@@ -8,14 +8,26 @@
 import SwiftUI
 
 struct ContentView: View {
+    
+    // RollViewをStateObjectで保持して操作する
+    @StateObject private var rollViewModel = RollViewModel()
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        VStack(spacing: 0) {
+            Text("CalcRoll V3")
+                .font(.title)
+                .padding(.top)
+            
+            RollView(viewModel: rollViewModel)
+            
+            KeyboardView(
+                columnCount: 5,
+                lineCount: 4,
+                spacing: 10
+            ) { tappedLabel in
+                rollViewModel.append(tappedLabel)
+            }
         }
-        .padding()
     }
 }
 
