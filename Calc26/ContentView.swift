@@ -20,11 +20,7 @@ struct ContentView: View {
             
             RollView(viewModel: rollViewModel)
             
-            KeyboardView(
-                columnCount: 5,
-                lineCount: 4,
-                spacing: 10
-            ) { tappedLabel in
+            KeyboardView() { tappedLabel in
                 rollViewModel.append(tappedLabel)
             }
         }

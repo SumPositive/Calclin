@@ -20,7 +20,7 @@ struct KeyboardKey: Codable {
     let option: String?  // 任意項目
 }
 
-func loadKeyboardLabels() -> (labels: [String], column: Int) {
+func loadKeyboardLabels() -> (keys: [KeyboardKey], column: Int) {
     guard let url = Bundle.main.url(forResource: "Keyboard", withExtension: "plist"),
           let data = try? Data(contentsOf: url) else {
         print("❌ ファイル読み込み失敗")
@@ -30,8 +30,8 @@ func loadKeyboardLabels() -> (labels: [String], column: Int) {
     do {
         let layouts = try PropertyListDecoder().decode([KeyboardLayout].self, from: data)
         if let standard = layouts.first(where: { $0.Name == "Standard" }) {
-            let labels = standard.Keys.compactMap { $0.label }
-            return (labels, standard.Column)
+            let keys = standard.Keys.compactMap { $0 }
+            return (keys, standard.Column)
         } else {
             print("❌ 'Standard' レイアウトが見つかりません")
             return ([], 0)
@@ -63,20 +63,19 @@ struct PressableImageButtonStyle: ButtonStyle {
 }
 
 struct KeyboardView: View {
-    let columnCount: Int
-    let lineCount: Int
-    let spacing: CGFloat
+    
+    let spacing: CGFloat = 8
     var onTap: (String) -> Void
     
-    @State private var labels: [String] = []
-    @State private var columns: Int = 0
+    @State private var keys: [KeyboardKey] = []
+    @State private var column: Int = 0
     
     var body: some View {
-        let gridColumns = Array(repeating: GridItem(.flexible(), spacing: spacing), count: columns)
+        let gridColumns = Array(repeating: GridItem(.flexible(), spacing: spacing), count: column)
         
         LazyVGrid(columns: gridColumns, spacing: spacing) {
-            ForEach(labels.indices, id: \.self) { index in
-                let label = labels[index]
+            ForEach(keys.indices, id: \.self) { index in
+                let label = keys[index].label
                 Button(action: {
                     onTap(label)
                 }) {
@@ -94,11 +93,11 @@ struct KeyboardView: View {
         }
         .padding(spacing)
         .onAppear {
-            // ✅ 初回表示時のみ読み込む
-            if labels.isEmpty {
+            // 初回表示時のみ読み込む
+            if keys.isEmpty {
                 let result = loadKeyboardLabels()
-                labels = result.labels
-                columns = result.column
+                keys = result.keys
+                column = result.column
             }
         }
     }
