@@ -2,7 +2,7 @@
 //  Calc26App.swift
 //  Calc26
 //
-//  Created by Sum Positive on 2025/06/29.
+//  Created by sumpo on 2025/06/29.
 //
 
 import SwiftUI

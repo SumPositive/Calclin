@@ -2,7 +2,7 @@
 //  KeyboardView.swift
 //  Calc26
 //
-//  Created by Sum Positive on 2025/07/01.
+//  Created by sumpo on 2025/07/01.
 //
 
 import SwiftUI
@@ -56,7 +56,7 @@ struct PressableImageButtonStyle: ButtonStyle {
             
             Text(labelText)
                 .foregroundColor(.black)
-                .font(.headline)
+                .font(.system(size: 24, weight: .bold))
                 .shadow(radius: 1)
         }
     }

@@ -92,8 +92,6 @@
 				<string>＋</string>
 				<key>key</key>
 				<string>+</string>
-				<key>option</key>
-				<string>Height2</string>
 			</dict>
 			<dict>
 				<key>label</key>
@@ -103,29 +101,27 @@
 			</dict>
 			<dict>
 				<key>label</key>
-				<string>０</string>
+				<string>0</string>
 				<key>key</key>
 				<string>0</string>
 			</dict>
 			<dict>
 				<key>label</key>
-				<string>００</string>
+				<string>00</string>
 				<key>key</key>
 				<string>00</string>
 			</dict>
 			<dict>
 				<key>label</key>
-				<string>.</string>
+				<string>000</string>
 				<key>key</key>
-				<string>.</string>
+				<string>000</string>
 			</dict>
 			<dict>
 				<key>label</key>
-				<string>＋</string>
+				<string>.</string>
 				<key>key</key>
-				<string>+</string>
-				<key>option</key>
-				<string>Hide</string>
+				<string>.</string>
 			</dict>
 			<dict>
 				<key>label</key>

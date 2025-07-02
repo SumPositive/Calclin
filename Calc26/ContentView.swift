@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  Calc26
 //
-//  Created by Sum Positive on 2025/06/29.
+//  Created by sumpo on 2025/06/29.
 //
 
 import SwiftUI
@@ -14,7 +14,7 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("CalcRoll V3")
+            Text("Calc26")
                 .font(.title)
                 .padding(.top)
             

@@ -2,7 +2,7 @@
 //  RollView.swift
 //  Calc26
 //
-//  Created by Sum Positive on 2025/07/01.
+//  Created by sumpo on 2025/07/01.
 //
 
 import SwiftUI
