@@ -12,254 +12,121 @@
 			<dict>
 				<key>label</key>
 				<string>７</string>
-				<key>key</key>
+				<key>keyTag</key>
 				<string>7</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>８</string>
-				<key>key</key>
+				<key>keyTag</key>
 				<string>8</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>９</string>
-				<key>key</key>
+				<key>keyTag</key>
 				<string>9</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>％</string>
-				<key>key</key>
+				<key>keyTag</key>
 				<string>%</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>+/-</string>
-				<key>key</key>
-				<string>@1</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>４</string>
-				<key>key</key>
-				<string>4</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>５</string>
-				<key>key</key>
-				<string>5</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>６</string>
-				<key>key</key>
-				<string>6</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>×</string>
-				<key>key</key>
-				<string>*</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>÷</string>
-				<key>key</key>
-				<string>/</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>１</string>
-				<key>key</key>
-				<string>1</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>２</string>
-				<key>key</key>
-				<string>2</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>３</string>
-				<key>key</key>
-				<string>3</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>＋</string>
-				<key>key</key>
-				<string>+</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>ー</string>
-				<key>key</key>
-				<string>-</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>0</string>
-				<key>key</key>
-				<string>0</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>00</string>
-				<key>key</key>
-				<string>00</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>000</string>
-				<key>key</key>
-				<string>000</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>.</string>
-				<key>key</key>
-				<string>.</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>＝</string>
-				<key>key</key>
-				<string>=</string>
-			</dict>
-		</array>
-	</dict>
-	<dict>
-		<key>Name</key>
-		<string>Custom</string>
-		<key>Column</key>
-		<integer>5</integer>
-		<key>Keys</key>
-		<array>
-			<dict>
-				<key>label</key>
-				<string>７</string>
-				<key>key</key>
-				<string>7</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>８</string>
-				<key>key</key>
-				<string>8</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>９</string>
-				<key>key</key>
-				<string>9</string>
-			</dict>
-			<dict>
-				<key>label</key>
-				<string>％</string>
-				<key>key</key>
-				<string>%</string>
-			</dict>
-			<dict>
-				<key>label</key>
+				<key>keyTag</key>
 				<string>+/-</string>
-				<key>key</key>
-				<string>@1</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>４</string>
-				<key>key</key>
+				<key>keyTag</key>
 				<string>4</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>５</string>
-				<key>key</key>
+				<key>keyTag</key>
 				<string>5</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>６</string>
-				<key>key</key>
+				<key>keyTag</key>
 				<string>6</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>×</string>
-				<key>key</key>
-				<string>*</string>
+				<key>keyTag</key>
+				<string>×</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>÷</string>
-				<key>key</key>
-				<string>/</string>
+				<key>keyTag</key>
+				<string>÷</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>１</string>
-				<key>key</key>
+				<key>keyTag</key>
 				<string>1</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>２</string>
-				<key>key</key>
+				<key>keyTag</key>
 				<string>2</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>３</string>
-				<key>key</key>
+				<key>keyTag</key>
 				<string>3</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>＋</string>
-				<key>key</key>
+				<key>keyTag</key>
 				<string>+</string>
-				<key>option</key>
-				<string>Height2</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>ー</string>
-				<key>key</key>
+				<key>keyTag</key>
 				<string>-</string>
 			</dict>
 			<dict>
 				<key>label</key>
-				<string>０</string>
-				<key>key</key>
+				<string>0</string>
+				<key>keyTag</key>
 				<string>0</string>
 			</dict>
 			<dict>
 				<key>label</key>
-				<string>００</string>
-				<key>key</key>
+				<string>00</string>
+				<key>keyTag</key>
 				<string>00</string>
 			</dict>
 			<dict>
 				<key>label</key>
-				<string>.</string>
-				<key>key</key>
-				<string>.</string>
+				<string>000</string>
+				<key>keyTag</key>
+				<string>000</string>
 			</dict>
 			<dict>
 				<key>label</key>
-				<string>＋</string>
-				<key>key</key>
-				<string>+</string>
-				<key>option</key>
-				<string>Hide</string>
+				<string>.</string>
+				<key>keyTag</key>
+				<string>.</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>＝</string>
-				<key>key</key>
+				<key>keyTag</key>
 				<string>=</string>
 			</dict>
 		</array>

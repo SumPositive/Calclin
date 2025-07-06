@@ -9,8 +9,8 @@ import SwiftUI
 
 struct ContentView: View {
     
-    // RollViewをStateObjectで保持して操作する
-    @StateObject private var rollViewModel = RollViewModel()
+    // ListViewをStateObjectで保持して操作する
+    @StateObject private var listViewModel = ListViewModel()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -18,11 +18,12 @@ struct ContentView: View {
                 .font(.title)
                 .padding(.top)
             
-            RollView(viewModel: rollViewModel)
+            ListView(viewModel: listViewModel)
             
-            KeyboardView() { tappedLabel in
-                rollViewModel.append(tappedLabel)
-            }
+            KeyboardView(onTap: { keyTag in
+                listViewModel
+                    .input(keyTag: keyTag)
+            })
         }
     }
 }

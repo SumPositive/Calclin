@@ -5,8 +5,8 @@
 //  Created by sumpo on 2025/07/01.
 //
 
-import SwiftUI
 import Foundation
+import SwiftUI
 
 
 struct KeyboardLayout: Codable {
@@ -16,7 +16,7 @@ struct KeyboardLayout: Codable {
 }
 struct KeyboardKey: Codable {
     let label: String
-    let key: String
+    let keyTag: String
     let option: String?  // 任意項目
 }
 
@@ -63,21 +63,26 @@ struct PressableImageButtonStyle: ButtonStyle {
 }
 
 struct KeyboardView: View {
-    
+
     let spacing: CGFloat = 8
     var onTap: (String) -> Void
     
     @State private var keys: [KeyboardKey] = []
     @State private var column: Int = 0
     
+    @StateObject private var keyViewModel = KeyViewModel()
+    
+
     var body: some View {
         let gridColumns = Array(repeating: GridItem(.flexible(), spacing: spacing), count: column)
         
         LazyVGrid(columns: gridColumns, spacing: spacing) {
             ForEach(keys.indices, id: \.self) { index in
                 let label = keys[index].label
+//                KeyView(viewModel: keyViewModel, label: label)
+                            
                 Button(action: {
-                    onTap(label)
+                    onTap(keys[index].keyTag)
                 }) {
                     EmptyView()
                 }
