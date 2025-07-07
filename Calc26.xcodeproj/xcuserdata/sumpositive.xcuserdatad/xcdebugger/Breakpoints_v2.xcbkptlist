@@ -23,16 +23,32 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "C41C89A9-707E-4E69-BC89-8F23858DE0C7"
-            shouldBeEnabled = "Yes"
+            uuid = "64CF1CB7-DFDC-463F-9718-6C3D66C66598"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Calc26/CalcFunctions.swift"
+            filePath = "Calc26/SBCD/SBCD.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "52"
-            endingLineNumber = "52"
-            landmarkName = "answer(_:)"
+            startingLineNumber = "95"
+            endingLineNumber = "95"
+            landmarkName = "init(from:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "7429F1EA-5A8B-4315-A3D8-F593F910D3B2"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Calc26/SBCD/SBCD.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "114"
+            endingLineNumber = "114"
+            landmarkName = "toString()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

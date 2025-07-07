@@ -43,13 +43,13 @@ class CalcFunctions {
         // 逆ポーランド記法に変換
         let rpnTokens = convertToRPN(tokens)
         // RPNから答えを計算
-        let ans1 = evaluateRPN(rpnTokens)
+        let sbcd1 = evaluateRPN(rpnTokens)
         // 丸め処理
-        let ans2 = ans1.rounding()
+        let sbcd2 = sbcd1.rounding()
         // 桁区切り文字列化
-        let ans3 = ans2.toString()
+        let sbcd3 = sbcd2.toString()
         
-        return ans3
+        return sbcd3
     }
     
     /// 数式をトークンに分割する（演算子と数字を分離）

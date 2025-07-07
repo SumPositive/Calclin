@@ -16,18 +16,18 @@ let SBCD_PRECISION = 10
 // 参考！「偶数丸め」するためには小数以下2倍の桁数が必要（内部計算をアプリ有効桁数(PRECISION)の2倍とするため）
 
 // 小数以下表示桁数（丸め処理する）
-var decimalDigits: Int = 3
+var decimalDigits: Int = 2
 // 丸めタイプ
 enum RoundingType: Int {
-    case RM     // 四捨五入（偶数丸め）
-    case RZ     // 切り捨て
-    case R65    // 6/5 丸め
-    case R55    // 5/5 丸め
-    case R54    // 5/4 丸め
-    case RI     // 切り上げ
-    case RP     // 正方向丸め（常に符号を正に）
+    case RM     // 負方向丸め（常に符号を負に）常に減るから「負の無限大への丸め」と言われる
+    case RZ     // 切り捨て（絶対値）常に0に近づくことになるから「0への丸め」と言われる
+    case R65    // 五捨六入（絶対値型）
+    case R55    // 五捨五入「最近接偶数への丸め」[JIS Z 8401 規則Ａ]
+    case R54    // 四捨五入（絶対値型）[JIS Z 8401 規則Ｂ]
+    case RI     // 切り上げ（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
+    case RP     // 正方向丸め（常に符号を正に）常に増えるから「正の無限大への丸め」と言われる
 }
-var roundingType: RoundingType = .RM
+var roundingType: RoundingType = .R54
 // 桁区切りタイプ
 enum GroupingType: Int {
     case none           // なし
@@ -102,27 +102,17 @@ struct SBCD {
 
     /// 文字列化
     func toString() -> String {
-        var startIndex = digits.firstIndex(where: { $0 != 0 }) ?? (SBCD_PRECISION - 1)
-        if SBCD_PRECISION - decimalDigits < startIndex {
-            startIndex = SBCD_PRECISION - decimalDigits
-        }
-        // 整数部
-        let intPart = digits[startIndex..<(SBCD_PRECISION - decimalDigits)].map(String.init).joined()
-        // 小数部
-        let decPart = digits[(SBCD_PRECISION - decimalDigits)..<SBCD_PRECISION].map(String.init).joined()
-
-        
-        var result = intPart.isEmpty ? "0" : intPart
-        // 整数部を桁区切りする
-        result = formatGrouping(result)
-        // 小数点を入れて小数部を結合する
-        if 0 < decimalDigits {
-            result += displayDecimalSeparator + decPart
-        }
+        // 整数部（固定小数点の前半）
+        let maxIntDigits = SBCD_PRECISION / 2
+        let intDigits = self.digits.prefix(maxIntDigits).map(String.init).joined()
+        // 小数部（固定小数点の後半）
+        let maxDecDigits = SBCD_PRECISION - maxIntDigits
+        let decDigits = self.digits.suffix(maxDecDigits).map(String.init).joined()
+        // 整数部＋小数点＋小数部
+        let result = intDigits + displayDecimalSeparator + decDigits
         // 符号を付けて完成
-        return (self.minus ? String(SBCD_MINUS) : "") + result
+        return self.minus ? String(SBCD_MINUS) + result : result
     }
-    
     
     // MARK: - 四則演算
     
@@ -195,48 +185,108 @@ struct SBCD {
     // MARK: - 丸め
     /// 丸め
     /// - Parameters:
-    ///   - totalDigits: 有効桁数（整数部と小数部を合わせた最大桁数。符号や小数点は含まない）
+    ///   - SBCD_PRECISION: 有効桁数（整数部と小数部を合わせた最大桁数。符号や小数点は含まない）
     ///   - decimalDigits: 小数桁数（小数部の最大桁数）[ 0 〜 iPrecision ]
-    ///   - type: 丸め方法 (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP        [1.0.6]以降
+    ///   - roundingType: 丸め方法 (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP        [1.0.6]以降
     /// - Returns: 結果SBCD
     func rounding() -> SBCD {
-        var result = self
-        let roundingIndex = SBCD_PRECISION - decimalDigits
-        let nextDigit = (roundingIndex < SBCD_PRECISION) ? result.digits[roundingIndex] : 0
+        var sbcd = self
+        // 丸め位置
+        let iRoundPos = SBCD_PRECISION/2 + decimalDigits
+        if iRoundPos < 0 || SBCD_PRECISION - 1 <= iRoundPos {
+            return self
+        }
+        // 丸め位置の値
+        let roundNumber = sbcd.digits[iRoundPos]
+        // 繰り上げフラグ
+        var roundUp = false
         
         switch roundingType {
-            case .RM:
-                if 5 < nextDigit || (nextDigit == 5 && result.digits[roundingIndex - 1] % 2 != 0) {
-                    result.digits[roundingIndex - 1] += 1
+            case .RM:   // RM　常に減るから「負の無限大への丸め」と言われる
+                        // (+)切捨　(-)絶対値切上
+                if sbcd.minus {
+                    // マイナスで、iRoundPos以降に0でない数値があれば、繰り上げる
+                    for i in iRoundPos..<SBCD_PRECISION {
+                        if sbcd.digits[i] != 0 {
+                            roundUp = true
+                            break
+                        }
+                    }
                 }
-            case .RZ:
+                
+            case .RZ:   // RZ:切捨（絶対値）常に0に近づくことになるから「0への丸め」と言われる
+                        // bRoundUp = false; Default
                 break
-            case .R65:
-                if 6 <= nextDigit {
-                    result.digits[roundingIndex - 1] += 1
+
+            case .R65:  // 6/5 五捨六入（絶対値型）
+                roundUp = (6 <= roundNumber)
+
+            case .R55:  // 5/5 五捨五入「最近接偶数への丸め」[JIS Z 8401 規則Ａ]
+                        // （偶数丸め、JIS丸め、ISO丸め、銀行家の丸め）
+                if roundNumber % 2 == 0 {
+                    // 偶数で、roundNumberが5より大きいならば繰り上げる
+                    if 5 < roundNumber {
+                        roundUp = true
+                    }
+                    else if 5 == roundNumber {
+                        // roundNumberが5で、以降に0でない数値があれば「5より大きい」ので繰り上げる
+                        for i in (iRoundPos + 1)..<SBCD_PRECISION {
+                            if sbcd.digits[i] != 0 {
+                                roundUp = true
+                                break
+                            }
+                        }
+                    }
+                }else {
+                    // 奇数で、roundNumberが5以上ならば繰り上げる
+                    // 奇数
+                    roundUp = (5 <= roundNumber)
                 }
-            case .R55:
-                if 5 <= nextDigit {
-                    result.digits[roundingIndex - 1] += 1
+
+            case .R54:  // 5/4 四捨五入（絶対値型）[JIS Z 8401 規則Ｂ]
+                        // [iRoundPos+1] >= 5 ならば、[iRoundPos]++ する
+                roundUp = (5 <= roundNumber)
+
+            case .RI:   // (5)RI:切上（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
+                        // iRoundPos以降に0でない数値があれば、繰り上げる
+                for i in iRoundPos..<SBCD_PRECISION {
+                    if sbcd.digits[i] != 0 {
+                        roundUp = true
+                        break
+                    }
                 }
-            case .R54:
-                if 5 < nextDigit || (nextDigit == 5 && result.digits[roundingIndex] != 0) {
-                    result.digits[roundingIndex - 1] += 1
-                }
-            case .RI:
-                if 0 < nextDigit {
-                    result.digits[roundingIndex - 1] += 1
-                }
-            case .RP:
-                if !result.minus && 0 < nextDigit {
-                    result.digits[roundingIndex - 1] += 1
+
+            case .RP:   // (6)RP　常に増えるから「正の無限大への丸め」と言われる
+                        // (+)絶対値切上　(-)切捨
+                if sbcd.minus == false {
+                    // プラスで、iRoundPos以降に0でない数値があれば、繰り上げる
+                    for i in iRoundPos..<SBCD_PRECISION {
+                        if sbcd.digits[i] != 0 {
+                            roundUp = true
+                            break
+                        }
+                    }
                 }
         }
-        
-        for i in roundingIndex..<SBCD_PRECISION {
-            result.digits[i] = 0
+        //
+        if roundUp {
+            // 繰り上げする
+            // 繰り上げする位置
+            let upPos = iRoundPos - 1
+            if sbcd.digits[upPos] < 9 {
+                // 繰り上げする値が9未満ならば＋1するだけ
+                sbcd.digits[upPos] += 1
+            }
+            else {
+                // 繰り上げする値が9以上ならば繰り上げが伝播する可能性があるのでADD+1計算処理する
+                sbcd = sbcd.add(SBCD(from: "1"))
+            }
         }
-        return result
+        // 丸め位置以降を0にする
+        for i in iRoundPos..<SBCD_PRECISION {
+            sbcd.digits[i] = 0
+        }
+        return sbcd
     }
     
     
