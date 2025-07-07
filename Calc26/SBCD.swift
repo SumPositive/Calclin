@@ -2,8 +2,8 @@
 //  SBCD.swift
 //  1.1.0
 //
-//  Created by MSPO/masa on 1998/09/14.
-//  Converted by sumpo on 2025/07/02.
+//  Originally created by MSPO/masa on 1998/09/15
+//  Converted from Objective-C by sumpo on 2025/07/02
 //
 
 import Foundation

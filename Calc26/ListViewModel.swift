@@ -2,8 +2,7 @@
 //  ListViewModel.swift
 //  Calc26
 //
-//  Converted from Objective-C by sumpo on 2025/07/02
-//  Originally created by MSPO/masa on 2010/03/15
+//  Created by sumpo on 2025/07/03.
 //
 
 import Foundation
