@@ -11,6 +11,36 @@
 		<array>
 			<dict>
 				<key>label</key>
+				<string>AC</string>
+				<key>keyTag</key>
+				<string>AC</string>
+			</dict>
+			<dict>
+				<key>label</key>
+				<string>0</string>
+				<key>keyTag</key>
+				<string>0</string>
+			</dict>
+			<dict>
+				<key>label</key>
+				<string>0</string>
+				<key>keyTag</key>
+				<string>0</string>
+			</dict>
+			<dict>
+				<key>label</key>
+				<string>0</string>
+				<key>keyTag</key>
+				<string>0</string>
+			</dict>
+			<dict>
+				<key>label</key>
+				<string>BS</string>
+				<key>keyTag</key>
+				<string>BS</string>
+			</dict>
+			<dict>
+				<key>label</key>
 				<string>７</string>
 				<key>keyTag</key>
 				<string>7</string>

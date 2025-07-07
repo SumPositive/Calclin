@@ -7,6 +7,19 @@
 
 import Foundation
 
+
+// 桁区切りタイプ
+enum GroupingType: Int {
+    case none           // なし
+    case international  // 3桁　　123,456,789
+    case kanjiZone      // 4桁　　1234,5678,9012
+    case indian         // インド　12,34,56,789
+}
+var groupingType: GroupingType = .international
+// 表示記号（ユーザーが目にする）
+var displayGroupSeparator = ","
+
+
 /// 数式処理と計算ロジックを提供するユーティリティ
 class CalcFunctions {
     
@@ -141,5 +154,87 @@ class CalcFunctions {
         }
         return stack.first ?? SBCD(from: "0")
     }
+    
+    
+    /// 桁区切り
+    static func formatGrouping(_ num: String) -> String {
+        if groupingType == .none {
+            return num
+        }
+        // トリミング
+        var trimmed = num.trimmingCharacters(in: .whitespacesAndNewlines)
+        // 符号処理
+        var minus = false
+        if trimmed.hasPrefix("-") {
+            minus = true
+            trimmed.removeFirst()
+        }
+        // 整数部と小数部に分ける
+        let parts = trimmed.split(whereSeparator: { $0 == "." || $0 == displayDecimalSeparator.first })
+        // 整数部
+        var integerPart = parts.count > 0 ? parts[0] : Substring("")
+        // 小数部
+        let decimalPart = parts.count > 1 ? parts[1] : Substring("")
+
+        // 整数部だけを桁区切りする
+        let chars = Array(integerPart)
+        let count = chars.count
+        
+        guard 3 < count else {
+            return num
+        }
+        
+        switch groupingType {
+            case .none:
+                return num
+                
+            case .indian:
+                let last3 = chars[(count - 3)..<count]
+                var remaining = chars[0..<(count - 3)]
+                var parts: [String] = []
+                
+                while 2 < remaining.count {
+                    let chunk = remaining.suffix(2)
+                    parts.insert(String(chunk), at: 0)
+                    remaining.removeLast(2)
+                }
+                
+                if !remaining.isEmpty {
+                    parts.insert(String(remaining), at: 0)
+                }
+                
+                integerPart = parts.joined(separator: displayGroupSeparator) + displayGroupSeparator + Substring(last3)
+                
+            case .kanjiZone:
+                var result = ""
+                let rev = chars.reversed()
+                for (index, char) in rev.enumerated() {
+                    if 0 < index && index % 4 == 0 {
+                        result.append(contentsOf: displayGroupSeparator)
+                    }
+                    result.append(char)
+                }
+                integerPart = Substring(result.reversed())
+                
+            case .international:
+                var result = ""
+                let rev = chars.reversed()
+                for (index, char) in rev.enumerated() {
+                    if 0 < index && index % 3 == 0 {
+                        result.append(contentsOf: displayGroupSeparator)
+                    }
+                    result.append(char)
+                }
+                integerPart = Substring(result.reversed())
+        }
+        // 整数部（＋小数点＋小数部）
+        var gpNum = integerPart
+        if decimalPart != "" {
+            gpNum += displayDecimalSeparator + decimalPart
+        }
+        // 符号を付けて完成
+        return String(minus ? "-" + gpNum : gpNum)
+    }
+
 }
 

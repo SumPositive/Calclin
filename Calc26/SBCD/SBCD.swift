@@ -10,7 +10,7 @@ import Foundation
 
 
 // SBCD.degits有効桁数（必ず偶数値にすること）
-let SBCD_PRECISION = 10
+let SBCD_PRECISION = 60  //= 30 + 30
 // 固定小数点の整数部：前半（0...SBCD_PRECISION/2-1）
 // 固定小数点の小数部：後半（SBCD_PRECISION/2...SBCD_PRECISION-1）
 // 参考！「偶数丸め」するためには小数以下2倍の桁数が必要（内部計算をアプリ有効桁数(PRECISION)の2倍とするため）
@@ -28,18 +28,9 @@ enum RoundingType: Int {
     case RP     // 正方向丸め（常に符号を正に）常に増えるから「正の無限大への丸め」と言われる
 }
 var roundingType: RoundingType = .R54
-// 桁区切りタイプ
-enum GroupingType: Int {
-    case none           // なし
-    case international  // 3桁　　123,456,789
-    case kanjiZone      // 4桁　　1234,5678,9012
-    case indian         // インド　12,34,56,789
-}
-var groupingType: GroupingType = .international
 
 // 表示記号（ユーザーが目にする）
 var displayDecimalSeparator = "."
-var displayGroupSeparator = ","
 
 
 
@@ -100,19 +91,30 @@ struct SBCD {
         self.digits = digits
     }
 
-    /// 文字列化
+    /// 文字列化（前後の0を除去する）
     func toString() -> String {
-        // 整数部（固定小数点の前半）
         let maxIntDigits = SBCD_PRECISION / 2
-        let intDigits = self.digits.prefix(maxIntDigits).map(String.init).joined()
-        // 小数部（固定小数点の後半）
-        let maxDecDigits = SBCD_PRECISION - maxIntDigits
-        let decDigits = self.digits.suffix(maxDecDigits).map(String.init).joined()
+        let intPartRaw = self.digits[0..<maxIntDigits]
+        let decPartRaw = self.digits[maxIntDigits..<SBCD_PRECISION]
+        // 小数部が全て0か確認
+        let isDecimalAllZero = decPartRaw.allSatisfy { $0 == 0 }
+        // 整数部の先頭の 0 を除去（最低1桁は残す）
+        let intStart = intPartRaw.firstIndex(where: { $0 != 0 }) ?? (maxIntDigits - 1)
+        let intDigits = intPartRaw[intStart..<maxIntDigits].map(String.init).joined()
+        // ここでは桁区切りしない。表示時に桁区切りなどの表示フォーマットを行う
+        // 小数部がすべて0なら整数部のみ返す
+        if isDecimalAllZero {
+            return self.minus ? "-" + intDigits : intDigits
+        }
+        // 小数部の末尾0は削除（ただし前にゼロ以外があった場合のみ）
+        let decEnd = decPartRaw.lastIndex(where: { $0 != 0 }) ?? (maxIntDigits - 1)
+        let decDigits = decPartRaw.prefix(through: decEnd).map(String.init).joined()
         // 整数部＋小数点＋小数部
         let result = intDigits + displayDecimalSeparator + decDigits
         // 符号を付けて完成
-        return self.minus ? String(SBCD_MINUS) + result : result
+        return self.minus ? "-" + result : result
     }
+
     
     // MARK: - 四則演算
     
@@ -290,98 +292,98 @@ struct SBCD {
     }
     
     
-    func stringFormatter(_ strAzNum: String, bZeroCut: Bool) -> String {
-        // 内部記号（; と :）を表示記号に変換
-        var formatted = strAzNum
-            .replacingOccurrences(of: SBCD_GROUP_SEPARATOR, with: displayGroupSeparator)
-            .replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR, with: displayDecimalSeparator)
-        
-        // 小数点以下の0を切り捨てる
-        if bZeroCut,
-           let dotRange = formatted.range(of: displayDecimalSeparator) {
-            let integerPart = String(formatted[..<dotRange.lowerBound])
-            var decimalPart = String(formatted[dotRange.upperBound...])
-            while decimalPart.last == SBCD_ZERO {
-                decimalPart.removeLast()
-            }
-            formatted = decimalPart.isEmpty
-            ? integerPart
-            : integerPart + displayDecimalSeparator + decimalPart
-        }
-        
-        // 整形（桁区切り）
-        if let dotIndex = formatted.firstIndex(of: Character(displayDecimalSeparator)) {
-            let intPart = String(formatted[..<dotIndex])
-            let decPart = String(formatted[formatted.index(after: dotIndex)...])
-            return formatGrouping(intPart) + displayDecimalSeparator + decPart
-        } else {
-            return formatGrouping(formatted)
-        }
-    }
+//    func stringFormatter(_ strAzNum: String, bZeroCut: Bool) -> String {
+//        // 内部記号（; と :）を表示記号に変換
+//        var formatted = strAzNum
+//            .replacingOccurrences(of: SBCD_GROUP_SEPARATOR, with: displayGroupSeparator)
+//            .replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR, with: displayDecimalSeparator)
+//        
+//        // 小数点以下の0を切り捨てる
+//        if bZeroCut,
+//           let dotRange = formatted.range(of: displayDecimalSeparator) {
+//            let integerPart = String(formatted[..<dotRange.lowerBound])
+//            var decimalPart = String(formatted[dotRange.upperBound...])
+//            while decimalPart.last == SBCD_ZERO {
+//                decimalPart.removeLast()
+//            }
+//            formatted = decimalPart.isEmpty
+//            ? integerPart
+//            : integerPart + displayDecimalSeparator + decimalPart
+//        }
+//        
+//        // 整形（桁区切り）
+//        if let dotIndex = formatted.firstIndex(of: Character(displayDecimalSeparator)) {
+//            let intPart = String(formatted[..<dotIndex])
+//            let decPart = String(formatted[formatted.index(after: dotIndex)...])
+//            return formatGrouping(intPart) + displayDecimalSeparator + decPart
+//        } else {
+//            return formatGrouping(formatted)
+//        }
+//    }
     
-    /// 表示用文字列を内部形式へ変換（逆変換）
-    private func stringAzNum(_ zNum: String) -> String {
-        return zNum
-            .replacingOccurrences(of: displayGroupSeparator, with: SBCD_GROUP_SEPARATOR)
-            .replacingOccurrences(of: displayDecimalSeparator, with: SBCD_DECIMAL_SEPARATOR)
-    }
+//    /// 表示用文字列を内部形式へ変換（逆変換）
+//    private func stringAzNum(_ zNum: String) -> String {
+//        return zNum
+//            .replacingOccurrences(of: displayGroupSeparator, with: SBCD_GROUP_SEPARATOR)
+//            .replacingOccurrences(of: displayDecimalSeparator, with: SBCD_DECIMAL_SEPARATOR)
+//    }
     
-    
-    private func formatGrouping(_ integerPart: String) -> String {
-        if groupingType == .none {
-            return integerPart
-        }
-        let chars = Array(integerPart)
-        let count = chars.count
-        
-        guard 3 < count else {
-            return integerPart
-        }
-        
-        switch groupingType {
-            case .none:
-                return integerPart
-
-            case .indian:
-                let last3 = chars[(count - 3)..<count]
-                var remaining = chars[0..<(count - 3)]
-                var parts: [String] = []
-                
-                while 2 < remaining.count {
-                    let chunk = remaining.suffix(2)
-                    parts.insert(String(chunk), at: 0)
-                    remaining.removeLast(2)
-                }
-                
-                if !remaining.isEmpty {
-                    parts.insert(String(remaining), at: 0)
-                }
-                
-                return parts.joined(separator: displayGroupSeparator) + displayGroupSeparator + String(last3)
-                
-            case .kanjiZone:
-                var result = ""
-                let rev = chars.reversed()
-                for (index, char) in rev.enumerated() {
-                    if 0 < index && index % 4 == 0 {
-                        result.append(contentsOf: displayGroupSeparator)
-                    }
-                    result.append(char)
-                }
-                return String(result.reversed())
-                
-            case .international:
-                var result = ""
-                let rev = chars.reversed()
-                for (index, char) in rev.enumerated() {
-                    if 0 < index && index % 3 == 0 {
-                        result.append(contentsOf: displayGroupSeparator)
-                    }
-                    result.append(char)
-                }
-                return String(result.reversed())
-        }
-    }
+//    /// 桁区切り
+//    func formatGrouping(_ integerPart: String) -> String {
+//        if groupingType == .none {
+//            return integerPart
+//        }
+//        let chars = Array(integerPart)
+//        let count = chars.count
+//        
+//        guard 3 < count else {
+//            return integerPart
+//        }
+//        
+//        switch groupingType {
+//            case .none:
+//                return integerPart
+//
+//            case .indian:
+//                let last3 = chars[(count - 3)..<count]
+//                var remaining = chars[0..<(count - 3)]
+//                var parts: [String] = []
+//                
+//                while 2 < remaining.count {
+//                    let chunk = remaining.suffix(2)
+//                    parts.insert(String(chunk), at: 0)
+//                    remaining.removeLast(2)
+//                }
+//                
+//                if !remaining.isEmpty {
+//                    parts.insert(String(remaining), at: 0)
+//                }
+//                
+//                return parts.joined(separator: displayGroupSeparator) + displayGroupSeparator + String(last3)
+//                
+//            case .kanjiZone:
+//                var result = ""
+//                let rev = chars.reversed()
+//                for (index, char) in rev.enumerated() {
+//                    if 0 < index && index % 4 == 0 {
+//                        result.append(contentsOf: displayGroupSeparator)
+//                    }
+//                    result.append(char)
+//                }
+//                return String(result.reversed())
+//                
+//            case .international:
+//                var result = ""
+//                let rev = chars.reversed()
+//                for (index, char) in rev.enumerated() {
+//                    if 0 < index && index % 3 == 0 {
+//                        result.append(contentsOf: displayGroupSeparator)
+//                    }
+//                    result.append(char)
+//                }
+//                return String(result.reversed())
+//        }
+//    }
     
 }
 

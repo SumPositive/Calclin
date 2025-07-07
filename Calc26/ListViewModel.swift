@@ -37,13 +37,13 @@ final class ListViewModel: ObservableObject {
 
     // MARK: - Public Properties
     // 有効桁数＝整数桁＋小数桁（小数点は含まない）
-    var num_precision: Int = 12
+    var num_precision: Int = 6
     // 税率
     var tax_rate: Double = 0.10
 
     
     struct  ListRow: Hashable {
-        var oerator: String = KeyTag.start.rawValue
+        var oper: String = KeyTag.start.rawValue
         var number: String = ""
         var unit: String = ""
         var answer: String = ""
@@ -62,6 +62,13 @@ final class ListViewModel: ObservableObject {
     /// KeyViewからKeyを受け取り計算式を組み立てる
     func input(keyTag: String, label: String? = nil, rzUnit: String? = nil) {
         switch keyTag {
+                // 前方一致で評価されることに注意！
+                // 例えば、"0"が先にあると"00"が"0"の所で処理されてしまう
+                
+            case KeyTag.doubleZero.rawValue, // [00]
+                KeyTag.tripleZero.rawValue:  // [000]
+                handleZeroGroup(keyTag)
+                
             case "0"..."9":                 // [0]...[9]
                 handleNumber(keyTag)
 
@@ -70,25 +77,45 @@ final class ListViewModel: ObservableObject {
             case KeyTag.decimal.rawValue:   // [.]
                 handleDecimal()
 
-            case KeyTag.doubleZero.rawValue, // [00]
-                KeyTag.tripleZero.rawValue:  // [000]
-                handleZeroGroup(keyTag)
-
             case KeyTag.sign.rawValue:      // [+/-]
                 handleSign()
 
             case KeyTag.answer.rawValue,    // [=]
-                KeyTag.add.rawValue,       // [+]
-                KeyTag.subtract.rawValue,      // [-]
+                KeyTag.add.rawValue,        // [+]
+                KeyTag.subtract.rawValue,   // [-]
                 KeyTag.multiply.rawValue,   // [×]
                 KeyTag.divide.rawValue:     // [÷]
                 handleOperator(keyTag)
+
+            case KeyTag.ac.rawValue:        // [AC]
+                // Reset
+                listRows = [ListRow()] // 初期化
+                listIndex = 0
+                // UNIT Reset
+
+            case KeyTag.bs.rawValue:        // [BS]
+                var row = listRows[listIndex]
+                if 0 < row.unit.count {
+                    row.unit = ""
+                }
+                else if 0 < row.number.count {
+                    row.number.removeLast()
+                }
+                else if 1 < row.oper.count {
+                    // 演算子（先頭の1文字）は消さない
+                    if let firstChar = row.oper.first {
+                        row.oper = String(firstChar)
+                    }
+                }
+                // Replace an element（これによりViewが更新される）
+                listRows[listIndex] = row
 
             default:
                 break
         }
     }
 
+    
     
     // MARK: - Private Methods
 
@@ -97,7 +124,7 @@ final class ListViewModel: ObservableObject {
         guard listRows.count < ListViewModel.ROWS_MAX,
               listIndex < listRows.count else {
             var row = listRows[listIndex]
-            row.oerator = OP_ANSWER
+            row.oper = OP_ANSWER
             row.number = answer()
             // Replace an element（structで値型なので要素を差し替える）
             listRows[listIndex] = row
@@ -106,7 +133,7 @@ final class ListViewModel: ObservableObject {
 
         // 新しいenterRowを準備
         var row = ListRow()
-        row.oerator = nextOperator
+        row.oper = nextOperator
         row.number = ""
         row.unit = ""
         row.answer = ""
@@ -122,11 +149,11 @@ final class ListViewModel: ObservableObject {
         assert(listIndex < listRows.count, "enterIndex=\(listIndex), count=\(listRows.count)")
         var row = listRows[listIndex]
 
-        if !row.oerator.isEmpty {
+        if !row.oper.isEmpty {
             if !row.number.isEmpty {
-                if row.oerator.hasPrefix(OP_ANSWER) {
+                if row.oper.hasPrefix(OP_ANSWER) {
                     row.answer = row.number
-                    row.oerator = op
+                    row.oper = op
                     row.number = ""
                 }
                 else if newLine(nextOperator: op) { // 新しい行を追加する
@@ -140,16 +167,16 @@ final class ListViewModel: ObservableObject {
                 }
             }
             else {
-                if row.oerator.hasPrefix(OP_START), op == OP_SUBTRACT {
+                if row.oper.hasPrefix(OP_START), op == OP_SUBTRACT {
                     handleSign()
                 }
                 else {
-                    row.oerator = op
+                    row.oper = op
                 }
             }
         }
         else {
-            row.oerator = op
+            row.oper = op
         }
         // Replace an element
         listRows[listIndex] = row
@@ -172,7 +199,7 @@ final class ListViewModel: ObservableObject {
         var iRowStart = 0
         for i in stride(from: listIndex - 1, through: 0, by: -1) {
             let row = listRows[i]
-            if row.oerator.hasPrefix(OP_ANSWER) || row.oerator.hasPrefix(OP_GT) {
+            if row.oper.hasPrefix(OP_ANSWER) || row.oper.hasPrefix(OP_GT) {
                 iRowStart = i + 1
                 break
             }
@@ -184,7 +211,7 @@ final class ListViewModel: ObservableObject {
         var fomula = ""
         for i in iRowStart...iRowEnd {
             let row = listRows[i]
-            let op = row.oerator.hasPrefix(OP_START) ? String(row.oerator.dropFirst()) : row.oerator
+            let op = row.oper.hasPrefix(OP_START) ? String(row.oper.dropFirst()) : row.oper
             
             
             if row.unit.isEmpty {
@@ -236,7 +263,7 @@ final class ListViewModel: ObservableObject {
                     // UNIT変換式："#" を "%@" に置換（String(format:)用）
                     fmt = fmt.replacingOccurrences(of: "#", with: "%@")
                     // zFormula に演算子と変換式を連結
-                    fomula += row.oerator
+                    fomula += row.oper
                     fomula += String(format: fmt, row.number)
                 }
             }
@@ -249,7 +276,7 @@ final class ListViewModel: ObservableObject {
         assert(listIndex < listRows.count, "enterIndex=\(listIndex), count=\(listRows.count)")
         var row = listRows[listIndex]
 
-        if row.oerator == OP_ANSWER { // [=]ならば改行する
+        if row.oper == OP_ANSWER { // [=]ならば改行する
             if newLine(nextOperator: OP_START) { // 新しい行を追加する
                 // 新しい行を取得
                 row = listRows[listIndex]
@@ -262,16 +289,21 @@ final class ListViewModel: ObservableObject {
         }
         if num_precision - 2 <= row.number.count { // [-][.]を考慮して(-2)
             // 改めて[-][.]を除いた有効桁数を調べる
-            if num_precision <= numLength(row.number) { return }
+            if num_precision <= numLength(row.number) {
+                log("Overflow: \(row.number)", level: .warning)
+                return
+            }
         }
         if row.number.hasPrefix("0") || row.number.hasPrefix("-0") {
-            if !row.number.contains(NUM_DECIMAL), // 小数点が無い ⇒ 整数部である
-                "0" < num {
-                // 末尾の[0]を削除して数値を追加する
-                row.number.removeLast()
-            } else if num == "0" {
-                // 2個目以降の[0]は無効
-                return
+            if !row.number.contains(NUM_DECIMAL) { // 小数点が無い ⇒ 整数部である
+                if "0" < num {
+                    // 末尾の[0]を削除して数値を追加する
+                    row.number.removeLast()
+                }
+                else if num == "0" {
+                    // 整数部先頭の2個目以降の[0]は不要
+                    return
+                }
             }
         }
         row.number += num
@@ -284,7 +316,7 @@ final class ListViewModel: ObservableObject {
         assert(listIndex < listRows.count, "enterIndex=\(listIndex), count=\(listRows.count)")
         var row = listRows[listIndex]
 
-        if row.oerator == OP_ANSWER { // [=]ならば改行する
+        if row.oper == OP_ANSWER { // [=]ならば改行する
             if newLine(nextOperator: OP_START) { // 新しい行を追加する
                 // 新しい行を取得
                 row = listRows[listIndex]
@@ -312,9 +344,13 @@ final class ListViewModel: ObservableObject {
         var row = listRows[listIndex]
 
         if num_precision - zeros.count - 1 <= row.number.count {
-            if num_precision - (zeros.count == 3 ? 2 : 1) <= numLength(row.number) { return }
+            if num_precision - (zeros.count == 3 ? 2 : 1) <= numLength(row.number) {
+                log("Overflow: \(row.number)", level: .warning)
+                return
+            }
         }
         if let val = Double(row.number), val != 0 || row.number.contains(NUM_DECIMAL) {
+            // 0でない || 小数点がない
             row.number += zeros
         }
         // Replace an element
