@@ -12,151 +12,151 @@
 			<dict>
 				<key>label</key>
 				<string>AC</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>AC</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>0</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>0</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>0</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>0</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>0</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>0</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>BS</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>BS</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>７</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>7</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>８</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>8</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>９</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>9</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>％</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>%</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>+/-</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>+/-</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>４</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>4</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>５</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>5</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>６</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>6</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>×</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>×</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>÷</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>÷</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>１</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>1</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>２</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>2</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>３</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>3</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>＋</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>+</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>ー</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>-</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>0</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>0</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>00</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>00</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>000</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>000</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>.</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>.</string>
 			</dict>
 			<dict>
 				<key>label</key>
 				<string>＝</string>
-				<key>keyTag</key>
+				<key>keyVal</key>
 				<string>=</string>
 			</dict>
 		</array>

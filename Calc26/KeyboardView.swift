@@ -16,7 +16,7 @@ struct KeyboardLayout: Codable {
 }
 struct KeyboardKey: Codable {
     let label: String
-    let keyTag: String
+    let keyVal: String
     let option: String?  // 任意項目
 }
 
@@ -65,7 +65,7 @@ struct PressableImageButtonStyle: ButtonStyle {
 struct KeyboardView: View {
 
     let spacing: CGFloat = 8
-    var onTap: (String) -> Void
+    var onTap: (KeyTag) -> Void
     
     @State private var keys: [KeyboardKey] = []
     @State private var column: Int = 0
@@ -82,7 +82,7 @@ struct KeyboardView: View {
 //                KeyView(viewModel: keyViewModel, label: label)
                             
                 Button(action: {
-                    onTap(keys[index].keyTag)
+                    onTap(KeyTag(rawValue: keys[index].keyVal) ?? KeyTag.none)
                 }) {
                     EmptyView()
                 }

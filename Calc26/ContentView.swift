@@ -22,7 +22,7 @@ struct ContentView: View {
             
             KeyboardView(onTap: { keyTag in
                 listViewModel
-                    .input(keyTag: keyTag)
+                    .input(keyTag)
             })
         }
     }

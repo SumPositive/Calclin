@@ -11,24 +11,22 @@ import Foundation
 
 final class ListViewModel: ObservableObject {
 
-    // listRows,formula(計算式)で使用する文字を定義（原則としてKeyTag.rawValueに対応しているが、異なる場合もある）
-    // 制御文字 Operator String
-    let OP_START    = ">" // 願いましては
-    let OP_ADD      = "+" // 加算
-    let OP_SUBTRACT = "-" // 減算 Unicode[002D] 内部用文字（String ⇒ doubleValue)変換のために必須
-    let OP_MULTIPLY = "×" // 掛算
-    let OP_DIVIDE   = "÷" // 割算
-    let OP_ANSWER   = "=" // 答え
-    let OP_GT       = ">GT" // 総計 ＜＜1字目を OP_START にして「開始行」扱いすることを示す＞＞
-    let OP_ROOT     = "√" // ルート
+    // 原則としてKeyTag.*.rawValueを使用するが頻出するものを下記に定義
     // 数字構成文字
-    let NUM_0       = "0"
-    let NUM_DECIMAL = "." // 小数点
+    let NUM_DECIMAL = KeyTag.decimal.rawValue // 小数点
+    // 制御文字 Operator String
+    let OP_START    = KeyTag.fn_start.rawValue // 願いましては
+    let OP_ADD      = KeyTag.op_add.rawValue // 加算
+    let OP_SUBTRACT = KeyTag.op_subtract.rawValue // 減算 Unicode[002D] 内部用文字（String ⇒ doubleValue)変換のために必須
+    let OP_MULTIPLY = KeyTag.op_multiply.rawValue // 掛算
+    let OP_DIVIDE   = KeyTag.op_divide.rawValue // 割算
+    let OP_ANSWER   = KeyTag.op_answer.rawValue // 答え
+    let OP_GT       = KeyTag.fn_start.rawValue + KeyTag.fn_gt.rawValue //">GT" // 総計 ＜＜1字目を OP_START にして「開始行」扱いすることを示す＞＞
     // Unit String
-    let U_PERCENT   = "%" // パーセント
-    let U_PERMIL    = "‰" // パーミル
-    let U_AddTAX    = "+Tax" // 税込み
-    let U_SubTAX    = "-Tax" // 税抜き
+    let U_PERCENT   = KeyTag.fn_percent.rawValue // パーセント
+    let U_PERMIL    = KeyTag.fn_permil.rawValue // パーミル
+    let U_AddTAX    = KeyTag.fn_addTax.rawValue // 税込み
+    let U_SubTAX    = KeyTag.fn_subTax.rawValue // 税抜き
     
     // MARK: - Constants
     static let ROWS_MAX: Int = 100      // 最大行数
@@ -42,7 +40,7 @@ final class ListViewModel: ObservableObject {
 
     
     struct  ListRow: Hashable {
-        var oper: String = KeyTag.start.rawValue
+        var oper: String = KeyTag.fn_start.rawValue
         var number: String = ""
         var unit: String = ""
         var answer: String = ""
@@ -59,40 +57,35 @@ final class ListViewModel: ObservableObject {
     // MARK: - Public Methods
     
     /// KeyViewからKeyを受け取り計算式を組み立てる
-    func input(keyTag: String, label: String? = nil, rzUnit: String? = nil) {
+    func input(_ keyTag: KeyTag, label: String? = nil, rzUnit: String? = nil) {
         switch keyTag {
-                // 前方一致で評価されることに注意！
-                // 例えば、"0"が先にあると"00"が"0"の所で処理されてしまう
-                
-            case KeyTag.doubleZero.rawValue, // [00]
-                KeyTag.tripleZero.rawValue:  // [000]
-                handleZeroGroup(keyTag)
-                
-            case "0"..."9":                 // [0]...[9]
-                handleNumber(keyTag)
+            case .n0,.n1,.n2,.n3,.n4,.n5,.n6,.n7,.n8,.n9: // [0]...[9]
+                handleNumber(keyTag.rawValue)
 
-            //case "A"..."F":                 // [A]...[F] HEX対応
-
-            case KeyTag.decimal.rawValue:   // [.]
+            case .n00,  // [00]
+                .n000:  // [000]
+                handleZeroGroup(keyTag.rawValue)
+                
+            case .decimal:  // [.]
                 handleDecimal()
 
-            case KeyTag.sign.rawValue:      // [+/-]
+            case .fn_sign:  // [+/-]
                 handleSign()
 
-            case KeyTag.answer.rawValue,    // [=]
-                KeyTag.add.rawValue,        // [+]
-                KeyTag.subtract.rawValue,   // [-]
-                KeyTag.multiply.rawValue,   // [×]
-                KeyTag.divide.rawValue:     // [÷]
-                handleOperator(keyTag)
+            case .op_answer,    // [=]
+                .op_add,        // [+]
+                .op_subtract,   // [-]
+                .op_multiply,   // [×]
+                .op_divide:     // [÷]
+                handleOperator(keyTag.rawValue)
 
-            case KeyTag.ac.rawValue:        // [AC]
+            case .fn_ac: // [AC]
                 // Reset
                 listRows = [ListRow()] // 初期化
                 listIndex = 0
                 // UNIT Reset
 
-            case KeyTag.bs.rawValue:        // [BS]
+            case .fn_bs: // [BS]
                 var row = listRows[listIndex]
                 if 0 < row.unit.count {
                     row.unit = ""
@@ -166,7 +159,7 @@ final class ListViewModel: ObservableObject {
                 }
             }
             else {
-                if row.oper.hasPrefix(OP_START), op == OP_SUBTRACT {
+                if row.oper.hasPrefix(KeyTag.fn_start.rawValue), op == OP_SUBTRACT {
                     handleSign()
                 }
                 else {

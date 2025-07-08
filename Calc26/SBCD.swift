@@ -30,7 +30,7 @@ enum RoundingType: Int {
 var roundingType: RoundingType = .R54
 
 // 表示記号（ユーザーが目にする）
-var displayDecimalSeparator = "."
+var displayDecimalSeparator = KeyTag.decimal.rawValue //"."
 
 
 
@@ -40,7 +40,7 @@ struct SBCD {
     let SBCD_ZERO: Character  = "0"
     let SBCD_DECIMAL_SEPARATOR = ":"  // 小数点内部記号　[:]コロン（表示に無い記号にすること）
     let SBCD_GROUP_SEPARATOR   = ";"  // 桁区切り内部記号　[;]セミコロン（表示に無い記号にすること）
-
+    
     // SBCD要素
     // 符号部
     var minus: Bool = false
@@ -85,12 +85,12 @@ struct SBCD {
         // SBCD.degits
         self.digits = digits
     }
-
+    
     init(minus: Bool, digits: [UInt8]) {
         self.minus = minus
         self.digits = digits
     }
-
+    
     /// 文字列化（前後の0を除去する）
     func toString() -> String {
         let maxIntDigits = SBCD_PRECISION / 2
@@ -114,7 +114,7 @@ struct SBCD {
         // 符号を付けて完成
         return self.minus ? "-" + result : result
     }
-
+    
     
     // MARK: - 四則演算
     
@@ -183,7 +183,7 @@ struct SBCD {
         
         return SBCD(from: str.replacingOccurrences(of: ".", with: ""))
     }
-
+    
     // MARK: - 丸め
     /// 丸め
     /// - Parameters:
@@ -205,7 +205,7 @@ struct SBCD {
         
         switch roundingType {
             case .RM:   // RM　常に減るから「負の無限大への丸め」と言われる
-                        // (+)切捨　(-)絶対値切上
+                // (+)切捨　(-)絶対値切上
                 if sbcd.minus {
                     // マイナスで、iRoundPos以降に0でない数値があれば、繰り上げる
                     for i in iRoundPos..<SBCD_PRECISION {
@@ -217,14 +217,14 @@ struct SBCD {
                 }
                 
             case .RZ:   // RZ:切捨（絶対値）常に0に近づくことになるから「0への丸め」と言われる
-                        // bRoundUp = false; Default
+                // bRoundUp = false; Default
                 break
-
+                
             case .R65:  // 6/5 五捨六入（絶対値型）
                 roundUp = (6 <= roundNumber)
-
+                
             case .R55:  // 5/5 五捨五入「最近接偶数への丸め」[JIS Z 8401 規則Ａ]
-                        // （偶数丸め、JIS丸め、ISO丸め、銀行家の丸め）
+                // （偶数丸め、JIS丸め、ISO丸め、銀行家の丸め）
                 if roundNumber % 2 == 0 {
                     // 偶数で、roundNumberが5より大きいならば繰り上げる
                     if 5 < roundNumber {
@@ -244,22 +244,22 @@ struct SBCD {
                     // 奇数
                     roundUp = (5 <= roundNumber)
                 }
-
+                
             case .R54:  // 5/4 四捨五入（絶対値型）[JIS Z 8401 規則Ｂ]
-                        // [iRoundPos+1] >= 5 ならば、[iRoundPos]++ する
+                // [iRoundPos+1] >= 5 ならば、[iRoundPos]++ する
                 roundUp = (5 <= roundNumber)
-
+                
             case .RI:   // (5)RI:切上（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
-                        // iRoundPos以降に0でない数値があれば、繰り上げる
+                // iRoundPos以降に0でない数値があれば、繰り上げる
                 for i in iRoundPos..<SBCD_PRECISION {
                     if sbcd.digits[i] != 0 {
                         roundUp = true
                         break
                     }
                 }
-
+                
             case .RP:   // (6)RP　常に増えるから「正の無限大への丸め」と言われる
-                        // (+)絶対値切上　(-)切捨
+                // (+)絶対値切上　(-)切捨
                 if sbcd.minus == false {
                     // プラスで、iRoundPos以降に0でない数値があれば、繰り上げる
                     for i in iRoundPos..<SBCD_PRECISION {
@@ -290,100 +290,6 @@ struct SBCD {
         }
         return sbcd
     }
-    
-    
-//    func stringFormatter(_ strAzNum: String, bZeroCut: Bool) -> String {
-//        // 内部記号（; と :）を表示記号に変換
-//        var formatted = strAzNum
-//            .replacingOccurrences(of: SBCD_GROUP_SEPARATOR, with: displayGroupSeparator)
-//            .replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR, with: displayDecimalSeparator)
-//        
-//        // 小数点以下の0を切り捨てる
-//        if bZeroCut,
-//           let dotRange = formatted.range(of: displayDecimalSeparator) {
-//            let integerPart = String(formatted[..<dotRange.lowerBound])
-//            var decimalPart = String(formatted[dotRange.upperBound...])
-//            while decimalPart.last == SBCD_ZERO {
-//                decimalPart.removeLast()
-//            }
-//            formatted = decimalPart.isEmpty
-//            ? integerPart
-//            : integerPart + displayDecimalSeparator + decimalPart
-//        }
-//        
-//        // 整形（桁区切り）
-//        if let dotIndex = formatted.firstIndex(of: Character(displayDecimalSeparator)) {
-//            let intPart = String(formatted[..<dotIndex])
-//            let decPart = String(formatted[formatted.index(after: dotIndex)...])
-//            return formatGrouping(intPart) + displayDecimalSeparator + decPart
-//        } else {
-//            return formatGrouping(formatted)
-//        }
-//    }
-    
-//    /// 表示用文字列を内部形式へ変換（逆変換）
-//    private func stringAzNum(_ zNum: String) -> String {
-//        return zNum
-//            .replacingOccurrences(of: displayGroupSeparator, with: SBCD_GROUP_SEPARATOR)
-//            .replacingOccurrences(of: displayDecimalSeparator, with: SBCD_DECIMAL_SEPARATOR)
-//    }
-    
-//    /// 桁区切り
-//    func formatGrouping(_ integerPart: String) -> String {
-//        if groupingType == .none {
-//            return integerPart
-//        }
-//        let chars = Array(integerPart)
-//        let count = chars.count
-//        
-//        guard 3 < count else {
-//            return integerPart
-//        }
-//        
-//        switch groupingType {
-//            case .none:
-//                return integerPart
-//
-//            case .indian:
-//                let last3 = chars[(count - 3)..<count]
-//                var remaining = chars[0..<(count - 3)]
-//                var parts: [String] = []
-//                
-//                while 2 < remaining.count {
-//                    let chunk = remaining.suffix(2)
-//                    parts.insert(String(chunk), at: 0)
-//                    remaining.removeLast(2)
-//                }
-//                
-//                if !remaining.isEmpty {
-//                    parts.insert(String(remaining), at: 0)
-//                }
-//                
-//                return parts.joined(separator: displayGroupSeparator) + displayGroupSeparator + String(last3)
-//                
-//            case .kanjiZone:
-//                var result = ""
-//                let rev = chars.reversed()
-//                for (index, char) in rev.enumerated() {
-//                    if 0 < index && index % 4 == 0 {
-//                        result.append(contentsOf: displayGroupSeparator)
-//                    }
-//                    result.append(char)
-//                }
-//                return String(result.reversed())
-//                
-//            case .international:
-//                var result = ""
-//                let rev = chars.reversed()
-//                for (index, char) in rev.enumerated() {
-//                    if 0 < index && index % 3 == 0 {
-//                        result.append(contentsOf: displayGroupSeparator)
-//                    }
-//                    result.append(char)
-//                }
-//                return String(result.reversed())
-//        }
-//    }
     
 }
 
