@@ -12,10 +12,10 @@ enum LogLevel: String {
     case info = "(i)", debug = "(d)", warning = "(W)", error = "[ERROR]", fatal = "[FATAL]"
 }
 
-func log(_ message: String,
-                level: LogLevel = .info,
-                file: String = #file,
-                line: Int = #line) {
+func log(_ level: LogLevel,
+         _ message: String,
+         file: String = #file,
+         line: Int = #line) {
     let fileName = (file as NSString).lastPathComponent
-    print("\(level.rawValue) \(fileName)(\(line)) \(message)")
+    print("\(fileName) \(line) \(level.rawValue) \(message)")
 }

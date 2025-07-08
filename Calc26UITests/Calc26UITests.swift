@@ -6,6 +6,8 @@
 //
 
 import XCTest
+@testable import Calc26
+
 
 final class Calc26UITests: XCTestCase {
 
@@ -37,5 +39,51 @@ final class Calc26UITests: XCTestCase {
         measure(metrics: [XCTApplicationLaunchMetric()]) {
             XCUIApplication().launch()
         }
+    }
+}
+
+
+final class CalcFuncTests: XCTestCase {
+    
+    func testTokenizeFormula_basicOperators() {
+        let input = "12+34"
+        let expected = ["12", "+", "34"]
+        let result = CalcFunc.tokenizeFormula(input)
+        XCTAssertEqual(result, expected)
+    }
+    
+    func testTokenizeFormula_withParentheses() {
+        let input = "(1+2)*3"
+        let expected = ["(", "1", "+", "2", ")", "*", "3"]
+        let result = CalcFunc.tokenizeFormula(input)
+        XCTAssertEqual(result, expected)
+    }
+    
+    func testTokenizeFormula_withRootSymbol() {
+        let input = "√25+4"
+        let expected = ["√", "25", "+", "4"]
+        let result = CalcFunc.tokenizeFormula(input)
+        XCTAssertEqual(result, expected)
+    }
+    
+    func testTokenizeFormula_withMixedOperators() {
+        let input = "100×(20-5)/√4"
+        let expected = ["100", "×", "(", "20", "-", "5", ")", "/", "√", "4"]
+        let result = CalcFunc.tokenizeFormula(input)
+        XCTAssertEqual(result, expected)
+    }
+    
+    func testTokenizeFormula_withWhitespace() {
+        let input = " 12 +  7 "
+        let expected = ["12", "+", "7"]
+        let result = CalcFunc.tokenizeFormula(input.replacingOccurrences(of: " ", with: ""))
+        XCTAssertEqual(result, expected)
+    }
+    
+    func testTokenizeFormula_emptyInput() {
+        let input = ""
+        let expected: [String] = []
+        let result = CalcFunc.tokenizeFormula(input)
+        XCTAssertEqual(result, expected)
     }
 }

@@ -16,16 +16,18 @@ let SBCD_PRECISION = 60  //= 30 + 30
 // 参考！「偶数丸め」するためには小数以下2倍の桁数が必要（内部計算をアプリ有効桁数(PRECISION)の2倍とするため）
 
 // 小数以下表示桁数（丸め処理する）
-var decimalDigits: Int = 2
+var sbcd_decimalDigits: Int = 10
+
 // 丸めタイプ
-enum RoundingType: Int {
-    case RM     // 負方向丸め（常に符号を負に）常に減るから「負の無限大への丸め」と言われる
-    case RZ     // 切り捨て（絶対値）常に0に近づくことになるから「0への丸め」と言われる
-    case R65    // 五捨六入（絶対値型）
-    case R55    // 五捨五入「最近接偶数への丸め」[JIS Z 8401 規則Ａ]
-    case R54    // 四捨五入（絶対値型）[JIS Z 8401 規則Ｂ]
-    case RI     // 切り上げ（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
-    case RP     // 正方向丸め（常に符号を正に）常に増えるから「正の無限大への丸め」と言われる
+enum RoundingType: String, CaseIterable, Identifiable {
+    var id: String { self.rawValue }
+    case RI  = "切り上げ"   //（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
+    case RP  = "正方向丸め" //（常に符号を正に）常に増えるから「正の無限大への丸め」と言われる
+    case R54 = "四捨五入"   //（絶対値型）[JIS Z 8401 規則Ｂ]
+    case R55 = "五捨五入"   //「最近接偶数への丸め」[JIS Z 8401 規則Ａ]
+    case R65 = "五捨六入"   //（絶対値型）
+    case RM  = "負方向丸め" //（常に符号を負に）常に減るから「負の無限大への丸め」と言われる
+    case RZ  = "切り捨て"   //（絶対値）常に0に近づくことになるから「0への丸め」と言われる
 }
 var roundingType: RoundingType = .R54
 
@@ -119,71 +121,216 @@ struct SBCD {
     // MARK: - 四則演算
     
     /// 和
-    func add(_ add: SBCD) -> SBCD {
+    func add(_ add: SBCD) -> SBCD? {
         let base = self
-        var resultDigits = Array(repeating: UInt8(0), count: SBCD_PRECISION)
+        if base.minus == false, add.minus == true { // 2 + -3
+            // base - add // 2 - 3
+            let ans = base.absSub(add)
+            if ans.minus {
+                // add - base 逆は必ず正になる
+                let ans = add.absSub(base)
+                if ans.minus {
+                    log(.fatal, "差）桁下がり発生")
+                    return nil
+                }
+            }
+            return ans
+        }
+        else if base.minus == true, add.minus == false { // -2 + 3
+            // add - base // 3 - 2
+            let ans = add.absSub(base)
+            if ans.minus {
+                // base - add 逆は必ず正になる
+                let ans = base.absSub(add)
+                if ans.minus {
+                    log(.fatal, "差）桁下がり発生")
+                    return nil
+                }
+            }
+            return ans
+        }
+        // else if base.minus == add.minus // 2 + 3 // -2 + -3
+        // 同符号の場合
+        let  ansMinus = base.minus
+        // 同符号の和
+        var ansDigits = Array(repeating: UInt8(0), count: SBCD_PRECISION)
         var carry: UInt8 = 0
         for i in (0..<SBCD_PRECISION).reversed() {
             let sum = base.digits[i] + add.digits[i] + carry
-            resultDigits[i] = sum % 10
+            ansDigits[i] = sum % 10
             carry = sum / 10
         }
-        return SBCD(minus: false, digits: resultDigits)
+        return SBCD(minus: ansMinus, digits: ansDigits)
     }
     
     /// 差
-    func subtract(_ sub: SBCD) -> SBCD {
+    func subtract(_ sub: SBCD) -> SBCD? {
         let base = self
-        var resultDigits = Array(repeating: UInt8(0), count: SBCD_PRECISION)
+        // subの符号を反転する
+        var add = sub
+        add.minus = !sub.minus
+        // 和を求める
+        return base.add(add)
+    }
+    // 符号なし差
+    private func absSub(_ sub: SBCD) -> SBCD {
+        let base = self
+        var ansDigits = Array(repeating: UInt8(0), count: SBCD_PRECISION)
+        // 下位桁への繰り入れ
         var borrow: Int = 0
         for i in (0..<SBCD_PRECISION).reversed() {
+            // 減算分と下位桁への繰り入れ分を引く
             var diff = Int(base.digits[i]) - Int(sub.digits[i]) - borrow
+            if diff < 0 {
+                diff += 10 // 上位より繰り入れ
+                borrow = 1 // 桁下がり
+            } else {
+                borrow = 0
+            }
+            ansDigits[i] = UInt8(diff)
+        }
+        // 最後に桁下がりがあればマイナス値である
+        return SBCD(minus: (borrow == 1), digits: ansDigits)
+    }
+    
+    /// 積
+    func multiply(_ multi: SBCD) -> SBCD? {
+        let base = self
+        var cBuf = [UInt8](repeating: 0, count: SBCD_PRECISION * 2)
+        var ansDigi = Array(repeating: UInt8(0), count: SBCD_PRECISION)
+
+        // 積の計算
+        for i in (0..<SBCD_PRECISION).reversed() {
+            var carry = 0
+            for j in (0..<SBCD_PRECISION).reversed() {
+                let index = i + 1 + j
+                guard index < cBuf.count else { continue }
+                let sum = Int(cBuf[index]) + Int(base.digits[i]) * Int(multi.digits[j]) + carry
+                cBuf[index] = UInt8(sum % 10)
+                carry = sum / 10
+            }
+            cBuf[i] = UInt8(carry)
+        }
+        
+        // オーバーフロー判定
+        if 9 < cBuf[0] {
+            log(.warning, "積）Overflow")
+            return nil
+        }
+        
+        // 偶数丸め判定
+        var bRoundUp = false
+        let startIndex = SBCD_PRECISION / 2 + SBCD_PRECISION
+        for i in startIndex..<SBCD_PRECISION * 2 {
+            if cBuf[i] != 0 {
+                let k = Int(cBuf[startIndex - 1])
+                let nextDigit = cBuf[startIndex]
+                if k % 2 == 0 {
+                    if nextDigit > 5 {
+                        bRoundUp = true
+                    } else if nextDigit == 5 {
+                        for m in (startIndex + 1)..<SBCD_PRECISION * 2 {
+                            if cBuf[m] != 0 {
+                                bRoundUp = true
+                                break
+                            }
+                        }
+                    }
+                } else {
+                    if nextDigit >= 5 {
+                        bRoundUp = true
+                    }
+                }
+                break
+            }
+        }
+        
+        // 結果を抽出（中央のSBCD_PRECISIONぶん）
+        for i in 0..<SBCD_PRECISION {
+            ansDigi[i] = cBuf[SBCD_PRECISION / 2 + i]
+        }
+        
+        // 丸めが必要なら1を加算
+        if bRoundUp {
+            if ansDigi[SBCD_PRECISION - 1] < 9 {
+                ansDigi[SBCD_PRECISION - 1] += 1
+            } else {
+                var cRound = [UInt8](repeating: 0, count: SBCD_PRECISION)
+                cRound[SBCD_PRECISION - 1] = 1
+                ansDigi = sbcAbsAdd(ansDigi, cRound)
+            }
+        }
+        
+        return SBCD(minus: (base.minus != multi.minus),
+                    digits: ansDigi)
+    }
+    /// SBCD加算（配列同士、符号無し）
+    private func sbcAbsAdd(_ lhs: [UInt8], _ rhs: [UInt8]) -> [UInt8] {
+        var result = [UInt8](repeating: 0, count: SBCD_PRECISION)
+        var carry = 0
+        for i in (0..<SBCD_PRECISION).reversed() {
+            let sum = Int(lhs[i]) + Int(rhs[i]) + carry
+            result[i] = UInt8(sum % 10)
+            carry = sum / 10
+        }
+        return result
+    }
+    
+    
+    ///　商
+    func divide(_ divisor: SBCD) -> SBCD? {
+        let base = self
+        var ansDigi = Array(repeating: UInt8(0), count: SBCD_PRECISION)
+        var cBuf = [UInt8](repeating: 0, count: SBCD_PRECISION * 2)
+        
+        // 被除数を右シフトして cBuf に格納（最上位が整数の第1位になるように）
+        for i in 0..<SBCD_PRECISION {
+            cBuf[SBCD_PRECISION / 2 - 1 + i] = base.digits[i]
+        }
+        
+        for i in 0..<SBCD_PRECISION {
+            var iCount: UInt8 = 0
+            // pValue2 を何回引けるかを試す
+            while !sbcAbsSub(&cBuf, offset: i, sub: divisor.digits) {
+                iCount += 1
+            }
+            // 最後に引きすぎた分を1回分足し戻す
+            sbcAbsAdd(&cBuf, offset: i, add: divisor.digits)
+            ansDigi[i] = iCount
+        }
+        
+        return SBCD(minus: (base.minus != divisor.minus),
+                    digits: ansDigi)
+    }
+    /// 配列から特定位置以降で減算を行う
+    private func sbcAbsSub(_ cBuf: inout [UInt8], offset: Int, sub: [UInt8]) -> Bool {
+        var borrow = 0
+        for j in (0..<SBCD_PRECISION).reversed() {
+            let idx = offset + j
+            if idx >= cBuf.count { continue }
+            var diff = Int(cBuf[idx]) - Int(sub[j]) - borrow
             if diff < 0 {
                 diff += 10
                 borrow = 1
             } else {
                 borrow = 0
             }
-            resultDigits[i] = UInt8(diff)
+            cBuf[idx] = UInt8(diff)
         }
-        return SBCD(minus: borrow == 1, digits: resultDigits)
+        return borrow != 0
     }
-    
-    /// 積
-    func multiply(_ multi: SBCD) -> SBCD {
-        let base = self
-        var result = Array(repeating: UInt8(0), count: SBCD_PRECISION)
-        for i in (0..<SBCD_PRECISION).reversed() {
-            for j in (0..<(SBCD_PRECISION - i)).reversed() {
-                let index = i + j
-                if SBCD_PRECISION <= index { continue }
-                let mul = Int(base.digits[i]) * Int(multi.digits[j])
-                let sum = Int(result[index]) + mul
-                result[index] = UInt8(sum % 10)
-                if 0 < index {
-                    result[index - 1] = UInt8(Int(result[index - 1]) + sum / 10)
-                }
-            }
+    /// 配列から特定位置以降で加算を行う（borrowを戻す）
+    private func sbcAbsAdd(_ cBuf: inout [UInt8], offset: Int, add: [UInt8]) {
+        var carry = 0
+        for j in (0..<SBCD_PRECISION).reversed() {
+            let idx = offset + j
+            if idx >= cBuf.count { continue }
+            let sum = Int(cBuf[idx]) + Int(add[j]) + carry
+            cBuf[idx] = UInt8(sum % 10)
+            carry = sum / 10
         }
-        return SBCD(minus: base.minus != multi.minus, digits: result)
     }
-    
-    ///　商
-    func divide(_ divisor: SBCD, precision: Int = 10) -> SBCD {
-        let base = self
-        let num1 = Int(String(base.digits.map(String.init).joined())) ?? 0
-        let num2 = Int(String(divisor.digits.map(String.init).joined())) ?? 1
-        let quotient = Double(num1) / Double(num2)
-        
-        let formatter = NumberFormatter()
-        formatter.minimumFractionDigits = precision
-        formatter.maximumFractionDigits = precision
-        formatter.minimumIntegerDigits = 1
-        let str = formatter.string(from: NSNumber(value: quotient)) ?? "0"
-        
-        return SBCD(from: str.replacingOccurrences(of: ".", with: ""))
-    }
-    
+
     // MARK: - 丸め
     /// 丸め
     /// - Parameters:
@@ -194,7 +341,7 @@ struct SBCD {
     func rounding() -> SBCD {
         var sbcd = self
         // 丸め位置
-        let iRoundPos = SBCD_PRECISION/2 + decimalDigits
+        let iRoundPos = SBCD_PRECISION/2 + sbcd_decimalDigits
         if iRoundPos < 0 || SBCD_PRECISION - 1 <= iRoundPos {
             return self
         }
@@ -281,7 +428,12 @@ struct SBCD {
             }
             else {
                 // 繰り上げする値が9以上ならば繰り上げが伝播する可能性があるのでADD+1計算処理する
-                sbcd = sbcd.add(SBCD(from: "1"))
+                if let sb = sbcd.add(SBCD(from: "1")){
+                    sbcd = sb
+                }else{
+                    log(.error, "繰り上げ処理できないので丸め失敗")
+                    sbcd = self
+                }
             }
         }
         // 丸め位置以降を0にする

@@ -15,3 +15,4 @@ struct Calc26Tests {
     }
 
 }
+

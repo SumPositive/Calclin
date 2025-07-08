@@ -37,7 +37,6 @@ final class ListViewModel: ObservableObject {
     var num_precision: Int = 6
     // 税率
     var tax_rate: Double = 0.10
-
     
     struct  ListRow: Hashable {
         var oper: String = KeyTag.fn_start.rawValue
@@ -47,17 +46,46 @@ final class ListViewModel: ObservableObject {
     }
     // 全行記録
     @Published var listRows: [ListRow] = [ListRow()] // 初期1行 .index=0
-    
 
+    // 桁区切りタイプ
+    enum GroupingType: String, CaseIterable, Identifiable {
+        var id: String { self.rawValue }
+        case none          = "なし 12345678"
+        case international = "3桁 12,345,678"
+        case kanjiZone     = "4桁 1234,5678"
+        case indian        = "印式 1,23,45,678"
+    }
+    @Published var groupingType: GroupingType = .international
+    // 表示記号（ユーザーが目にする）
+    var displayGroupSeparator = ","
+
+    @Published var roundingType: RoundingType = .R54
+
+    
     // MARK: - Private
     // 入力中の行位置
     private var listIndex = 0
     
-
+    
     // MARK: - Public Methods
     
+    // 小数表示桁数
+    func decimalChange(decimalDigits: Int) {
+        sbcd_decimalDigits = decimalDigits
+        // 現在行が[=]ならば、
+        if let row = listRows.last, row.oper == KeyTag.op_answer.rawValue {
+            // 新しい小数桁数で再計算＆再表示する
+            listRows.removeLast()
+            listIndex -= 1
+            handleOperator(OP_ANSWER)
+        }
+    }
+    
     /// KeyViewからKeyを受け取り計算式を組み立てる
-    func input(_ keyTag: KeyTag, label: String? = nil, rzUnit: String? = nil) {
+    func input(_ keyTag: KeyTag,
+               label: String? = nil,
+               rzUnit: String? = nil)
+    {
         switch keyTag {
             case .n0,.n1,.n2,.n3,.n4,.n5,.n6,.n7,.n8,.n9: // [0]...[9]
                 handleNumber(keyTag.rawValue)
@@ -107,6 +135,86 @@ final class ListViewModel: ObservableObject {
         }
     }
 
+    
+    /// 桁区切り
+    func formatGrouping(_ num: String) -> String {
+        if groupingType == .none {
+            return num
+        }
+        // トリミング
+        var trimmed = num.trimmingCharacters(in: .whitespacesAndNewlines)
+        // 符号処理
+        var minus = false
+        if trimmed.hasPrefix("-") {
+            minus = true
+            trimmed.removeFirst()
+        }
+        // 整数部と小数部に分ける
+        let parts = trimmed.split(whereSeparator: { $0 == "." || $0 == displayDecimalSeparator.first })
+        // 整数部
+        var integerPart = parts.count > 0 ? parts[0] : Substring("")
+        // 小数部
+        let decimalPart = parts.count > 1 ? parts[1] : Substring("")
+        
+        // 整数部だけを桁区切りする
+        let chars = Array(integerPart)
+        let count = chars.count
+        
+        guard 3 < count else {
+            return num
+        }
+        
+        switch groupingType {
+            case .none:
+                return num
+                
+            case .indian:
+                let last3 = chars[(count - 3)..<count]
+                var remaining = chars[0..<(count - 3)]
+                var parts: [String] = []
+                
+                while 2 < remaining.count {
+                    let chunk = remaining.suffix(2)
+                    parts.insert(String(chunk), at: 0)
+                    remaining.removeLast(2)
+                }
+                
+                if !remaining.isEmpty {
+                    parts.insert(String(remaining), at: 0)
+                }
+                
+                integerPart = parts.joined(separator: displayGroupSeparator) + displayGroupSeparator + Substring(last3)
+                
+            case .kanjiZone:
+                var result = ""
+                let rev = chars.reversed()
+                for (index, char) in rev.enumerated() {
+                    if 0 < index && index % 4 == 0 {
+                        result.append(contentsOf: displayGroupSeparator)
+                    }
+                    result.append(char)
+                }
+                integerPart = Substring(result.reversed())
+                
+            case .international:
+                var result = ""
+                let rev = chars.reversed()
+                for (index, char) in rev.enumerated() {
+                    if 0 < index && index % 3 == 0 {
+                        result.append(contentsOf: displayGroupSeparator)
+                    }
+                    result.append(char)
+                }
+                integerPart = Substring(result.reversed())
+        }
+        // 整数部（＋小数点＋小数部）
+        var gpNum = integerPart
+        if decimalPart != "" {
+            gpNum += displayDecimalSeparator + decimalPart
+        }
+        // 符号を付けて完成
+        return String(minus ? "-" + gpNum : gpNum)
+    }
     
     
     // MARK: - Private Methods
@@ -179,7 +287,7 @@ final class ListViewModel: ObservableObject {
         // listRowsから計算式に変換する
         let fomula = formula()
         // 計算式の答えを返す
-        return fomula.isEmpty ? "" : CalcFunctions.answer(fomula)
+        return fomula.isEmpty ? "" : CalcFunc.answer(fomula)
     }
     
     /// listRowsから計算式に変換する
@@ -282,7 +390,7 @@ final class ListViewModel: ObservableObject {
         if num_precision - 2 <= row.number.count { // [-][.]を考慮して(-2)
             // 改めて[-][.]を除いた有効桁数を調べる
             if num_precision <= numLength(row.number) {
-                log("Overflow: \(row.number)", level: .warning)
+                log(.warning, "Overflow: \(row.number)")
                 return
             }
         }
@@ -337,7 +445,7 @@ final class ListViewModel: ObservableObject {
 
         if num_precision - zeros.count - 1 <= row.number.count {
             if num_precision - (zeros.count == 3 ? 2 : 1) <= numLength(row.number) {
-                log("Overflow: \(row.number)", level: .warning)
+                log(.warning, "Overflow: \(row.number)")
                 return
             }
         }
