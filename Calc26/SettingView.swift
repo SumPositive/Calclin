@@ -70,7 +70,7 @@ struct SettingView: View {
             }
             .padding()
             .background(Color(.systemGray6))
-            .cornerRadius(10)
+            //.cornerRadius(4)
             
             // 小数部
             VStack(spacing: 4) {
@@ -121,11 +121,11 @@ struct SettingView: View {
             }
             .padding()
             .background(Color(.systemGray6))
-            .cornerRadius(10)
+            //.cornerRadius(4)
         }
-        .padding()
-        .background(Color.gray.opacity(0.3))
-        .cornerRadius(10.0)
+        .padding(10)
+        .background(Color(.systemGray5))
+        .cornerRadius(10)
         .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
     }
 }

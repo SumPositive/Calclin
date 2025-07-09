@@ -30,7 +30,7 @@ struct ContentView: View {
 
 //    let onTapList : (() -> Void)?  // ← 親に通知するクロージャ
     
-    
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack() {
@@ -40,6 +40,9 @@ struct ContentView: View {
 
                 Text("CalcRoll")
                     .font(.headline)
+                    .foregroundColor(
+                        colorScheme == .dark ? .gray : .black
+                    )
                 
                 Spacer()
                 // トグルボタン
@@ -59,6 +62,7 @@ struct ContentView: View {
             if isShowingSetting {
                 SettingView(viewModel: setting)
                     .transition(.opacity) // フェード
+                    .padding(.horizontal)
             }
 
             HStack(spacing: 3) {
@@ -99,7 +103,7 @@ struct ContentView: View {
                 }
             }
             .padding(3)
-            
+
             // キーボード
             KeyboardView(onTap: { keyTag in
                 if activeList == 1 {
@@ -109,6 +113,7 @@ struct ContentView: View {
                 }
             })
         }
+        .background(Color(.systemGray6))
     }
 }
 

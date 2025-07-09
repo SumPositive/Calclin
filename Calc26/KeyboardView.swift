@@ -97,10 +97,13 @@ struct PressableImageButtonStyle: ButtonStyle {
     var pressedImage: String
     var labelText: String
     
+    @Environment(\.colorScheme) var colorScheme
+    
     func makeBody(configuration: Configuration) -> some View {
         ZStack {
             Image(configuration.isPressed ? pressedImage : normalImage)
                 .resizable()
+                .brightness(colorScheme == .dark ? -0.45 : 0) // ← ダークモードで暗く
             
             Text(labelText)
                 .foregroundColor(.black)
