@@ -22,7 +22,7 @@ let SBCD_DECIMAL_SEPARATOR = ":"
 @MainActor var sbcd_roundingType: SettingViewModel.RoundingType = .R54
 
 // 小数以下表示桁数（丸め処理する）
-@MainActor var sbcd_decimalDigits: Int = 10
+@MainActor var sbcd_decimalDigits: Int = 3
 
 
 struct SBCD {

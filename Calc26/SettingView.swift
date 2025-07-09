@@ -34,26 +34,27 @@ struct SettingView: View {
                         NotificationCenter.default.post(name: .decimalChange, object: Int(newValue))
                     })
             }
+            .padding(.top, 5)
             .padding(.horizontal)
             .padding(.bottom, 4)
 
             
             HStack(spacing: 4) {
                 // 丸め
-                Text("丸め: \(viewModel.roundingType.rawValue)")
-                    .padding(.trailing)
+                Text("丸め:")
                 Picker("RoundingType", selection: $viewModel.roundingType) {
                     ForEach(SettingViewModel.RoundingType.allCases) { type in
-                        Text(type.rawValue)
+                        Text(type.rawValue).tag(type)
                     }
                 }
                 .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
                 .onChange(of: viewModel.roundingType) { oldValue, newValue in
                     // 選択されたときに呼ばれる処理
                     sbcd_roundingType = newValue
-                    viewModel.roundingType = newValue
+                    // ローカル通知 送信：小数桁数が変更された　＞再描画させるため
+                    NotificationCenter.default.post(name: .decimalChange, object: Int(decDigi))
                 }
-                
+
                 Spacer()
             }
             .padding(.leading)
@@ -62,11 +63,10 @@ struct SettingView: View {
 
             HStack(spacing: 4) {
                 // 桁区切り
-                Text("桁区切り: \(viewModel.groupingType.rawValue)")
-                    .padding(.trailing)
+                Text("桁区切り:")
                 Picker("GroupingType", selection: $viewModel.groupingType) {
                     ForEach(SettingViewModel.GroupingType.allCases) { type in
-                        Text(type.rawValue)
+                        Text(type.rawValue).tag(type)
                     }
                 }
                 .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
@@ -79,11 +79,12 @@ struct SettingView: View {
 
                 Spacer()
             }
-            .padding(.top, 5)
             .padding(.leading)
             .padding(.bottom, 5)
         }
-        .background(Color.gray.opacity(0.5))
+        .padding()
+        .background(Color.gray.opacity(0.3))
+        .cornerRadius(8.0)
     }
 }
 
@@ -95,14 +96,15 @@ final class SettingViewModel: ObservableObject {
     
     // 丸めタイプ
     enum RoundingType: String, CaseIterable, Identifiable {
+        case RI  = "切り上げ"   //（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
+        case RP  = "正方向丸め" //（常に符号を正に）常に増えるから「正の無限大への丸め」と言われる
+        case R54 = "四捨五入"   //（絶対値型）[JIS Z 8401 規則Ｂ]
+        case R55 = "五捨五入"   //「最近接偶数への丸め」[JIS Z 8401 規則Ａ]
+        case R65 = "五捨六入"   //（絶対値型）
+        case RM  = "負方向丸め" //（常に符号を負に）常に減るから「負の無限大への丸め」と言われる
+        case RZ  = "切り捨て"   //（絶対値）常に0に近づくことになるから「0への丸め」と言われる
+        // Identifiable
         var id: String { self.rawValue }
-        case RI  = "1.切り上げ"   //（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
-        case RP  = "2.正方向丸め" //（常に符号を正に）常に増えるから「正の無限大への丸め」と言われる
-        case R54 = "3.四捨五入"   //（絶対値型）[JIS Z 8401 規則Ｂ]
-        case R55 = "4.五捨五入"   //「最近接偶数への丸め」[JIS Z 8401 規則Ａ]
-        case R65 = "5.五捨六入"   //（絶対値型）
-        case RM  = "6.負方向丸め" //（常に符号を負に）常に減るから「負の無限大への丸め」と言われる
-        case RZ  = "7.切り捨て"   //（絶対値）常に0に近づくことになるから「0への丸め」と言われる
     }
     @Published var roundingType: RoundingType = .R54
     // 表示記号（ユーザーが目にする）
@@ -111,13 +113,14 @@ final class SettingViewModel: ObservableObject {
 
     // 桁区切りタイプ
     enum GroupingType: String, CaseIterable, Identifiable {
-        var id: String { self.rawValue }
         case none          = "なし 12345678"
         case international = "3桁 12,345,678"
         case kanjiZone     = "4桁 1234,5678"
         case indian        = "印式 1,23,45,678"
+        // Identifiable
+        var id: String { self.rawValue }
     }
-    @Published var groupingType: GroupingType = .indian
+    @Published var groupingType: GroupingType = .international
     // 表示記号（ユーザーが目にする）
     var set_displayGroupSeparator = ","
     
