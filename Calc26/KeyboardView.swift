@@ -9,6 +9,53 @@ import Foundation
 import SwiftUI
 
 
+struct KeyboardView: View {
+    @StateObject private var keyViewModel = KeyViewModel()
+    
+    let spacing: CGFloat = 4
+    var onTap: (KeyTag) -> Void
+    
+    @State private var keys: [KeyboardKey] = []
+    @State private var column: Int = 0
+
+    
+    var body: some View {
+        let gridColumns = Array(repeating: GridItem(.flexible(), spacing: spacing), count: column)
+        
+        LazyVGrid(columns: gridColumns, spacing: spacing) {
+            ForEach(keys.indices, id: \.self) { index in
+                let label = keys[index].label
+                //                KeyView(viewModel: keyViewModel, label: label)
+                
+                Button(action: {
+                    onTap(KeyTag(rawValue: keys[index].keyVal) ?? KeyTag.none)
+                }) {
+                    EmptyView()
+                }
+                .buttonStyle(
+                    PressableImageButtonStyle(
+                        normalImage: "keyUp",
+                        pressedImage: "keyDown",
+                        labelText: label
+                    )
+                )
+                .aspectRatio(128 / 80, contentMode: .fit)
+            }
+        }
+        .padding(spacing)
+        .onAppear {
+            // 初回表示時のみ読み込む
+            if keys.isEmpty {
+                let result = loadKeyboardLabels()
+                keys = result.keys
+                column = result.column
+            }
+        }
+    }
+}
+
+
+
 struct KeyboardLayout: Codable {
     let Name: String
     let Column: Int
@@ -62,48 +109,3 @@ struct PressableImageButtonStyle: ButtonStyle {
     }
 }
 
-struct KeyboardView: View {
-    @StateObject private var keyViewModel = KeyViewModel()
-
-    let spacing: CGFloat = 8
-    var onTap: (KeyTag) -> Void
-    
-    @State private var keys: [KeyboardKey] = []
-    @State private var column: Int = 0
-    
-    
-
-    var body: some View {
-        let gridColumns = Array(repeating: GridItem(.flexible(), spacing: spacing), count: column)
-        
-        LazyVGrid(columns: gridColumns, spacing: spacing) {
-            ForEach(keys.indices, id: \.self) { index in
-                let label = keys[index].label
-//                KeyView(viewModel: keyViewModel, label: label)
-                            
-                Button(action: {
-                    onTap(KeyTag(rawValue: keys[index].keyVal) ?? KeyTag.none)
-                }) {
-                    EmptyView()
-                }
-                .buttonStyle(
-                    PressableImageButtonStyle(
-                        normalImage: "keyUp",
-                        pressedImage: "keyDown",
-                        labelText: label
-                    )
-                )
-                .aspectRatio(128 / 80, contentMode: .fit)
-            }
-        }
-        .padding(spacing)
-        .onAppear {
-            // 初回表示時のみ読み込む
-            if keys.isEmpty {
-                let result = loadKeyboardLabels()
-                keys = result.keys
-                column = result.column
-            }
-        }
-    }
-}

@@ -55,7 +55,7 @@ struct SBCD {
             self.minus = false
         }
         // 整数部と小数部に分ける
-        let parts = trimmed.split(whereSeparator: { $0 == "." || $0 == SBCD_DECIMAL_SEPARATOR.first })
+        let parts = trimmed.split(whereSeparator: { $0 == SBCD_DECIMAL_SEPARATOR.first })
         // 整数部
         let integerPart = parts.count > 0 ? parts[0] : Substring("")
         // 小数部

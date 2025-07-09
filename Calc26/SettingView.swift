@@ -22,65 +22,106 @@ struct SettingView: View {
 
     
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 4) {
             
-            HStack(spacing: 4) {
-                // 小数桁数スライダー
-                Text("小数桁: \(Int(decDigi))")
-                Spacer()
-                Slider(value: $decDigi, in: 0...20, step: 1)
-                    .onChange(of: decDigi, { oldValue, newValue in
-                        // ローカル通知 送信：小数桁数が変更された
-                        NotificationCenter.default.post(name: .decimalChange, object: Int(newValue))
-                    })
-            }
-            .padding(.top, 5)
-            .padding(.horizontal)
-            .padding(.bottom, 4)
+            // 整数部
+            VStack(spacing: 4) {
+            
+                Text("整数部（桁区切り）") //.frame(width: 80, alignment: .trailing)
+                    .font(.system(size: 14, weight: .regular, design: .default))
 
-            
-            HStack(spacing: 4) {
-                // 丸め
-                Text("丸め:")
-                Picker("RoundingType", selection: $viewModel.roundingType) {
-                    ForEach(SettingViewModel.RoundingType.allCases) { type in
-                        Text(type.rawValue).tag(type)
+                HStack() {
+                    // 桁区切り
+                    Text("方式") //.frame(width: 80, alignment: .trailing)
+                    Picker("GroupingType", selection: $viewModel.groupingType) {
+                        ForEach(SettingViewModel.GroupingType.allCases) { type in
+                            Text(type.rawValue).tag(type)
+                        }
                     }
+                    .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
+                    .onChange(of: viewModel.groupingType) { oldValue, newValue in
+                        // 選択されたときに呼ばれる処理
+                        viewModel.groupingType = newValue
+                        // ローカル通知 送信：小数桁数が変更された　＞再描画させるため
+                        NotificationCenter.default.post(name: .decimalChange, object: Int(decDigi))
+                    }
+                    
+                    Spacer()
                 }
-                .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
-                .onChange(of: viewModel.roundingType) { oldValue, newValue in
-                    // 選択されたときに呼ばれる処理
-                    sbcd_roundingType = newValue
-                    // ローカル通知 送信：小数桁数が変更された　＞再描画させるため
-                    NotificationCenter.default.post(name: .decimalChange, object: Int(decDigi))
-                }
 
-                Spacer()
-            }
-            .padding(.leading)
-            .padding(.bottom, 4)
-
-
-            HStack(spacing: 4) {
                 // 桁区切り
-                Text("桁区切り:")
-                Picker("GroupingType", selection: $viewModel.groupingType) {
-                    ForEach(SettingViewModel.GroupingType.allCases) { type in
-                        Text(type.rawValue).tag(type)
+                HStack {
+                    Text("記号") //.frame(width: 110, alignment: .trailing)
+                    Picker("DisplayDecimalType", selection: $viewModel.displayGroupType) {
+                        ForEach(SettingViewModel.DisplayGroupType.allCases) { type in
+                            Text(type.rawValue)
+                                .tag(type)
+                            //.font(.system(size: 24, weight: .bold)) セグメントでは無効
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle()) // メニュー型 or SegmentedPickerStyle()
+                    .onChange(of: viewModel.displayGroupType) { oldValue, newValue in
+                        // 選択されたときに呼ばれる処理
+                        viewModel.set_displayGroupSeparator = newValue.rawValue
+                        // ローカル通知 送信：小数桁数が変更された　＞再描画させるため
+                        NotificationCenter.default.post(name: .decimalChange, object: Int(decDigi))
                     }
                 }
-                .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
-                .onChange(of: viewModel.groupingType) { oldValue, newValue in
-                    // 選択されたときに呼ばれる処理
-                    viewModel.groupingType = newValue
-                    // ローカル通知 送信：小数桁数が変更された　＞再描画させるため
-                    NotificationCenter.default.post(name: .decimalChange, object: Int(decDigi))
-                }
-
-                Spacer()
             }
-            .padding(.leading)
-            .padding(.bottom, 5)
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(10)
+            
+            // 小数部
+            VStack(spacing: 4) {
+                Text("小数部（有効桁数と丸め処理）") //.frame(width: 80, alignment: .trailing)
+                    .font(.system(size: 14, weight: .regular, design: .default))
+
+                HStack() {
+                    // 小数桁数スライダー
+                    Text("桁数") //.frame(width: 80, alignment: .trailing)
+                    Text(" \(Int(decDigi)) ")
+                    Slider(value: $decDigi, in: 0...20, step: 1)
+                        .onChange(of: decDigi, { oldValue, newValue in
+                            // ローカル通知 送信：小数桁数が変更された
+                            NotificationCenter.default.post(name: .decimalChange, object: Int(newValue))
+                        })
+                    
+                    Picker("RoundingType", selection: $viewModel.roundingType) {
+                        ForEach(SettingViewModel.RoundingType.allCases) { type in
+                            Text(type.rawValue).tag(type)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
+                    .onChange(of: viewModel.roundingType) { oldValue, newValue in
+                        // 選択されたときに呼ばれる処理
+                        sbcd_roundingType = newValue
+                        // ローカル通知 送信：小数桁数が変更された　＞再描画させるため
+                        NotificationCenter.default.post(name: .decimalChange, object: Int(decDigi))
+                    }
+                }
+                // 小数点
+                HStack {
+                    Text("記号") //.frame(width: 110, alignment: .trailing)
+                    Picker("DisplayDecimalType", selection: $viewModel.displayDecimalType) {
+                        ForEach(SettingViewModel.DisplayDecimalType.allCases) { type in
+                            Text(type.rawValue)
+                                .tag(type)
+                            //.font(.system(size: 24, weight: .bold)) セグメントでは無効
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle()) // メニュー型 or SegmentedPickerStyle()
+                    .onChange(of: viewModel.displayDecimalType) { oldValue, newValue in
+                        // 選択されたときに呼ばれる処理
+                        viewModel.set_displayDecimal = newValue.rawValue
+                        // ローカル通知 送信：小数桁数が変更された　＞再描画させるため
+                        NotificationCenter.default.post(name: .decimalChange, object: Int(decDigi))
+                    }
+                }
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(10)
         }
         .padding()
         .background(Color.gray.opacity(0.3))
@@ -109,8 +150,18 @@ final class SettingViewModel: ObservableObject {
     @Published var roundingType: RoundingType = .R54
     // 表示記号（ユーザーが目にする）
     var set_displayDecimal = KeyTag.decimal.rawValue //"."
-    
+    // 表示用小数点
+    enum DisplayDecimalType: String, CaseIterable, Identifiable {
+        case none          = "."
+        case international = ","
+        case kanjiZone     = "。"
+        case indian        = "・"
+        // Identifiable
+        var id: String { self.rawValue }
+    }
+    @Published var displayDecimalType: DisplayDecimalType = .none
 
+    
     // 桁区切りタイプ
     enum GroupingType: String, CaseIterable, Identifiable {
         case none          = "なし 12345678"
@@ -123,17 +174,29 @@ final class SettingViewModel: ObservableObject {
     @Published var groupingType: GroupingType = .international
     // 表示記号（ユーザーが目にする）
     var set_displayGroupSeparator = ","
+    // 表示用桁区切り
+    enum DisplayGroupType: String, CaseIterable, Identifiable {
+        case none          = ","
+        case international = "."
+        case kanjiZone     = "。"
+        case indian        = "・"
+        // Identifiable
+        var id: String { self.rawValue }
+    }
+    @Published var displayGroupType: DisplayGroupType = .none
+
+    
+    
     
     /// 桁区切り、小数点など表示用フォーマット
     func displayFormat(_ num: String) -> String {
-        // 内部小数点(SBCD_DECIMAL_SEPARATOR)を表示記号(displayDecimalSeparator)に置き換える
-        let replaced = num.replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR,
-                                                with: set_displayDecimal)
         if groupingType == .none {
-            return replaced
+            // 内部小数点(SBCD_DECIMAL_SEPARATOR)を表示記号(displayDecimalSeparator)に置き換える
+            return num.replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR,
+                                            with: set_displayDecimal)
         }
         // トリミング
-        var trimmed = replaced.trimmingCharacters(in: .whitespacesAndNewlines)
+        var trimmed = num.trimmingCharacters(in: .whitespacesAndNewlines)
         // 符号処理
         var minus = false
         if trimmed.hasPrefix("-") {
@@ -141,10 +204,7 @@ final class SettingViewModel: ObservableObject {
             trimmed.removeFirst()
         }
         // 整数部と小数部に分ける
-        let parts = trimmed.split(whereSeparator: {
-            $0 == SBCD_DECIMAL_SEPARATOR.first ||
-            $0 == set_displayDecimal.first
-        })
+        let parts = trimmed.split(whereSeparator: { $0 == SBCD_DECIMAL_SEPARATOR.first })
         // 整数部
         var integerPart = parts.count > 0 ? parts[0] : Substring("")
         // 小数部
@@ -155,13 +215,17 @@ final class SettingViewModel: ObservableObject {
         let count = chars.count
         
         guard 3 < count else {
-            return replaced
+            // 内部小数点(SBCD_DECIMAL_SEPARATOR)を表示記号(displayDecimalSeparator)に置き換える
+            return num.replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR,
+                                            with: set_displayDecimal)
         }
         
         switch groupingType {
             case .none:
-                return replaced
-                
+                // 内部小数点(SBCD_DECIMAL_SEPARATOR)を表示記号(displayDecimalSeparator)に置き換える
+                return num.replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR,
+                                                with: set_displayDecimal)
+
             case .indian:
                 let last3 = chars[(count - 3)..<count]
                 var remaining = chars[0..<(count - 3)]

@@ -15,33 +15,33 @@ struct ListView: View {
     var fontSize: CGFloat = 24
     
     var body: some View {
+
         List {
             ForEach(viewModel.listRows.reversed(), id: \.self) { row in
                 HStack  {
                     // 演算記号列
                     Text(row.oper)
                         .font(.system(size: fontSize, weight: .medium))
-                        .scaleEffect(y: -1)
+                        .scaleEffect(y: -1) // 上下反転：下から上にするため
                     
                     // 桁区切り、小数点など表示用フォーマット
                     let num = viewModel.setting.displayFormat(row.number)
                     // 数値列
                     Text(num)
                         .font(.system(size: fontSize, weight: .medium))
-                        .scaleEffect(y: -1)
+                        .scaleEffect(y: -1) // 上下反転：下から上にするため
 
                     // 単位列
                     Text(row.unit)
                         .font(.system(size: fontSize, weight: .medium))
-                        .scaleEffect(y: -1)
+                        .scaleEffect(y: -1) // 上下反転：下から上にするため
                         .frame(width: 6, alignment: .trailing) // 固定幅指定
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
             }
         }
-        .scaleEffect(y: -1)
-        .listStyle(.insetGrouped)
-        //.frame(height: 200)
+        .scaleEffect(y: -1) // 上下反転：下から上にするため ここで元に戻る
+        .listStyle(.inset)
     }
 }
 
