@@ -125,7 +125,8 @@ struct SettingView: View {
         }
         .padding()
         .background(Color.gray.opacity(0.3))
-        .cornerRadius(8.0)
+        .cornerRadius(10.0)
+        .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
     }
 }
 

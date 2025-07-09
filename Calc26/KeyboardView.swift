@@ -51,6 +51,7 @@ struct KeyboardView: View {
                 column = result.column
             }
         }
+        .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
     }
 }
 

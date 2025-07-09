@@ -42,6 +42,7 @@ struct ListView: View {
         }
         .scaleEffect(y: -1) // 上下反転：下から上にするため ここで元に戻る
         .listStyle(.inset)
+        .frame(minWidth: APP_MIN_WIDTH / 2.0, maxWidth: APP_MAX_WIDTH * 1.5)
     }
 }
 

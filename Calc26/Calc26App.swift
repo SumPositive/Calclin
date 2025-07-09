@@ -15,3 +15,8 @@ struct Calc26App: App {
         }
     }
 }
+
+
+let APP_MIN_WIDTH : CGFloat = 320
+let APP_MAX_WIDTH : CGFloat = 480
+
