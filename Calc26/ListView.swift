@@ -23,8 +23,8 @@ struct ListView: View {
                         .font(.system(size: fontSize, weight: .medium))
                         .scaleEffect(y: -1)
                     
-                    // 桁区切りする
-                    let num = viewModel.setting.formatGrouping(row.number)
+                    // 桁区切り、小数点など表示用フォーマット
+                    let num = viewModel.setting.displayFormat(row.number)
                     // 数値列
                     Text(num)
                         .font(.system(size: fontSize, weight: .medium))

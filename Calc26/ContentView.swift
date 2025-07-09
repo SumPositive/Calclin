@@ -31,7 +31,9 @@ struct ContentView: View {
                 Spacer()
                 // トグルボタン
                 Button(action: {
-                    isShowingSetting.toggle()
+                    withAnimation {
+                        isShowingSetting.toggle()
+                    }
                 }) {
                     Image(systemName: isShowingSetting ? "gearshape.fill" : "gearshape")
                         .imageScale(.large)
@@ -43,8 +45,9 @@ struct ContentView: View {
             // 設定画面（表示・非表示）
             if isShowingSetting {
                 SettingView(viewModel: setting)
+                    .transition(.opacity) // フェード
             }
-            
+
             Spacer()
             // 計算式リスト
             ListView(viewModel: listViewModel)

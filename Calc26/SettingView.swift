@@ -19,7 +19,7 @@ struct SettingView: View {
 
     // 小数点以下の桁数（0〜10）
     @State private var decDigi = Double(sbcd_decimalDigits)
-    
+
     
     var body: some View {
         VStack(spacing: 0) {
@@ -51,6 +51,7 @@ struct SettingView: View {
                 .onChange(of: viewModel.roundingType) { oldValue, newValue in
                     // 選択されたときに呼ばれる処理
                     sbcd_roundingType = newValue
+                    viewModel.roundingType = newValue
                 }
                 
                 Spacer()
@@ -78,10 +79,11 @@ struct SettingView: View {
 
                 Spacer()
             }
+            .padding(.top, 5)
             .padding(.leading)
-            .padding(.bottom, 4)
-
+            .padding(.bottom, 5)
         }
+        .background(Color.gray.opacity(0.5))
     }
 }
 
@@ -94,17 +96,17 @@ final class SettingViewModel: ObservableObject {
     // 丸めタイプ
     enum RoundingType: String, CaseIterable, Identifiable {
         var id: String { self.rawValue }
-        case RI  = "切り上げ"   //（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
-        case RP  = "正方向丸め" //（常に符号を正に）常に増えるから「正の無限大への丸め」と言われる
-        case R54 = "四捨五入"   //（絶対値型）[JIS Z 8401 規則Ｂ]
-        case R55 = "五捨五入"   //「最近接偶数への丸め」[JIS Z 8401 規則Ａ]
-        case R65 = "五捨六入"   //（絶対値型）
-        case RM  = "負方向丸め" //（常に符号を負に）常に減るから「負の無限大への丸め」と言われる
-        case RZ  = "切り捨て"   //（絶対値）常に0に近づくことになるから「0への丸め」と言われる
+        case RI  = "1.切り上げ"   //（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
+        case RP  = "2.正方向丸め" //（常に符号を正に）常に増えるから「正の無限大への丸め」と言われる
+        case R54 = "3.四捨五入"   //（絶対値型）[JIS Z 8401 規則Ｂ]
+        case R55 = "4.五捨五入"   //「最近接偶数への丸め」[JIS Z 8401 規則Ａ]
+        case R65 = "5.五捨六入"   //（絶対値型）
+        case RM  = "6.負方向丸め" //（常に符号を負に）常に減るから「負の無限大への丸め」と言われる
+        case RZ  = "7.切り捨て"   //（絶対値）常に0に近づくことになるから「0への丸め」と言われる
     }
     @Published var roundingType: RoundingType = .R54
     // 表示記号（ユーザーが目にする）
-    var displayDecimalSeparator = KeyTag.decimal.rawValue //"."
+    var set_displayDecimal = KeyTag.decimal.rawValue //"."
     
 
     // 桁区切りタイプ
@@ -115,17 +117,20 @@ final class SettingViewModel: ObservableObject {
         case kanjiZone     = "4桁 1234,5678"
         case indian        = "印式 1,23,45,678"
     }
-    @Published var groupingType: GroupingType = .international
+    @Published var groupingType: GroupingType = .indian
     // 表示記号（ユーザーが目にする）
-    var displayGroupSeparator = ","
+    var set_displayGroupSeparator = ","
     
-    /// 桁区切り
-    func formatGrouping(_ num: String) -> String {
+    /// 桁区切り、小数点など表示用フォーマット
+    func displayFormat(_ num: String) -> String {
+        // 内部小数点(SBCD_DECIMAL_SEPARATOR)を表示記号(displayDecimalSeparator)に置き換える
+        let replaced = num.replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR,
+                                                with: set_displayDecimal)
         if groupingType == .none {
-            return num
+            return replaced
         }
         // トリミング
-        var trimmed = num.trimmingCharacters(in: .whitespacesAndNewlines)
+        var trimmed = replaced.trimmingCharacters(in: .whitespacesAndNewlines)
         // 符号処理
         var minus = false
         if trimmed.hasPrefix("-") {
@@ -135,7 +140,7 @@ final class SettingViewModel: ObservableObject {
         // 整数部と小数部に分ける
         let parts = trimmed.split(whereSeparator: {
             $0 == SBCD_DECIMAL_SEPARATOR.first ||
-            $0 == displayDecimalSeparator.first
+            $0 == set_displayDecimal.first
         })
         // 整数部
         var integerPart = parts.count > 0 ? parts[0] : Substring("")
@@ -147,12 +152,12 @@ final class SettingViewModel: ObservableObject {
         let count = chars.count
         
         guard 3 < count else {
-            return num
+            return replaced
         }
         
         switch groupingType {
             case .none:
-                return num
+                return replaced
                 
             case .indian:
                 let last3 = chars[(count - 3)..<count]
@@ -169,14 +174,14 @@ final class SettingViewModel: ObservableObject {
                     parts.insert(String(remaining), at: 0)
                 }
                 
-                integerPart = parts.joined(separator: displayGroupSeparator) + displayGroupSeparator + Substring(last3)
+                integerPart = parts.joined(separator: set_displayGroupSeparator) + set_displayGroupSeparator + Substring(last3)
                 
             case .kanjiZone:
                 var result = ""
                 let rev = chars.reversed()
                 for (index, char) in rev.enumerated() {
                     if 0 < index && index % 4 == 0 {
-                        result.append(contentsOf: displayGroupSeparator)
+                        result.append(contentsOf: set_displayGroupSeparator)
                     }
                     result.append(char)
                 }
@@ -187,7 +192,7 @@ final class SettingViewModel: ObservableObject {
                 let rev = chars.reversed()
                 for (index, char) in rev.enumerated() {
                     if 0 < index && index % 3 == 0 {
-                        result.append(contentsOf: displayGroupSeparator)
+                        result.append(contentsOf: set_displayGroupSeparator)
                     }
                     result.append(char)
                 }
@@ -196,7 +201,7 @@ final class SettingViewModel: ObservableObject {
         // 整数部（＋小数点＋小数部）
         var gpNum = integerPart
         if decimalPart != "" {
-            gpNum += displayDecimalSeparator + decimalPart
+            gpNum += set_displayDecimal + decimalPart
         }
         // 符号を付けて完成
         return String(minus ? "-" + gpNum : gpNum)
