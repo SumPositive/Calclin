@@ -191,7 +191,7 @@ enum KeyTag: String {
 }
 
 
-final class KeyButton: UIButton, NSSecureCoding {
+final class KeyButton: UIButton, @preconcurrency NSSecureCoding {
     
     var rzUnit: String = ""
     var page: Int = 0

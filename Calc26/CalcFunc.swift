@@ -39,7 +39,7 @@ final class CalcFunc {
      */
     
     /// 数式から答えを計算する（文字列→逆ポーランド→計算→丸め→桁区切り文字列化）
-    static func answer(_ formula: String) -> String {
+    @MainActor static func answer(_ formula: String) -> String {
         if formula.count == 0 {
             log(.warning, "formula: なし")
             return ""

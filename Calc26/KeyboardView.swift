@@ -63,6 +63,7 @@ struct PressableImageButtonStyle: ButtonStyle {
 }
 
 struct KeyboardView: View {
+    @StateObject private var keyViewModel = KeyViewModel()
 
     let spacing: CGFloat = 8
     var onTap: (KeyTag) -> Void
@@ -70,7 +71,6 @@ struct KeyboardView: View {
     @State private var keys: [KeyboardKey] = []
     @State private var column: Int = 0
     
-    @StateObject private var keyViewModel = KeyViewModel()
     
 
     var body: some View {

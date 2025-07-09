@@ -15,33 +15,23 @@ let SBCD_PRECISION = 60  //= 30 + 30
 // 固定小数点の小数部：後半（SBCD_PRECISION/2...SBCD_PRECISION-1）
 // 参考！「偶数丸め」するためには小数以下2倍の桁数が必要（内部計算をアプリ有効桁数(PRECISION)の2倍とするため）
 
-// 小数以下表示桁数（丸め処理する）
-var sbcd_decimalDigits: Int = 10
+// 桁区切り内部記号　[;]セミコロン（表示に無い記号にすること）
+let SBCD_GROUP_SEPARATOR   = ";"
+
+// 小数点内部記号　[:]コロン（表示に無い記号にすること）
+let SBCD_DECIMAL_SEPARATOR = ":"
 
 // 丸めタイプ
-enum RoundingType: String, CaseIterable, Identifiable {
-    var id: String { self.rawValue }
-    case RI  = "切り上げ"   //（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
-    case RP  = "正方向丸め" //（常に符号を正に）常に増えるから「正の無限大への丸め」と言われる
-    case R54 = "四捨五入"   //（絶対値型）[JIS Z 8401 規則Ｂ]
-    case R55 = "五捨五入"   //「最近接偶数への丸め」[JIS Z 8401 規則Ａ]
-    case R65 = "五捨六入"   //（絶対値型）
-    case RM  = "負方向丸め" //（常に符号を負に）常に減るから「負の無限大への丸め」と言われる
-    case RZ  = "切り捨て"   //（絶対値）常に0に近づくことになるから「0への丸め」と言われる
-}
-var roundingType: RoundingType = .R54
+@MainActor var sbcd_roundingType: SettingViewModel.RoundingType = .R54
 
-// 表示記号（ユーザーが目にする）
-var displayDecimalSeparator = KeyTag.decimal.rawValue //"."
-
+// 小数以下表示桁数（丸め処理する）
+@MainActor var sbcd_decimalDigits: Int = 10
 
 
 struct SBCD {
-    
+
     let SBCD_MINUS: Character = "-"
     let SBCD_ZERO: Character  = "0"
-    let SBCD_DECIMAL_SEPARATOR = ":"  // 小数点内部記号　[:]コロン（表示に無い記号にすること）
-    let SBCD_GROUP_SEPARATOR   = ";"  // 桁区切り内部記号　[;]セミコロン（表示に無い記号にすること）
     
     // SBCD要素
     // 符号部
@@ -112,7 +102,7 @@ struct SBCD {
         let decEnd = decPartRaw.lastIndex(where: { $0 != 0 }) ?? (maxIntDigits - 1)
         let decDigits = decPartRaw.prefix(through: decEnd).map(String.init).joined()
         // 整数部＋小数点＋小数部
-        let result = intDigits + displayDecimalSeparator + decDigits
+        let result = intDigits + SBCD_DECIMAL_SEPARATOR + decDigits
         // 符号を付けて完成
         return self.minus ? "-" + result : result
     }
@@ -338,7 +328,7 @@ struct SBCD {
     ///   - decimalDigits: 小数桁数（小数部の最大桁数）[ 0 〜 iPrecision ]
     ///   - roundingType: 丸め方法 (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP        [1.0.6]以降
     /// - Returns: 結果SBCD
-    func rounding() -> SBCD {
+    @MainActor func rounding() -> SBCD {
         var sbcd = self
         // 丸め位置
         let iRoundPos = SBCD_PRECISION/2 + sbcd_decimalDigits
@@ -350,7 +340,7 @@ struct SBCD {
         // 繰り上げフラグ
         var roundUp = false
         
-        switch roundingType {
+        switch sbcd_roundingType {
             case .RM:   // RM　常に減るから「負の無限大への丸め」と言われる
                 // (+)切捨　(-)絶対値切上
                 if sbcd.minus {

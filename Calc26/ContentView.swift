@@ -8,9 +8,13 @@
 import SwiftUI
 
 struct ContentView: View {
-    
-    // ListViewをStateObjectで保持して操作する
-    @StateObject private var listViewModel = ListViewModel()
+    let setting: SettingViewModel
+    @StateObject var listViewModel: ListViewModel
+    init() {
+        let setting = SettingViewModel()
+        self.setting = setting
+        _listViewModel = StateObject(wrappedValue: ListViewModel(settingViewModel: setting))
+    }
     
     // 小数点以下の桁数（0〜10）
     @State private var decDigi: Double = 2
@@ -38,7 +42,7 @@ struct ContentView: View {
             
             // 設定画面（表示・非表示）
             if isShowingSetting {
-                SettingView(viewModel: listViewModel)
+                SettingView(viewModel: setting)
             }
             
             Spacer()
