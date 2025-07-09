@@ -17,6 +17,7 @@ extension Notification.Name {
 struct SettingView: View {
     @ObservedObject var viewModel: SettingViewModel
 
+    // @State 変化あればViewが更新される
     // 小数点以下の桁数（0〜10）
     @State private var decDigi = Double(sbcd_decimalDigits)
 

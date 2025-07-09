@@ -19,18 +19,21 @@ struct ContentView: View {
         _list2ViewModel = StateObject(wrappedValue: ListViewModel(settingViewModel: setting))
     }
 
+    // @State 変化あればViewが更新される
     // 小数点以下の桁数（0〜10）
     @State private var decDigi: Double = 2
-
+    // 設定　表示状態
     @State private var isShowingSetting = false
-
+    // アクティブ（フォーカス）ListView番号　＜＜＜TODO:配列で複数対応
     @State private var activeList: Int = 0
+    // ListView1　表示状態
     @State private var isShowList1 = true
+    // ListView2　表示状態
     @State private var isShowList2 = true
 
-//    let onTapList : (() -> Void)?  // ← 親に通知するクロージャ
-    
+    // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
+
     
     var body: some View {
         VStack() {

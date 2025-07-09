@@ -15,6 +15,7 @@ struct KeyboardView: View {
     let spacing: CGFloat = 4
     var onTap: (KeyTag) -> Void
     
+    // @State 変化あればViewが更新される
     @State private var keys: [KeyboardKey] = []
     @State private var column: Int = 0
 
@@ -97,6 +98,7 @@ struct PressableImageButtonStyle: ButtonStyle {
     var pressedImage: String
     var labelText: String
     
+    // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
     
     func makeBody(configuration: Configuration) -> some View {

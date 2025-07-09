@@ -2,7 +2,7 @@
 //  Calc26App.swift
 //  Calc26
 //
-//  Created by sumpo on 2025/06/29.
+//  Created by sumpo on 2025/06/29. SwiftUI練習のためにCalcRoll移植を開始
 //
 
 import SwiftUI
