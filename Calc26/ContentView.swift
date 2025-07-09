@@ -84,7 +84,10 @@ struct ContentView: View {
                             withAnimation {
                                 isShowList2.toggle()
                             }
+                            // 同時にフォーカス切替
+                            activeList = 0
                         }
+                        //.cornerRadius(10)
                 }
                 
                 // 計算式リスト2
@@ -102,7 +105,10 @@ struct ContentView: View {
                             withAnimation {
                                 isShowList1.toggle()
                             }
+                            // 同時にフォーカス切替
+                            activeList = 1
                         }
+                        //.cornerRadius(20)
                 }
             }
             .padding(3)

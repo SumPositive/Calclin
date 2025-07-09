@@ -12,37 +12,61 @@ import Combine
 struct ListView: View {
     @ObservedObject var viewModel: ListViewModel
     
-    var fontSize: CGFloat = 24
-    
     var body: some View {
 
         List {
             ForEach(viewModel.listRows.reversed(), id: \.self) { row in
-                HStack  {
-                    // 演算記号列
-                    Text(row.oper)
-                        .font(.system(size: fontSize, weight: .medium))
-                        .scaleEffect(y: -1) // 上下反転：下から上にするため
-                    
-                    // 桁区切り、小数点など表示用フォーマット
-                    let num = viewModel.setting.displayFormat(row.number)
-                    // 数値列
-                    Text(num)
-                        .font(.system(size: fontSize, weight: .medium))
-                        .scaleEffect(y: -1) // 上下反転：下から上にするため
-
-                    // 単位列
-                    Text(row.unit)
-                        .font(.system(size: fontSize, weight: .medium))
-                        .scaleEffect(y: -1) // 上下反転：下から上にするため
-                        .frame(width: 6, alignment: .trailing) // 固定幅指定
-                }
-                .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
+                // カスタム明細セル
+                CustomCell(viewModel: viewModel, row: row)
+                    .listRowSeparator(.hidden) // 既定の下線を非表示
+                    .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
+                    .padding(.vertical, 2)  // 上下の余白
             }
         }
         .scaleEffect(y: -1) // 上下反転：下から上にするため ここで元に戻る
-        .listStyle(.inset)
+        .listStyle(.plain)
+        .environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
         .frame(minWidth: APP_MIN_WIDTH / 2.0, maxWidth: APP_MAX_WIDTH * 1.5)
+    }
+}
+
+// カスタム明細セル
+struct CustomCell: View {
+    let viewModel: ListViewModel
+    let row: ListViewModel.ListRow
+
+    var fontSize: CGFloat = 24
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack  {
+                // 演算記号列
+                Text(row.oper)
+                    .font(.body) // 通常本文    最も一般的なテキスト    約17pt
+                    //.font(.system(size: fontSize, weight: .regular))
+                    .scaleEffect(y: -1) // 上下反転：下から上にするため
+                
+                // 桁区切り、小数点など表示用フォーマット
+                let num = viewModel.setting.displayFormat(row.number)
+                // 数値列
+                Text(num)
+                    .font(.headline) // 強調文（太字）    重要な小見出し・ボタンラベルなど    約17pt, 太字
+                    .scaleEffect(y: -1) // 上下反転：下から上にするため
+                
+                // 単位列
+                Text("坪")//row.unit)
+                    .font(.callout) // 注釈    補助的な説明文など    約16pt
+                    .scaleEffect(y: -1) // 上下反転：下から上にするため
+                    .frame(width: 30, alignment: .leading) // 固定幅指定
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
+            
+            // 下線
+            if row.oper == KeyTag.op_answer.rawValue {
+                Divider()
+            }
+        }
+        .padding(.horizontal, 4)
     }
 }
 
