@@ -39,7 +39,8 @@ final class CalcFunc {
      */
     
     /// 数式から答えを計算する（文字列→逆ポーランド→計算→丸め→桁区切り文字列化）
-    @MainActor static func answer(_ formula: String) -> String {
+    @MainActor
+    static func answer(_ formula: String) -> String {
         if formula.count == 0 {
             log(.warning, "formula: なし")
             return ""
@@ -72,11 +73,9 @@ final class CalcFunc {
         // RPNから答えを計算
         let sbcd1 = evaluateRPN(rpnTokens)
         // 丸め処理
-        let sbcd2 = sbcd1.rounding()
+        let sbcd2 = sbcd1.round()
         // 桁区切り文字列化
-        let sbcd3 = sbcd2.toString()
-        
-        return sbcd3
+        return sbcd2.value
     }
     
     /// 数式をトークンに分割する（演算子と数字を分離）
@@ -205,44 +204,33 @@ final class CalcFunc {
             case "+":
                 let b = stack.removeLast()
                 let a = stack.removeLast()
-                    if let sbcd = a.add(b) {
-                        stack.append(sbcd)
-                    }else{
-                        log(.error,"+ add失敗")
-                    }
+                    stack.append(a.add(b))
+                    
             case "-":
                 let b = stack.removeLast()
                 let a = stack.removeLast()
-                    if let sbcd = a.subtract(b) {
-                        stack.append(sbcd)
-                    }else{
-                        log(.error,"- subtract失敗")
-                    }
+                    stack.append(a.subtract(b))
+
             case "*":
                 let b = stack.removeLast()
                 let a = stack.removeLast()
-                    if let sbcd = a.multiply(b) {
-                        stack.append(sbcd)
-                    }else{
-                        log(.error,"* multiply失敗")
-                    }
+                    stack.append(a.multiply(b))
+                    
             case "/":
                 let b = stack.removeLast()
                 let a = stack.removeLast()
-                    if let sbcd = a.divide(b) {
-                        stack.append(sbcd)
-                    }else{
-                        log(.error,"/ divide失敗")
-                    }
+                    stack.append(a.divide(b))
+                    
             case "√":
                 let a = stack.removeLast()
-                let approx = sqrt(Double(a.toString().replacingOccurrences(of: "-", with: "")) ?? 0)
-                stack.append(SBCD(from: String(approx)))
+                    let approx = sqrt(Double(a.value.replacingOccurrences(of: "-", with: "")) ?? 0)
+                    stack.append(SBCD(String(approx)))
+                    
             default:
-                stack.append(SBCD(from: token))
+                    stack.append(SBCD(token))
             }
         }
-        return stack.first ?? SBCD(from: "0")
+        return stack.first ?? SBCD("0")
     }
     
 }

@@ -19,7 +19,7 @@ struct SettingView: View {
 
     // @State 変化あればViewが更新される
     // 小数点以下の桁数（0〜10）
-    @State private var decDigi = Double(sbcd_decimalDigits)
+    @State private var decDigi = Double(3) //SBCD.sbcd_decimalDigits)
 
     
     var body: some View {
@@ -96,7 +96,7 @@ struct SettingView: View {
                     .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
                     .onChange(of: viewModel.roundingType) { oldValue, newValue in
                         // 選択されたときに呼ばれる処理
-                        sbcd_roundingType = newValue
+              //          sbcd_roundingType = newValue
                         // ローカル通知 送信：小数桁数が変更された　＞再描画させるため
                         NotificationCenter.default.post(name: .decimalChange, object: Int(decDigi))
                     }
@@ -137,7 +137,7 @@ final class SettingViewModel: ObservableObject {
 
     // MARK: - Public Properties
     
-    // 丸めタイプ
+    // 丸めタイプ　　　PickerデータソースにするためCaseIterable, Identifiableに準拠
     enum RoundingType: String, CaseIterable, Identifiable {
         case RI  = "切り上げ"   //（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
         case RP  = "正方向丸め" //（常に符号を正に）常に増えるから「正の無限大への丸め」と言われる
@@ -154,22 +154,22 @@ final class SettingViewModel: ObservableObject {
     var set_displayDecimal = KeyTag.decimal.rawValue //"."
     // 表示用小数点
     enum DisplayDecimalType: String, CaseIterable, Identifiable {
-        case none          = "."
-        case international = ","
-        case kanjiZone     = "。"
-        case indian        = "・"
+        case dot        = "."
+        case conma      = ","
+        case center     = "・"
+        case upperr     = "'"
         // Identifiable
         var id: String { self.rawValue }
     }
-    @Published var displayDecimalType: DisplayDecimalType = .none
+    @Published var displayDecimalType: DisplayDecimalType = .dot
 
     
-    // 桁区切りタイプ
+    // 桁区切りタイプ　　　PickerデータソースにするためCaseIterable, Identifiableに準拠
     enum GroupingType: String, CaseIterable, Identifiable {
-        case none          = "なし 12345678"
-        case international = "3桁 12,345,678"
-        case kanjiZone     = "4桁 1234,5678"
-        case indian        = "印式 1,23,45,678"
+        case none          = "なし　12345678"
+        case international = "３桁　12,345,678"
+        case kanjiZone     = "４桁　1234,5678"
+        case indian        = "印式　1,23,45,678"
         // Identifiable
         var id: String { self.rawValue }
     }
@@ -178,14 +178,14 @@ final class SettingViewModel: ObservableObject {
     var set_displayGroupSeparator = ","
     // 表示用桁区切り
     enum DisplayGroupType: String, CaseIterable, Identifiable {
-        case none          = ","
-        case international = "."
-        case kanjiZone     = "。"
-        case indian        = "・"
+        case dot        = "."
+        case conma      = ","
+        case center     = "・"
+        case upperr     = "'"
         // Identifiable
         var id: String { self.rawValue }
     }
-    @Published var displayGroupType: DisplayGroupType = .none
+    @Published var displayGroupType: DisplayGroupType = .conma
 
     
     

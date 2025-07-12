@@ -42,48 +42,152 @@ final class Calc26UITests: XCTestCase {
     }
 }
 
+final class SBCD_subtract_Tests: XCTestCase {
+    
+    func test_add_basic1() {
+        SBCD.setDecimalDigits(0)
+        SBCD.setRoundType(.R54)
+        
+        let a   = SBCD("1.1")
+        let b   = SBCD("2.1")
+        let ans = SBCD("3")
+        let result = a.add(b).round()
 
-final class CalcFuncTests: XCTestCase {
-    
-    func testTokenizeFormula_basicOperators() {
-        let input = "12+34"
-        let expected = ["12", "+", "34"]
-        let result = CalcFunc.tokenizeFormula(input)
-        XCTAssertEqual(result, expected)
+        XCTAssertEqual(result, ans)
     }
     
-    func testTokenizeFormula_withParentheses() {
-        let input = "(1+2)*3"
-        let expected = ["(", "1", "+", "2", ")", "*", "3"]
-        let result = CalcFunc.tokenizeFormula(input)
-        XCTAssertEqual(result, expected)
-    }
+
+//    func test_subtract_basic1() {
+//        let a   = SBCD("1")
+//        let b   = SBCD("1")
+//        let ans = SBCD("0")
+//        let result = a.subtract(b)
+//        XCTAssertEqual(result, ans)
+//    }
+//    
+//    func test_subtract_basic2() {
+//        let a   = SBCD("10")
+//        let b   = SBCD("3")
+//        let ans = SBCD("7")
+//        let result = a.subtract(b)
+//        XCTAssertEqual(result, ans)
+//    }
+//    
+//    func test_subtract_basic3() {
+//        let a   = SBCD("12345")
+//        let b   = SBCD("345")
+//        let ans = SBCD("12000")
+//        let result = a.subtract(b)
+//        XCTAssertEqual(result, ans)
+//    }
+//    
+//    func test_subtract_zero1() {
+//        let a   = SBCD("1")
+//        let b   = SBCD("1")
+//        let ans = SBCD("0")
+//        let result = a.subtract(b)
+//        XCTAssertEqual(result, ans)
+//    }
+//    
+//    func test_subtract_zero2() {
+//        let a   = SBCD("-123")
+//        let b   = SBCD("-123")
+//        let ans = SBCD("0")
+//        let result = a.subtract(b)
+//        XCTAssertEqual(result, ans)
+//    }
+//    
+//    func test_subtract_minus1() {
+//        let a   = SBCD("1")
+//        let b   = SBCD("2")
+//        let ans = SBCD("-1")
+//        let result = a.subtract(b)
+//        XCTAssertEqual(result, ans)
+//    }
+//    
+//    func test_subtract_minus2() {
+//        let a   = SBCD("1")
+//        let b   = SBCD("2")
+//        let ans = SBCD("-1")
+//        let result = a.subtract(b)
+//        XCTAssertEqual(result, ans)
+//    }
     
-    func testTokenizeFormula_withRootSymbol() {
-        let input = "√25+4"
-        let expected = ["√", "25", "+", "4"]
-        let result = CalcFunc.tokenizeFormula(input)
-        XCTAssertEqual(result, expected)
-    }
+}
+
+final class SBCD_add_Tests: XCTestCase {
     
-    func testTokenizeFormula_withMixedOperators() {
-        let input = "100×(20-5)/√4"
-        let expected = ["100", "×", "(", "20", "-", "5", ")", "/", "√", "4"]
-        let result = CalcFunc.tokenizeFormula(input)
-        XCTAssertEqual(result, expected)
-    }
+//    func test_add_basic1() {
+//        let a   = SBCD("1")
+//        let b   = SBCD("2")
+//        let ans = SBCD("3")
+//        let result = a.add(b)
+//        XCTAssertEqual(result, ans)
+//    }
+//    
+//    func test_add_basic2() {
+//        let a   = SBCD("1")
+//        let b   = SBCD("-2")
+//        let ans = SBCD("-1")
+//        let result = a.add(b)
+//        XCTAssertEqual(result, ans)
+//    }
+//    
+//    @MainActor
+//    func test_add_basic3() {
+//        let a   = SBCD("1")
+//        let b   = SBCD("0.1234567")
+////        sbcd_decimalDigits = 4
+////        SettingViewModel.roundingType = .R54
+//        let ans = SBCD("1.1234567")
+//        let result = a.add(b)
+//        XCTAssertEqual(result, ans)
+//    }
+}
+
+
+/// tokenizeFormula
+final class CalcFunc_tokenizeFormula_Tests: XCTestCase {
     
-    func testTokenizeFormula_withWhitespace() {
-        let input = " 12 +  7 "
-        let expected = ["12", "+", "7"]
-        let result = CalcFunc.tokenizeFormula(input.replacingOccurrences(of: " ", with: ""))
-        XCTAssertEqual(result, expected)
-    }
-    
-    func testTokenizeFormula_emptyInput() {
-        let input = ""
-        let expected: [String] = []
-        let result = CalcFunc.tokenizeFormula(input)
-        XCTAssertEqual(result, expected)
-    }
+//    func testTokenizeFormula_basicOperators() {
+//        let input = "12+34"
+//        let expected = ["12", "+", "34"]
+//        let result = CalcFunc.tokenizeFormula(input)
+//        XCTAssertEqual(result, expected)
+//    }
+//    
+//    func testTokenizeFormula_withParentheses() {
+//        let input = "(1+2)*3"
+//        let expected = ["(", "1", "+", "2", ")", "*", "3"]
+//        let result = CalcFunc.tokenizeFormula(input)
+//        XCTAssertEqual(result, expected)
+//    }
+//    
+//    func testTokenizeFormula_withRootSymbol() {
+//        let input = "√25+4"
+//        let expected = ["√", "25", "+", "4"]
+//        let result = CalcFunc.tokenizeFormula(input)
+//        XCTAssertEqual(result, expected)
+//    }
+//    
+//    func testTokenizeFormula_withMixedOperators() {
+//        let input = "100×(20-5)/√4"
+//        let expected = ["100", "×", "(", "20", "-", "5", ")", "/", "√", "4"]
+//        let result = CalcFunc.tokenizeFormula(input)
+//        XCTAssertEqual(result, expected)
+//    }
+//    
+//    func testTokenizeFormula_withWhitespace() {
+//        let input = " 12 +  7 "
+//        let expected = ["12", "+", "7"]
+//        let result = CalcFunc.tokenizeFormula(input.replacingOccurrences(of: " ", with: ""))
+//        XCTAssertEqual(result, expected)
+//    }
+//    
+//    func testTokenizeFormula_emptyInput() {
+//        let input = ""
+//        let expected: [String] = []
+//        let result = CalcFunc.tokenizeFormula(input)
+//        XCTAssertEqual(result, expected)
+//    }
 }

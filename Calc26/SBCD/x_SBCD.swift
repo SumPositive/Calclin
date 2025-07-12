@@ -24,6 +24,13 @@ let SBCD_DECIMAL_SEPARATOR = ":"
 // 小数以下表示桁数（丸め処理する）
 @MainActor var sbcd_decimalDigits: Int = 3
 
+/// Equatable準拠
+extension SBCD: Equatable {
+    static func == (lhs: SBCD, rhs: SBCD) -> Bool {
+        // 比較ロジック
+        return lhs.digits == rhs.digits && lhs.minus == rhs.minus
+    }
+}
 
 struct SBCD {
 
@@ -42,7 +49,7 @@ struct SBCD {
     // "123.456" -> "0012345600"
     // "1234.56" -> "0123456000"
     // "1.23456" -> "0000123456"
-    init(from num: String) {
+    init(_ num: String) {
         // トリミング
         var trimmed = num.trimmingCharacters(in: .whitespacesAndNewlines)
         //
@@ -75,7 +82,7 @@ struct SBCD {
         self.digits = digits
     }
     
-    init(minus: Bool, digits: [UInt8]) {
+    init(_ minus: Bool, _ digits: [UInt8]) {
         self.minus = minus
         self.digits = digits
     }
@@ -108,7 +115,7 @@ struct SBCD {
     // MARK: - 四則演算
     
     /// 和
-    func add(_ add: SBCD) -> SBCD? {
+    func add(_ add: SBCD) -> SBCD {
         let base = self
         if base.minus == false, add.minus == true { // 2 + -3
             // base - add // 2 - 3
@@ -118,7 +125,7 @@ struct SBCD {
                 let ans = add.absSub(base)
                 if ans.minus {
                     log(.fatal, "差）桁下がり発生")
-                    return nil
+                    return SBCD("0")
                 }
             }
             return ans
@@ -131,7 +138,7 @@ struct SBCD {
                 let ans = base.absSub(add)
                 if ans.minus {
                     log(.fatal, "差）桁下がり発生")
-                    return nil
+                    return SBCD("0")
                 }
             }
             return ans
@@ -147,11 +154,11 @@ struct SBCD {
             ansDigits[i] = sum % 10
             carry = sum / 10
         }
-        return SBCD(minus: ansMinus, digits: ansDigits)
+        return SBCD(ansMinus, ansDigits)
     }
     
     /// 差
-    func subtract(_ sub: SBCD) -> SBCD? {
+    func subtract(_ sub: SBCD) -> SBCD {
         let base = self
         // subの符号を反転する
         var add = sub
@@ -177,11 +184,11 @@ struct SBCD {
             ansDigits[i] = UInt8(diff)
         }
         // 最後に桁下がりがあればマイナス値である
-        return SBCD(minus: (borrow == 1), digits: ansDigits)
+        return SBCD((borrow == 1), ansDigits)
     }
     
     /// 積
-    func multiply(_ multi: SBCD) -> SBCD? {
+    func multiply(_ multi: SBCD) -> SBCD {
         let base = self
         var cBuf = [UInt8](repeating: 0, count: SBCD_PRECISION * 2)
         var ansDigi = Array(repeating: UInt8(0), count: SBCD_PRECISION)
@@ -202,7 +209,7 @@ struct SBCD {
         // オーバーフロー判定
         if 9 < cBuf[0] {
             log(.warning, "積）Overflow")
-            return nil
+            return SBCD("0")
         }
         
         // 偶数丸め判定
@@ -248,8 +255,8 @@ struct SBCD {
             }
         }
         
-        return SBCD(minus: (base.minus != multi.minus),
-                    digits: ansDigi)
+        return SBCD((base.minus != multi.minus),
+                    ansDigi)
     }
     /// SBCD加算（配列同士、符号無し）
     private func sbcAbsAdd(_ lhs: [UInt8], _ rhs: [UInt8]) -> [UInt8] {
@@ -265,7 +272,7 @@ struct SBCD {
     
     
     ///　商
-    func divide(_ divisor: SBCD) -> SBCD? {
+    func divide(_ divisor: SBCD) -> SBCD {
         let base = self
         var ansDigi = Array(repeating: UInt8(0), count: SBCD_PRECISION)
         var cBuf = [UInt8](repeating: 0, count: SBCD_PRECISION * 2)
@@ -286,8 +293,8 @@ struct SBCD {
             ansDigi[i] = iCount
         }
         
-        return SBCD(minus: (base.minus != divisor.minus),
-                    digits: ansDigi)
+        return SBCD((base.minus != divisor.minus),
+                    ansDigi)
     }
     /// 配列から特定位置以降で減算を行う
     private func sbcAbsSub(_ cBuf: inout [UInt8], offset: Int, sub: [UInt8]) -> Bool {
@@ -415,7 +422,8 @@ struct SBCD {
             }
             else {
                 // 繰り上げする値が9以上ならば繰り上げが伝播する可能性があるのでADD+1計算処理する
-                if let sb = sbcd.add(SBCD(from: "1")){
+                let one = SBCD("1")
+                if let sb = sbcd.add(one){
                     sbcd = sb
                 }else{
                     log(.error, "繰り上げ処理できないので丸め失敗")

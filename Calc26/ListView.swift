@@ -129,7 +129,7 @@ final class ListViewModel: ObservableObject {
             .compactMap { $0.object as? Int }
             .sink { [weak self] value in
                 Task { @MainActor in
-                    self?.decimalChange(decimalDigits: value)
+                    self?.decimalChange(digits: value)
                 }
             }
             .store(in: &cancellables)
@@ -138,8 +138,8 @@ final class ListViewModel: ObservableObject {
     // MARK: - Public Methods
     
     // 小数表示桁数
-    @MainActor func decimalChange(decimalDigits: Int) {
-        sbcd_decimalDigits = decimalDigits
+    @MainActor func decimalChange(digits: Int) {
+        sbcd_setDecimalDigits(Int32(digits))
         // 現在行が[=]ならば、
         if let row = listRows.last, row.oper == KeyTag.op_answer.rawValue {
             // 新しい小数桁数で再計算＆再表示する
