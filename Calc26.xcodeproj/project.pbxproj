@@ -64,20 +64,12 @@
 			);
 			target = C30A78B92E10EE8700212729 /* Calc26UITests */;
 		};
-		C387A89C2E1F58F000077927 /* Exceptions for "Calc26" folder in "Calc26" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				SBCD/x_SBCD.swift,
-			);
-			target = C30A78A22E10EE8500212729 /* Calc26 */;
-		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C30A78A52E10EE8500212729 /* Calc26 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				C387A89C2E1F58F000077927 /* Exceptions for "Calc26" folder in "Calc26" target */,
 				C32598A82E224A4E00615696 /* Exceptions for "Calc26" folder in "Calc26Tests" target */,
 				C32598A92E224A4E00615696 /* Exceptions for "Calc26" folder in "Calc26UITests" target */,
 			);

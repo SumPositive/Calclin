@@ -125,7 +125,7 @@ static bool sbcdZero( SBCD *pSbcd )
 
 
 //---------------------------------------------------------
-// SBCD ⇒ 文字列化
+// SBCD ⇒ 文字列化　　小数部があれば小数点を入れて末尾の0は除去する
 //	pSbcd	:Read Only
 //	zAnswer	:Write Return
 //---------------------------------------------------------
@@ -157,14 +157,25 @@ static void sbcdToString( SBCD *pSbcd, char *zAnswer)
         	*zAnswer++ = (pSbcd->digit[i] + 0x30);
         }
     }
-    //ドット
-    *zAnswer++ = SBCD_DECIMAL_SEPARATOR;								// 小数点
     //小数部
-    for( ; i < SBCD_PRECISION; i++) {				// 小数部
-       	*zAnswer++ = (pSbcd->digit[i] + 0x30);
+    int iDeciPos = 0; //= 小数部なし
+    for(i = SBCD_PRECISION-1; SBCD_PRECISION/2 <= i; i--) {
+        // 末尾から辿って小数の最下位を見つける
+        if( pSbcd->digit[i] != 0x00 ){
+            iDeciPos = i;
+            break;
+        }
     }
-
-	*zAnswer = 0x00;								// 文字列終端
+    if(0 < iDeciPos){
+        // 小数部あり
+        *zAnswer++ = SBCD_DECIMAL_SEPARATOR; // 小数点
+        // 小数1桁目から最下位まで追加
+        for(i = SBCD_PRECISION/2; i <= iDeciPos; i++) {
+            // 小数部
+            *zAnswer++ = (pSbcd->digit[i] + 0x30);
+        }
+    }
+	*zAnswer = 0x00; // 文字列終端
 }
 
 //---------------------------------------------------------------------------

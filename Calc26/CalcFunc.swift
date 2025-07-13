@@ -15,7 +15,7 @@ let FORMULA_MAX_LENGTH = 200
 final class CalcFunc {
     
     // 数値構成文字
-    static let numberChars = "0123456789."
+    static let numberChars = "0123456789" + SBCD_MINUS_SIGN + SBCD_DECIMAL_SEPARATOR
     // 演算子構成文字
     static let operatorChars = "+-*/×÷()√"
     // スペース文字
@@ -82,31 +82,39 @@ final class CalcFunc {
     static func tokenizeFormula(_ input: String) -> [String] {
         var tokens: [String] = []
         var current = ""
-        var previousToken: String? = nil
+        var prevToken = ""
         
         let operators: Set<Character> = Set(CalcFunc.operatorChars) // "+-*/×÷()√"
-        
+        let minusNumbers: Set<Character> = Set("+-*/×÷(")
+
         for (index, char) in input.enumerated() {
             if operators.contains(char) {
                 if char == "-" {
-                    // マイナス記号が演算化符号かを判定処理する
-                    // 最初 or 前が演算子 or 前が開き括弧 ならば、マイナス符号として扱う
-                    if index == 0 || previousToken == nil || operators.contains(previousToken!.last!) &&
-                        previousToken != ")" {
+                    // マイナス記号が符号か演算子かを判定処理する
+                    // 先頭ならば符号
+                    // "×-" "÷-" "+-" "--" "(-" の "-" は符号、以外は演算子だと解釈
+                    if index == 0 ||
+                        (prevToken != "" && minusNumbers.contains(prevToken)) {
+                        // これはマイナス符号である
                         current.append(char)
                         continue
                     }
+                    // マイナス演算子である
                 }
-                // それ以外の演算子はトークン確定
+                // charは、演算子である
                 if !current.isEmpty {
+                    // 直前までの数値(current)をトークン登録する
                     tokens.append(current)
-                    previousToken = current
+                    prevToken = current
                     current = ""
                 }
+                // 演算子(char)をトークン登録する
                 tokens.append(String(char))
-                previousToken = String(char)
+                prevToken = String(char)
             } else {
+                // 数値
                 current.append(char)
+                prevToken = ""
             }
         }
         

@@ -11,14 +11,14 @@
 #include "SBCD.h"  // ← ここで C/C++ の関数を読み込む
 
 
-int sbcd_decimalDigits = 0;
+int _sbcd_decimalDigits = 0;
 void sbcd_setDecimalDigits( int digits ) {
-    sbcd_decimalDigits = digits;
+    _sbcd_decimalDigits = digits;
 }
 
-int sbcd_roundType = 4; // (4)四捨五入
+int _sbcd_roundType = 4; // (4)四捨五入
 void sbcd_setRoundType( int type ) {
-    sbcd_roundType = type;
+    _sbcd_roundType = type;
 }
 
 
@@ -40,6 +40,6 @@ void sbcd_div(char *result, const char *a, const char *b) {
 
 void sbcd_round(char *result, const char *a) {
     stringRounding(result, a, SBCD_PRECISION,
-                   sbcd_decimalDigits, sbcd_roundType);
+                   _sbcd_decimalDigits, _sbcd_roundType);
 }
 

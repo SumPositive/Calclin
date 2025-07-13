@@ -37,7 +37,7 @@ typedef struct {
 #endif
 
 
-#define SBCD_DECIMAL_SEPARATOR  ':' // [:]コロン（表示に無い記号にすること）
+#define SBCD_DECIMAL_SEPARATOR  '.' // [:]コロン（表示に無い記号にすること）
 #define SBCD_MINUS_SIGN         '-' // マイナス記号
 
 

@@ -12,24 +12,20 @@ import Foundation
 let SBCD_PRECISION = 60 //== SBCD.hで定義されている値と同じであること！
 
 
-let SBCD_GROUP_SEPARATOR    = ";" // [;]セミコロン    （表示に無い記号にすること）
-let SBCD_DECIMAL_SEPARATOR  = ":" // [:]コロン（表示に無い記号にすること）
+let SBCD_MINUS_SIGN         = "-" // SBCD処理(.value)に使用するマイナス記号
+let SBCD_DECIMAL_SEPARATOR  = "." // SBCD処理(.value)に使用する小数点
 
 
 // 丸めタイプ（この.rawValueは、C-func:stringRoundingのパラメータに一致すること）
 public enum SBCD_RoundType: Int {
-    case RM  = 0 // 丸め
-    case RZ  = 1 // 切り捨て
-    case R65 = 2 // 6/5
-    case R55 = 3 // 5/5
-    case R54 = 4 // 5/4
-    case RI  = 5 // 切り上げ
-    case RP  = 6 // 常に正方向
+    case Rminus = 0 // 常に減るから「負の無限大への丸め」と言われる  (+)切捨　(-)絶対値切上
+    case Rdown  = 1 // 切り捨て（絶対値）常に0に近づくことになるから「0への丸め」と言われる
+    case R65    = 2 // 五捨六入（絶対値型）
+    case R55    = 3 // 五捨五入「最近接偶数への丸め」[JIS Z 8401 規則Ａ] （偶数丸め、JIS丸め、ISO丸め、銀行家の丸め）
+    case R54    = 4 // 四捨五入（絶対値型）[JIS Z 8401 規則Ｂ]
+    case Rup    = 5 // 切り上げ（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
+    case Rplus  = 6 // 常に増えるから「正の無限大への丸め」と言われる (+)絶対値切上　(-)切捨
 }
-//// 現在の丸めタイプ
-//@MainActor var sbcd_roundType: SBCD_RoundType = .R54
-//// 現在の小数桁数　[ 0 〜 SBCD_PRECISION ] この桁で丸める
-//@MainActor var sbcd_decimalDigits: Int = 3
 
 /// Equatable準拠
 extension SBCD: Equatable {
@@ -45,8 +41,14 @@ struct SBCD {
 
     // 初期化
     init(_ num: String) {
-        // トリミング
-        value = num.trimmingCharacters(in: .whitespacesAndNewlines)
+        // 許可文字だけ抽出する
+        let allowedChars = CharacterSet(charactersIn: "0123456789"
+                                        + SBCD_MINUS_SIGN
+                                        + SBCD_DECIMAL_SEPARATOR)
+        let filtered = num.filter { char in
+            char.unicodeScalars.allSatisfy { allowedChars.contains($0) }
+        }
+        value = filtered
     }
 
     // Answerバッファサイズ
@@ -65,7 +67,11 @@ struct SBCD {
             sbcd_setDecimalDigits(Int32(digits))
         }
     }
+
     
+    // 四則演算
+    // 結果：「整数部最大(SBCD_PRECISION/2)桁、前方の0除去」＋小数点＋「小数部最大(SBCD_PRECISION/2)桁、後方の0除去」
+
     // 足し算
     func add(_ other: SBCD) -> SBCD {
         let ans = UnsafeMutablePointer<CChar>.allocate(capacity: AnsBufferSize)
