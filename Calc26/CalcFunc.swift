@@ -15,13 +15,13 @@ let FORMULA_MAX_LENGTH = 200
 final class CalcFunc {
     
     // 数値構成文字
-    static let numberChars = "0123456789" + SBCD_MINUS_SIGN + SBCD_DECIMAL_SEPARATOR
+    static let numberChars = "0123456789" + SBCD.MINUS_SIGN + SBCD.DECIMAL_SEPARATOR
     // 演算子構成文字
-    static let operatorChars = "+-*/×÷()√"
+    static let operatorChars = "+-*/×÷()√" // [×,÷]は計算式では許可
     // スペース文字
     static let spaceChar = " "
-    // 許可された文字だけを通すフィルタ文字セット
-    static let allowedCharacters = CharacterSet(
+    // 計算式に許可された文字セット
+    static let formulaCharacters = CharacterSet(
         charactersIn: numberChars + operatorChars + spaceChar)
 
     
@@ -53,21 +53,16 @@ final class CalcFunc {
             log(.warning, "formula: FORMULA_MAX_LENGTH=\(FORMULA_MAX_LENGTH) OVER")
             return "OVER"
         }
-        log(.info, "answer(formula: \(formula))")
 
-        // formulaから無効文字を取り除く
-        let trimmed = formula.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            log(.warning, "answer(formula: トリミング後なし)")
-            return ""
+        log(.info, "formula: \(formula)")
+        // 計算式に許可された文字セットだけにフィルタ（空白除去）
+        let filtered = formula.filter { char in
+            char.unicodeScalars.allSatisfy { CalcFunc.formulaCharacters.contains($0) }
         }
-        
-        // 入力文字を有効な記号だけにフィルタ（空白除去）
-        let filtered = trimmed.filter { char in
-            char.unicodeScalars.allSatisfy { CalcFunc.allowedCharacters.contains($0) }
-        }
+        log(.info, "filtered: \(filtered)")
+
         // 数式をトークンに分割
-        let tokens = tokenizeFormula(filtered)
+        let tokens = splitFormula(filtered)
         // 逆ポーランド記法に変換
         let rpnTokens = convertToRPN(tokens)
         // RPNから答えを計算
@@ -79,20 +74,25 @@ final class CalcFunc {
     }
     
     /// 数式をトークンに分割する（演算子と数字を分離）
-    static func tokenizeFormula(_ input: String) -> [String] {
+    static func splitFormula(_ formula: String) -> [String] {
         var tokens: [String] = []
         var current = ""
         var prevToken = ""
         
-        let operators: Set<Character> = Set(CalcFunc.operatorChars) // "+-*/×÷()√"
-        let minusNumbers: Set<Character> = Set("+-*/×÷(")
+        let operators: Set<Character> = Set(CalcFunc.operatorChars)
+        let minusNumbers: Set<Character> = Set("+-*/(")
 
-        for (index, char) in input.enumerated() {
+        // 計算式では許可されている[×,÷]を[*,/]に置換する
+        let formula = formula
+            .replacingOccurrences(of: "×", with: "*")
+            .replacingOccurrences(of: "÷", with: "/")
+
+        for (index, char) in formula.enumerated() {
             if operators.contains(char) {
                 if char == "-" {
                     // マイナス記号が符号か演算子かを判定処理する
                     // 先頭ならば符号
-                    // "×-" "÷-" "+-" "--" "(-" の "-" は符号、以外は演算子だと解釈
+                    // "*-" "/-" "+-" "--" "(-" の "-" は符号、以外は演算子だと解釈
                     if index == 0 ||
                         (prevToken != "" && minusNumbers.contains(prevToken)) {
                         // これはマイナス符号である
@@ -126,16 +126,6 @@ final class CalcFunc {
         return tokens
     }
     
-    private func normalizeOperator(_ tokens: [String]) -> [String] {
-        return tokens.map {
-            switch $0 {
-                case "×": return "*"
-                case "÷": return "/"
-                default: return $0
-            }
-        }
-    }
-    
     /// 逆ポーランド記法(RPN)に変換（Shunting Yardアルゴリズム）
     static func convertToRPN(_ tokens: [String]) -> [String] {
         var rpn: [String] = []
@@ -146,20 +136,13 @@ final class CalcFunc {
             "+": 1, "-": 1,
             "*": 2, "/": 2
         ]
+
         let isLeftAss: (String) -> Bool = { op in
             return ["+", "-", "*", "/"].contains(op)
         }
 
-        // 類似演算子を統一する
-        let normalized = tokens.map {
-            switch $0 {
-                case "×": return "*"
-                case "÷": return "/"
-                default: return $0
-            }
-        }
         // 逆ポーランドスタック
-        for token in normalized {
+        for token in tokens {
             if let _ = Double(token) {
                 // 数値なら出力キューに追加
                 rpn.append(token)

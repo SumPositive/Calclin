@@ -189,94 +189,94 @@ final class SettingViewModel: ObservableObject {
 
     
     
-    
-    /// 桁区切り、小数点など表示用フォーマット
-    func displayFormat(_ num: String) -> String {
-        if groupingType == .none {
-            // 内部小数点(SBCD_DECIMAL_SEPARATOR)を表示記号(displayDecimalSeparator)に置き換える
-            return num.replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR,
-                                            with: set_displayDecimal)
-        }
-        // トリミング
-        var trimmed = num.trimmingCharacters(in: .whitespacesAndNewlines)
-        // 符号処理
-        var minus = false
-        if trimmed.hasPrefix("-") {
-            minus = true
-            trimmed.removeFirst()
-        }
-        // 整数部と小数部に分ける
-        let parts = trimmed.split(whereSeparator: { $0 == SBCD_DECIMAL_SEPARATOR.first })
-        // 整数部
-        var integerPart = parts.count > 0 ? parts[0] : Substring("")
-        // 小数部
-        let decimalPart = parts.count > 1 ? parts[1] : Substring("")
-        
-        // 整数部だけを桁区切りする
-        let chars = Array(integerPart)
-        let count = chars.count
-        
-        guard 3 < count else {
-            // 内部小数点(SBCD_DECIMAL_SEPARATOR)を表示記号(displayDecimalSeparator)に置き換える
-            return num.replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR,
-                                            with: set_displayDecimal)
-        }
-        
-        switch groupingType {
-            case .none:
-                // 内部小数点(SBCD_DECIMAL_SEPARATOR)を表示記号(displayDecimalSeparator)に置き換える
-                return num.replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR,
-                                                with: set_displayDecimal)
-
-            case .indian:
-                let last3 = chars[(count - 3)..<count]
-                var remaining = chars[0..<(count - 3)]
-                var parts: [String] = []
-                
-                while 2 < remaining.count {
-                    let chunk = remaining.suffix(2)
-                    parts.insert(String(chunk), at: 0)
-                    remaining.removeLast(2)
-                }
-                
-                if !remaining.isEmpty {
-                    parts.insert(String(remaining), at: 0)
-                }
-                
-                integerPart = parts.joined(separator: set_displayGroupSeparator) + set_displayGroupSeparator + Substring(last3)
-                
-            case .kanjiZone:
-                var result = ""
-                let rev = chars.reversed()
-                for (index, char) in rev.enumerated() {
-                    if 0 < index && index % 4 == 0 {
-                        result.append(contentsOf: set_displayGroupSeparator)
-                    }
-                    result.append(char)
-                }
-                integerPart = Substring(result.reversed())
-                
-            case .international:
-                var result = ""
-                let rev = chars.reversed()
-                for (index, char) in rev.enumerated() {
-                    if 0 < index && index % 3 == 0 {
-                        result.append(contentsOf: set_displayGroupSeparator)
-                    }
-                    result.append(char)
-                }
-                integerPart = Substring(result.reversed())
-        }
-        // 整数部（＋小数点＋小数部）
-        var gpNum = integerPart
-        if decimalPart != "" {
-            gpNum += set_displayDecimal + decimalPart
-        }
-        // 符号を付けて完成
-        return String(minus ? "-" + gpNum : gpNum)
-    }
-    
-    
+//    
+//    /// 桁区切り、小数点など表示用フォーマット
+//    func displayFormat(_ num: String) -> String {
+//        if groupingType == .none {
+//            // 内部小数点(SBCD_DECIMAL_SEPARATOR)を表示記号(displayDecimalSeparator)に置き換える
+//            return num.replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR,
+//                                            with: set_displayDecimal)
+//        }
+//        // トリミング
+//        var trimmed = num.trimmingCharacters(in: .whitespacesAndNewlines)
+//        // 符号処理
+//        var minus = false
+//        if trimmed.hasPrefix("-") {
+//            minus = true
+//            trimmed.removeFirst()
+//        }
+//        // 整数部と小数部に分ける
+//        let parts = trimmed.split(whereSeparator: { $0 == SBCD_DECIMAL_SEPARATOR.first })
+//        // 整数部
+//        var integerPart = parts.count > 0 ? parts[0] : Substring("")
+//        // 小数部
+//        let decimalPart = parts.count > 1 ? parts[1] : Substring("")
+//        
+//        // 整数部だけを桁区切りする
+//        let chars = Array(integerPart)
+//        let count = chars.count
+//        
+//        guard 3 < count else {
+//            // 内部小数点(SBCD_DECIMAL_SEPARATOR)を表示記号(displayDecimalSeparator)に置き換える
+//            return num.replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR,
+//                                            with: set_displayDecimal)
+//        }
+//        
+//        switch groupingType {
+//            case .none:
+//                // 内部小数点(SBCD_DECIMAL_SEPARATOR)を表示記号(displayDecimalSeparator)に置き換える
+//                return num.replacingOccurrences(of: SBCD_DECIMAL_SEPARATOR,
+//                                                with: set_displayDecimal)
+//
+//            case .indian:
+//                let last3 = chars[(count - 3)..<count]
+//                var remaining = chars[0..<(count - 3)]
+//                var parts: [String] = []
+//                
+//                while 2 < remaining.count {
+//                    let chunk = remaining.suffix(2)
+//                    parts.insert(String(chunk), at: 0)
+//                    remaining.removeLast(2)
+//                }
+//                
+//                if !remaining.isEmpty {
+//                    parts.insert(String(remaining), at: 0)
+//                }
+//                
+//                integerPart = parts.joined(separator: set_displayGroupSeparator) + set_displayGroupSeparator + Substring(last3)
+//                
+//            case .kanjiZone:
+//                var result = ""
+//                let rev = chars.reversed()
+//                for (index, char) in rev.enumerated() {
+//                    if 0 < index && index % 4 == 0 {
+//                        result.append(contentsOf: set_displayGroupSeparator)
+//                    }
+//                    result.append(char)
+//                }
+//                integerPart = Substring(result.reversed())
+//                
+//            case .international:
+//                var result = ""
+//                let rev = chars.reversed()
+//                for (index, char) in rev.enumerated() {
+//                    if 0 < index && index % 3 == 0 {
+//                        result.append(contentsOf: set_displayGroupSeparator)
+//                    }
+//                    result.append(char)
+//                }
+//                integerPart = Substring(result.reversed())
+//        }
+//        // 整数部（＋小数点＋小数部）
+//        var gpNum = integerPart
+//        if decimalPart != "" {
+//            gpNum += set_displayDecimal + decimalPart
+//        }
+//        // 符号を付けて完成
+//        return String(minus ? "-" + gpNum : gpNum)
+//    }
+//    
+//    
     
     
     // MARK: - Private

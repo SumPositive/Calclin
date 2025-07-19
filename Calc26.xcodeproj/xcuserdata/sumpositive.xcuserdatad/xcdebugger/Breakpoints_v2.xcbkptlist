@@ -128,7 +128,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "612"
             endingLineNumber = "612"
-            landmarkName = "stringRounding(strAnswer, strNum, iPrecision, iDecimal, iType)"
+            landmarkName = "stringRounding(strAnswer, strNum, iDecimal, iType)"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
@@ -144,8 +144,38 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "546"
             endingLineNumber = "546"
-            landmarkName = "stringRounding(strAnswer, strNum, iPrecision, iDecimal, iType)"
+            landmarkName = "stringRounding(strAnswer, strNum, iDecimal, iType)"
             landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "7A3062A3-F8FC-4F24-8325-177507747F9F - 7bae0190d68dfa6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "stringRounding"
+                  moduleName = "Calc26.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/sumpositive/GitLocal/Calc26/Calc26/SBCD/SBCD.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "546"
+                  endingLineNumber = "546">
+               </Location>
+               <Location
+                  uuid = "7A3062A3-F8FC-4F24-8325-177507747F9F - 473811d9299c773b"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "stringRounding"
+                  moduleName = "Calc26Tests"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/sumpositive/GitLocal/Calc26/Calc26/SBCD/SBCD.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "546"
+                  endingLineNumber = "546">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -160,7 +190,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "660"
             endingLineNumber = "660"
-            landmarkName = "stringRounding(strAnswer, strNum, iPrecision, iDecimal, iType)"
+            landmarkName = "stringRounding(strAnswer, strNum, iDecimal, iType)"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
@@ -176,8 +206,38 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "651"
             endingLineNumber = "651"
-            landmarkName = "stringRounding(strAnswer, strNum, iPrecision, iDecimal, iType)"
+            landmarkName = "stringRounding(strAnswer, strNum, iDecimal, iType)"
             landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "17758339-92D9-4A7F-A500-F693405A4EF6 - 7bae0190d68cc3d"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "stringRounding"
+                  moduleName = "Calc26.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/sumpositive/GitLocal/Calc26/Calc26/SBCD/SBCD.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "651"
+                  endingLineNumber = "651">
+               </Location>
+               <Location
+                  uuid = "17758339-92D9-4A7F-A500-F693405A4EF6 - 473811d9299c64a0"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "stringRounding"
+                  moduleName = "Calc26Tests"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/sumpositive/GitLocal/Calc26/Calc26/SBCD/SBCD.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "651"
+                  endingLineNumber = "651">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -190,8 +250,8 @@
             filePath = "Calc26/SBCD/SBCD_Wrapper.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "51"
-            endingLineNumber = "51"
+            startingLineNumber = "43"
+            endingLineNumber = "43"
             landmarkName = "init(_:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -199,49 +259,93 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "9C870385-B996-42DF-8A29-D77D308D0F35"
+            uuid = "398D145D-7B43-4EE0-9636-AD81CC6F0884"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Calc26/CalcFunc.swift"
+            filePath = "Calc26/SBCD/SBCD_Wrapper.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "98"
-            endingLineNumber = "98"
-            landmarkName = "tokenizeFormula(_:)"
+            startingLineNumber = "249"
+            endingLineNumber = "249"
+            landmarkName = "toString(groupType:groupSeparator:decimalSeparator:cutZero:)"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "398D145D-7B43-4EE0-9636-AD81CC6F0884 - 8eccfa75cc78dea"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Calc26.SBCD.toString(source: Swift.String, cutZero: Swift.Bool) -&gt; Swift.String"
+                  moduleName = "Calc26.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/sumpositive/GitLocal/Calc26/Calc26/SBCD/SBCD_Wrapper.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "211"
+                  endingLineNumber = "211">
+               </Location>
+               <Location
+                  uuid = "398D145D-7B43-4EE0-9636-AD81CC6F0884 - 24a92c70c83be16f"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Calc26Tests.SBCD.toString(source: Swift.String, cutZero: Swift.Bool) -&gt; Swift.String"
+                  moduleName = "Calc26Tests"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/sumpositive/GitLocal/Calc26/Calc26/SBCD/SBCD_Wrapper.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "211"
+                  endingLineNumber = "211">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "D4A5068E-61BE-4832-8B91-F7098AF463B1"
+            uuid = "F9EC7360-BC56-4340-B293-D0AD2C08F387"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Calc26/CalcFunc.swift"
+            filePath = "Calc26/SBCD/SBCD_Wrapper.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "109"
-            endingLineNumber = "109"
-            landmarkName = "tokenizeFormula(_:)"
+            startingLineNumber = "274"
+            endingLineNumber = "274"
+            landmarkName = "toString(groupType:groupSeparator:decimalSeparator:cutZero:)"
             landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "261A5959-88CC-45B5-8669-BBD888E8E87B"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Calc26/CalcFunc.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "116"
-            endingLineNumber = "116"
-            landmarkName = "tokenizeFormula(_:)"
-            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "F9EC7360-BC56-4340-B293-D0AD2C08F387 - 8eccfa75cc788a3"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Calc26.SBCD.toString(source: Swift.String, cutZero: Swift.Bool) -&gt; Swift.String"
+                  moduleName = "Calc26.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/sumpositive/GitLocal/Calc26/Calc26/SBCD/SBCD_Wrapper.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "236"
+                  endingLineNumber = "236">
+               </Location>
+               <Location
+                  uuid = "F9EC7360-BC56-4340-B293-D0AD2C08F387 - 24a92c70c83be426"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Calc26Tests.SBCD.toString(source: Swift.String, cutZero: Swift.Bool) -&gt; Swift.String"
+                  moduleName = "Calc26Tests"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/sumpositive/GitLocal/Calc26/Calc26/SBCD/SBCD_Wrapper.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "236"
+                  endingLineNumber = "236">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

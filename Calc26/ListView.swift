@@ -47,7 +47,7 @@ struct CustomCell: View {
                     .scaleEffect(y: -1) // 上下反転：下から上にするため
                 
                 // 桁区切り、小数点など表示用フォーマット
-                let num = viewModel.setting.displayFormat(row.number)
+                let num = row.number   // SBCD.toString( source: row.number)
                 // 数値列
                 Text(num)
                     .font(.headline) // 強調文（太字）    重要な小見出し・ボタンラベルなど    約17pt, 太字
@@ -139,7 +139,7 @@ final class ListViewModel: ObservableObject {
     
     // 小数表示桁数
     @MainActor func decimalChange(digits: Int) {
-        sbcd_setDecimalDigits(Int32(digits))
+        SBCD.round_digits(digits)
         // 現在行が[=]ならば、
         if let row = listRows.last, row.oper == KeyTag.op_answer.rawValue {
             // 新しい小数桁数で再計算＆再表示する

@@ -37,8 +37,8 @@ typedef struct {
 #endif
 
 
-#define SBCD_DECIMAL_SEPARATOR  '.' // [:]コロン（表示に無い記号にすること）
-#define SBCD_MINUS_SIGN         '-' // マイナス記号
+#define SBCD_DECIMAL_SEPARATOR  '.' // 小数点文字
+#define SBCD_MINUS_SIGN         '-' // マイナス符号文字
 
 
 //----------------------------------------------- *strAnswer[SBCD_PRECISION+1 以上] 確保して渡すこと。
@@ -54,11 +54,10 @@ void stringSubtract( char *strAnswer, const char *strNum1, const char *strNum2 )
 void stringMultiply( char *strAnswer, const char *strNum1, const char *strNum2 );
 void stringDivision( char *strAnswer, const char *strNum1, const char *strNum2 );
 
-// 丸め  iPrecision	= 有効桁数（整数部と小数部を合わせた最大桁数。符号や小数点は含まない）
-//		iDecimal	= 小数桁数（小数部の最大桁数）[ 0 〜 iPrecision ]
-//xx		iType		= 丸め方法 (0)RM (1)RZ:切捨 (2)5/4 (3)5/5 (4)6/5 (5)RI:切上 (6)RP		[1.0.5]以前
-//		iType		= 丸め方法 (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP		[1.0.6]以降
-void stringRounding( char *strAnswer, const char *strNum, int iPrecision, int iDecimal, int iType );
+// 丸め
+//	iDecimal	= 小数桁数（小数部の最大桁数）[ 0 〜 iPrecision ]
+//	iType		= 丸め方法 (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP		[1.0.6]以降
+void stringRounding( char *strAnswer, const char *strNum, int iDecimal, int iType );
 
 #ifdef __cplusplus
 }
