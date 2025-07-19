@@ -28,25 +28,27 @@ void sbcd_div(char *result, const char *a, const char *b) {
 }
 
 
-/// 丸め小数桁数
-/// - Parameter digits: 小数部の最大桁数  [ 0 〜 SBCD_PRECISION ]
-int _def_sbcd_round_digits = 0;
-void sbcd_round_digits( int digits ) {
-    _def_sbcd_round_digits = digits;
-}
-
-/// 丸め方法 (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP
-/// - Parameter type:  (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP
-int _def_sbcd_round_type = 4; // (4)四捨五入
-void sbcd_round_type( int type ) {
-    _def_sbcd_round_type = type;
-}
+///// 丸め小数桁数
+///// - Parameter digits: 小数部の最大桁数  [ 0 〜 SBCD_PRECISION ]
+//int _def_sbcd_round_digits = 0;
+//void sbcd_round_digits( int digits ) {
+//    _def_sbcd_round_digits = digits;
+//}
+//
+///// 丸め方法 (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP
+///// - Parameter type:  (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP
+//int _def_sbcd_round_type = 4; // (4)四捨五入
+//void sbcd_round_type( int type ) {
+//    _def_sbcd_round_type = type;
+//}
 
 /// 丸め処理
 /// - Parameters:
 ///   - result: 結果
 ///   - num: 数字文字列
-void sbcd_round(char *result, const char *a) {
-    stringRounding(result, a,  _def_sbcd_round_digits, _def_sbcd_round_type);
+///   - digits: 小数部の最大桁数  [ 0 〜 SBCD_PRECISION ]
+///   - type: 丸め方法 (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP
+void sbcd_round(char *result, const char *num, int digits, int type) {
+    stringRounding(result, num,  digits, type);
 }
 

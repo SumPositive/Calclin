@@ -138,8 +138,9 @@ final class ListViewModel: ObservableObject {
     // MARK: - Public Methods
     
     // 小数表示桁数
-    @MainActor func decimalChange(digits: Int) {
-        SBCD.round_digits(digits)
+    @MainActor
+    func decimalChange(digits: Int) {
+        SBCD_Config.decimalDigits = digits
         // 現在行が[=]ならば、
         if let row = listRows.last, row.oper == KeyTag.op_answer.rawValue {
             // 新しい小数桁数で再計算＆再表示する

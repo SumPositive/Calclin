@@ -3,17 +3,18 @@
 
 import XCTest
 
+@MainActor
 final class SBCD_Tests: XCTestCase {
     
     func test_add_basic1() {
         let a   = SBCD("1.1")
         let b   = SBCD("2.0456")
-        var ans = SBCD("3.1456")
+        let ans = SBCD("3.1456")
         let result = a.add(b)
         XCTAssertEqual(result, ans)
         
-        SBCD.round_digits(2)
-        SBCD.round_type(.R54)
+        SBCD_Config.decimalDigits = 2
+        SBCD_Config.roundType = .R54
         XCTAssertEqual(ans.round(), SBCD("3.15"))
     }
     
@@ -39,12 +40,12 @@ final class SBCD_Tests: XCTestCase {
     }
     
     func test_rounding_R54_vs_RDOWN() {
-        var value = SBCD("1.275")
-        SBCD.round_digits(2)
-        SBCD.round_type(.R54)
+        let value = SBCD("1.275")
+        SBCD_Config.decimalDigits = 2
+        SBCD_Config.roundType = .R54
         XCTAssertEqual(value.round(), SBCD("1.28"))
         
-        SBCD.round_type(.Rdown)
+        SBCD_Config.roundType = .Rdown
         XCTAssertEqual(value.round(), SBCD("1.27"))
     }
     
@@ -55,12 +56,12 @@ final class SBCD_Tests: XCTestCase {
     }
     
     func test_rounding_precision() {
-        var value = SBCD("3.141592")
-        SBCD.round_digits(4)
-        SBCD.round_type(.R54)
+        let value = SBCD("3.141592")
+        SBCD_Config.decimalDigits = 4
+        SBCD_Config.roundType = .R54
         XCTAssertEqual(value.round(), SBCD("3.1416"))
         
-        SBCD.round_digits(2)
+        SBCD_Config.decimalDigits = 2
         XCTAssertEqual(value.round(), SBCD("3.14"))
     }
     
@@ -79,29 +80,30 @@ final class SBCD_Tests: XCTestCase {
     }
     
     func test_decimal() {
-        var value = SBCD("100.123")
-        SBCD.round_digits(1)
-        value.decimal_separator = ":"
+        let value = SBCD("100.123")
+        SBCD_Config.decimalDigits = 1
+        SBCD_Config.decimalSeparator = ":"
         XCTAssertEqual(value.round().toString(), "100:1")
-        value.decimal_separator = "."
+        SBCD_Config.decimalSeparator = "."
     }
 
     func test_group() {
-        var value = SBCD("123456789.01234")
-        SBCD.round_digits(2)
-        SBCD.round_type(.R54)
-        value.group_type = .G3
-        value.group_separator   = ","
+        let value = SBCD("123456789.01234")
+        SBCD_Config.decimalDigits = 2
+        SBCD_Config.roundType = .R54
+        SBCD_Config.groupType = .G3
+        SBCD_Config.groupSeparator = ","
         XCTAssertEqual(value.round().toString(), "123,456,789.01")
+        SBCD_Config.decimalSeparator = "."
     }
 
     func test_group2() {
-        var value = SBCD("123456789.01234")
-        SBCD.round_digits(2)
-        SBCD.round_type(.R54)
-        value.group_type = .G4
-        value.group_separator   = ";"
+        let value = SBCD("123456789.01234")
+        SBCD_Config.decimalDigits = 2
+        SBCD_Config.roundType = .R54
+        SBCD_Config.groupType = .G4
+        SBCD_Config.groupSeparator = ";"
         XCTAssertEqual(value.round().toString(), "1;2345;6789.01")
-        value.group_separator   = ","
+        SBCD_Config.decimalSeparator = "."
     }
 }
