@@ -13,6 +13,9 @@ extension Notification.Name {
     static let SBCD_Config_Change = Notification.Name("SBCD_Config_Change")
 }
 
+// 小数部の表示最大桁数（この桁まで0埋めする）
+let Setting_decimalMaxDigits: Int = 10
+
 
 struct SettingView: View {
     @ObservedObject var viewModel: SettingViewModel
@@ -26,10 +29,11 @@ struct SettingView: View {
         VStack(spacing: 4) {
             
             // 整数部
-            VStack(spacing: 4) {
+            VStack(spacing: 0) {
             
-                Text("整数部（桁区切り）") //.frame(width: 80, alignment: .trailing)
+                Text("整数部（桁区切り）")
                     .font(.system(size: 14, weight: .regular, design: .default))
+                    .frame(maxHeight: 10)
 
                 HStack() {
                     // 桁区切りタイプ
@@ -71,24 +75,37 @@ struct SettingView: View {
                     }
                 }
             }
-            .padding()
+            .padding(4)
             .background(Color(.systemGray6))
             //.cornerRadius(4)
             
             // 小数部
-            VStack(spacing: 4) {
-                Text("小数部（有効桁数と丸め処理）") //.frame(width: 80, alignment: .trailing)
+            VStack(spacing: 0) {
+                Text("小数部（有効桁数と丸め処理）")
                     .font(.system(size: 14, weight: .regular, design: .default))
+                    .frame(maxHeight: 10)
 
                 HStack() {
                     // 小数桁数スライダー
                     Text("桁数") //.frame(width: 80, alignment: .trailing)
-                    Text(" \(Int(decDigi)) ")
-                    Slider(value: $decDigi, in: 0...20, step: 1)
+                    if Int(decDigi) <= Setting_decimalMaxDigits {
+                        Text(" \(Int(decDigi)) ")
+                    }else{
+                        Text(" F ")
+                    }
+                    Slider(value: $decDigi, in: 0...Double(Setting_decimalMaxDigits+1), step: 1)
                         .onChange(of: decDigi, { oldValue, newValue in
                             decDigi = newValue // Double型
                             // SBCD_Configにセットする
-                            SBCD_Config.decimalDigits = Int(decDigi)
+                            if Int(decDigi) <= Setting_decimalMaxDigits {
+                                // 小数部桁数「固定」末尾0埋め
+                                SBCD_Config.decimalDigits = Int(decDigi)
+                                SBCD_Config.trailingZeros = true
+                            }else{
+                                // 小数部桁数「可変」末尾0削除
+                                SBCD_Config.decimalDigits = Setting_decimalMaxDigits
+                                SBCD_Config.trailingZeros = false
+                            }
                             // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
                             NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                         })
@@ -126,11 +143,11 @@ struct SettingView: View {
                     }
                 }
             }
-            .padding()
+            .padding(4)
             .background(Color(.systemGray6))
             //.cornerRadius(4)
         }
-        .padding(10)
+        .padding(6)
         .background(Color(.systemGray5))
         .cornerRadius(10)
         .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
