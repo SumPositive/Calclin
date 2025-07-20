@@ -125,38 +125,31 @@ static bool sbcdZero( SBCD *pSbcd )
 
 
 //---------------------------------------------------------
-// SBCD ⇒ 文字列化　　小数部があれば小数点を入れて末尾の0は除去する
+// SBCD ⇒ 文字列化（前後0除去）　小数部があれば小数点を入れて末尾の0は除去して最小長の文字列にする
 //	pSbcd	:Read Only
 //	zAnswer	:Write Return
 //---------------------------------------------------------
 static void sbcdToString( SBCD *pSbcd, char *zAnswer)
 {
-    //char *p = zAnswer;
     int i;
-    int zero_sup = 0;
-    //int num = 0;
     char c;
-	
-	//負号
-    if(pSbcd->minus) 	*zAnswer++ = SBCD_MINUS_SIGN;
+    bool isEnable = false;
 
-    //整数部
-    //int bSize = sizeof(pSbcd->digit);
-	
+    // 負号
+    if(pSbcd->minus)  *zAnswer++ = SBCD_MINUS_SIGN;
+    // 整数部
     for(i = 0; i < SBCD_PRECISION/2; i++) {			// 整数部
-        //num = (int)(pSbcd->digit[i]);
         c = pSbcd->digit[i];
-        //ゼロサプレス
-    	//if((1<=num) & (num<=9) ) zero_sup=1;
-    	if((0x01<=c) & (c<=0x09) ) zero_sup = 1;
-        //小数点前は必ずあるものとする
-        if((zero_sup!=1) & (i==SBCD_PRECISION/2-1)) zero_sup = 1;
-        //ゼロサプレスじゃないかゼロより多い場合
-        //if( (zero_sup==1) | ((1<=num) & (num<=9))){
-        if( (zero_sup==1) | ((0x01<=c) & (c<=0x09))){
+        // [0]でない数値[1]-[9]あり
+    	if((0x01<=c) & (c<=0x09) ) isEnable = true;
+        // 小数点前は必ずあるものとする
+        if( !isEnable & (i==SBCD_PRECISION/2-1)) isEnable = true;
+        // isEnable = true 以降有効
+        if( isEnable ){
         	*zAnswer++ = (pSbcd->digit[i] + 0x30);
         }
     }
+    //
     //小数部
     int iDeciPos = 0; //= 小数部なし
     for(i = SBCD_PRECISION-1; SBCD_PRECISION/2 <= i; i--) {
@@ -175,7 +168,17 @@ static void sbcdToString( SBCD *pSbcd, char *zAnswer)
             *zAnswer++ = (pSbcd->digit[i] + 0x30);
         }
     }
-	*zAnswer = 0x00; // 文字列終端
+    // 文字列終端
+    *zAnswer = 0x00;
+    
+//    // 小数点
+//    *zAnswer++ = SBCD_DECIMAL_SEPARATOR;
+//    //小数部（SBCDでは末尾まで0ありとする）　後の表示処理で末尾0を処理する
+//    for( ; i < SBCD_PRECISION; i++) {
+//        *zAnswer++ = (pSbcd->digit[i] + 0x30);
+//    }
+//    // 文字列終端
+//    *zAnswer = 0x00;
 }
 
 //---------------------------------------------------------------------------
@@ -520,43 +523,45 @@ extern "C" void stringDivision( char *strAnswer, const char *strNum1, const char
 
 //----------------------------------------------------------------------------------------
 // 丸め
-//  iDecimal	= 小数桁数（小数部の最大桁数）[ 0 〜 iPrecision ]
-//	iType		= 丸め方法 (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP		[1.0.6]以降
+//  iDecimal = 小数桁数（小数部の出力桁数）[ 0 〜 iPrecision ]　+1桁目を丸める
+//	iType	 = 丸め方法 (0)Rup:切上 (1)Rplus (2)5/4 (3)5/5 (4)6/5 (5)Rminus (6)Rdown:切捨
 extern "C" void stringRounding( char *strAnswer, const char *strNum, int iDecimal, int iType )
 {
     SBCD sbcd,		*pSbcd = &sbcd;
 
 	stringToSbcd(strNum, pSbcd);
 	
-	int iStart = SBCD_PRECISION-1, iEnd = 0;
+    int iStart = SBCD_PRECISION-1;
 	for (int i=0; i<SBCD_PRECISION; i++) { // 上から
 		if (pSbcd->digit[i] != 0) {
-			iStart = i;
+			iStart = i; // 0でない最大桁
 			break;
 		}
 	}
+    int iEnd = 0;
 	for (int i=SBCD_PRECISION-1; 0 <= i; i--) { // 下から
 		if (pSbcd->digit[i] != 0) {
-			iEnd = i;
+			iEnd = i; // 0でない最小桁
 			break;
 		}
 	}
-	if (iEnd < iStart) {	// 全桁ZERO
-		strcpy( strAnswer, "0.0" );
+	if (iEnd < iStart) {
+        // 全桁0である
+		strcpy( strAnswer, strNum );
 		return;
 	}
 	
-	int iRoundPos = iStart + SBCD_PRECISION - 1;  // 桁制限
+	int iRoundPos = SBCD_PRECISION - 1;  // 最大桁
 
 	if (SBCD_PRECISION/2 + iDecimal - 1 < iRoundPos) {
-		iRoundPos = SBCD_PRECISION/2 + iDecimal - 1;  // iDecimalによる桁制限
+		iRoundPos = SBCD_PRECISION/2 + iDecimal - 1;  // 丸め位置
 	}
 	
-	if (SBCD_PRECISION/4*3 <= iRoundPos) {
-		iRoundPos = SBCD_PRECISION/4*3 - 1;  // 丸め処理が可能な最終位置 ＜＜偶数丸めでは最大2倍必要になるため
+	if (SBCD_PRECISION/4 * 3 <= iRoundPos) {
+		iRoundPos = SBCD_PRECISION/4 * 3 - 1;  // 丸め処理が可能な最終位置 ＜＜偶数丸めでは最大2倍必要になるため
 	}
 	
-	if (iEnd <= iRoundPos) {
+	if (iEnd < iRoundPos) {
 		strcpy( strAnswer, strNum );	// 桁制限範囲内につき丸め不要
 		return;
 	}
@@ -564,7 +569,65 @@ extern "C" void stringRounding( char *strAnswer, const char *strNum, int iDecima
 	// 丸め処理：丸め桁＝iRoundPos
 	bool bRoundUp = false;
 	switch (iType) {
-		case 0: // (0)RM　常に減るから「負の無限大への丸め」と言われる
+        case 0: // (5)RI:切上（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
+            // [iRoundPos+1]以降に0でない数値があれば、[iRoundPos]++ する
+            for (int i=iRoundPos+1; i<SBCD_PRECISION; i++) {
+                if (pSbcd->digit[i] != 0) {
+                    bRoundUp = true; // ++
+                    break;
+                }
+            }
+            break;
+
+        case 1: // (1)Rplus　常に増えるから「正の無限大への丸め」と言われる
+            // (+)絶対値切上　(-)切捨
+            if (!pSbcd->minus) { // Plusならば
+                // [iRoundPos+1]以降に0でない数値があれば、[iRoundPos]++ する
+                for (int i=iRoundPos+1; i<SBCD_PRECISION; i++) {
+                    if (pSbcd->digit[i] != 0) {
+                        bRoundUp = true; // ++
+                        break;
+                    }
+                }
+            }
+            break;
+
+        case 2: // 5/4 四捨五入（絶対値型）[JIS Z 8401 規則Ｂ]
+            // [iRoundPos+1] >= 5 ならば、[iRoundPos]++ する
+            bRoundUp = (5 <= pSbcd->digit[iRoundPos+1]);    // ++
+            break;
+
+        case 3: // 5/5 五捨五入「最近接偶数への丸め」[JIS Z 8401 規則Ａ] （偶数丸め、JIS丸め、ISO丸め、銀行家の丸め）
+            // [iRoundPos]が偶数で、[iRoundPos+1]以降が5より大きいならば [iRoundPos]++ する
+            // [iRoundPos]が奇数で、[iRoundPos+1]以降が5以上ならば [iRoundPos]++ する
+            if ( (pSbcd->digit[iRoundPos]/2)*2 == pSbcd->digit[iRoundPos]) {
+                // 偶数
+                if (5 < pSbcd->digit[iRoundPos+1]) { // 5「より大きい」
+                    bRoundUp = true; // ++
+                }
+                else if (5 == pSbcd->digit[iRoundPos+1]) { // 5「より大きい」か、調べないと解らない
+                    // [iRoundPos+2]以降に0でない数値があれば、5「より大きい」ので [iRoundPos]++ する
+                    for (int i=iRoundPos+2; i<SBCD_PRECISION; i++) {
+                        if (pSbcd->digit[i] != 0) {
+                            bRoundUp = true; // ++
+                            break;
+                        }
+                    }
+                }
+            } else {
+                // 奇数
+                if (5 <= pSbcd->digit[iRoundPos+1]) { // 5以上
+                    bRoundUp = true; // ++
+                }
+            }
+            break;
+
+        case 4: // 6/5 五捨六入（絶対値型）
+            // [iRoundPos+1] >= 6 ならば、[iRoundPos]++ する
+            bRoundUp = (6 <= pSbcd->digit[iRoundPos+1]);    // ++
+            break;
+
+        case 5: // (5)Rminus　常に減るから「負の無限大への丸め」と言われる
 			// (+)切捨　(-)絶対値切上
 			if (pSbcd->minus) { // Minusならば
 				// [iRoundPos+1]以降に0でない数値があれば、[iRoundPos]++ する
@@ -576,64 +639,13 @@ extern "C" void stringRounding( char *strAnswer, const char *strNum, int iDecima
 				}
 			}
 			break;
-		case 1: // (1)RZ:切捨（絶対値）常に0に近づくことになるから「0への丸め」と言われる
+            
+		case 6: // (6)Rdown:切捨（絶対値）常に0に近づくことになるから「0への丸め」と言われる
 			// bRoundUp = false; Default
 			break;
-		case 2: // 6/5 五捨六入（絶対値型）
-			// [iRoundPos+1] >= 6 ならば、[iRoundPos]++ する
-			bRoundUp = (6 <= pSbcd->digit[iRoundPos+1]);	// ++
-			break;
-		case 3: // 5/5 五捨五入「最近接偶数への丸め」[JIS Z 8401 規則Ａ] （偶数丸め、JIS丸め、ISO丸め、銀行家の丸め）
-			// [iRoundPos]が偶数で、[iRoundPos+1]以降が5より大きいならば [iRoundPos]++ する
-			// [iRoundPos]が奇数で、[iRoundPos+1]以降が5以上ならば [iRoundPos]++ する
-			if ( (pSbcd->digit[iRoundPos]/2)*2 == pSbcd->digit[iRoundPos]) {
-				// 偶数
-				if (5 < pSbcd->digit[iRoundPos+1]) { // 5「より大きい」
-					bRoundUp = true; // ++
-				}
-				else if (5 == pSbcd->digit[iRoundPos+1]) { // 5「より大きい」か、調べないと解らない
-					// [iRoundPos+2]以降に0でない数値があれば、5「より大きい」ので [iRoundPos]++ する
-					for (int i=iRoundPos+2; i<SBCD_PRECISION; i++) {
-						if (pSbcd->digit[i] != 0) {
-							bRoundUp = true; // ++
-							break;
-						}
-					}
-				}
-			} else {
-				// 奇数
-				if (5 <= pSbcd->digit[iRoundPos+1]) { // 5以上
-					bRoundUp = true; // ++
-				}
-			}
-			break;
-		case 4: // 5/4 四捨五入（絶対値型）[JIS Z 8401 規則Ｂ]
-			// [iRoundPos+1] >= 5 ならば、[iRoundPos]++ する
-			bRoundUp = (5 <= pSbcd->digit[iRoundPos+1]);	// ++
-			break;
-		case 5: // (5)RI:切上（絶対値）常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
-			// [iRoundPos+1]以降に0でない数値があれば、[iRoundPos]++ する
-			for (int i=iRoundPos+1; i<SBCD_PRECISION; i++) {
-				if (pSbcd->digit[i] != 0) {
-					bRoundUp = true; // ++
-					break;
-				}
-			}
-			break;
-		case 6: // (6)RP　常に増えるから「正の無限大への丸め」と言われる
-			// (+)絶対値切上　(-)切捨
-			if (!pSbcd->minus) { // Plusならば
-				// [iRoundPos+1]以降に0でない数値があれば、[iRoundPos]++ する
-				for (int i=iRoundPos+1; i<SBCD_PRECISION; i++) {
-					if (pSbcd->digit[i] != 0) {
-						bRoundUp = true; // ++
-						break;
-					}
-				}
-			}
-			break;
+
 		default:
-			// (1)RZ:切捨 と同じ
+			// (6)Rdown:切捨 と同じ
 			break;
 	}
 	

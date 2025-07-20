@@ -124,12 +124,25 @@ final class ListViewModel: ObservableObject {
         // 親モデル
         _setting = StateObject(wrappedValue: settingViewModel)
 
-        // ローカル通知 受信：小数桁数が変更された
-        NotificationCenter.default.publisher(for: .decimalChange)
-            .compactMap { $0.object as? Int }
-            .sink { [weak self] value in
+        // SBCD初期化
+        /// 丸め：丸め方法（R54 = 四捨五入 など）
+        SBCD_Config.roundType  = .R54
+        /// 丸め：小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する）
+        SBCD_Config.decimalDigits = 3
+        /// 小数点記号（例: "." or "．"）
+        SBCD_Config.decimalSeparator = "."
+        /// 小数部の桁数まで0埋めする／false=末尾0削除する
+        SBCD_Config.trailingZeros = false
+        /// 桁区切りの方式（3桁区切り、4桁区切り、インド式など）
+        SBCD_Config.groupType = .G3
+        /// 桁区切り記号（例: "," or "，"）
+        SBCD_Config.groupSeparator = ","
+
+        // ローカル通知 受信：SBCD_Configが変更された
+        NotificationCenter.default.publisher(for: .SBCD_Config_Change)
+            .sink { [weak self] _ in
                 Task { @MainActor in
-                    self?.decimalChange(digits: value)
+                    self?.sbcdConfigChange()
                 }
             }
             .store(in: &cancellables)
@@ -139,8 +152,7 @@ final class ListViewModel: ObservableObject {
     
     // 小数表示桁数
     @MainActor
-    func decimalChange(digits: Int) {
-        SBCD_Config.decimalDigits = digits
+    func sbcdConfigChange() {
         // 現在行が[=]ならば、
         if let row = listRows.last, row.oper == KeyTag.op_answer.rawValue {
             // 新しい小数桁数で再計算＆再表示する
@@ -149,8 +161,6 @@ final class ListViewModel: ObservableObject {
             handleOperator(OP_ANSWER)
         }
     }
-    
-    
 
     /// KeyViewからKeyを受け取り計算式を組み立てる
     @MainActor func input(_ keyTag: KeyTag,

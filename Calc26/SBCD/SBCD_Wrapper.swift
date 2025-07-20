@@ -13,43 +13,32 @@ import Foundation
 @MainActor
 struct SBCD_Config {
 
-    // 丸め
-    enum RoundType: Int, CaseIterable, Identifiable {
-        case Rminus = 0, Rdown, R65, R55, R54, Rup, Rplus
-        var label: String {
-            switch self {
-                case .Rminus: return "負方向丸め"
-                case .Rdown:  return "切り捨て"
-                case .R65:    return "五捨六入"
-                case .R55:    return "五捨五入"
-                case .R54:    return "四捨五入"
-                case .Rup:    return "切り上げ"
-                case .Rplus:  return "正方向丸め"
-            }
-        }
-        var id: Int { rawValue }
+    // 丸めタイプ
+    enum RoundType: Int {
+        // この順序（.rawValue）は、C-func:stringRounding.iTypeの値と一致すること
+        case Rup    = 0
+        case Rplus
+        case R54
+        case R55
+        case R65
+        case Rminus
+        case Rdown
     }
     /// 丸め：丸め方法（R54 = 四捨五入 など）
     static var roundType: RoundType = .R54
-    /// 丸め：小数部の桁数（例：2 → 小数点以下2桁）
-    static var decimalDigits: Int = 2
+    /// 丸め：小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する）
+    static var decimalDigits: Int = 3
     /// 小数点記号（例: "." or "．"）
     static var decimalSeparator: String = "."
-    /// 小数部の末尾の0を除去するか
-    static var cutTrailingZeros: Bool = false
+    /// 小数部の桁数まで0埋めする／false=末尾0削除する
+    static var trailingZeros: Bool = true
 
     // 桁区切り
-    enum GroupType: Int, CaseIterable, Identifiable {
-        case none = 0, G3, G4, G23
-        var label: String {
-            switch self {
-                case .none: return "なし"
-                case .G3: return "3桁区切り"
-                case .G4: return "4桁区切り"
-                case .G23: return "インド式"
-            }
-        }
-        var id: Int { rawValue }
+    enum GroupType: Int {
+        case none = 0
+        case G3
+        case G4
+        case G23
     }
     /// 桁区切りの方式（3桁区切り、4桁区切り、インド式など）
     static var groupType: GroupType = .G3
@@ -126,14 +115,16 @@ final class SBCD: Equatable {
         return SBCD(String(cString: ans))
     }
     
-    /// 表示文字列化
+    /// SBCD_Configの設定値に従いSBCDオブジェクトを文字列化する
+    /// - Returns: String
     @MainActor
     func toString() -> String {
         let groupType = SBCD_Config.groupType
         let groupSeparator = SBCD_Config.groupSeparator
         let decimalSeparator = SBCD_Config.decimalSeparator
-        let isCutZero = SBCD_Config.cutTrailingZeros
-        
+        let decimalDigits = SBCD_Config.decimalDigits  // 小数部の桁数
+        let trailingZeros = SBCD_Config.trailingZeros  // 小数部の桁数まで0埋めする／false=末尾0削除する
+
         // マイナス記号の処理
         var trimmed = value
         var minus = false
@@ -182,15 +173,19 @@ final class SBCD: Equatable {
         // 整数部
         var result = String(integerPart)
         // 小数部
-        if !decimalPart.isEmpty {
-            var decimalStr = String(decimalPart)
-            if isCutZero {
-                // 小数部末尾の0のみ削除（例: "1234000" → "1234"）
-                decimalStr = decimalStr.replacingOccurrences(of: "0+$", with: "", options: .regularExpression)
+        var decimalStr = String(decimalPart.prefix(decimalDigits)) // 小数桁数（decimalDigits）以内でカット
+        if trailingZeros {
+            if decimalStr.count < decimalDigits {
+                // 小数部末尾に0補充する
+                decimalStr = decimalStr.padding(toLength: decimalDigits, withPad: "0", startingAt: 0)
             }
-            if !decimalStr.isEmpty {
-                result += decimalSeparator + decimalStr
-            }
+        }else{
+            // 小数部末尾の0削除する（例: "1204000" → "1204"）
+            decimalStr = decimalStr.replacingOccurrences(of: "0+$", with: "", options: .regularExpression)
+        }
+        // 小数点
+        if !decimalStr.isEmpty {
+            result += decimalSeparator + decimalStr
         }
         // 符号を付けて完成
         return minus ? "-" + result : result

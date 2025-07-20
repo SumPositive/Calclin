@@ -57,6 +57,10 @@ void stringDivision( char *strAnswer, const char *strNum1, const char *strNum2 )
 // 丸め
 //	iDecimal	= 小数桁数（小数部の最大桁数）[ 0 〜 iPrecision ]
 //	iType		= 丸め方法 (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP		[1.0.6]以降
+
+// old (0)Rminus (1)Rdown:切捨 (2)6/5 (3)5/5 (4)5/4 (5)Rup:切上 (6)Rplus
+// new (0)Rup:切上 (1)Rplus (2)5/4 (3)5/5 (4)6/5 (5)Rminus (6)Rdown:切捨
+
 void stringRounding( char *strAnswer, const char *strNum, int iDecimal, int iType );
 
 #ifdef __cplusplus

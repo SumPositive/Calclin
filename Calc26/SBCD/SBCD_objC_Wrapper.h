@@ -23,22 +23,12 @@ void sbcd_sub(char *result, const char *a, const char *b);
 void sbcd_mul(char *result, const char *a, const char *b);
 void sbcd_div(char *result, const char *a, const char *b);
 
-
-///// 丸め小数桁数
-///// - Parameter digits: 小数部の最大桁数  [ 0 〜 SBCD_PRECISION ]
-//void sbcd_round_digits( int digits );
-//
-///// 丸め方法 (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP
-///// - Parameter type:  (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP
-//void sbcd_round_type( int type );
-
 /// 丸め処理
 /// - Parameters:
 ///   - result: 結果
 ///   - num: 数字文字列
 ///   - digits: 小数部の最大桁数  [ 0 〜 SBCD_PRECISION ]
-///   - type: 丸め方法 (0)RM (1)RZ:切捨 (2)6/5 (3)5/5 (4)5/4 (5)RI:切上 (6)RP
-//void sbcd_round(char *result, const char *num);
+///   - type: 丸め方法
 void sbcd_round(char *result, const char *num, int digits, int type);
 
 
