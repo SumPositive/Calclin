@@ -458,7 +458,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = jp.art.sumpo.calc26;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/calc26-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -487,7 +487,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = jp.art.sumpo.calc26;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/calc26-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -506,7 +506,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/calc26-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Calc26.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Calc26";
@@ -526,7 +526,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/calc26-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Calc26.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Calc26";
@@ -544,7 +544,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26UITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/calc26-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Calc26;
@@ -562,7 +562,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26UITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/calc26-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Calc26;
