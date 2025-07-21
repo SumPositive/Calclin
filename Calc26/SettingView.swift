@@ -22,7 +22,7 @@ struct SettingView: View {
 
     // @State 変化あればViewが更新される
     // 小数点以下の桁数（0〜10）  SliderパラメータのためDouble型
-    @State private var decDigi: Double = 3.0
+    @State private var decDigi = Double(SETTING_decimalDigits_MAX + 1) // [F]
 
     
     var body: some View {
@@ -163,7 +163,7 @@ final class SettingViewModel: ObservableObject {
         case Rup    = "切り上げ"
         case Rplus  = "正方向丸め"
         case R54    = "四捨五入"
-        case R55    = "五捨五入"
+        case R55    = "五捨五超入" // Default
         case R65    = "五捨六入"
         case Rminus = "負方向丸め"
         case Rdown  = "切り捨て"
@@ -182,9 +182,9 @@ final class SettingViewModel: ObservableObject {
             }
         }
     }
-    @Published var roundType: RoundType = .R54
+    @Published var roundType: RoundType = .R55
     /// 丸め：小数部の桁数（例：2 → 小数点以下3桁目を丸めて2桁表示する）
-    @Published var decimalDigits: Int = 2
+    @Published var decimalDigits: Int = SETTING_decimalDigits_MAX // 初期「F」小数末尾0可変
 
     /// 小数点記号
     enum DecimalSeparator: String, CaseIterable, Identifiable {

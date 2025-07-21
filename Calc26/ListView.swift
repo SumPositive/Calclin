@@ -125,18 +125,19 @@ final class ListViewModel: ObservableObject {
         _setting = StateObject(wrappedValue: settingViewModel)
 
         // SBCD初期化
-        /// 丸め：丸め方法（R54 = 四捨五入 など）
-        SBCD_Config.decimalRoundType  = .R54
-        /// 丸め：小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する）
-        SBCD_Config.decimalDigits = 3
         /// 小数点記号（例: "." or "．"）
         SBCD_Config.decimalSeparator = "."
+        /// 小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する）
+        SBCD_Config.decimalDigits = SETTING_decimalDigits_MAX
         /// 小数部の桁数まで0埋めする／false=末尾0削除する
-        SBCD_Config.decimalTrailZero = false
-        /// 桁区切りの方式（3桁区切り、4桁区切り、インド式など）
-        SBCD_Config.groupType = .G3
+        SBCD_Config.decimalTrailZero = false  // 「F」小数末尾0可変
+        /// 丸め方法（R54 = 四捨五入 など）
+        SBCD_Config.decimalRoundType  = .R55 // 五捨五超入　偶数丸め
+
         /// 桁区切り記号（例: "," or "，"）
         SBCD_Config.groupSeparator = ","
+        /// 桁区切りの方式（3桁区切り、4桁区切り、インド式など）
+        SBCD_Config.groupType = .G3
 
         // ローカル通知 受信：SBCD_Configが変更された
         NotificationCenter.default.publisher(for: .SBCD_Config_Change)

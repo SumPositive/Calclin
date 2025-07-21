@@ -29,7 +29,7 @@ struct SBCD_Config {
         case Rup    = 0 // 切り上げ
         case Rplus      // 正方向丸め
         case R54        // 四捨五入
-        case R55        // 五捨五入
+        case R55        // 五捨五超入　偶数丸め
         case R65        // 五捨六入
         case Rminus     // 負方向丸め
         case Rdown      // 切り捨て（丸めない）

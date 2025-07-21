@@ -217,7 +217,7 @@ final class SBCD_toString_Tests: XCTestCase {
         XCTAssertEqual(result.toString(), "4")
     }
     
-    func test_R55() { // 五捨五入「最近接偶数への丸め」[JIS Z 8401 規則Ａ] （偶数丸め、JIS丸め、ISO丸め、銀行家の丸め）
+    func test_R55() { // 五捨五超入「最近接偶数への丸め」[JIS Z 8401 規則Ａ] （偶数丸め、JIS丸め、ISO丸め、銀行家の丸め）
         SBCD_Config.decimalRoundType = .R55
         SBCD_Config.decimalTrailZero = false
 
@@ -226,9 +226,9 @@ final class SBCD_toString_Tests: XCTestCase {
 
         // [iRoundPos]が偶数で、[iRoundPos+1]以降が5より大きいならば [iRoundPos]++ する
         SBCD_Config.decimalDigits = 1
-        XCTAssertEqual(SBCD("1.25").toString(),         "1.2") // down
-        XCTAssertEqual(SBCD("1.250000001").toString(),  "1.3") // up
-        XCTAssertEqual(SBCD("1.26").toString(),         "1.3") // up
+        XCTAssertEqual(SBCD("1.25").toString(),         "1.2") // 五 down
+        XCTAssertEqual(SBCD("1.250000001").toString(),  "1.3") // 五超 up
+        XCTAssertEqual(SBCD("1.26").toString(),         "1.3") // 五超 up
 
         // [iRoundPos]が奇数で、[iRoundPos+1]以降が5以上ならば [iRoundPos]++ する
         SBCD_Config.decimalDigits = 1

@@ -601,7 +601,7 @@ extern "C" void stringRounding( char *strAnswer, const char *strNum, int iDecima
             bRoundUp = (5 <= pSbcd->digit[iRoundPos+1]);    // ++
             break;
 
-        case 3: // 5/5 五捨五入「最近接偶数への丸め」[JIS Z 8401 規則Ａ] （偶数丸め、JIS丸め、ISO丸め、銀行家の丸め）
+        case 3: // 5/5 五捨五超入　「最近接偶数への丸め」[JIS Z 8401 規則Ａ] （偶数丸め、JIS丸め、ISO丸め、銀行家の丸め）
             // [iRoundPos]が偶数で、[iRoundPos+1]以降が5より大きいならば [iRoundPos]++ する
             // [iRoundPos]が奇数で、[iRoundPos+1]以降が5以上ならば [iRoundPos]++ する
             if ( (pSbcd->digit[iRoundPos]/2)*2 == pSbcd->digit[iRoundPos]) {
