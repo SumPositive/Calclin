@@ -378,7 +378,11 @@ extern "C" void stringAddition( char *strAnswer, const char *strNum1, const char
 	
 	if (pSbcd1->minus == pSbcd2->minus) {
 		// 符号無し和
-    	sbcAbsAdd( pSbcd1->digit, pSbcd2->digit, pSbcdAns->digit ); // N1 + N2 = Ans
+        if (sbcAbsAdd( pSbcd1->digit, pSbcd2->digit, pSbcdAns->digit )) { // N1 + N2 = Ans
+            // carry==1 Overflow
+            strcpy(strAnswer, "-0");
+            return;
+        }
 		// 符号
 		pSbcdAns->minus = pSbcd1->minus;	// どちらでも同じ
 		// 回答
@@ -390,7 +394,7 @@ extern "C" void stringAddition( char *strAnswer, const char *strNum1, const char
 			// 桁下がり発生>>> ｜pSbcd1｜<｜pSbcd2｜ であるから、逆差を求める
 			if ( sbcAbsSub(pSbcd2->digit, pSbcd1->digit, pSbcdAns->digit) ) { // ｜N2｜-｜N1｜
 				// 桁下がり発生>>> 異常
-				strcpy(strAnswer, "@Over\0");
+				strcpy(strAnswer, "-0");
 				return;
 			}
 			// 符号
@@ -407,7 +411,7 @@ extern "C" void stringAddition( char *strAnswer, const char *strNum1, const char
 			// 桁下がり発生>>> ｜pSbcd2｜<｜pSbcd1｜ であるから、逆差を求める
 			if ( sbcAbsSub(pSbcd1->digit, pSbcd2->digit, pSbcdAns->digit) ) { // ｜N1｜-｜N2｜
 				// 桁下がり発生>>> 異常
-				strcpy(strAnswer, "@Over\0");
+				strcpy(strAnswer, "-0");
 				return;
 			}
 			// 符号
@@ -435,7 +439,7 @@ extern "C" void stringSubtract( char *strAnswer, const char *strNum1, const char
 	char cBuf[SBCD_PRECISION+4]; // SBCD_MINUS_SIGN('-')追加により最大+2の可能性あり
 	
 	if (SBCD_PRECISION+2 < strlen(strNum2)) { // (+2)符号と小数点の分
-		strcpy(strAnswer, "@Over\0");
+		strcpy(strAnswer, "-0");
 	}
 	// Num2 の符号反転して和を求める
 	if (strNum2[0] == SBCD_MINUS_SIGN) {
@@ -468,7 +472,7 @@ extern "C" void stringMultiply( char *strAnswer, const char *strNum1, const char
     // 符号無し積
 	sbcAbsMulti(pSbcd1->digit, pSbcd2->digit, pSbcdAns->digit);
 	if ( 9 < pSbcdAns->digit[0]) { // 内部計算 Overflow
-		strcpy( strAnswer, "@Overflow" );
+		strcpy( strAnswer, "-0" );
 		return;
 	}
 	
@@ -500,7 +504,7 @@ extern "C" void stringDivision( char *strAnswer, const char *strNum1, const char
 	
 	stringToSbcd(strNum2, pSbcd2);
 	if ( sbcdZero(pSbcd2) ){  // 0割エラー
-		strcpy( strAnswer, "@0\0" );
+		strcpy( strAnswer, "-0" );
 		return;
 	}
 	stringToSbcd(strNum1, pSbcd1);

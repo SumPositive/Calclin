@@ -54,7 +54,7 @@ struct CustomCell: View {
                     .scaleEffect(y: -1) // 上下反転：下から上にするため
                 
                 // 単位列
-                Text("坪")//row.unit)
+                Text(row.unit)
                     .font(.callout) // 注釈    補助的な説明文など    約16pt
                     .scaleEffect(y: -1) // 上下反転：下から上にするため
                     .frame(width: 30, alignment: .leading) // 固定幅指定
@@ -105,9 +105,9 @@ final class ListViewModel: ObservableObject {
     
     struct  ListRow: Hashable {
         var oper: String    = KeyTag.fn_start.rawValue
-        var number: String  = ""
-        var unit: String    = ""
-        var answer: String  = ""
+        var number: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
+        var unit: String    = ""    // 単位
+        var answer: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
     }
     // 全行記録
     @Published var listRows: [ListRow] = [ListRow()] // 初期1行 .index=0
@@ -126,13 +126,13 @@ final class ListViewModel: ObservableObject {
 
         // SBCD初期化
         /// 丸め：丸め方法（R54 = 四捨五入 など）
-        SBCD_Config.roundType  = .R54
+        SBCD_Config.decimalRoundType  = .R54
         /// 丸め：小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する）
         SBCD_Config.decimalDigits = 3
         /// 小数点記号（例: "." or "．"）
         SBCD_Config.decimalSeparator = "."
         /// 小数部の桁数まで0埋めする／false=末尾0削除する
-        SBCD_Config.trailingZeros = false
+        SBCD_Config.decimalTrailZero = false
         /// 桁区切りの方式（3桁区切り、4桁区切り、インド式など）
         SBCD_Config.groupType = .G3
         /// 桁区切り記号（例: "," or "，"）

@@ -15,7 +15,7 @@ let FORMULA_MAX_LENGTH = 200
 final class CalcFunc {
     
     // 数値構成文字
-    static let numberChars = "0123456789" + SBCD.MINUS_SIGN + SBCD.DECIMAL_SEPARATOR
+    static let numberChars = SBCD.VA_NUMBER + SBCD.VA_MINUS + SBCD.VA_DECIMAL
     // 演算子構成文字
     static let operatorChars = "+-*/×÷()√" // [×,÷]は計算式では許可
     // スペース文字
@@ -66,11 +66,9 @@ final class CalcFunc {
         // 逆ポーランド記法に変換
         let rpnTokens = convertToRPN(tokens)
         // RPNから答えを計算
-        let sbcd1 = evaluateRPN(rpnTokens)
-        // 丸め処理
-        let sbcd2 = sbcd1.round()
-        // 桁区切り文字列化
-        return sbcd2.value
+        let sbcd = evaluateRPN(rpnTokens)
+        // 文字列化（小数丸め、桁区切り）
+        return sbcd.toString()
     }
     
     /// 数式をトークンに分割する（演算子と数字を分離）

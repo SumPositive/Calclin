@@ -14,7 +14,7 @@ extension Notification.Name {
 }
 
 // 小数部の表示最大桁数（この桁まで0埋めする）
-let Setting_decimalMaxDigits: Int = 10
+let SETTING_decimalDigits_MAX: Int = 10
 
 
 struct SettingView: View {
@@ -88,23 +88,23 @@ struct SettingView: View {
                 HStack() {
                     // 小数桁数スライダー
                     Text("桁数") //.frame(width: 80, alignment: .trailing)
-                    if Int(decDigi) <= Setting_decimalMaxDigits {
+                    if Int(decDigi) <= SETTING_decimalDigits_MAX {
                         Text(" \(Int(decDigi)) ")
                     }else{
                         Text(" F ")
                     }
-                    Slider(value: $decDigi, in: 0...Double(Setting_decimalMaxDigits+1), step: 1)
+                    Slider(value: $decDigi, in: 0...Double(SETTING_decimalDigits_MAX+1), step: 1)
                         .onChange(of: decDigi, { oldValue, newValue in
                             decDigi = newValue // Double型
                             // SBCD_Configにセットする
-                            if Int(decDigi) <= Setting_decimalMaxDigits {
+                            if Int(decDigi) <= SETTING_decimalDigits_MAX {
                                 // 小数部桁数「固定」末尾0埋め
                                 SBCD_Config.decimalDigits = Int(decDigi)
-                                SBCD_Config.trailingZeros = true
+                                SBCD_Config.decimalTrailZero = true
                             }else{
                                 // 小数部桁数「可変」末尾0削除
-                                SBCD_Config.decimalDigits = Setting_decimalMaxDigits
-                                SBCD_Config.trailingZeros = false
+                                SBCD_Config.decimalDigits = SETTING_decimalDigits_MAX
+                                SBCD_Config.decimalTrailZero = false
                             }
                             // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
                             NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
@@ -119,7 +119,7 @@ struct SettingView: View {
                     .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
                     .onChange(of: viewModel.roundType) { oldValue, newValue in
                         // SBCD_Configにセットする
-                        SBCD_Config.roundType = newValue.sbcd_config_roundType
+                        SBCD_Config.decimalRoundType = newValue.sbcd_config_roundType
                         // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                     }
@@ -170,7 +170,7 @@ final class SettingViewModel: ObservableObject {
         // Identifiable対応のため
         var id: String { rawValue }
         // SBCD_Config.RoundTypeを返す
-        var sbcd_config_roundType: SBCD_Config.RoundType {
+        var sbcd_config_roundType: SBCD_Config.DecimalRoundType {
             switch self {
                 case .Rup:    return .Rup
                 case .Rplus:  return .Rplus
