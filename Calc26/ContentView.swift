@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    let setting: SettingViewModel
+    let setting: SettingViewModel // 全Viewで共通のインスタンス
     @StateObject var listViewModel: ListViewModel
     @StateObject var list2ViewModel: ListViewModel
 
@@ -20,8 +20,8 @@ struct ContentView: View {
     }
 
     // @State 変化あればViewが更新される
-    // 小数点以下の桁数（0〜10）
-    @State private var decDigi: Double = 2
+//    // 小数点以下の桁数（0〜10）
+//    @State private var decDigi: Double = 2
     // 設定　表示状態
     @State private var isShowingSetting = false
     // アクティブ（フォーカス）ListView番号　＜＜＜TODO:配列で複数対応

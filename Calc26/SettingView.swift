@@ -9,7 +9,7 @@ import SwiftUI
 
 // ローカル通知名を定義
 extension Notification.Name {
-    // 小数桁数が変更された
+    // SBCD_Configが変更された
     static let SBCD_Config_Change = Notification.Name("SBCD_Config_Change")
 }
 
@@ -24,6 +24,15 @@ struct SettingView: View {
     // 小数点以下の桁数（0〜10）  SliderパラメータのためDouble型
     @State private var decDigi = Double(SETTING_decimalDigits_MAX + 1) // [F]
 
+    @State private var fontScale = Double(1.5)
+    
+
+//    func attributedString(_ str: String) -> AttributedString {
+//        var attrStr = AttributedString(str)
+//        attrStr.font = .system(size: 18, weight: .regular, design: .monospaced)
+//        attrStr.foregroundColor = .blue
+//        return attrStr
+//    }
     
     var body: some View {
         VStack(spacing: 4) {
@@ -69,7 +78,7 @@ struct SettingView: View {
                         // 選択されたときに呼ばれる処理
                         viewModel.groupSeparator = newValue
                         // SBCD_Configにセットする
-                        SBCD_Config.groupSeparator = newValue.rawValue
+                        SBCD_Config.groupSeparator = newValue.symbol
                         // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                     }
@@ -95,6 +104,7 @@ struct SettingView: View {
                     }
                     Slider(value: $decDigi, in: 0...Double(SETTING_decimalDigits_MAX+1), step: 1)
                         .onChange(of: decDigi, { oldValue, newValue in
+                            // @State decDigi 更新により描画
                             decDigi = newValue // Double型
                             // SBCD_Configにセットする
                             if Int(decDigi) <= SETTING_decimalDigits_MAX {
@@ -137,7 +147,7 @@ struct SettingView: View {
                         // 選択されたときに呼ばれる処理
                         viewModel.decimalSeparator = newValue
                         // SBCD_Configにセットする
-                        SBCD_Config.decimalSeparator = newValue.rawValue
+                        SBCD_Config.decimalSeparator = newValue.symbol
                         // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                     }
@@ -145,7 +155,28 @@ struct SettingView: View {
             }
             .padding(4)
             .background(Color(.systemGray6))
-            //.cornerRadius(4)
+            
+            // その他
+            VStack(spacing: 0) {
+                
+                HStack() {
+                    // 数字倍率スライダー
+                    Text("数字倍率")
+                    Text(String(format: " %.1f ", fontScale))
+                    Slider(value: $fontScale, in: (0.5)...(3.0), step: 0.1)
+                        .onChange(of: fontScale, { oldValue, newValue in
+                            // @State fontScale 更新により描画
+                            fontScale = newValue // Double型
+                            // SettingViewModel
+                            viewModel.numberFontScale = newValue // Double型
+                            // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
+                            NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                        })
+                }
+            }
+            .padding(4)
+            .background(Color(.systemGray6))
+
         }
         .padding(6)
         .background(Color(.systemGray5))
@@ -188,22 +219,29 @@ final class SettingViewModel: ObservableObject {
 
     /// 小数点記号
     enum DecimalSeparator: String, CaseIterable, Identifiable {
-        case dot    = "."
-        case conma  = ","
-        case center = "・"
-        case upperr = "'"
+        case dot    = "0.0"
+        case center = "0·0"
+        case conma  = "0,0"
         // Identifiable対応のため
         var id: String { rawValue }
+        // 記号
+        var symbol: String {
+            switch self {
+                case .dot:      return "."
+                case .center:   return "·"
+                case .conma:    return ","
+            }
+        }
     }
     @Published var decimalSeparator: DecimalSeparator = .dot
 
     
     // 桁区切りタイプ    　　PickerデータソースにするためCaseIterable, Identifiableに準拠
     enum GroupType: String, CaseIterable, Identifiable {
-        case none   = "なし"
-        case G3     = "3桁区切り"
-        case G4     = "4桁区切り"
-        case G23    = "インド式"
+        case none   = "区切りなし 1234567.0"
+        case G3     = "３桁区切り 1,123,123.0"
+        case G23    = "インド方式 12,12,123.0"
+        case G4     = "４桁区切り 1234,1234.0"
         // Identifiable対応のため
         var id: String { rawValue }
         // SBCD_Config.GroupTypeを返す
@@ -219,14 +257,26 @@ final class SettingViewModel: ObservableObject {
     @Published var groupType: GroupType = .G3
     /// 桁区切り記号（例: "," or "，"）
     enum GroupSeparator: String, CaseIterable, Identifiable {
-        case dot    = "."
-        case conma  = ","
-        case center = "・"
-        case upperr = "'"
+        case conma  = "9,9"
+        case upperr = "9'9"
+        case space  = "9 9"
+        case dot    = "9.9"
         // Identifiable対応のため
         var id: String { rawValue }
+        // 記号
+        var symbol: String {
+            switch self {
+                case .conma:    return ","
+                case .upperr:   return "'"
+                case .space:    return " "
+                case .dot:      return "."
+            }
+        }
     }
     @Published var groupSeparator: GroupSeparator = .conma
 
+    //
+    @Published var numberFontScale = Double(1.5)
+    
 }
 

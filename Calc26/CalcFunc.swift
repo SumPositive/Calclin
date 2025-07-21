@@ -67,8 +67,8 @@ final class CalcFunc {
         let rpnTokens = convertToRPN(tokens)
         // RPNから答えを計算
         let sbcd = evaluateRPN(rpnTokens)
-        // 文字列化（小数丸め、桁区切り）
-        return sbcd.toString()
+        // 文字列化（小数丸め） ここでは、桁区切りしない。List表示時に.formatStringで桁区切りなど書式付きにする
+        return sbcd.round().value
     }
     
     /// 数式をトークンに分割する（演算子と数字を分離）

@@ -114,40 +114,34 @@ final class SBCD: Equatable {
         return SBCD(String(cString: ans))
     }
     
-// toStringに含めて簡潔にした。
-//    /// 丸め
-//    @MainActor
-//    func round() -> SBCD {
-//        let ans = UnsafeMutablePointer<CChar>.allocate(capacity: AnsBufferSize)
-//        defer { ans.deallocate() }
-//        sbcd_round(ans, self.value, Int32(SBCD_Config.decimalDigits), Int32(SBCD_Config.decimalRoundType.rawValue))
-//        return SBCD(String(cString: ans))
-//    }
-    
-    /// SBCD_Config 設定値に従いSBCDオブジェクトを文字列化する
-    /// - Returns: String
+    /// 丸め
+    /// SBCD_Config 設定値に従いSBCDオブジェクトを丸める　（桁区切り、記号など装飾しない）
+    /// CalcFunc.answer()に使用し、装飾のない丸め結果だけを返す
     @MainActor
-    func toString() -> String {
-        var value: String
+    func round() -> SBCD {
         // 丸め
         if SBCD_Config.decimalRoundType == .Rdown {
             // 切り捨て（丸めない）
-            value = self.value
-        }else{
-            // 丸め処理
-            let ans = UnsafeMutablePointer<CChar>.allocate(capacity: AnsBufferSize)
-            defer { ans.deallocate() }
-            sbcd_round(ans, self.value, Int32(SBCD_Config.decimalDigits), Int32(SBCD_Config.decimalRoundType.rawValue))
-            value = String(cString: ans)
+            return self
         }
-
+        // 丸め処理
+        let ans = UnsafeMutablePointer<CChar>.allocate(capacity: AnsBufferSize)
+        defer { ans.deallocate() }
+        sbcd_round(ans, self.value, Int32(SBCD_Config.decimalDigits), Int32(SBCD_Config.decimalRoundType.rawValue))
+        return SBCD(String(cString: ans))
+    }
+    
+    /// 数字文字列を SBCD_Config設定値に従い書式付にする
+    /// - Returns: String    桁区切り、記号など装飾された文字列
+    @MainActor
+    func format() -> String {
+        var value = self.value
         // マイナス記号の処理
         var minus = false
         if value.hasPrefix(SBCD.VA_MINUS) {
             minus = true
             value.removeFirst()
         }
-        
         // 整数部と小数部に分離
         let parts = value.split(separator: Character(SBCD.VA_DECIMAL))
         var integerPart = parts.count > 0 ? parts[0] : Substring("")

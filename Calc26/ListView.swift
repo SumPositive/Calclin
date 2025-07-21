@@ -21,46 +21,50 @@ struct ListView: View {
                     .listRowSeparator(.hidden) // 既定の下線を非表示
                     .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
                     .padding(.vertical, 2)  // 上下の余白
+                    .padding(.horizontal, 0)
             }
         }
         .scaleEffect(y: -1) // 上下反転：下から上にするため ここで元に戻る
         .listStyle(.plain)
         .environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
         .frame(minWidth: APP_MIN_WIDTH / 2.0, maxWidth: APP_MAX_WIDTH * 1.5)
+        .padding(0)
     }
 }
 
 // カスタム明細セル
 struct CustomCell: View {
-    let viewModel: ListViewModel
+    @ObservedObject var viewModel: ListViewModel
     let row: ListViewModel.ListRow
-
-    var fontSize: CGFloat = 24
+    let fontSize: CGFloat = 16.0
     
     var body: some View {
         VStack(spacing: 0) {
-            HStack  {
+            HStack(spacing: 0) {
                 // 演算記号列
                 Text(row.oper)
-                    .font(.body) // 通常本文    最も一般的なテキスト    約17pt
-                    //.font(.system(size: fontSize, weight: .regular))
-                    .scaleEffect(y: -1) // 上下反転：下から上にするため
-                
-                // 桁区切り、小数点など表示用フォーマット
-                let num = row.number   // SBCD.toString( source: row.number)
+                    //.font(.body) // 通常本文    最も一般的なテキスト    約17pt
+                    .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .regular))
+                    .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
+
                 // 数値列
-                Text(num)
-                    .font(.headline) // 強調文（太字）    重要な小見出し・ボタンラベルなど    約17pt, 太字
-                    .scaleEffect(y: -1) // 上下反転：下から上にするため
-                
+                let fmt = SBCD(row.number).format()
+                Text(fmt)
+                    //.font(.headline) // 強調文（太字）    重要な小見出し・ボタンラベルなど    約17pt, 太字
+                    .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .bold))
+                    .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
+                    .padding(.horizontal, 2.0)
+
                 // 単位列
-                Text(row.unit)
-                    .font(.callout) // 注釈    補助的な説明文など    約16pt
-                    .scaleEffect(y: -1) // 上下反転：下から上にするため
-                    .frame(width: 30, alignment: .leading) // 固定幅指定
+                Text("Kg")//row.unit)
+                    //.font(.callout) // 注釈    補助的な説明文など    約16pt
+                    .font(.system(size: fontSize, weight: .light))
+                    .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
+                    .frame(width: 30, alignment: .leading) // 幅指定、左寄せ
+                    .fixedSize()
             }
-            .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
-            
+            .frame(maxWidth: APP_MAX_WIDTH * 1.5, alignment: .trailing) // 右寄せ
+
             // 下線
             if row.oper == KeyTag.op_answer.rawValue {
                 Divider()
@@ -74,7 +78,7 @@ struct CustomCell: View {
 @MainActor
 final class ListViewModel: ObservableObject {
     // 親モデル
-    @StateObject var setting: SettingViewModel
+    @ObservedObject var setting: SettingViewModel
 
 
     // 原則としてKeyTag.*.rawValueを使用するが頻出するものを下記に定義
@@ -99,10 +103,11 @@ final class ListViewModel: ObservableObject {
     
     // MARK: - Public Properties
     // 有効桁数＝整数桁＋小数桁（小数点は含まない）
-    var num_precision: Int = 6
+    var num_precision: Int = 9
     // 税率
     var tax_rate: Double = 0.10
     
+
     struct  ListRow: Hashable {
         var oper: String    = KeyTag.fn_start.rawValue
         var number: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
@@ -111,7 +116,7 @@ final class ListViewModel: ObservableObject {
     }
     // 全行記録
     @Published var listRows: [ListRow] = [ListRow()] // 初期1行 .index=0
-    
+
     
     // MARK: - Private
     // 入力中の行位置
@@ -122,7 +127,7 @@ final class ListViewModel: ObservableObject {
     /// 初期化
     init(settingViewModel: SettingViewModel) {
         // 親モデル
-        _setting = StateObject(wrappedValue: settingViewModel)
+        self.setting = settingViewModel
 
         // SBCD初期化
         /// 小数点記号（例: "." or "．"）
@@ -155,11 +160,17 @@ final class ListViewModel: ObservableObject {
     @MainActor
     func sbcdConfigChange() {
         // 現在行が[=]ならば、
-        if let row = listRows.last, row.oper == KeyTag.op_answer.rawValue {
-            // 新しい小数桁数で再計算＆再表示する
-            listRows.removeLast()
-            listIndex -= 1
-            handleOperator(OP_ANSWER)
+        if let row = listRows.last {
+            if row.oper == KeyTag.op_answer.rawValue {
+                // 新しいSBCD_Config設定で再計算＆再表示する
+                listRows.removeLast()
+                listIndex -= 1
+                handleOperator(OP_ANSWER)
+            }else{
+                // 数字倍率の変化で描画させる
+                listRows.removeLast()
+                listRows.append(row)
+            }
         }
     }
 

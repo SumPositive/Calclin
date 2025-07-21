@@ -3,7 +3,7 @@
 
 import XCTest
 
-@MainActor
+//@MainActor
 final class SBCD_Lo_Tests: XCTestCase {
     
     func test_add_1() {
@@ -111,184 +111,199 @@ final class SBCD_Lo_Tests: XCTestCase {
 
 
 @MainActor
-final class SBCD_toString_Tests: XCTestCase {
+final class SBCD_round_Tests: XCTestCase {
 
-    //----- SBCD.toString
+    //----- SBCD.round()
     
-    func test_TrailZero() {
-        let result = SBCD("3.1001")
-        
-        SBCD_Config.decimalDigits = 3
-        SBCD_Config.decimalRoundType = .Rdown
-        SBCD_Config.decimalTrailZero = true
-        XCTAssertEqual(result.toString(), "3.100")
-
-        SBCD_Config.decimalTrailZero = false
-        XCTAssertEqual(result.toString(), "3.1")
-
-        SBCD_Config.decimalRoundType = .Rup
-        XCTAssertEqual(result.toString(), "3.101")
-    }
-
     func test_Rdown() {  // 切り捨て
         let result = SBCD("3.129")
         SBCD_Config.decimalRoundType = .Rdown
 
         SBCD_Config.decimalDigits = 5
-        SBCD_Config.decimalTrailZero = true
-        XCTAssertEqual(result.toString(), "3.12900")
+        XCTAssertEqual(result.round(), SBCD("3.129"))
         
-        SBCD_Config.decimalTrailZero = false
-        XCTAssertEqual(result.toString(), "3.129")
-
         SBCD_Config.decimalDigits = 2
-        XCTAssertEqual(result.toString(), "3.12") // down
+        XCTAssertEqual(result.round(), SBCD("3.12")) // down
     }
 
     func test_Rup() { // 切り上げ
         let result = SBCD("9.9001")
         SBCD_Config.decimalRoundType = .Rup
-        SBCD_Config.decimalTrailZero = false
         SBCD_Config.decimalDigits = 3
-        XCTAssertEqual(result.toString(), "9.901")
+        XCTAssertEqual(result.round(), SBCD("9.901"))
         SBCD_Config.decimalDigits = 2
-        XCTAssertEqual(result.toString(), "9.91")
+        XCTAssertEqual(result.round(), SBCD("9.91"))
         SBCD_Config.decimalDigits = 1
-        XCTAssertEqual(result.toString(), "10") // 繰り上げ
+        XCTAssertEqual(result.round(), SBCD("10")) // 繰り上げ
         SBCD_Config.decimalDigits = 0
-        XCTAssertEqual(result.toString(), "10") // 繰り上げ
+        XCTAssertEqual(result.round(), SBCD("10")) // 繰り上げ
     }
 
     func test_Rminus() { // 負方向丸め  負値ならば[iRoundPos+1]以降に0でない数値があれば、[iRoundPos]++ する
         let result = SBCD("-3.1001")
         SBCD_Config.decimalRoundType = .Rminus
-        SBCD_Config.decimalTrailZero = false
         SBCD_Config.decimalDigits = 3
-        XCTAssertEqual(result.toString(), "-3.101")
+        XCTAssertEqual(result.round(), SBCD("-3.101"))
         SBCD_Config.decimalDigits = 2
-        XCTAssertEqual(result.toString(), "-3.11")
+        XCTAssertEqual(result.round(), SBCD("-3.11"))
         SBCD_Config.decimalDigits = 1
-        XCTAssertEqual(result.toString(), "-3.2")
+        XCTAssertEqual(result.round(), SBCD("-3.2"))
         SBCD_Config.decimalDigits = 0
-        XCTAssertEqual(result.toString(), "-4")
+        XCTAssertEqual(result.round(), SBCD("-4"))
 
         let resultPlus = SBCD("3.1001")
         SBCD_Config.decimalDigits = 3
         SBCD_Config.decimalRoundType = .Rminus
-        XCTAssertEqual(resultPlus.toString(), "3.1") // 切り捨て同様
+        XCTAssertEqual(resultPlus.round(), SBCD("3.1")) // 切り捨て同様
     }
 
     func test_Rplus() { // 正方向丸め  正値ならば[iRoundPos+1]以降に0でない数値があれば、[iRoundPos]++ する
         let result = SBCD("3.1001")
         SBCD_Config.decimalRoundType = .Rplus
-        SBCD_Config.decimalTrailZero = false
         SBCD_Config.decimalDigits = 3
-        XCTAssertEqual(result.toString(), "3.101")
+        XCTAssertEqual(result.round(), SBCD("3.101"))
         SBCD_Config.decimalDigits = 2
-        XCTAssertEqual(result.toString(), "3.11")
+        XCTAssertEqual(result.round(), SBCD("3.11"))
         SBCD_Config.decimalDigits = 1
-        XCTAssertEqual(result.toString(), "3.2")
+        XCTAssertEqual(result.round(), SBCD("3.2"))
         SBCD_Config.decimalDigits = 0
-        XCTAssertEqual(result.toString(), "4")
+        XCTAssertEqual(result.round(), SBCD("4"))
         
         let resultMinus = SBCD("-3.1001")
         SBCD_Config.decimalDigits = 3
         SBCD_Config.decimalRoundType = .Rplus
-        XCTAssertEqual(resultMinus.toString(), "-3.1") // 切り捨て同様
+        XCTAssertEqual(resultMinus.round(), SBCD("-3.1")) // 切り捨て同様
     }
 
     func test_R54() { // 四捨五入
         let result = SBCD("3.95345001")
         SBCD_Config.decimalRoundType = .R54
-        SBCD_Config.decimalTrailZero = false
         SBCD_Config.decimalDigits = 6
-        XCTAssertEqual(result.toString(), "3.95345")
+        XCTAssertEqual(result.round(), SBCD("3.95345"))
         SBCD_Config.decimalDigits = 5
-        XCTAssertEqual(result.toString(), "3.95345")
+        XCTAssertEqual(result.round(), SBCD("3.95345"))
         SBCD_Config.decimalDigits = 4
-        XCTAssertEqual(result.toString(), "3.9535")
+        XCTAssertEqual(result.round(), SBCD("3.9535"))
         SBCD_Config.decimalDigits = 3
-        XCTAssertEqual(result.toString(), "3.953")
+        XCTAssertEqual(result.round(), SBCD("3.953"))
         SBCD_Config.decimalDigits = 2
-        XCTAssertEqual(result.toString(), "3.95")
+        XCTAssertEqual(result.round(), SBCD("3.95"))
         SBCD_Config.decimalDigits = 1
-        XCTAssertEqual(result.toString(), "4")
+        XCTAssertEqual(result.round(), SBCD("4"))
         SBCD_Config.decimalDigits = 0
-        XCTAssertEqual(result.toString(), "4")
+        XCTAssertEqual(result.round(), SBCD("4"))
     }
     
     func test_R55() { // 五捨五超入「最近接偶数への丸め」[JIS Z 8401 規則Ａ] （偶数丸め、JIS丸め、ISO丸め、銀行家の丸め）
         SBCD_Config.decimalRoundType = .R55
-        SBCD_Config.decimalTrailZero = false
-
         SBCD_Config.decimalDigits = 1
-        XCTAssertEqual(SBCD("1.25").toString(),         "1.2") // down
+        XCTAssertEqual(SBCD("1.25").round(),         SBCD("1.2")) // down
 
         // [iRoundPos]が偶数で、[iRoundPos+1]以降が5より大きいならば [iRoundPos]++ する
         SBCD_Config.decimalDigits = 1
-        XCTAssertEqual(SBCD("1.25").toString(),         "1.2") // 五 down
-        XCTAssertEqual(SBCD("1.250000001").toString(),  "1.3") // 五超 up
-        XCTAssertEqual(SBCD("1.26").toString(),         "1.3") // 五超 up
+        XCTAssertEqual(SBCD("1.25").round(),         SBCD("1.2")) // 五 down
+        XCTAssertEqual(SBCD("1.250000001").round(),  SBCD("1.3")) // 五超 up
+        XCTAssertEqual(SBCD("1.26").round(),         SBCD("1.3")) // 五超 up
 
         // [iRoundPos]が奇数で、[iRoundPos+1]以降が5以上ならば [iRoundPos]++ する
         SBCD_Config.decimalDigits = 1
-        XCTAssertEqual(SBCD("1.349999").toString(),     "1.3") // down
-        XCTAssertEqual(SBCD("1.35").toString(),         "1.4") // up
+        XCTAssertEqual(SBCD("1.349999").round(),     SBCD("1.3")) // down
+        XCTAssertEqual(SBCD("1.35").round(),         SBCD("1.4")) // up
     }
 
     func test_R65() { // 五捨六入
         let result = SBCD("3.9645601")
         SBCD_Config.decimalRoundType = .R65
-        SBCD_Config.decimalTrailZero = false
         SBCD_Config.decimalDigits = 6
-        XCTAssertEqual(result.toString(), "3.96456")
+        XCTAssertEqual(result.round(), SBCD("3.96456"))
         SBCD_Config.decimalDigits = 5
-        XCTAssertEqual(result.toString(), "3.96456")
+        XCTAssertEqual(result.round(), SBCD("3.96456"))
         SBCD_Config.decimalDigits = 4
-        XCTAssertEqual(result.toString(), "3.9646") // up
+        XCTAssertEqual(result.round(), SBCD("3.9646")) // up
         SBCD_Config.decimalDigits = 3
-        XCTAssertEqual(result.toString(), "3.964") // down
+        XCTAssertEqual(result.round(), SBCD("3.964")) // down
         SBCD_Config.decimalDigits = 2
-        XCTAssertEqual(result.toString(), "3.96") // down
+        XCTAssertEqual(result.round(), SBCD("3.96")) // down
         SBCD_Config.decimalDigits = 1
-        XCTAssertEqual(result.toString(), "4") // up
+        XCTAssertEqual(result.round(), SBCD("4")) // up
         SBCD_Config.decimalDigits = 0
-        XCTAssertEqual(result.toString(), "4")
+        XCTAssertEqual(result.round(), SBCD("4"))
     }
 
+}
+
+
+@MainActor
+final class SBCD_format_Tests: XCTestCase {
+    
+    //----- SBCD.format()
+    
+    func test_TrailZero() {
+        let result = SBCD("3.1")
+        
+        SBCD_Config.decimalDigits = 3
+        SBCD_Config.decimalTrailZero = true
+        XCTAssertEqual(result.format(), "3.100")
+        
+        SBCD_Config.decimalTrailZero = false
+        XCTAssertEqual(result.format(), "3.1")
+    }
+    
     func test_decimalSeparator() {
-        let result = SBCD("100.123")
+        let result = SBCD("100.199")
         SBCD_Config.decimalDigits = 1
         SBCD_Config.decimalSeparator = ":"
-        XCTAssertEqual(result.toString(), "100:1")
+        XCTAssertEqual(result.format(), "100:1") // .round()が無いので単純に切り捨てられる
         SBCD_Config.decimalSeparator = "."
     }
-
+    
     func test_group_G3() {
-        let result = SBCD("123456789.01234")
+        let result = SBCD("123456789.0199")
         SBCD_Config.decimalDigits = 2
-        SBCD_Config.decimalRoundType = .R54
         SBCD_Config.groupType = .G3
         SBCD_Config.groupSeparator = ","
-        XCTAssertEqual(result.toString(), "123,456,789.01")
+        XCTAssertEqual(result.format(), "123,456,789.01")
     }
-
+    
     func test_group_G4() {
-        let result = SBCD("123456789.015")
+        let result = SBCD("123456789.0199")
         SBCD_Config.decimalDigits = 2
-        SBCD_Config.decimalRoundType = .R54
         SBCD_Config.groupType = .G4
         SBCD_Config.groupSeparator = ";"
-        XCTAssertEqual(result.toString(), "1;2345;6789.02")
+        XCTAssertEqual(result.format(), "1;2345;6789.01")
         SBCD_Config.groupSeparator = ","
     }
-
+    
     func test_group_G23() {
-        let result = SBCD("123456789.01234")
+        let result = SBCD("123456789.0199")
         SBCD_Config.decimalDigits = 2
-        SBCD_Config.decimalRoundType = .R54
         SBCD_Config.groupType = .G23 // インド式
         SBCD_Config.groupSeparator = ","
-        XCTAssertEqual(result.toString(), "12,34,56,789.01")
+        XCTAssertEqual(result.format(), "12,34,56,789.01")
     }
+    
+    
+    //----- SBCD.round().format()
+
+    func test_round_format() {
+        let result = SBCD("123456789.045")
+        
+        SBCD_Config.decimalDigits = 5
+        SBCD_Config.decimalRoundType = .R54
+        SBCD_Config.decimalTrailZero = true
+        SBCD_Config.groupType = .G3
+        SBCD_Config.groupSeparator = ","
+        XCTAssertEqual(result.round().format(), "123,456,789.04500")
+
+        SBCD_Config.decimalDigits = 3
+        XCTAssertEqual(result.round().format(), "123,456,789.045")
+        SBCD_Config.decimalDigits = 2
+        XCTAssertEqual(result.round().format(), "123,456,789.05")
+        SBCD_Config.decimalDigits = 1
+        XCTAssertEqual(result.round().format(), "123,456,789.0")
+        SBCD_Config.decimalDigits = 0
+        XCTAssertEqual(result.round().format(), "123,456,789")
+    }
+    
 }
+
