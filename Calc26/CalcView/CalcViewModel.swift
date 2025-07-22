@@ -94,7 +94,7 @@ final class CalcViewModel: ObservableObject {
     
     // MARK: - Public Methods
 
-    /// KeyViewからKeyを受け取り計算式を組み立てる
+    /// KeyViewからKeyを受け取り listRows と formulaText を更新する
     @MainActor
     func input(_ keyTag: KeyTag,
                label: String? = nil,
@@ -227,9 +227,16 @@ final class CalcViewModel: ObservableObject {
     /// listRowsの答えを返す
     @MainActor private func answer() -> String {
         // listRowsから計算式に変換する
-        let fomula = formula()
-        // 計算式の答えを返す
-        return fomula.isEmpty ? "" : CalcFunc.answer(fomula)
+        let formula = formula()
+        if formula.isEmpty {
+            formulaText = formula + OP_ANSWER
+            return ""
+        }
+        // 計算式の答え
+        let ans = CalcFunc.answer(formula)
+        // FormulaView 更新
+        formulaText = formula + OP_ANSWER + ans
+        return ans
     }
     
     /// listRowsから計算式に変換する

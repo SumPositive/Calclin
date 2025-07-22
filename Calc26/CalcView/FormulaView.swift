@@ -10,12 +10,16 @@ import SwiftUI
 
 struct FormulaView: View {
     @ObservedObject var viewModel: CalcViewModel
-    
-    var body: some View {
+    let fontSize: CGFloat = 16.0
 
-        Text(viewModel.formulaText)
-        .frame(minWidth: APP_MIN_WIDTH / 2.0, maxWidth: APP_MAX_WIDTH * 1.5)
-        .padding(4)
+    var body: some View {
+        ZStack { // Textの位置を自由に制御できる
+            Color.clear // 背景が必要な場合（なくてもOK）
+            Text(viewModel.formulaText)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing) // 右下寄せ
+                .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .regular))
+                .padding(4)
+        }
     }
 }
 
