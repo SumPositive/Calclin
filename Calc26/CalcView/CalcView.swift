@@ -1,84 +1,75 @@
 //
-//  RollView.swift
+//  CalcView.swift
 //  Calc26
 //
-//  Created by sumpo on 2025/07/01.
+//  Created by sumpo on 2025/07/22.
 //
 
 import SwiftUI
 import Combine
 
 
-struct ListView: View {
-    @ObservedObject var viewModel: ListViewModel
+struct CalcView: View {
+    @ObservedObject var viewModel: CalcViewModel
     
-    var body: some View {
 
-        List {
-            ForEach(viewModel.listRows.reversed(), id: \.self) { row in
-                // カスタム明細セル
-                CustomCell(viewModel: viewModel, row: row)
-                    .listRowSeparator(.hidden) // 既定の下線を非表示
-                    .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
-                    .padding(.vertical, 2)  // 上下の余白
-                    .padding(.horizontal, 0)
-            }
-        }
-        .scaleEffect(y: -1) // 上下反転：下から上にするため ここで元に戻る
-        .listStyle(.plain)
-        .environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
-        .frame(minWidth: APP_MIN_WIDTH / 2.0, maxWidth: APP_MAX_WIDTH * 1.5)
-        .padding(0)
-    }
-}
-
-// カスタム明細セル
-struct CustomCell: View {
-    @ObservedObject var viewModel: ListViewModel
-    let row: ListViewModel.ListRow
-    let fontSize: CGFloat = 16.0
-    
     var body: some View {
+        
         VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                // 演算記号列
-                Text(row.oper)
-                    //.font(.body) // 通常本文    最も一般的なテキスト    約17pt
-                    .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .regular))
-                    .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
-
-                // 数値列
-                let fmt = SBCD(row.number).format()
-                Text(fmt)
-                    //.font(.headline) // 強調文（太字）    重要な小見出し・ボタンラベルなど    約17pt, 太字
-                    .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .bold))
-                    .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
-                    .padding(.horizontal, 2.0)
-
-                // 単位列
-                Text("Kg")//row.unit)
-                    //.font(.callout) // 注釈    補助的な説明文など    約16pt
-                    .font(.system(size: fontSize, weight: .light))
-                    .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
-                    .frame(width: 30, alignment: .leading) // 幅指定、左寄せ
-                    .fixedSize()
-            }
-            .frame(maxWidth: APP_MAX_WIDTH * 1.5, alignment: .trailing) // 右寄せ
-
-            // 下線
-            if row.oper == KeyTag.op_answer.rawValue {
-                Divider()
-            }
+            FormulaView(viewModel: viewModel)
+                .frame(maxHeight: .infinity) // 高さを均等にする
+                .contentShape(Rectangle())
+                .border(Color.gray.opacity(0.3), width: 2.0)
+                .transition(.opacity) // フェード
+            
+            ListView(viewModel: viewModel)
+                .frame(maxHeight: .infinity) // 高さを均等にする
+                .contentShape(Rectangle())
+                .border(Color.gray.opacity(0.3), width: 2.0)
+//                .border( activeList == 0 ? Color.blue : Color.gray.opacity(0.3), width: 2.0)
+                .transition(.opacity) // フェード
         }
-        .padding(.horizontal, 4)
+
     }
 }
 
 
 @MainActor
-final class ListViewModel: ObservableObject {
+final class CalcViewModel: ObservableObject {
     // 親モデル
     @ObservedObject var setting: SettingViewModel
+
+    
+    private var cancellables = Set<AnyCancellable>()
+    /// 初期化
+    init(settingViewModel: SettingViewModel) {
+        // 親モデル
+        self.setting = settingViewModel
+
+        // SBCD初期化
+        /// 小数点記号（例: "." or "．"）
+        SBCD_Config.decimalSeparator = "."
+        /// 小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する）
+        SBCD_Config.decimalDigits = SETTING_decimalDigits_MAX
+        /// 小数部の桁数まで0埋めする／false=末尾0削除する
+        SBCD_Config.decimalTrailZero = false  // 「F」小数末尾0可変
+        /// 丸め方法（R54 = 四捨五入 など）
+        SBCD_Config.decimalRoundType  = .R55 // 五捨五超入　偶数丸め
+        
+        /// 桁区切り記号（例: "," or "，"）
+        SBCD_Config.groupSeparator = ","
+        /// 桁区切りの方式（3桁区切り、4桁区切り、インド式など）
+        SBCD_Config.groupType = .G3
+        
+        // ローカル通知 受信：SBCD_Configが変更された
+        NotificationCenter.default.publisher(for: .SBCD_Config_Change)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.sbcdConfigChange()
+                }
+            }
+            .store(in: &cancellables)
+    }
 
 
     // 原則としてKeyTag.*.rawValueを使用するが頻出するものを下記に定義
@@ -107,7 +98,7 @@ final class ListViewModel: ObservableObject {
     // 税率
     var tax_rate: Double = 0.10
     
-
+    
     struct  ListRow: Hashable {
         var oper: String    = KeyTag.fn_start.rawValue
         var number: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
@@ -116,6 +107,8 @@ final class ListViewModel: ObservableObject {
     }
     // 全行記録
     @Published var listRows: [ListRow] = [ListRow()] // 初期1行 .index=0
+    // 計算式
+    @Published var formulaText = ""
 
     
     // MARK: - Private
@@ -123,59 +116,12 @@ final class ListViewModel: ObservableObject {
     private var listIndex = 0
     
     
-    private var cancellables = Set<AnyCancellable>()
-    /// 初期化
-    init(settingViewModel: SettingViewModel) {
-        // 親モデル
-        self.setting = settingViewModel
-
-        // SBCD初期化
-        /// 小数点記号（例: "." or "．"）
-        SBCD_Config.decimalSeparator = "."
-        /// 小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する）
-        SBCD_Config.decimalDigits = SETTING_decimalDigits_MAX
-        /// 小数部の桁数まで0埋めする／false=末尾0削除する
-        SBCD_Config.decimalTrailZero = false  // 「F」小数末尾0可変
-        /// 丸め方法（R54 = 四捨五入 など）
-        SBCD_Config.decimalRoundType  = .R55 // 五捨五超入　偶数丸め
-
-        /// 桁区切り記号（例: "," or "，"）
-        SBCD_Config.groupSeparator = ","
-        /// 桁区切りの方式（3桁区切り、4桁区切り、インド式など）
-        SBCD_Config.groupType = .G3
-
-        // ローカル通知 受信：SBCD_Configが変更された
-        NotificationCenter.default.publisher(for: .SBCD_Config_Change)
-            .sink { [weak self] _ in
-                Task { @MainActor in
-                    self?.sbcdConfigChange()
-                }
-            }
-            .store(in: &cancellables)
-    }
-
-    // MARK: - Public Methods
     
-    // 小数表示桁数
-    @MainActor
-    func sbcdConfigChange() {
-        // 現在行が[=]ならば、
-        if let row = listRows.last {
-            if row.oper == KeyTag.op_answer.rawValue {
-                // 新しいSBCD_Config設定で再計算＆再表示する
-                listRows.removeLast()
-                listIndex -= 1
-                handleOperator(OP_ANSWER)
-            }else{
-                // 数字倍率の変化で描画させる
-                listRows.removeLast()
-                listRows.append(row)
-            }
-        }
-    }
+    // MARK: - Public Methods
 
     /// KeyViewからKeyを受け取り計算式を組み立てる
-    @MainActor func input(_ keyTag: KeyTag,
+    @MainActor
+    func input(_ keyTag: KeyTag,
                label: String? = nil,
                rzUnit: String? = nil)
     {
@@ -200,28 +146,18 @@ final class ListViewModel: ObservableObject {
                     .op_divide:     // [÷]
                 handleOperator(keyTag.rawValue)
                 
-            case .fn_ac: // [AC]
-                // Reset
-                listRows = [ListRow()] // 初期化
-                listIndex = 0
-                // UNIT Reset
+            case .fn_ac: // [AC] All Clear
+                handleAllClear()
                 
-            case .fn_bs: // [BS]
-                var row = listRows[listIndex]
-                if 0 < row.unit.count {
-                    row.unit = ""
-                }
-                else if 0 < row.number.count {
-                    row.number.removeLast()
-                }
-                else if 1 < row.oper.count {
-                    // 演算子（先頭の1文字）は消さない
-                    if let firstChar = row.oper.first {
-                        row.oper = String(firstChar)
-                    }
-                }
-                // Replace an element（これによりViewが更新される）
-                listRows[listIndex] = row
+            case .fn_sc: // [SC] Section Clear：1行クリア
+                handleSectionClear()
+                
+            case .fn_bs: // [BS] Back Space
+                handleBackSpace()
+                
+            case .fn_gt: // [GT] Ground Total: 1ドラムの全[=]回答値の合計
+                handleGroundTotal()
+                
                 
             default:
                 break
@@ -232,9 +168,27 @@ final class ListViewModel: ObservableObject {
     
     // MARK: - Private Methods
     
+    // 小数表示桁数
+    @MainActor
+    private func sbcdConfigChange() {
+        // 現在行が[=]ならば、
+        if let row = listRows.last {
+            if row.oper == KeyTag.op_answer.rawValue {
+                // 新しいSBCD_Config設定で再計算＆再表示する
+                listRows.removeLast()
+                listIndex -= 1
+                handleOperator(OP_ANSWER)
+            }else{
+                // 数字倍率の変化で描画させる
+                listRows.removeLast()
+                listRows.append(row)
+            }
+        }
+    }
+    
     // 行を確定して新しい行へ
     @MainActor private func newLine(nextOperator: String) -> Bool {
-        guard listRows.count < ListViewModel.ROWS_MAX,
+        guard listRows.count < CalcViewModel.ROWS_MAX,
               listIndex < listRows.count else {
             var row = listRows[listIndex]
             row.oper = OP_ANSWER
@@ -292,7 +246,7 @@ final class ListViewModel: ObservableObject {
             row.oper = op
         }
         // Replace an element
-        listRows[listIndex] = row
+        listRows[listIndex] = row // Replace
     }
     
     /// listRowsの答えを返す
@@ -395,7 +349,7 @@ final class ListViewModel: ObservableObject {
                 row = listRows[listIndex]
                 row.number = num
                 // Replace an element
-                listRows[listIndex] = row
+                listRows[listIndex] = row // Replace
                 // [self GvEntryUnitSet]; // entryUnitと単位キーを最適化
                 return
             }
@@ -421,7 +375,7 @@ final class ListViewModel: ObservableObject {
         }
         row.number += num
         // Replace an element
-        listRows[listIndex] = row
+        listRows[listIndex] = row // Replace
     }
     
     /// [.]小数点
@@ -448,7 +402,7 @@ final class ListViewModel: ObservableObject {
         // 小数点を追加する
         row.number += NUM_DECIMAL
         // Replace an element
-        listRows[listIndex] = row
+        listRows[listIndex] = row // Replace
     }
     
     /// [00] [000]
@@ -467,7 +421,7 @@ final class ListViewModel: ObservableObject {
             row.number += zeros
         }
         // Replace an element
-        listRows[listIndex] = row
+        listRows[listIndex] = row // Replace
     }
     
     /// [+/-] 符号切替
@@ -481,8 +435,92 @@ final class ListViewModel: ObservableObject {
             row.number = OP_SUBTRACT + row.number
         }
         // Replace an element
-        listRows[listIndex] = row
+        listRows[listIndex] = row // Replace
     }
+    
+    // [AC] All Clear
+    private func handleAllClear() {
+        listRows = [ListRow()] // 初期化
+        listIndex = 0
+        
+        // UNIT Clear
+        
+    }
+    
+    /// [SC] Section Clear
+    private func handleSectionClear() {
+        var row = listRows[listIndex]
+        if !row.oper.hasPrefix(OP_START) {
+            row.oper = ""
+        }
+        row.number = ""
+        row.unit = ""
+        row.answer = ""
+        // Replace an element（これによりViewが更新される）
+        listRows[listIndex] = row // Replace
+    }
+    
+    /// [SC] Back Space
+    private func handleBackSpace() {
+        var row = listRows[listIndex]
+        if 0 < row.unit.count {
+            row.unit = ""
+        }
+        else if 0 < row.number.count {
+            row.number.removeLast()
+        }
+        else if 1 < row.oper.count {
+            // 演算子（先頭の1文字）は消さない
+            if let firstChar = row.oper.first {
+                row.oper = String(firstChar)
+            }
+        }
+        // Replace an element（これによりViewが更新される）
+        listRows[listIndex] = row // Replace
+    }
+    
+    /// [GT] Ground Total
+    private func handleGroundTotal() {
+        assert(listIndex < listRows.count, "enterIndex=\(listIndex), count=\(listRows.count)")
+        var row = listRows[listIndex]
+        // まず[=]と同様の処理をする。その後、[GT]処理する
+        if row.oper.hasPrefix(OP_START) {
+            // 前行が[>]であるとき
+            return  // 無効
+        }
+        else if row.oper.hasPrefix(OP_ANSWER) {
+            // 前行が [=] のとき：新しいエントリを作成
+            guard newLine(nextOperator: OP_START) else { return }
+            // ↓ [GT]
+        }
+        else if row.number.isEmpty {
+            // 数値が空なら、現在の演算子を [=]、数値に式全体の答えを設定
+            row.oper = OP_ANSWER
+            row.number = answer()
+            listRows[listIndex] = row // Replace
+            guard newLine(nextOperator: OP_START) else { return }
+            // ↓ [GT] に進む
+        }
+        // [GT]の処理：全[=]行の数値を合計する
+        var total = SBCD("0")
+        for ro in listRows {
+            if ro.oper.hasPrefix(OP_ANSWER) {
+                // 合計
+                total = total.add(SBCD(ro.number))
+            }
+        }
+        // 表示として [>GT] と合計値をセット
+        row.oper = OP_GT
+        row.number = total.value
+        row.unit = ""
+        // Replace an element（これによりViewが更新される）
+        listRows[listIndex] = row // Replace
+        // エラーでなければ新しい行を作成
+        if total.value != "-0" {
+            guard newLine(nextOperator: OP_START) else { return }
+        }
+    }
+    
     
     private func numLength(_ num: String) -> Int {
         return num.replacingOccurrences(of: OP_SUBTRACT, with: "").replacingOccurrences(of: NUM_DECIMAL, with: "").count

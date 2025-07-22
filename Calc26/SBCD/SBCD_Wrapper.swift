@@ -132,9 +132,10 @@ final class SBCD: Equatable {
     }
     
     /// 数字文字列を SBCD_Config設定値に従い書式付にする
+    /// - Parameter trailNoZero: True=小数末尾0埋めしない   false=SBCD_Config.decimalTrailZeroに従う
     /// - Returns: String    桁区切り、記号など装飾された文字列
     @MainActor
-    func format() -> String {
+    func format( trailNoZero: Bool = false ) -> String {
         var value = self.value
         // マイナス記号の処理
         var minus = false
@@ -183,15 +184,19 @@ final class SBCD: Equatable {
         var result = String(integerPart)
         // 小数部
         var decimalStr = String(decimalPart.prefix(SBCD_Config.decimalDigits)) // 小数桁数（decimalDigits）以内でカット
-        if SBCD_Config.decimalTrailZero {
+
+        // 小数末尾0 // Option:trailNoZero
+        let tZero = trailNoZero ? false : SBCD_Config.decimalTrailZero
+        if tZero {
+            // 小数部末尾に0補充する
             if decimalStr.count < SBCD_Config.decimalDigits {
-                // 小数部末尾に0補充する
                 decimalStr = decimalStr.padding(toLength: SBCD_Config.decimalDigits, withPad: "0", startingAt: 0)
             }
         }else{
             // 小数部末尾の0削除する（例: "1204000" → "1204"）
             decimalStr = decimalStr.replacingOccurrences(of: "0+$", with: "", options: .regularExpression)
         }
+
         // 小数点
         if !decimalStr.isEmpty {
             result += SBCD_Config.decimalSeparator + decimalStr

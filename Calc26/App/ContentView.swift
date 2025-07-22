@@ -9,19 +9,19 @@ import SwiftUI
 
 struct ContentView: View {
     let setting: SettingViewModel // 全Viewで共通のインスタンス
-    @StateObject var listViewModel: ListViewModel
-    @StateObject var list2ViewModel: ListViewModel
+    // CalcView
+    @StateObject var calcViewModel: CalcViewModel
+    @StateObject var calc2ViewModel: CalcViewModel
 
     init() {
         let setting = SettingViewModel()
         self.setting = setting
-        _listViewModel = StateObject(wrappedValue: ListViewModel(settingViewModel: setting))
-        _list2ViewModel = StateObject(wrappedValue: ListViewModel(settingViewModel: setting))
+        // CalcView
+        _calcViewModel = StateObject(wrappedValue: CalcViewModel(settingViewModel: setting))
+        _calc2ViewModel = StateObject(wrappedValue: CalcViewModel(settingViewModel: setting))
     }
 
     // @State 変化あればViewが更新される
-//    // 小数点以下の桁数（0〜10）
-//    @State private var decDigi: Double = 2
     // 設定　表示状態
     @State private var isShowingSetting = false
     // アクティブ（フォーカス）ListView番号　＜＜＜TODO:配列で複数対応
@@ -56,7 +56,6 @@ struct ContentView: View {
                 }) {
                     Image(systemName: isShowingSetting ? "gearshape.fill" : "gearshape")
                         .imageScale(.large)
-//                        .padding()
                 }
             }
             .padding(.horizontal)
@@ -71,7 +70,8 @@ struct ContentView: View {
             HStack(spacing: 3) {
                 // 計算式リスト
                 if isShowList1 {
-                    ListView(viewModel: listViewModel)
+                    CalcView(viewModel: calcViewModel)
+                        .frame(maxHeight: .infinity) // 高さを均等にする
                         .contentShape(Rectangle())
                         .border( activeList == 0 ? Color.blue : Color.gray.opacity(0.3), width: 2.0)
                         .transition(.opacity) // フェード
@@ -87,12 +87,13 @@ struct ContentView: View {
                             // 同時にフォーカス切替
                             activeList = 0
                         }
-                        //.cornerRadius(10)
+                    //.cornerRadius(10)
                 }
                 
                 // 計算式リスト2
                 if isShowList2 {
-                    ListView(viewModel: list2ViewModel)
+                    CalcView(viewModel: calc2ViewModel)
+                        .frame(maxHeight: .infinity) // 高さを均等にする
                         .contentShape(Rectangle())
                         .border( activeList == 1 ? Color.blue : Color.gray.opacity(0.3), width: 2.0)
                         .transition(.opacity) // フェード
@@ -108,7 +109,7 @@ struct ContentView: View {
                             // 同時にフォーカス切替
                             activeList = 1
                         }
-                        //.cornerRadius(20)
+                    //.cornerRadius(20)
                 }
             }
             .padding(3)
@@ -116,9 +117,9 @@ struct ContentView: View {
             // キーボード
             KeyboardView(onTap: { keyTag in
                 if activeList == 1 {
-                    list2ViewModel.input(keyTag)
+                    calc2ViewModel.input(keyTag)
                 }else{
-                    listViewModel.input(keyTag)
+                    calcViewModel.input(keyTag)
                 }
             })
         }
