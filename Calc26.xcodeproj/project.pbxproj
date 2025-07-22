@@ -39,6 +39,7 @@
 				App/Log.swift,
 				CalcView/CalcFunc.swift,
 				CalcView/CalcView.swift,
+				CalcView/CalcViewModel.swift,
 				CalcView/FormulaView.swift,
 				CalcView/ListView.swift,
 				KeyboardView/Keyboard.plist,
@@ -48,6 +49,7 @@
 				SBCD/SBCD_Wrapper.swift,
 				SBCD/SBCD.cpp,
 				SettingView/SettingView.swift,
+				SettingView/SettingViewModel.swift,
 			);
 			target = C30A78A22E10EE8500212729 /* Calc26 */;
 		};
@@ -67,6 +69,7 @@
 				App/Log.swift,
 				CalcView/CalcFunc.swift,
 				CalcView/CalcView.swift,
+				CalcView/CalcViewModel.swift,
 				CalcView/FormulaView.swift,
 				CalcView/ListView.swift,
 				KeyboardView/KeyboardView.swift,
@@ -75,6 +78,7 @@
 				SBCD/SBCD_Wrapper.swift,
 				SBCD/SBCD.cpp,
 				SettingView/SettingView.swift,
+				SettingView/SettingViewModel.swift,
 			);
 			target = C30A78B92E10EE8700212729 /* Calc26UITests */;
 		};
