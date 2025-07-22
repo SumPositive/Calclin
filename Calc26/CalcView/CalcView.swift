@@ -19,16 +19,16 @@ struct CalcView: View {
                 .frame(maxHeight: .infinity) // 高さを均等にする
                 .contentShape(Rectangle())
                 .border(Color.gray.opacity(0.3), width: 2.0)
-                .transition(.opacity) // フェード
+                //.transition(.opacity) // フェード
             
             ListView(viewModel: viewModel)
                 .frame(maxHeight: .infinity) // 高さを均等にする
                 .contentShape(Rectangle())
                 .border(Color.gray.opacity(0.3), width: 2.0)
-//                .border( activeList == 0 ? Color.blue : Color.gray.opacity(0.3), width: 2.0)
-                .transition(.opacity) // フェード
+                //.transition(.opacity) // フェード
         }
 
     }
 }
+
 

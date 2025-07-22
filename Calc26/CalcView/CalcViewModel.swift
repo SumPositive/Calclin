@@ -96,9 +96,7 @@ final class CalcViewModel: ObservableObject {
 
     /// KeyViewからKeyを受け取り listRows と formulaText を更新する
     @MainActor
-    func input(_ keyTag: KeyTag,
-               label: String? = nil,
-               rzUnit: String? = nil)
+    func input(_ keyTag: KeyTag)
     {
         switch keyTag {
             case .n0,.n1,.n2,.n3,.n4,.n5,.n6,.n7,.n8,.n9: // [0]...[9]
@@ -133,12 +131,41 @@ final class CalcViewModel: ObservableObject {
             case .fn_gt: // [GT] Ground Total: 1ドラムの全[=]回答値の合計
                 handleGroundTotal()
                 
+//            case .unit(.kg):
+//                break
                 
             default:
                 break
         }
     }
     
+//    func entryUnitKey(_ keyButton: KeyButton) {
+//        // 単位キー処理
+//        guard !keyButton.rzUnit.isEmpty else { return }
+//        
+//        do {
+//            // 単位表示を entryUnit にセット（例: "kg;1;1"）
+//            entryUnit = (keyButton.titleLabel?.text ?? "") + KeyUNIT_DELIMIT + keyButton.rzUnit
+//            print("entryUnitKey: entryUnit=\(entryUnit)")
+//            
+//            // 前行が [=] のとき再計算して単位を変換表示する
+//            if entryOperator.hasPrefix(OP_ANS) {
+//                if var zRevers = zUnitPara(entryUnit, iPara: 3) {  // 逆変換式
+//                    // "#" を "%@" に変換
+//                    zRevers = zRevers.replacingOccurrences(of: "#", with: "%@")
+//                    // ドラムから数式を取り出し、逆変換式を適用
+//                    let zForm = String(format: zRevers, zFormulaFromDrum())
+//                    // 再計算して表示
+//                    entryNumber = CalcFunctions.zAnswerFromFormula(zForm)
+//                    print("entryUnitKey: entryNumber=\(entryNumber)")
+//                }
+//            }
+//        } catch {
+//            print("entryUnitKey: Exception: \(error)")
+//            GA_TRACK_EVENT_ERROR("\(error)", 0)
+//        }
+//    }
+
     
     
     // MARK: - Private Methods

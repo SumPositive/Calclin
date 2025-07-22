@@ -80,24 +80,23 @@ enum KeyTag: String {
     //    static let memoryEnd = 399
 
     // ms メモリストアキー
-    enum ms: String {
-        case m1  = "M1"
-        case m2  = "M2"
-        case m3  = "M3"
-        case m4  = "M4"
-        case m5  = "M5"
-        case m6  = "M6"
-        case m7  = "M7"
-        case m8  = "M8"
-        case m9  = "M9"
-        //    // --- MStore (M1〜M20)
-        //    static let mstoreStart = 400
-        //    case m1 = 401, m2 = 402, m3 = 403, m4 = 404, m5 = 405
-        //    case m6 = 406, m7 = 407, m8 = 408, m9 = 409, m10 = 410
-        //    case m11 = 411, m12 = 412, m13 = 413, m14 = 414, m15 = 415
-        //    case m16 = 416, m17 = 417, m18 = 418, m19 = 419, m20 = 420
-        //    static let mstoreEnd = 499
-    }
+    case m1  = "M1"
+    case m2  = "M2"
+    case m3  = "M3"
+    case m4  = "M4"
+    case m5  = "M5"
+    case m6  = "M6"
+    case m7  = "M7"
+    case m8  = "M8"
+    case m9  = "M9"
+    //    // --- MStore (M1〜M20)
+    //    static let mstoreStart = 400
+    //    case m1 = 401, m2 = 402, m3 = 403, m4 = 404, m5 = 405
+    //    case m6 = 406, m7 = 407, m8 = 408, m9 = 409, m10 = 410
+    //    case m11 = 411, m12 = 412, m13 = 413, m14 = 414, m15 = 415
+    //    case m16 = 416, m17 = 417, m18 = 418, m19 = 419, m20 = 420
+    //    static let mstoreEnd = 499
+
     // --- Function (空定義枠)
     static let funcStart = 500
     // case iCloud = 501
@@ -105,19 +104,34 @@ enum KeyTag: String {
     // case evernote = 503
     static let funcEnd = 599
     
-    // unit 単位キー
-    enum unit: String {
-        case kg  = "kg"
-        case g  = "g"
-        case mg  = "mg"
-        case t  = "t"
-        case kt  = "kt"
-        case ozav  = "ozav"
-        case lbav  = "lbav"
-        case KANN  = "KANN"
-        case MONN  = "MONN"
-        
-        // --- Unit（1000〜2999）: 定数多すぎるため一部略記。必要に応じて定義を追加。
+    // unit 単位キー  "表示単位;基準単位;(表示単位→基準単位にする);(基準単位→表示単位にする)"
+    // kg系　1次元
+    case u_kg   = "kg;kg;#;#"
+    case u_g    = "g;kg;(#/1000);(#*1000)"
+    case u_mg   = "mg;kg;(#/1000000);(#*1000000)"
+    case u_t    = "t;kg;(#*1000);(#/1000)"
+    case u_kt   = "kt;kg;(#*1000000);(#/1000000)"
+
+    // m系　１次元
+    case u_m    = "m;m;#;#"
+    case u_cm   = "cm;m;(#/100);(#*100)"
+    case u_mm   = "mm;m;(#/1000);(#*1000)"
+    case u_km   = "km;m;(#*1000);(#/1000)"
+
+    // m2系　２次元
+    case u_m2   = "㎡;㎡;#;#"
+    case u_cm2  = "c㎡;㎡;(#/10000);(#*10000)"
+    case u_are  = "are"
+    case u_ha   = "ha;㎡;(#*10000);(#/10000)"
+    case u_km2  = "k㎡;㎡;(#*1000000);(#/1000000)"
+    case u_mm2  = "m㎡;㎡;(#/1000000);(#*1000000)"
+    case u_TUBO = "坪"
+    case u_UNE  = "畝"
+    case u_TAN  = "TAN"
+
+    
+
+    // --- Unit（1000〜2999）: 定数多すぎるため一部略記。必要に応じて定義を追加。
         //    static let unitStart = 1000
         
         //    case u_kg = "u_kg"
@@ -187,7 +201,7 @@ enum KeyTag: String {
         //    case u_wk = 1605
         
         //    static let unitEnd = 2999
-    }
+    
 }
 
 
@@ -263,34 +277,133 @@ struct KeyButtonStyle: ButtonStyle {
     }
 }
 
+//struct KeyView: View {
+//    let label: String
+//    
+//    var body: some View {
+//        Button(action: {
+//            onTap(KeyTag(rawValue: keys[index].keyVal) ?? KeyTag.none)
+//        }) {
+//            Text(label)
+//                .frame(maxWidth: .infinity, maxHeight: .infinity)
+//                .padding()
+//                .background(Color.gray.opacity(0.2))
+//                .cornerRadius(8)
+//        }
+//    }
+//}
 struct KeyView: View {
-    @ObservedObject var viewModel: KeyViewModel
+    @ObservedObject var viewModel: KeyboardViewModel
+    //@ObservedObject var viewModel: KeyViewModel
     @State var label: String
 
+    //@Binding var popupInfo: (label: String, position: CGPoint, items: [String])?
+
+    
+//    @State private var isShowingPopup = false
     //var onTap: (String) -> Void
     
 
+    let popupItems = ["Answer", "BS", "Clear", "+", "-", "%"]
+
     var body: some View {
-        Button(action: {
-            viewModel.onTap(label)
-        }) {
-            EmptyView()
+        GeometryReader { geo in
+            Button(action: {
+                viewModel.onTap(label)
+            }) {
+                EmptyView()
+            }
+            .aspectRatio(128/80, contentMode: .fit)
+            .buttonStyle(
+                KeyButtonStyle(labelText: label)
+            )
+            .simultaneousGesture(
+                LongPressGesture(minimumDuration: 0.5) // 0.5秒以上の長押し
+                    .onEnded { _ in
+                        var global = geo.frame(in: .global).center
+                        global.y -= 225
+                        viewModel.popupInfo = (
+                            label: label,
+                            position: global,
+                            items: popupItems
+                        )
+                    }
+            )
         }
-        .buttonStyle(
-            KeyButtonStyle(labelText: label)
-        )
-        .aspectRatio(128/80, contentMode: .fit)
     }
 }
 
+extension CGRect {
+    var center: CGPoint {
+        CGPoint(x: midX, y: midY)
+    }
+}
 
-final class KeyViewModel: ObservableObject {
-    @Published var history: [String] = []
+struct PopupListView: View {
+    let items: [String]
+    let onSelect: (String) -> Void
     
-    /// Keyタップ時の処理
-    func onTap(_ label: String) {
-        history.append(label)
+    var body: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 0) {
+                Text("キー定義")
+                // 吹き出し本体
+                List {
+                    ForEach(items, id: \.self) { item in
+                        Text(item)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.accentColor)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .listRowSeparator(.hidden) // 既定の下線を非表示
+                            .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
+                            .padding(.vertical, 2)  // 上下の余白
+                            .padding(.horizontal, 4)// 左右の余白
+                            .background(.white)
+                            .onTapGesture {
+                                onSelect(item)
+                            }
+                    }
+                }
+                .listStyle(.plain)
+                .environment(\.defaultMinListRowHeight, 16) // デフォルトの最小行高を縮小
+            }
+            .background(.white)
+            .cornerRadius(15.0)
+            .padding(0) // 吹き出しとの間隔(0)
+            // 吹き出しの三角形部分（下向き）
+            Triangle()
+                .fill(.white)
+                .frame(width: 30, height: 15)
+                .rotationEffect(.degrees(180)) // 上下反転
+        }
+        .frame(width: 100, height: 300, alignment: .center)
     }
-
 }
+
+struct Triangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.move(to: CGPoint(x: rect.midX, y: rect.minY))     // 上
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))  // 右下
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))  // 左下
+            path.closeSubpath()
+        }
+    }
+}
+
+//final class KeyViewModel: ObservableObject {
+//    @Published var history: [String] = []
+//    
+//    /// Keyタップ時の処理
+//    func onTap(_ label: String) {
+//        history.append(label)
+//    }
+//    
+//    
+//    /// Key長押し時の処理：キー割り当て変更
+//    func onLongPress(_ label: String) {
+//        // KeyTagリストを表示する
+//    }
+//
+//}
 

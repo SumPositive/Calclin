@@ -8,54 +8,123 @@
 import Foundation
 import SwiftUI
 
+final class KeyboardViewModel: ObservableObject {
+    @Published var history: [String] = []
+    @Published var popupInfo: (label: String, position: CGPoint, items: [String])? = nil
+
+    /// Keyタップ時の処理
+    func onTap(_ label: String) {
+        history.append(label)
+    }
+    
+    
+    /// Key長押し時の処理：キー割り当て変更
+    func onLongPress(_ label: String) {
+        // KeyTagリストを表示する
+    }
+    
+}
+
 
 struct KeyboardView: View {
-    @StateObject private var keyViewModel = KeyViewModel()
-    
+    @ObservedObject var viewModel: KeyboardViewModel
+
     let spacing: CGFloat = 4
     var onTap: (KeyTag) -> Void
-    
+    //@Binding var popupInfo: (label: String, position: CGPoint, items: [String])?
+
     // @State 変化あればViewが更新される
     @State private var keys: [KeyboardKey] = []
     @State private var column: Int = 0
-
+    @State private var selectedPage = 1 // 初期で2ページ目（インデックス1）を表示
+    //
+    private let pageCount = 3
     
     var body: some View {
-        let gridColumns = Array(repeating: GridItem(.flexible(), spacing: spacing), count: column)
-        
-        LazyVGrid(columns: gridColumns, spacing: spacing) {
-            ForEach(keys.indices, id: \.self) { index in
-                let label = keys[index].label
-                //                KeyView(viewModel: keyViewModel, label: label)
-                
-                Button(action: {
-                    onTap(KeyTag(rawValue: keys[index].keyVal) ?? KeyTag.none)
-                }) {
-                    EmptyView()
+
+        VStack {
+            // KeyPageViewを3個横に並べ、1ページずつ左右にスワイプできる
+            TabView(selection: $selectedPage) {
+                ForEach(0..<pageCount, id: \.self) { index in
+                    KeyPageView(viewModel: viewModel)
+                        .padding(4.0)
+                        .tag(index)
                 }
-                .buttonStyle(
-                    PressableImageButtonStyle(
-                        normalImage: "keyUp",
-                        pressedImage: "keyDown",
-                        labelText: label
-                    )
-                )
-                .aspectRatio(128 / 80, contentMode: .fit)
             }
-        }
-        .padding(spacing)
-        .onAppear {
-            // 初回表示時のみ読み込む
-            if keys.isEmpty {
-                let result = loadKeyboardLabels()
-                keys = result.keys
-                column = result.column
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never)) // ページインジケータ非表示
+            .padding(0)
+            // カスタム ページインジケータ
+            HStack(spacing: 8) {
+                ForEach(0..<pageCount, id: \.self) { index in
+                    Circle()
+                        .fill(index == selectedPage ? Color.primary : Color.gray.opacity(0.4))
+                        .frame(width: 10, height: 10)
+                        .animation(.easeInOut(duration: 0.2), value: selectedPage)
+                }
             }
+            .padding(0)
         }
         .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
+        //.frame(height: .infinity, alignment: .center)
+        //.frame(minHeight: .infinity, maxHeight: .infinity)
+
+//        let gridColumns = Array(repeating: GridItem(.flexible(), spacing: spacing), count: column)
+//        
+//        LazyVGrid(columns: gridColumns, spacing: spacing) {
+//            ForEach(keys.indices, id: \.self) { index in
+//                let label = keys[index].label
+//                //                KeyView(viewModel: keyViewModel, label: label)
+//                
+//                Button(action: {
+//                    onTap(KeyTag(rawValue: keys[index].keyVal) ?? KeyTag.none)
+//                }) {
+//                    EmptyView()
+//                }
+//                .buttonStyle(
+//                    PressableImageButtonStyle(
+//                        normalImage: "keyUp",
+//                        pressedImage: "keyDown",
+//                        labelText: label
+//                    )
+//                )
+//                .aspectRatio(128 / 80, contentMode: .fit)
+//            }
+//        }
+//        .padding(spacing)
+//        .onAppear {
+//            // 初回表示時のみ読み込む
+//            if keys.isEmpty {
+//                let result = loadKeyboardLabels()
+//                keys = result.keys
+//                column = result.column
+//            }
+//        }
+//        .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
     }
 }
 
+struct KeyPageView: View {
+    @ObservedObject var viewModel: KeyboardViewModel
+
+    //@StateObject private var keyViewModel = KeyViewModel()
+
+    //@Binding var popupInfo: (label: String, position: CGPoint, items: [String])?
+
+    // 5x5 = 25個のキーを用意
+    //let keys = Array(repeating: "", count: 25)
+    
+    var body: some View {
+        // LazyVGridで縦横5x5に等間隔で配置
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 8) {
+            ForEach(0..<25) { index in
+                KeyView(viewModel: viewModel, label: "") //"\(index + 1)")
+                    .aspectRatio(128/80, contentMode: .fit)
+            }
+        }
+        .padding(0)
+        //.frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
+    }
+}
 
 
 struct KeyboardLayout: Codable {

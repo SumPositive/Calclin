@@ -8,20 +8,28 @@
 import SwiftUI
 
 struct ContentView: View {
+    // SettingView
     let setting: SettingViewModel // 全Viewで共通のインスタンス
     // CalcView
     @StateObject var calcViewModel: CalcViewModel
     @StateObject var calc2ViewModel: CalcViewModel
+    // KeyboardView
+    @StateObject var keyboardViewModel: KeyboardViewModel
 
     init() {
+        // SettingView
         let setting = SettingViewModel()
         self.setting = setting
         // CalcView
         _calcViewModel = StateObject(wrappedValue: CalcViewModel(settingViewModel: setting))
         _calc2ViewModel = StateObject(wrappedValue: CalcViewModel(settingViewModel: setting))
+        // KeyboardView
+        _keyboardViewModel = StateObject(wrappedValue: KeyboardViewModel())
     }
 
     // @State 変化あればViewが更新される
+    // ダークモード対応
+    @Environment(\.colorScheme) var colorScheme
     // 設定　表示状態
     @State private var isShowingSetting = false
     // アクティブ（フォーカス）ListView番号　＜＜＜TODO:配列で複数対応
@@ -31,99 +39,121 @@ struct ContentView: View {
     // ListView2　表示状態
     @State private var isShowList2 = true
 
-    // ダークモード対応
-    @Environment(\.colorScheme) var colorScheme
-
     
     var body: some View {
-        VStack() {
-            
-            HStack {
-                Spacer()
-
-                Text("CalcRoll")
-                    .font(.headline)
-                    .foregroundColor(
-                        colorScheme == .dark ? .gray : .black
-                    )
+        ZStack { // 全画面の自由な位置にPopupViewを表示するため
+            VStack() {
                 
-                Spacer()
-                // トグルボタン
-                Button(action: {
-                    withAnimation {
-                        isShowingSetting.toggle()
+                HStack {
+                    Spacer()
+                    
+                    Text("CalcRoll")
+                        .font(.headline)
+                        .foregroundColor(
+                            colorScheme == .dark ? .gray : .black
+                        )
+                    
+                    Spacer()
+                    // トグルボタン
+                    Button(action: {
+                        withAnimation {
+                            isShowingSetting.toggle()
+                        }
+                    }) {
+                        Image(systemName: isShowingSetting ? "gearshape.fill" : "gearshape")
+                            .imageScale(.large)
                     }
-                }) {
-                    Image(systemName: isShowingSetting ? "gearshape.fill" : "gearshape")
-                        .imageScale(.large)
                 }
-            }
-            .padding(.horizontal)
-            
-            // 設定画面（表示・非表示）
-            if isShowingSetting {
-                SettingView(viewModel: setting)
-                    .transition(.opacity) // フェード
-                    .padding(.horizontal)
-            }
-
-            HStack(spacing: 3) {
-                // 計算式リスト
-                if isShowList1 {
-                    CalcView(viewModel: calcViewModel)
-                        .frame(maxHeight: .infinity) // 高さを均等にする
-                        .contentShape(Rectangle())
-                        .border( activeList == 0 ? Color.blue : Color.gray.opacity(0.3), width: 2.0)
+                .padding(.horizontal)
+                
+                // 設定画面（表示・非表示）
+                if isShowingSetting {
+                    SettingView(viewModel: setting)
                         .transition(.opacity) // フェード
-                        .onTapGesture {
-                            // タップでフォーカス切替
-                            activeList = 0
-                        }
-                        .onTapGesture(count: 2) {
-                            // ダブルタップで最大化（他方のListViewを非表示にする
-                            withAnimation {
-                                isShowList2.toggle()
-                            }
-                            // 同時にフォーカス切替
-                            activeList = 0
-                        }
-                    //.cornerRadius(10)
+                        .padding(.horizontal)
                 }
                 
-                // 計算式リスト2
-                if isShowList2 {
-                    CalcView(viewModel: calc2ViewModel)
-                        .frame(maxHeight: .infinity) // 高さを均等にする
-                        .contentShape(Rectangle())
-                        .border( activeList == 1 ? Color.blue : Color.gray.opacity(0.3), width: 2.0)
-                        .transition(.opacity) // フェード
-                        .onTapGesture {
-                            // タップでフォーカス切替
-                            activeList = 1
-                        }
-                        .onTapGesture(count: 2) {
-                            // ダブルタップで最大化（他方のListViewを非表示にする
-                            withAnimation {
-                                isShowList1.toggle()
+                HStack(spacing: 3) {
+                    // 計算式リスト
+                    if isShowList1 {
+                        CalcView(viewModel: calcViewModel)
+                        //.frame(maxHeight: .infinity) // 高さを均等にする
+                            .contentShape(Rectangle())
+                            .border( activeList == 0 ? Color.blue : Color.gray.opacity(0.3), width: 2.0)
+                            .transition(.opacity) // フェード
+                            .onTapGesture {
+                                // タップでフォーカス切替
+                                activeList = 0
                             }
-                            // 同時にフォーカス切替
-                            activeList = 1
-                        }
-                    //.cornerRadius(20)
+                            .onTapGesture(count: 2) {
+                                // ダブルタップで最大化（他方のListViewを非表示にする
+                                withAnimation {
+                                    isShowList2.toggle()
+                                }
+                                // 同時にフォーカス切替
+                                activeList = 0
+                            }
+                        //.cornerRadius(10)
+                    }
+                    
+                    // 計算式リスト2
+                    if isShowList2 {
+                        CalcView(viewModel: calc2ViewModel)
+                        //.frame(maxHeight: .infinity) // 高さを均等にする
+                            .contentShape(Rectangle())
+                            .border( activeList == 1 ? Color.blue : Color.gray.opacity(0.3), width: 2.0)
+                            .transition(.opacity) // フェード
+                            .onTapGesture {
+                                // タップでフォーカス切替
+                                activeList = 1
+                            }
+                            .onTapGesture(count: 2) {
+                                // ダブルタップで最大化（他方のListViewを非表示にする
+                                withAnimation {
+                                    isShowList1.toggle()
+                                }
+                                // 同時にフォーカス切替
+                                activeList = 1
+                            }
+                        //.cornerRadius(20)
+                    }
                 }
+                .padding(.horizontal, 4.0)
+                //.padding(.horizontal)
+                
+                // キーボード
+                KeyboardView(viewModel: keyboardViewModel,
+                             onTap: { keyTag in
+                    if activeList == 1 {
+                        calc2ViewModel.input(keyTag)
+                    }else{
+                        calcViewModel.input(keyTag)
+                    }
+                })
+                .padding(.horizontal, 4.0)
+                .frame(height: 280)
             }
-            .padding(3)
+            .background(Color(.systemGray6))
 
-            // キーボード
-            KeyboardView(onTap: { keyTag in
-                if activeList == 1 {
-                    calc2ViewModel.input(keyTag)
-                }else{
-                    calcViewModel.input(keyTag)
+            // ZStack
+            // ポップアップの表示
+            if let popup = keyboardViewModel.popupInfo {
+                // ポップアップ外部タップで閉じるための半透明背景レイヤー
+                Color.black.opacity(0.2) // タップ判定される
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        // ポップアップを閉じる
+                        keyboardViewModel.popupInfo = nil
+                    }
+                // ポップアップを開く
+                PopupListView(items: popup.items) { selected in
+                    print("選択: \(selected)")
+                    keyboardViewModel.popupInfo = nil
                 }
-            })
+                .position(popup.position) // 画面全体の座標で表示
+                .zIndex(1)
+            }
         }
-        .background(Color(.systemGray6))
     }
 }
 
