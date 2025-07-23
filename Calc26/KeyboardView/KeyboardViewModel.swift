@@ -29,7 +29,7 @@ final class KeyboardViewModel: ObservableObject {
     
     
     var keyboard: [[String]] = [["1", "2", "3"],
-                                ["1", "2", "3", "Plus", "Minus", "m"],
+                                ["1", "2", "Deci", "Add", "Sub", "m"],
                                 ["1", "2", "3"]]  // .keyboard[page][key]
 
     // Popoverで直前に選択したkeyCode（空キーを長押しした時、初期選択に使用する）

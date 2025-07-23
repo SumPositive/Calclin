@@ -47,7 +47,7 @@ struct CustomCell: View {
                     .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
 
                 // 数値列
-                let fmt = SBCD(row.number).format(trailNoZero: row.oper != KeyTag.op_answer.rawValue)
+                let fmt = SBCD(row.number).format(trailNoZero: row.oper != "=")
                 Text(fmt)
                     //.font(.headline) // 強調文（太字）    重要な小見出し・ボタンラベルなど    約17pt, 太字
                     .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .bold))
@@ -65,7 +65,7 @@ struct CustomCell: View {
             .frame(maxWidth: APP_MAX_WIDTH * 1.5, alignment: .trailing) // 右寄せ
 
             // 下線
-            if row.oper == KeyTag.op_answer.rawValue {
+            if row.oper == "=" {
                 Divider()
             }
         }

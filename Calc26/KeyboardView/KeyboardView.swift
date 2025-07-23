@@ -202,60 +202,30 @@ struct Triangle: Shape {
 }
 
 
-
-//
-//struct KeyboardLayout: Codable {
-//    let Name: String
-//    let Column: Int
-//    let Keys: [KeyboardKey]
-//}
-//struct KeyboardKey: Codable {
-//    let label: String
-//    let keyVal: String
-//    let option: String?  // 任意項目
-//}
-//
-//func loadKeyboardLabels() -> (keys: [KeyboardKey], column: Int) {
-//    guard let url = Bundle.main.url(forResource: "Keyboard", withExtension: "plist"),
-//          let data = try? Data(contentsOf: url) else {
-//        print("❌ ファイル読み込み失敗")
-//        return ([], 0)
-//    }
-//
-//    do {
-//        let layouts = try PropertyListDecoder().decode([KeyboardLayout].self, from: data)
-//        if let standard = layouts.first(where: { $0.Name == "Standard" }) {
-//            let keys = standard.Keys.compactMap { $0 }
-//            return (keys, standard.Column)
-//        } else {
-//            print("❌ 'Standard' レイアウトが見つかりません")
-//            return ([], 0)
-//        }
-//    } catch {
-//        print("❌ デコードエラー: \(error)")
-//        return ([], 0)
-//    }
-//}
-
-
 // カスタムスタイル：押下時に画像を切り替える
-struct PressableImageButtonStyle: ButtonStyle {
-    var normalImage: String
-    var pressedImage: String
+struct KeyButtonStyle: ButtonStyle {
+    var normalImage: String = "keyUp"
+    var pressedImage: String = "keyDown"
+    
     var labelText: String
     
-    // ダークモード対応
-    @Environment(\.colorScheme) var colorScheme
+//    var rzUnit: String = ""
+//    var page: Int = 0
+//    var column: Int = 0
+//    var row: Int = 0
+//    var colorNo: Int = 0
+    var fontSize: CGFloat = 24
+//    var isDirty: Bool = false
+    
     
     func makeBody(configuration: Configuration) -> some View {
         ZStack {
             Image(configuration.isPressed ? pressedImage : normalImage)
                 .resizable()
-                .brightness(colorScheme == .dark ? -0.45 : 0) // ← ダークモードで暗く
             
             Text(labelText)
                 .foregroundColor(.black)
-                .font(.system(size: 24, weight: .bold))
+                .font(.system(size: fontSize, weight: .bold))
                 .shadow(radius: 1)
         }
     }

@@ -45,7 +45,6 @@
 				KeyboardView/KeyboardView.swift,
 				KeyboardView/KeyboardViewModel.swift,
 				KeyboardView/KeyDefinition.plist,
-				KeyboardView/KeyView.swift,
 				SBCD/SBCD_objC_Wrapper.mm,
 				SBCD/SBCD_Wrapper.swift,
 				SBCD/SBCD.cpp,
@@ -61,8 +60,6 @@
 				KeyboardView/Keyboard.plist,
 				KeyboardView/KeyboardView.swift,
 				KeyboardView/KeyDefinition.plist,
-				KeyboardView/KeyDefinitionXX2.plist,
-				KeyboardView/KeyView.swift,
 			);
 			target = C30A78AF2E10EE8700212729 /* Calc26Tests */;
 		};

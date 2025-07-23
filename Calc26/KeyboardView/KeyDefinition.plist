@@ -44,6 +44,12 @@
 	</dict>
 	<dict>
 		<key>code</key>
+		<string>Deci</string>
+		<key>keyTop</key>
+		<string>.</string>
+	</dict>
+	<dict>
+		<key>code</key>
 		<string>00</string>
 	</dict>
 	<dict>
@@ -64,13 +70,13 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>Plus</string>
+		<string>Add</string>
 		<key>keyTop</key>
 		<string>+</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>Minus</string>
+		<string>Sub</string>
 		<key>keyTop</key>
 		<string>-</string>
 	</dict>

@@ -47,22 +47,23 @@ final class CalcViewModel: ObservableObject {
     }
 
 
-    // 原則としてKeyTag.*.rawValueを使用するが頻出するものを下記に定義
-    // 数字構成文字
-    let NUM_DECIMAL = KeyTag.decimal.rawValue // 小数点
+    // Formula 構成文字
+    let NUM_DECIMAL = "." // 小数点
     // 制御文字 Operator String
-    let OP_START    = KeyTag.fn_start.rawValue // 願いましては
-    let OP_ADD      = KeyTag.op_add.rawValue // 加算
-    let OP_SUBTRACT = KeyTag.op_subtract.rawValue // 減算 Unicode[002D] 内部用文字（String ⇒ doubleValue)変換のために必須
-    let OP_MULTIPLY = KeyTag.op_multiply.rawValue // 掛算
-    let OP_DIVIDE   = KeyTag.op_divide.rawValue // 割算
-    let OP_ANSWER   = KeyTag.op_answer.rawValue // 答え
-    let OP_GT       = KeyTag.fn_start.rawValue + KeyTag.fn_gt.rawValue //">GT" // 総計 ＜＜1字目を OP_START にして「開始行」扱いすることを示す＞＞
+    let OP_START    = "→" // 願いましては
+    let OP_ADD      = "+" // 加算
+    let OP_SUBTRACT = "-" // 減算 Unicode[002D] 内部用文字（String ⇒ doubleValue)変換のために必須
+    let OP_MULTIPLY = "×" // 掛算
+    let OP_DIVIDE   = "÷" // 割算
+    let OP_ANSWER   = "=" // 答え
+    let OP_GT       = "GT" //">GT" // 総計 ＜＜1字目を OP_START にして「開始行」扱いすることを示す＞＞
+
     // Unit String
-    let U_PERCENT   = KeyTag.fn_percent.rawValue // パーセント
-    let U_PERMIL    = KeyTag.fn_permil.rawValue // パーミル
-    let U_AddTAX    = KeyTag.fn_addTax.rawValue // 税込み
-    let U_SubTAX    = KeyTag.fn_subTax.rawValue // 税抜き
+    let U_PERCENT   = "%" // パーセント
+    let U_PERMIL    = "‰" // パーミル
+    let U_AddTAX    = "+Tax" // 税込み
+    let U_SubTAX    = "-Tax" // 税抜き
+
     
     // MARK: - Constants
     static let ROWS_MAX: Int = 100      // 最大行数
@@ -75,10 +76,16 @@ final class CalcViewModel: ObservableObject {
     
     
     struct  ListRow: Hashable {
-        var oper: String    = KeyTag.fn_start.rawValue
+        struct  Unit: Hashable {
+            var unit: String    = ""    // 表示単位
+            var base: String    = ""    // 基準単位
+            var conv: String    = ""    // 変換式
+            var rev: String     = ""    // 逆変換式
+        }
+        var oper: String    = "→"
         var number: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
-        var unit: String    = ""    // 単位
         var answer: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
+        var unit: ListRow.Unit?     // 単位
     }
     // 全行記録
     @Published var listRows: [ListRow] = [ListRow()] // 初期1行 .index=0
@@ -110,13 +117,13 @@ final class CalcViewModel: ObservableObject {
                 case "00", "000":
                     handleZeroGroup(keyDef.code)
                     
-                case ".":  // [.]
+                case "Deci":  // [.]
                     handleDecimal()
                     
-                case "+/-":  // [+/-]
+                case "Sign":  // [+/-]
                     handleSign()
                     
-                case "=","+","-","×","÷":
+                case "Ans","Add","Sub","Mul","Div":
                     handleOperator(keyDef.code)
                     
                 case "AC": // [AC] All Clear
@@ -181,7 +188,7 @@ final class CalcViewModel: ObservableObject {
     private func sbcdConfigChange() {
         // 現在行が[=]ならば、
         if let row = listRows.last {
-            if row.oper == KeyTag.op_answer.rawValue {
+            if row.oper == OP_ANSWER {
                 // 新しいSBCD_Config設定で再計算＆再表示する
                 listRows.removeLast()
                 listIndex -= 1
@@ -210,8 +217,8 @@ final class CalcViewModel: ObservableObject {
         var row = ListRow()
         row.oper = nextOperator
         row.number = ""
-        row.unit = ""
         row.answer = ""
+        row.unit = nil
         // Append an element
         listRows.append(row)
         // 入力対象行
@@ -242,7 +249,7 @@ final class CalcViewModel: ObservableObject {
                 }
             }
             else {
-                if row.oper.hasPrefix(KeyTag.fn_start.rawValue), op == OP_SUBTRACT {
+                if row.oper.hasPrefix(OP_START), op == OP_SUBTRACT {
                     handleSign()
                 }
                 else {
@@ -296,63 +303,67 @@ final class CalcViewModel: ObservableObject {
             let op = row.oper.hasPrefix(OP_START) ? String(row.oper.dropFirst()) : row.oper
             
             
-            if row.unit.isEmpty {
+            if let unit = row.unit {
+                // UNIT あり
+                fomula += formUnit(row, oper: op)
+            }else{
                 // UNIT なし
                 fomula += "\(op)\(row.number)"
             }
-            else if row.unit.hasPrefix(U_PERCENT) {
-                //[%]
-                if op == OP_ADD {
-                    // ＋％増　＜＜シャープ式： a[+]b[%] = aのb%増し「税込」と同じ＞＞ 100+5% = 100*(1+5/100) = 105
-                    fomula += "×(1+(\(row.number)/100))"
-                }
-                else if op == OP_SUBTRACT {
-                    // ー％減　＜＜シャープ式： a[-]b[%] = aのb%引き「税抜」と違う！＞＞ 100-5% = 100*(1-5/100) = 95
-                    fomula += "×(1-(\(row.number)/100))"
-                }
-                else {
-                    fomula += "\(op)(\(row.number)/100)"
-                }
-            }
-            else if row.unit.hasPrefix(U_PERMIL) {
-                //[‰]
-                if op == OP_ADD {
-                    // ＋％増　＜＜シャープ式： a[+]b[%] = aのb%増し「税込」と同じ＞＞ 100+5% = 100*(1+5/100) = 105
-                    fomula += "×(1+(\(row.number)/1000))"
-                }
-                else if op == OP_SUBTRACT {
-                    // ー％減　＜＜シャープ式： a[-]b[%] = aのb%引き「税抜」と違う！＞＞ 100-5% = 100*(1-5/100) = 95
-                    fomula += "×(1-(\(row.number)/1000))"
-                }
-                else {
-                    fomula += "\(op)(\(row.number)/1000)"
-                }
-            }
-            else if row.unit.hasPrefix(U_AddTAX) {
-                //[+Tax]
-                fomula += "\(row.number)×\(tax_rate))"
-            }
-            else if row.unit.hasPrefix(U_SubTAX) {
-                //[-Tax]
-                fomula += "\(row.number)÷\(tax_rate))"
-            }
-            else {
-                // UNIT  SI基本単位変換
-                let arUnit = row.unit.components(separatedBy: KeyUNIT_DELIMIT)
-                if 2 < arUnit.count {
-                    // (0) 表示単位, (1) SI基本単位, (2) 変換式, (3) 逆変換式
-                    var fmt = arUnit[2]
-                    // UNIT変換式："#" を "%@" に置換（String(format:)用）
-                    fmt = fmt.replacingOccurrences(of: "#", with: "%@")
-                    // zFormula に演算子と変換式を連結
-                    fomula += row.oper
-                    fomula += String(format: fmt, row.number)
-                }
-            }
+            
         }
         return fomula
     }
-    
+
+    private func formUnit(_ row: ListRow, oper: String) -> String {
+        guard let unit = row.unit else {
+            return ""
+        }
+        if unit.unit.hasPrefix(U_PERCENT) {
+            //[%]
+            if oper == OP_ADD {
+                // ＋％増　＜＜シャープ式： a[+]b[%] = aのb%増し「税込」と同じ＞＞ 100+5% = 100*(1+5/100) = 105
+                return "×(1+(\(row.number)/100))"
+            }
+            else if oper == OP_SUBTRACT {
+                // ー％減　＜＜シャープ式： a[-]b[%] = aのb%引き「税抜」と違う！＞＞ 100-5% = 100*(1-5/100) = 95
+                return "×(1-(\(row.number)/100))"
+            }
+            else {
+                return "\(oper)(\(row.number)/100)"
+            }
+        }
+        else if unit.unit.hasPrefix(U_PERMIL) {
+            //[‰]
+            if oper == OP_ADD {
+                // ＋％増　＜＜シャープ式： a[+]b[%] = aのb%増し「税込」と同じ＞＞ 100+5% = 100*(1+5/100) = 105
+                return "×(1+(\(row.number)/1000))"
+            }
+            else if oper == OP_SUBTRACT {
+                // ー％減　＜＜シャープ式： a[-]b[%] = aのb%引き「税抜」と違う！＞＞ 100-5% = 100*(1-5/100) = 95
+                return "×(1-(\(row.number)/1000))"
+            }
+            else {
+                return "\(oper)(\(row.number)/1000)"
+            }
+        }
+        else if unit.unit.hasPrefix(U_AddTAX) {
+            //[+Tax]
+            return "\(row.number)×\(tax_rate))"
+        }
+        else if unit.unit.hasPrefix(U_SubTAX) {
+            //[-Tax]
+            return "\(row.number)÷\(tax_rate))"
+        }
+        else {
+            // UNIT  SI基本単位変換
+            // UNIT変換式："#" を "%@" に置換（String(format:)用）
+            let fmt = unit.conv.replacingOccurrences(of: "#", with: "%@")
+            //
+            return oper + String(format: fmt, row.number)
+        }
+    }
+
     /// [0]-[9] 数字
     @MainActor private func handleNumber(_ num: String) {
         assert(listIndex < listRows.count, "enterIndex=\(listIndex), count=\(listRows.count)")
@@ -469,8 +480,8 @@ final class CalcViewModel: ObservableObject {
             row.oper = ""
         }
         row.number = ""
-        row.unit = ""
         row.answer = ""
+        row.unit = nil
         // Replace an element（これによりViewが更新される）
         listRows[listIndex] = row // Replace
     }
@@ -478,8 +489,8 @@ final class CalcViewModel: ObservableObject {
     /// [SC] Back Space
     private func handleBackSpace() {
         var row = listRows[listIndex]
-        if 0 < row.unit.count {
-            row.unit = ""
+        if row.unit != nil {
+            row.unit = nil
         }
         else if 0 < row.number.count {
             row.number.removeLast()
@@ -527,7 +538,7 @@ final class CalcViewModel: ObservableObject {
         // 表示として [>GT] と合計値をセット
         row.oper = OP_GT
         row.number = total.value
-        row.unit = ""
+        row.unit = nil
         // Replace an element（これによりViewが更新される）
         listRows[listIndex] = row // Replace
         // エラーでなければ新しい行を作成
