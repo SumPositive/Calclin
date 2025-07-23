@@ -105,17 +105,21 @@ final class CalcViewModel: ObservableObject {
     @MainActor
     func input(_ keyDef: KeyDefinition)
     {
-        if let unit  = keyDef.UnitBase, !unit.isEmpty {
+        if let unit  = keyDef.unitBase, !unit.isEmpty {
             // Unit
             
         }
         else{
             switch keyDef.code {
                 case "0"..."9": // [0]...[9]
-                    handleNumber(keyDef.code)
+                    if let formula = keyDef.formula {
+                        handleNumber(formula)
+                    }
                     
                 case "00", "000":
-                    handleZeroGroup(keyDef.code)
+                    if let formula = keyDef.formula {
+                        handleZeroGroup(formula)
+                    }
                     
                 case "Deci":  // [.]
                     handleDecimal()
@@ -124,12 +128,14 @@ final class CalcViewModel: ObservableObject {
                     handleSign()
                     
                 case "Ans","Add","Sub","Mul","Div":
-                    handleOperator(keyDef.code)
+                    if let formula = keyDef.formula {
+                        handleOperator(formula)
+                    }
                     
-                case "AC": // [AC] All Clear
+                case "CA": // [CA] Clear All
                     handleAllClear()
                     
-                case "SC": // [SC] Section Clear：1行クリア
+                case "CS": // [SC] Clear Section：1行クリア
                     handleSectionClear()
                     
                 case "BS": // [BS] Back Space
@@ -303,7 +309,7 @@ final class CalcViewModel: ObservableObject {
             let op = row.oper.hasPrefix(OP_START) ? String(row.oper.dropFirst()) : row.oper
             
             
-            if let unit = row.unit {
+            if let _ = row.unit {
                 // UNIT あり
                 fomula += formUnit(row, oper: op)
             }else{

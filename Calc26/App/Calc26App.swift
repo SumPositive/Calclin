@@ -7,16 +7,37 @@
 
 import SwiftUI
 
+let APP_MIN_WIDTH : CGFloat = 320
+let APP_MAX_WIDTH : CGFloat = 480
+
+
 @main
 struct Calc26App: App {
+//    @Environment(\.scenePhase) private var scenePhase
+//    @StateObject private var viewModel = KeyboardViewModel() // ← @Published keyboard を持っていると仮定
+
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+//                .environmentObject(viewModel)
         }
+//        .onChange(of: scenePhase) { oldPhase, newPhase in
+//            switch newPhase {
+//                case .background:
+//                    saveKeyboard(viewModel.keyboard)
+//                case .active:
+//                    if let loaded = loadKeyboard() {
+//                        viewModel.keyboard = loaded
+//                    }
+//                default:
+//                    break
+//            }
+//        }
     }
+    
+    
 }
 
 
-let APP_MIN_WIDTH : CGFloat = 320
-let APP_MAX_WIDTH : CGFloat = 480
 

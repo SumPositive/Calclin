@@ -5,55 +5,81 @@
 	<dict>
 		<key>code</key>
 		<string>1</string>
+		<key>formula</key>
+		<string>1</string>
 	</dict>
 	<dict>
 		<key>code</key>
+		<string>2</string>
+		<key>formula</key>
 		<string>2</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>3</string>
+		<key>formula</key>
+		<string>3</string>
 	</dict>
 	<dict>
 		<key>code</key>
+		<string>4</string>
+		<key>formula</key>
 		<string>4</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>5</string>
+		<key>formula</key>
+		<string>5</string>
 	</dict>
 	<dict>
 		<key>code</key>
+		<string>6</string>
+		<key>formula</key>
 		<string>6</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>7</string>
+		<key>formula</key>
+		<string>7</string>
 	</dict>
 	<dict>
 		<key>code</key>
+		<string>8</string>
+		<key>formula</key>
 		<string>8</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>9</string>
+		<key>formula</key>
+		<string>9</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>0</string>
+		<key>formula</key>
+		<string>9</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>Deci</string>
+		<key>formula</key>
+		<string>.</string>
 		<key>keyTop</key>
 		<string>.</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>00</string>
+		<key>formula</key>
+		<string>00</string>
 	</dict>
 	<dict>
 		<key>code</key>
+		<string>000</string>
+		<key>formula</key>
 		<string>000</string>
 	</dict>
 	<dict>
@@ -65,36 +91,48 @@
 	<dict>
 		<key>code</key>
 		<string>Start</string>
+		<key>formula</key>
+		<string>→</string>
 		<key>keyTop</key>
 		<string>→</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>Add</string>
+		<key>formula</key>
+		<string>+</string>
 		<key>keyTop</key>
 		<string>+</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>Sub</string>
+		<key>formula</key>
+		<string>-</string>
 		<key>keyTop</key>
 		<string>-</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>Mul</string>
+		<key>formula</key>
+		<string>×</string>
 		<key>keyTop</key>
 		<string>×</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>Div</string>
+		<key>formula</key>
+		<string>÷</string>
 		<key>keyTop</key>
 		<string>÷</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>Ans</string>
+		<key>formula</key>
+		<string>=</string>
 		<key>keyTop</key>
 		<string>=</string>
 	</dict>
@@ -105,9 +143,13 @@
 	<dict>
 		<key>code</key>
 		<string>(</string>
+		<key>formula</key>
+		<string>(</string>
 	</dict>
 	<dict>
 		<key>code</key>
+		<string>)</string>
+		<key>formula</key>
 		<string>)</string>
 	</dict>
 	<dict>
@@ -118,7 +160,7 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>AC</string>
+		<string>CA</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -126,11 +168,17 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>SC</string>
+		<string>CS</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>LC</string>
+		<string>CL</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Sign</string>
+		<key>keyTop</key>
+		<string>+/-</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -171,181 +219,181 @@
 	<dict>
 		<key>code</key>
 		<string>mg</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>g</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#/1000)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#*1000)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>g</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>g</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>#</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>#</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>kg</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>g</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#*1000)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#/1000)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>t</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>g</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#*1000000)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#/1000000)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>kt</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>g</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#*1000000000)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#/1000000000)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>mm</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>m</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#/1000)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#*1000)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>cm</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>m</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#/100)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#*100)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>m</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>m</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>#</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>#</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>km</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>m</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#*1000)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#/1000)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>m㎡</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>㎡</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#/1000000)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#*1000000)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>c㎡</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>㎡</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#/10000)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#*10000)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>㎡</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>㎡</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>#</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>#</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>a</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>㎡</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#*100)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#/100)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>ha</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>㎡</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#*10000)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#/10000)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>k㎡</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>㎡</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#*1000000)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#/1000000)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>坪</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>㎡</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#*3.305785)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#/3.305785)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>畝</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>㎡</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#*99.17355)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#/99.17355)</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>反</string>
-		<key>UnitBase</key>
+		<key>unitBase</key>
 		<string>㎡</string>
-		<key>UnitConv</key>
+		<key>unitConv</key>
 		<string>(#*991.7355)</string>
-		<key>UnitRev</key>
+		<key>unitRev</key>
 		<string>(#/991.7355)</string>
 	</dict>
 </array>

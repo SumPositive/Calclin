@@ -71,6 +71,8 @@ struct KeyView: View {
     
     private var keyDef: KeyDefinition?
     private var keyTop: String = ""
+    private var page: Int
+    private var index: Int
 
     init(viewModel: KeyboardViewModel,
          onTap: @escaping (KeyDefinition) -> Void,
@@ -79,6 +81,8 @@ struct KeyView: View {
 
         self.viewModel = viewModel
         self.onTap = onTap
+        self.page = page
+        self.index = index
 
         if page < viewModel.keyboard.count,
            index < viewModel.keyboard[page].count {
@@ -109,6 +113,8 @@ struct KeyView: View {
                         var global = geo.frame(in: .global).center
                         global.y -= 225
                         viewModel.popupInfo = (
+                            page: self.page,
+                            index: self.index,
                             keyCode: keyDef?.code ?? "",
                             position: global
                         )
@@ -126,7 +132,7 @@ extension CGRect {
 
 struct PopupListView: View {
     @ObservedObject var viewModel: KeyboardViewModel
-    let onSelect: (String) -> Void
+    let onSelect: (KeyDefinition) -> Void
 
     @State private var selectedKeyCode: String = ""  // 選択状態のキーコードを管理
 
@@ -155,7 +161,7 @@ struct PopupListView: View {
                                 )
                                 .id(keyDef.code) // ScrollViewReaderのための id を指定
                                 .onTapGesture {
-                                    onSelect(keyDef.code)
+                                    onSelect(keyDef)
                                 }
                         }
                     }

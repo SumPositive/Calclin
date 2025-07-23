@@ -134,7 +134,10 @@ struct ContentView: View {
                 .frame(height: 280)
             }
             .background(Color(.systemGray6))
-
+            .onAppear {
+                // 不揮発記録よりkeyboardを読み込み再現する
+                keyboardViewModel.loadKeyboard()
+            }
             // ZStack
             // ポップアップの表示
             if let popup = keyboardViewModel.popupInfo {
@@ -146,9 +149,19 @@ struct ContentView: View {
                         keyboardViewModel.popupInfo = nil
                     }
                 // ポップアップを開く
-                PopupListView(viewModel: keyboardViewModel) { selectedKey in
-                    log(.info, "PopupListView selected: \(selectedKey)")
+                PopupListView(viewModel: keyboardViewModel) { selectedKeyDef in
+                    log(.info, "PopupListView selected: \(selectedKeyDef.code)")
                     keyboardViewModel.popupInfo = nil
+                    // 最終選択を記録
+                    keyboardViewModel.prevSelectKeyCode = selectedKeyDef.code
+                    // keyboardを更新する
+                    if popup.page < keyboardViewModel.keyboard.count,
+                       popup.index < keyboardViewModel.keyboard[popup.page].count {
+                        // keyboardを更新する
+                        keyboardViewModel.keyboard[popup.page][popup.index] = selectedKeyDef.code
+                        // 都度、不揮発記録にkeyboardを保存する
+                        keyboardViewModel.saveKeyboard()
+                    }
                 }
                 .position(popup.position) // 画面全体の座標で表示
                 .zIndex(1)
