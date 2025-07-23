@@ -42,9 +42,9 @@
 				CalcView/CalcViewModel.swift,
 				CalcView/FormulaView.swift,
 				CalcView/ListView.swift,
-				KeyboardView/Keyboard.plist,
 				KeyboardView/KeyboardView.swift,
-				KeyboardView/KeyTag.plist,
+				KeyboardView/KeyboardViewModel.swift,
+				KeyboardView/KeyDefinition.plist,
 				KeyboardView/KeyView.swift,
 				SBCD/SBCD_objC_Wrapper.mm,
 				SBCD/SBCD_Wrapper.swift,
@@ -59,6 +59,9 @@
 			membershipExceptions = (
 				App/Assets.xcassets,
 				KeyboardView/Keyboard.plist,
+				KeyboardView/KeyboardView.swift,
+				KeyboardView/KeyDefinition.plist,
+				KeyboardView/KeyDefinitionXX2.plist,
 				KeyboardView/KeyView.swift,
 			);
 			target = C30A78AF2E10EE8700212729 /* Calc26Tests */;
@@ -74,8 +77,7 @@
 				CalcView/CalcViewModel.swift,
 				CalcView/FormulaView.swift,
 				CalcView/ListView.swift,
-				KeyboardView/KeyboardView.swift,
-				KeyboardView/KeyTag.plist,
+				KeyboardView/KeyboardViewModel.swift,
 				SBCD/SBCD_objC_Wrapper.mm,
 				SBCD/SBCD_Wrapper.swift,
 				SBCD/SBCD.cpp,

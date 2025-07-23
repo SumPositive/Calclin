@@ -96,47 +96,53 @@ final class CalcViewModel: ObservableObject {
 
     /// KeyViewからKeyを受け取り listRows と formulaText を更新する
     @MainActor
-    func input(_ keyTag: KeyTag)
+    func input(_ keyDef: KeyDefinition)
     {
-        switch keyTag {
-            case .n0,.n1,.n2,.n3,.n4,.n5,.n6,.n7,.n8,.n9: // [0]...[9]
-                handleNumber(keyTag.rawValue)
-                
-            case .n00,  // [00]
-                    .n000:  // [000]
-                handleZeroGroup(keyTag.rawValue)
-                
-            case .decimal:  // [.]
-                handleDecimal()
-                
-            case .fn_sign:  // [+/-]
-                handleSign()
-                
-            case .op_answer,    // [=]
-                    .op_add,        // [+]
-                    .op_subtract,   // [-]
-                    .op_multiply,   // [×]
-                    .op_divide:     // [÷]
-                handleOperator(keyTag.rawValue)
-                
-            case .fn_ac: // [AC] All Clear
-                handleAllClear()
-                
-            case .fn_sc: // [SC] Section Clear：1行クリア
-                handleSectionClear()
-                
-            case .fn_bs: // [BS] Back Space
-                handleBackSpace()
-                
-            case .fn_gt: // [GT] Ground Total: 1ドラムの全[=]回答値の合計
-                handleGroundTotal()
-                
-//            case .unit(.kg):
-//                break
-                
-            default:
-                break
+        if let unit  = keyDef.UnitBase, !unit.isEmpty {
+            // Unit
+            
         }
+        else{
+            switch keyDef.code {
+                case "0"..."9": // [0]...[9]
+                    handleNumber(keyDef.code)
+                    
+                case "00", "000":
+                    handleZeroGroup(keyDef.code)
+                    
+                case ".":  // [.]
+                    handleDecimal()
+                    
+                case "+/-":  // [+/-]
+                    handleSign()
+                    
+                case "=","+","-","×","÷":
+                    handleOperator(keyDef.code)
+                    
+                case "AC": // [AC] All Clear
+                    handleAllClear()
+                    
+                case "SC": // [SC] Section Clear：1行クリア
+                    handleSectionClear()
+                    
+                case "BS": // [BS] Back Space
+                    handleBackSpace()
+                    
+                case "GT": // [GT] Ground Total: 1ドラムの全[=]回答値の合計
+                    handleGroundTotal()
+                    
+                default:
+                    break
+            }
+        }
+    }
+    
+    
+    /// 単位処理
+    /// - Parameter keyDef: KeyDefinition
+    private func handleUnit(_ keyDef: KeyDefinition) {
+        
+        
     }
     
 //    func entryUnitKey(_ keyButton: KeyButton) {

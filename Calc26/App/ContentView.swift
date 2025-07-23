@@ -123,11 +123,11 @@ struct ContentView: View {
                 
                 // キーボード
                 KeyboardView(viewModel: keyboardViewModel,
-                             onTap: { keyTag in
+                             onTap: { keyDef in
                     if activeList == 1 {
-                        calc2ViewModel.input(keyTag)
+                        calc2ViewModel.input(keyDef)
                     }else{
-                        calcViewModel.input(keyTag)
+                        calcViewModel.input(keyDef)
                     }
                 })
                 .padding(.horizontal, 4.0)
@@ -146,8 +146,8 @@ struct ContentView: View {
                         keyboardViewModel.popupInfo = nil
                     }
                 // ポップアップを開く
-                PopupListView(items: popup.items) { selected in
-                    print("選択: \(selected)")
+                PopupListView(viewModel: keyboardViewModel) { selectedKey in
+                    log(.info, "PopupListView selected: \(selectedKey)")
                     keyboardViewModel.popupInfo = nil
                 }
                 .position(popup.position) // 画面全体の座標で表示
