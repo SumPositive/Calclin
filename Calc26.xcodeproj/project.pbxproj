@@ -136,10 +136,10 @@
 		C30A789A2E10EE8500212729 = {
 			isa = PBXGroup;
 			children = (
+				C3308AFD2E2F3F34009ED6D6 /* Calc26 */,
 				C30A78B32E10EE8700212729 /* Calc26Tests */,
 				C30A78BD2E10EE8700212729 /* Calc26UITests */,
 				C30A78A42E10EE8500212729 /* Products */,
-				C3308AFD2E2F3F34009ED6D6 /* Calc26 */,
 			);
 			sourceTree = "<group>";
 		};

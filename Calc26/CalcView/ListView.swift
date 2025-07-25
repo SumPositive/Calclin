@@ -48,11 +48,24 @@ struct CustomCell: View {
 
                 // 数値列
                 let fmt = SBCD(row.number).format(trailNoZero: row.oper != "=")
-                Text(fmt)
-                    //.font(.headline) // 強調文（太字）    重要な小見出し・ボタンラベルなど    約17pt, 太字
-                    .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .bold))
-                    .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
-                    .padding(.horizontal, 2.0)
+                if row.number.hasPrefix("(") {
+                    Text("(" + fmt)
+                        .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .bold))
+                        .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
+                        .padding(.horizontal, 2.0)
+                }
+                else if row.number.hasSuffix(")") {
+                    Text(fmt + ")")
+                        .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .bold))
+                        .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
+                        .padding(.horizontal, 2.0)
+                }
+                else {
+                    Text(fmt)
+                        .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .bold))
+                        .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
+                        .padding(.horizontal, 2.0)
+                }
 
                 // 単位列
                 Text("Kg")//row.unit)

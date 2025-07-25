@@ -111,7 +111,7 @@ struct KeyView: View {
                 LongPressGesture(minimumDuration: 0.5) // 0.5秒以上の長押し
                     .onEnded { _ in
                         var global = geo.frame(in: .global).center
-                        global.y -= 225
+                        global.y -= 325
                         viewModel.popupInfo = (
                             page: self.page,
                             index: self.index,
@@ -184,7 +184,7 @@ struct PopupListView: View {
                 }
             }
             .background(.white)
-            .cornerRadius(15.0)
+            .cornerRadius(10.0)
             .padding(0) // 吹き出しとの間隔(0)
             // 吹き出しの三角形部分（下向き）
             Triangle()
@@ -192,7 +192,7 @@ struct PopupListView: View {
                 .frame(width: 30, height: 15)
                 .rotationEffect(.degrees(180)) // 上下反転
         }
-        .frame(width: 150, height: 500, alignment: .center)
+        .frame(width: 90, height: 500, alignment: .bottom)
     }
 }
 

@@ -78,12 +78,12 @@ final class CalcFunc {
         var prevToken = ""
         
         let operators: Set<Character> = Set(CalcFunc.operatorChars)
-        let minusNumbers: Set<Character> = Set("+-*/(")
+        let minusNumbers: Set<Character> = Set("+-*/×÷(")
 
-        // 計算式では許可されている[×,÷]を[*,/]に置換する
-        let formula = formula
-            .replacingOccurrences(of: "×", with: "*")
-            .replacingOccurrences(of: "÷", with: "/")
+//        // 計算式では許可されている[×,÷]を[*,/]に置換する
+//        let formula = formula
+//            .replacingOccurrences(of: "×", with: "*")
+//            .replacingOccurrences(of: "÷", with: "/")
 
         for (index, char) in formula.enumerated() {
             if operators.contains(char) {
@@ -132,11 +132,12 @@ final class CalcFunc {
         // 優先順位と結合性の定義
         let prec: [String: Int] = [
             "+": 1, "-": 1,
+            "×": 2, "÷": 2,
             "*": 2, "/": 2
         ]
 
         let isLeftAss: (String) -> Bool = { op in
-            return ["+", "-", "*", "/"].contains(op)
+            return ["+", "-", "*", "/", "×", "÷"].contains(op)
         }
 
         // 逆ポーランドスタック
