@@ -11,7 +11,6 @@ import Combine // AnyCancellable
 
 @MainActor
 final class CalcViewModel: ObservableObject {
-    // 親モデル
     @ObservedObject var setting: SettingViewModel
     
     
@@ -219,15 +218,25 @@ final class CalcViewModel: ObservableObject {
                             else if 3 < tokens.count {
                                 tokens.removeLast()
                                 formulaUpdate()
-                                // 再帰呼び出し
+                                // [=] 再帰呼び出し
                                 input(keyDef)
                             }
                         }
                     }
                     
                 case "Parentheses": // 前"("後")"の丸括弧を判定して追加する
-                    //handleParentheses()
-                    break
+                    if let last = tokens.last {
+                        if let _ = Double(last) {
+                            // 数値ならば
+                            tokens.append(")")
+                            parenthesesLeft -= 1
+                            formulaUpdate()
+                        }else{
+                            tokens.append("(")
+                            parenthesesLeft += 1
+                            formulaUpdate()
+                        }
+                    }
                     
                 case "CA": // [CA] Clear All
                     //handleAllClear()
@@ -240,9 +249,15 @@ final class CalcViewModel: ObservableObject {
                     
                 case "BS": // [BS] Back Space
                     if var last = tokens.last {
-                        last.removeLast()
-                        tokens[tokens.count - 1] = last
-                        formulaUpdate()
+                        if last.isEmpty {
+                            tokens.removeLast()
+                            // [BS] 再帰呼び出し
+                            input(keyDef)
+                        }else{
+                            last.removeLast()
+                            tokens[tokens.count - 1] = last
+                            formulaUpdate()
+                        }
                     }
                     
                 case "GT": // [GT] Ground Total: 1ドラムの全[=]回答値の合計

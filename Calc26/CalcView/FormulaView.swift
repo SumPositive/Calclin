@@ -18,7 +18,7 @@ struct FormulaView: View {
             Text(viewModel.formulaText)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing) // 右下寄せ
                 .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .regular))
-                .padding(4)
+                .padding(8)
         }
     }
 }
