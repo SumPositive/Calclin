@@ -76,31 +76,37 @@ final class CalcViewModel: ObservableObject {
     // 税率
     var tax_rate: Double = 0.10
     
-    
-    struct  ListRow: Hashable {
-        struct  Unit: Hashable {
-            var unit: String    = ""    // 表示単位
-            var base: String    = ""    // 基準単位
-            var conv: String    = ""    // 変換式
-            var rev: String     = ""    // 逆変換式
-        }
-        var oper: String    = "→"
-        var number: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 [(][)]括弧 で構成される実数文字列
-        var answer: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
-        var unit: ListRow.Unit?     // 単位
+    struct  HistoryRow: Hashable {
+        var formula: String = ""
+        var answer: String  = "" // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
     }
-    // 全行記録
-    @Published var listRows: [ListRow] = [ListRow()] // 初期1行 .index=0
+    @Published var historyRows: [HistoryRow] = []
+
+    
+//    struct  ListRow: Hashable {
+//        struct  Unit: Hashable {
+//            var unit: String    = ""    // 表示単位
+//            var base: String    = ""    // 基準単位
+//            var conv: String    = ""    // 変換式
+//            var rev: String     = ""    // 逆変換式
+//        }
+//        var oper: String    = "→"
+//        var number: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 [(][)]括弧 で構成される実数文字列
+//        var answer: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
+//        var unit: ListRow.Unit?     // 単位
+//    }
+//    // 全行記録
+//    @Published var listRows: [ListRow] = [ListRow()] // 初期1行 .index=0
+
     // 計算式
     @Published var formulaText = ""
-    //    var fTprev = ""
-    //    var fTnext = ""
+    // 計算式トークン
     var tokens: [String] = []
     
     
     // MARK: - Private
-    // 入力中の行位置
-    private var listIndex = 0
+//    // 入力中の行位置
+//    private var listIndex = 0
     // セクション内の左括弧"("の数
     private var parenthesesLeft: Int = 0
     // 入力中の数字（桁区切り文字を含まない[0]-[9],[.]のみ）
@@ -200,30 +206,30 @@ final class CalcViewModel: ObservableObject {
                     }
                     
                 case "Ans":
-                    if let ans = keyDef.formula {
-                        if let last = tokens.last {
-                            if let _ = Double(last) {
-                                // 数値なら
-                                let answer = CalcFunc.answer(formulaText)
-                                tokens.append(ans)
-                                tokens.append(answer)
-                                formulaUpdate()
-                                // add List
-                                //list.append(formulaText)
-                                // New
-                                tokens.removeAll()
-                                tokens.append(answer)
-                                formulaUpdate()
+                    if let last = tokens.last {
+                        if let _ = Double(last) { // 数値なら
+                            if 0 < parenthesesLeft {
+                                // 括弧を閉じる
+                                
                             }
-                            else if 3 < tokens.count {
-                                tokens.removeLast()
-                                formulaUpdate()
-                                // [=] 再帰呼び出し
-                                input(keyDef)
-                            }
+                            let answer = CalcFunc.answer(formulaText)
+                            // add History
+                            let row = HistoryRow(formula: formulaText,
+                                                 answer: SBCD(answer).format())
+                            historyRows.append(row)
+                            // New
+                            tokens.removeAll()
+                            tokens.append(answer)
+                            formulaUpdate()
+                        }
+                        else if 3 < tokens.count {
+                            tokens.removeLast()
+                            formulaUpdate()
+                            // [=] 再帰呼び出し
+                            input(keyDef)
                         }
                     }
-                    
+
                 case "Parentheses": // 前"("後")"の丸括弧を判定して追加する
                     if let last = tokens.last {
                         if let _ = Double(last) {

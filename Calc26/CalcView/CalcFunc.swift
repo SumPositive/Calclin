@@ -201,12 +201,12 @@ final class CalcFunc {
                 let a = stack.removeLast()
                     stack.append(a.subtract(b))
 
-            case "*":
+            case "*", "×":
                 let b = stack.removeLast()
                 let a = stack.removeLast()
                     stack.append(a.multiply(b))
                     
-            case "/":
+            case "/", "÷":
                 let b = stack.removeLast()
                 let a = stack.removeLast()
                     stack.append(a.divide(b))

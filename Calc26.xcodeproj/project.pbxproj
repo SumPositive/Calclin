@@ -41,7 +41,7 @@
 				CalcView/CalcView.swift,
 				CalcView/CalcViewModel.swift,
 				CalcView/FormulaView.swift,
-				CalcView/ListView.swift,
+				CalcView/HistoryView.swift,
 				KeyboardView/KeyboardView.swift,
 				KeyboardView/KeyboardViewModel.swift,
 				KeyboardView/KeyDefinition.plist,
@@ -57,6 +57,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Assets.xcassets,
+				CalcView/HistoryView.swift,
 				KeyboardView/Keyboard.plist,
 				KeyboardView/KeyboardView.swift,
 				KeyboardView/KeyDefinition.plist,
@@ -73,7 +74,6 @@
 				CalcView/CalcView.swift,
 				CalcView/CalcViewModel.swift,
 				CalcView/FormulaView.swift,
-				CalcView/ListView.swift,
 				KeyboardView/KeyboardViewModel.swift,
 				SBCD/SBCD_objC_Wrapper.mm,
 				SBCD/SBCD_Wrapper.swift,

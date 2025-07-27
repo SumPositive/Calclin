@@ -15,17 +15,19 @@ struct CalcView: View {
     var body: some View {
         
         VStack(spacing: 0) {
-            ListView(viewModel: viewModel)
+
+            HistoryView(viewModel: viewModel)
                 .frame(maxHeight: .infinity) // 高さを均等にする
                 .contentShape(Rectangle())
                 .border(Color.gray.opacity(0.3), width: 2.0)
                 //.transition(.opacity) // フェード
 
             FormulaView(viewModel: viewModel)
-                .frame(maxHeight: 50) // 高さ固定
+                //.frame(maxHeight: 50) // 高さ固定
+                .frame(minHeight: 50)
                 .contentShape(Rectangle())
-                .border(Color.gray.opacity(0.3), width: 2.0)
-                .padding(.horizontal, 10.0)
+                //.border(Color.gray.opacity(0.3), width: 2.0)
+                .padding(.horizontal, 0)
             //.transition(.opacity) // フェード
         }
 
