@@ -23,13 +23,12 @@ struct CalcView: View {
                 //.transition(.opacity) // フェード
 
             FormulaView(viewModel: viewModel)
-                //.frame(maxHeight: 50) // 高さ固定
-                .frame(minHeight: 50)
+                .frame(minHeight: 50) // 最小高さ、フォントサイズで拡大
                 .contentShape(Rectangle())
-                //.border(Color.gray.opacity(0.3), width: 2.0)
                 .padding(.horizontal, 0)
             //.transition(.opacity) // フェード
         }
+        .frame(minWidth: APP_MIN_WIDTH / 2.0, maxWidth: APP_MAX_WIDTH * 1.5)
 
     }
 }

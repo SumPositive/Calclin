@@ -41,8 +41,8 @@ struct FormulaView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
         .padding(.horizontal, hSpace)
-        .frame(minWidth: APP_MIN_WIDTH / 2.0, maxWidth: APP_MAX_WIDTH * 1.5)
     }
     
 }

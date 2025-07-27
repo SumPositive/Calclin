@@ -28,7 +28,7 @@ struct HistoryView: View {
         .scaleEffect(y: -1) // 上下反転：下から上にするため ここで元に戻る
         .listStyle(.plain)
         //.environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
-        .frame(minWidth: APP_MIN_WIDTH / 2.0, maxWidth: APP_MAX_WIDTH * 1.5)
+        .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
         //.padding(0)
     }
 }
@@ -48,8 +48,8 @@ struct CustomCell: View {
                 .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
 
         }
-        .frame(maxWidth: APP_MAX_WIDTH * 1.5, alignment: .trailing) // 右寄せ
-        .padding(.horizontal, 8.0)
+        .frame(maxWidth: .infinity) // 親View内側一杯に広げる
+        .padding(.horizontal, 10.0)
     }
 }
 
