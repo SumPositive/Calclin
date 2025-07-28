@@ -12,20 +12,10 @@ struct SettingView: View {
     @ObservedObject var viewModel: SettingViewModel
 
     // @State 変化あればViewが更新される
-    // 小数点以下の桁数（0〜10）  SliderパラメータのためDouble型
-    @State private var decDigi = Double(SETTING_decimalDigits_MAX + 1) // [F]
 
-    @State private var fontScale = Double(1.5)
-    
-
-//    func attributedString(_ str: String) -> AttributedString {
-//        var attrStr = AttributedString(str)
-//        attrStr.font = .system(size: 18, weight: .regular, design: .monospaced)
-//        attrStr.foregroundColor = .blue
-//        return attrStr
-//    }
     
     var body: some View {
+
         VStack(spacing: 4) {
             
             // 整数部
@@ -88,23 +78,25 @@ struct SettingView: View {
                 HStack() {
                     // 小数桁数スライダー
                     Text("桁数") //.frame(width: 80, alignment: .trailing)
-                    if Int(decDigi) <= SETTING_decimalDigits_MAX {
-                        Text(" \(Int(decDigi)) ")
+
+                    if viewModel.decimalDigits <= SETTING_decimalDigits_MAX {
+                        Text(" \(Int(viewModel.decimalDigits)) ")
                     }else{
                         Text(" F ")
                     }
-                    Slider(value: $decDigi, in: 0...Double(SETTING_decimalDigits_MAX+1), step: 1)
-                        .onChange(of: decDigi, { oldValue, newValue in
+                    Slider(value: $viewModel.decimalDigits,
+                           in: 0...(SETTING_decimalDigits_MAX + 1.0), step: 1)
+                        .onChange(of: viewModel.decimalDigits, { oldValue, newValue in
                             // @State decDigi 更新により描画
-                            decDigi = newValue // Double型
+                            viewModel.decimalDigits = newValue // Double型
                             // SBCD_Configにセットする
-                            if Int(decDigi) <= SETTING_decimalDigits_MAX {
+                            if viewModel.decimalDigits <= SETTING_decimalDigits_MAX {
                                 // 小数部桁数「固定」末尾0埋め
-                                SBCD_Config.decimalDigits = Int(decDigi)
+                                SBCD_Config.decimalDigits = Int(viewModel.decimalDigits)
                                 SBCD_Config.decimalTrailZero = true
                             }else{
                                 // 小数部桁数「可変」末尾0削除
-                                SBCD_Config.decimalDigits = SETTING_decimalDigits_MAX
+                                SBCD_Config.decimalDigits = Int(SETTING_decimalDigits_MAX)
                                 SBCD_Config.decimalTrailZero = false
                             }
                             // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
@@ -153,11 +145,9 @@ struct SettingView: View {
                 HStack() {
                     // 数字倍率スライダー
                     Text("数字倍率")
-                    Text(String(format: " %.1f ", fontScale))
-                    Slider(value: $fontScale, in: (0.5)...(3.0), step: 0.1)
-                        .onChange(of: fontScale, { oldValue, newValue in
-                            // @State fontScale 更新により描画
-                            fontScale = newValue // Double型
+                    Text(String(format: " %.1f ", viewModel.numberFontScale))
+                    Slider(value: $viewModel.numberFontScale, in: (0.5)...(3.0), step: 0.1)
+                        .onChange(of: viewModel.numberFontScale, { oldValue, newValue in
                             // SettingViewModel
                             viewModel.numberFontScale = newValue // Double型
                             // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため

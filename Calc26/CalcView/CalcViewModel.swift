@@ -24,7 +24,7 @@ final class CalcViewModel: ObservableObject {
         /// 小数点記号（例: "." or "．"）
         SBCD_Config.decimalSeparator = "."
         /// 小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する）
-        SBCD_Config.decimalDigits = SETTING_decimalDigits_MAX
+        SBCD_Config.decimalDigits = Int(SETTING_decimalDigits_MAX)
         /// 小数部の桁数まで0埋めする／false=末尾0削除する
         SBCD_Config.decimalTrailZero = false  // 「F」小数末尾0可変
         /// 丸め方法（R54 = 四捨五入 など）
@@ -35,15 +35,14 @@ final class CalcViewModel: ObservableObject {
         /// 桁区切りの方式（3桁区切り、4桁区切り、インド式など）
         SBCD_Config.groupType = .G3
         
-        // ローカル通知 受信：SBCD_Configが変更された
-//        NotificationCenter.default.publisher(for: .SBCD_Config_Change)
-//            .sink { [weak self] _ in
-//                Task { @MainActor in
-//                    //self?.sbcdConfigChange()
-//                    self?.formulaUpdate()
-//                }
-//            }
-//            .store(in: &cancellables)
+        // ローカル通知 受信：SBCD_Configが変更された ＞ CalcView表示更新
+        NotificationCenter.default.publisher(for: .SBCD_Config_Change)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.formulaUpdate()
+                }
+            }
+            .store(in: &cancellables)
     }
     
     
@@ -253,8 +252,9 @@ final class CalcViewModel: ObservableObject {
                                     tokens.append(NUM_PT_RIGHT)
                                 }
                                 parenthesesLeft = 0
-                                formulaUpdate()
                             }
+                            // Answer用フォーマット（true:末尾[0]表示と予定[.][)]表示なし）
+                            formulaUpdate(true)
                             //print(type(of: formulaAttr))
                             //BUG//let plainText = String(formulaAttr)
                             let plainText = formulaAttr.characters.map { String($0) }.joined()
@@ -266,6 +266,7 @@ final class CalcViewModel: ObservableObject {
                             // New
                             tokens.removeAll()
                             tokens.append(answer)
+                            // Answer用フォーマット
                             formulaUpdate(true)
                         }
                         else if 3 < tokens.count {
@@ -339,6 +340,9 @@ final class CalcViewModel: ObservableObject {
                 attr.foregroundColor = .blue.opacity(0.5)
                 self.formulaAttr += attr
             }
+        }
+        if isAnswer {
+            return
         }
         // 小数表示　末尾[0]表示と予定[.]表示
         if let last = tokens.last,  Double(last) != nil {

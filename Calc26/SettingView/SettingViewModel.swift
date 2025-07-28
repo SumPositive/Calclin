@@ -14,7 +14,7 @@ extension Notification.Name {
 }
 
 // 小数部の表示最大桁数（この桁まで0埋めする）
-let SETTING_decimalDigits_MAX: Int = 10
+let SETTING_decimalDigits_MAX: Double = 10.0
 
 
 final class SettingViewModel: ObservableObject {
@@ -45,8 +45,8 @@ final class SettingViewModel: ObservableObject {
         }
     }
     @Published var roundType: RoundType = .R55
-    /// 丸め：小数部の桁数（例：2 → 小数点以下3桁目を丸めて2桁表示する）
-    @Published var decimalDigits: Int = SETTING_decimalDigits_MAX // 初期「F」小数末尾0可変
+    /// 丸め：小数部の桁数（例：2 → 小数点以下3桁目を丸めて2桁表示する） Slider引数にするためDouble型
+    @Published var decimalDigits: Double = SETTING_decimalDigits_MAX + 1.0 // 初期「F」小数末尾0可変
 
     /// 小数点記号
     enum DecimalSeparator: String, CaseIterable, Identifiable {
@@ -106,8 +106,8 @@ final class SettingViewModel: ObservableObject {
     }
     @Published var groupSeparator: GroupSeparator = .conma
 
-    //
-    @Published var numberFontScale = Double(1.5)
+    // フォント倍率
+    @Published var numberFontScale: Double = 1.5
     
 }
 

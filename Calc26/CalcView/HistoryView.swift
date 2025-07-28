@@ -19,11 +19,15 @@ struct HistoryView: View {
                 // カスタム明細セル
                 CustomCell(viewModel: viewModel, row: row)
                     //.listRowSeparator(.hidden) // 既定の下線を非表示
-                    .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
-                    .padding(.vertical, 8.0)  // 上下の余白
-                    .padding(.horizontal, 8.0)
+//                    .listRowSeparator(.automatic, edges: .all)
+//                    .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
+                
+                    .listRowInsets(EdgeInsets()) // ← これが肝
+                    .listRowSeparator(.visible, edges: .all)
+                
+                    .padding(.bottom, 8.0)  // 下の余白
+                    .padding(.horizontal, 12.0) // 左右の余白
                     .background(Color(.systemGray6))
-//                    .foregroundColor(Color(.systemGray))
                     .swipeActions(edge: .trailing) { // 左スワイプ：削除
                         Button(role: .destructive) {
                             // 削除アクション
@@ -70,9 +74,11 @@ struct HistoryView: View {
         }
         .scaleEffect(y: -1) // 上下反転：下から上にするため ここで元に戻る
         .listStyle(.plain)
+        .background(Color(.systemGray6))
         //.environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
         .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
-        //.padding(0)
+        .padding(0)
+        .padding(.top, 20.0)
     }
 }
 
@@ -82,25 +88,36 @@ struct CustomCell: View {
     let row: CalcViewModel.HistoryRow
 
     private let fontSize: CGFloat = 16.0
+    private let lineFeedChars = "+-*/×÷=(√" // この文字の前で改行させる
+    private let zeroWidthSpace = AttributedString("\u{200B}") // 改行させるための「幅ゼロのスペース」
 
     var body: some View {
         VStack(spacing: 0.0) {
             // 計算式 = 答え
             Text({
-                var equal = AttributedString(" =")
+                var equal = AttributedString("=")
                 equal.foregroundColor = Color.blue //.opacity(0.5)
-                
                 var answer = AttributedString(row.answer)
                 answer.foregroundColor = Color.black
-                
-                return row.formula + equal + answer
-            }())
-            .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .regular))
-            .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
-            .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
+                var attrStr = row.formula + equal + answer
+                // 演算子の前で改行させるための処理
+                for index in attrStr.characters.indices.reversed() {
+                    if lineFeedChars.contains(attrStr.characters[index]) {
+                        attrStr.insert(zeroWidthSpace, at: index)
+                    }
+                }
+                return attrStr
+            }()).scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
+                .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .regular))
+                .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
+                .padding(.top, 8.0)
+
+            // 下線
+//            Divider()
+//                .padding(0)
+//                .padding(.top, 18.0)
         }
         .frame(maxWidth: .infinity) // 親View内側一杯に広げる
-        .padding(.horizontal, 10.0)
     }
 }
 
