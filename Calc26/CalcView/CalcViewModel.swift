@@ -36,23 +36,23 @@ final class CalcViewModel: ObservableObject {
         SBCD_Config.groupType = .G3
         
         // ローカル通知 受信：SBCD_Configが変更された
-        NotificationCenter.default.publisher(for: .SBCD_Config_Change)
-            .sink { [weak self] _ in
-                Task { @MainActor in
-                    //self?.sbcdConfigChange()
-                    self?.formulaUpdate()
-                }
-            }
-            .store(in: &cancellables)
+//        NotificationCenter.default.publisher(for: .SBCD_Config_Change)
+//            .sink { [weak self] _ in
+//                Task { @MainActor in
+//                    //self?.sbcdConfigChange()
+//                    self?.formulaUpdate()
+//                }
+//            }
+//            .store(in: &cancellables)
     }
     
     
-    // Formula 構成文字
+    // Formula 構成文字（CalcFunc処理で使用される文字に一致していること）
     let NUM_DECIMAL  = "." // 小数点
     let NUM_PT_LEFT  = "(" // 左括弧
     let NUM_PT_RIGHT = ")" // 右括弧
     // 制御文字 Operator String
-    let OP_START    = "→" // 願いましては
+//    let OP_START    = "→" // 願いましては
     let OP_ADD      = "+" // 加算
     let OP_SUBTRACT = "-" // 減算 Unicode[002D] 内部用文字（String ⇒ doubleValue)変換のために必須
     let OP_MULTIPLY = "×" // 掛算
@@ -77,7 +77,7 @@ final class CalcViewModel: ObservableObject {
     var tax_rate: Double = 0.10
     
     struct  HistoryRow: Hashable {
-        var formula: String = ""
+        var formula: AttributedString = ""
         var answer: String  = "" // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
     }
     @Published var historyRows: [HistoryRow] = []
@@ -99,7 +99,7 @@ final class CalcViewModel: ObservableObject {
 //    @Published var listRows: [ListRow] = [ListRow()] // 初期1行 .index=0
 
     // 計算式
-    @Published var formulaText = ""
+    @Published var formulaAttr: AttributedString = ""
     // 計算式トークン
     var tokens: [String] = []
     
@@ -109,8 +109,9 @@ final class CalcViewModel: ObservableObject {
 //    private var listIndex = 0
     // セクション内の左括弧"("の数
     private var parenthesesLeft: Int = 0
-    // 入力中の数字（桁区切り文字を含まない[0]-[9],[.]のみ）
-    private var numberText: String = ""
+//    // 入力中の数字（桁区切り文字を含まない[0]-[9],[.]のみ）
+//    private var numberText: String = ""
+    private var isAnswer = false
     
     
     
@@ -129,10 +130,18 @@ final class CalcViewModel: ObservableObject {
                 case "1"..."9": // [1]...[9]
                     if let num = keyDef.formula {
                         if var last = tokens.last {
-                            if let _ = Double(last) {
-                                last += num
+                            if Double(last) != nil || ( last == OP_SUBTRACT &&
+                                                        2 < tokens.count &&
+                                                        Double(tokens[tokens.count - 2]) == nil ) {
+                                // 数値 || マイナス符号
+                                if  isAnswer {
+                                    last = num
+                                }else{
+                                    last += num
+                                }
                                 tokens[tokens.count - 1] = last
                             }else{
+                                // isAnswer==trueならば初期入力にする
                                 tokens.append(num)
                             }
                         }else{
@@ -144,11 +153,19 @@ final class CalcViewModel: ObservableObject {
                 case "0", "00", "000":
                     if let num = keyDef.formula {
                         if var last = tokens.last {
-                            if let _ = Double(last) {
-                                last += num
+                            if Double(last) != nil || ( last == OP_SUBTRACT &&
+                                                        2 < tokens.count &&
+                                                        Double(tokens[tokens.count - 2]) == nil ) {
+                                // 数値 || マイナス符号
+                                if  isAnswer {
+                                    last = num
+                                }else{
+                                    last += num
+                                }
                                 //TODO: 先頭の0削除
                                 tokens[tokens.count - 1] = last
                             }else{
+                                // isAnswer==trueならば初期入力にする
                                 tokens.append("0")
                             }
                         }else{
@@ -160,26 +177,48 @@ final class CalcViewModel: ObservableObject {
                 case "Deci":  // [.]
                     if let decimal = keyDef.formula {
                         if var last = tokens.last {
-                            if let _ = Double(last) {
-                                last += decimal
-                                tokens[tokens.count - 1] = last
-                            }else{
-                                tokens.append("0.")
+                            if !last.contains(".") {
+                                if Double(last) != nil { // 数値
+                                    if  isAnswer {
+                                        last = "0" + decimal
+                                    }else{
+                                        last += decimal
+                                    }
+                                    tokens[tokens.count - 1] = last
+                                }else{
+                                    // isAnswer==trueならば初期入力にする
+                                    tokens.append("0" + decimal)
+                                }
                             }
                         }else{
-                            tokens.append("0.")
+                            tokens.append("0" + decimal)
                         }
                         formulaUpdate()
                     }
                     
-                case "Sign":  // [+/-]
+                case "Sign":  // [+/-] 逆符号
                     if var last = tokens.last {
-                        if let _ = Double(last) {
-                            // 数値なら
+                        if Double(last) != nil { // 数値
                             if last.hasPrefix(OP_SUBTRACT) {
+                                // "-"とる
                                 last.removeFirst()
                             } else if !last.isEmpty {
-                                last = OP_SUBTRACT + last
+                                // "-"つける
+                                if 2 < tokens.count {
+                                    if tokens[tokens.count - 2] == OP_SUBTRACT {
+                                        // "--"になる場合、"+"にする
+                                        tokens[tokens.count - 2] = OP_ADD
+                                    }
+                                    else if tokens[tokens.count - 2] == OP_ADD {
+                                        // "+-"になる場合、"-"にする
+                                        tokens[tokens.count - 2] = OP_SUBTRACT
+                                    }
+                                    else{
+                                        last = OP_SUBTRACT + last
+                                    }
+                                }else{
+                                    last = OP_SUBTRACT + last
+                                }
                             }
                             tokens[tokens.count - 1] = last
                             formulaUpdate()
@@ -189,38 +228,64 @@ final class CalcViewModel: ObservableObject {
                 case "Add","Sub","Mul","Div":
                     if let op = keyDef.formula {
                         if let last = tokens.last {
-                            if let _ = Double(last) {
-                                // 数値なら
+                            if Double(last) != nil { // 数値
                                 tokens.append(op)
-                                formulaUpdate()
                             }
-                            else if last == "(" {
+                            else if last == NUM_PT_RIGHT {
                                 tokens.append(op)
-                                formulaUpdate()
                             }
-                            else{
-                                tokens[tokens.count - 1] = op
-                                formulaUpdate()
+                            else if last == NUM_PT_LEFT {
+                                if keyDef.code == "Sub" {
+                                    tokens.append(op) // マイナス符号の予定
+                                }
+                            }
+                            else{ // 演算子
+                                if keyDef.code == "Sub" {
+                                    if 0 < tokens.count, tokens[tokens.count - 1] == OP_SUBTRACT {
+                                        // "--"になる場合、"+"にする
+                                        tokens[tokens.count - 1] = OP_ADD
+                                    }
+                                    else  if 0 < tokens.count, tokens[tokens.count - 1] == OP_ADD {
+                                            // "+-"になる場合、"-"にする
+                                            tokens[tokens.count - 1] = OP_SUBTRACT
+                                    }else{
+                                        tokens.append(op) // マイナス符号の予定
+                                    }
+                                }else{
+                                    // 演算子を置き換える
+                                    tokens[tokens.count - 1] = op
+                                }
                             }
                         }
+                        else if keyDef.code == "Sub" { // 先頭のマイナス
+                            tokens.append(op) // マイナス符号の予定
+                        }
+                        formulaUpdate()
                     }
                     
                 case "Ans":
                     if let last = tokens.last {
-                        if let _ = Double(last) { // 数値なら
+                        if Double(last) != nil { // 数値
                             if 0 < parenthesesLeft {
                                 // 括弧を閉じる
-                                
+                                for _ in 0..<parenthesesLeft {
+                                    tokens.append(NUM_PT_RIGHT)
+                                }
+                                parenthesesLeft = 0
+                                formulaUpdate()
                             }
-                            let answer = CalcFunc.answer(formulaText)
+                            //print(type(of: formulaAttr))
+                            //BUG//let plainText = String(formulaAttr)
+                            let plainText = formulaAttr.characters.map { String($0) }.joined()
+                            let answer = CalcFunc.answer(plainText)
                             // add History
-                            let row = HistoryRow(formula: formulaText,
+                            let row = HistoryRow(formula: formulaAttr,
                                                  answer: SBCD(answer).format())
                             historyRows.append(row)
                             // New
                             tokens.removeAll()
                             tokens.append(answer)
-                            formulaUpdate()
+                            formulaUpdate(true)
                         }
                         else if 3 < tokens.count {
                             tokens.removeLast()
@@ -232,13 +297,15 @@ final class CalcViewModel: ObservableObject {
 
                 case "Parentheses": // 前"("後")"の丸括弧を判定して追加する
                     if let last = tokens.last {
-                        if let _ = Double(last) {
-                            // 数値ならば
-                            tokens.append(")")
-                            parenthesesLeft -= 1
-                            formulaUpdate()
+                        if Double(last) != nil || last == NUM_PT_RIGHT {
+                            // 数値 or ")"
+                            if 0 < parenthesesLeft {
+                                tokens.append(NUM_PT_RIGHT)
+                                parenthesesLeft -= 1
+                                formulaUpdate()
+                            }
                         }else{
-                            tokens.append("(")
+                            tokens.append(NUM_PT_LEFT)
                             parenthesesLeft += 1
                             formulaUpdate()
                         }
@@ -248,11 +315,11 @@ final class CalcViewModel: ObservableObject {
                     //handleAllClear()
                     tokens.removeAll()
                     formulaUpdate()
-                    
+
                 case "CS": // [SC] Clear Section：1行クリア
                     tokens.removeLast()
                     formulaUpdate()
-                    
+
                 case "BS": // [BS] Back Space
                     if var last = tokens.last {
                         if last.isEmpty {
@@ -261,7 +328,11 @@ final class CalcViewModel: ObservableObject {
                             input(keyDef)
                         }else{
                             last.removeLast()
-                            tokens[tokens.count - 1] = last
+                            if last.isEmpty {
+                                tokens.removeLast()
+                            }else{
+                                tokens[tokens.count - 1] = last
+                            }
                             formulaUpdate()
                         }
                     }
@@ -276,15 +347,23 @@ final class CalcViewModel: ObservableObject {
         }
     }
     
-    private func formulaUpdate() {
-        formulaText = ""
+    func formulaUpdate(_ isAnswer: Bool = false) {
+        self.isAnswer = isAnswer
+        self.formulaAttr = ""
         for token in tokens {
-            if let _ = Double(token) {
-                // 数値なら
-                formulaText += SBCD(token).format()
+            if Double(token) != nil { // 数値
+                self.formulaAttr += AttributedString(SBCD(token).format())
             }else{
-                formulaText += token
+                var attr = AttributedString(token)
+                attr.foregroundColor = .blue.opacity(0.5)
+                self.formulaAttr += attr
             }
+        }
+        if 0 < parenthesesLeft {
+            // 待機中の右括弧を表示
+            var attr = AttributedString(String(repeating: NUM_PT_RIGHT, count: parenthesesLeft))
+            attr.foregroundColor = .gray.opacity(0.5)
+            self.formulaAttr += attr
         }
     }
     

@@ -165,17 +165,24 @@ final class SBCD: Equatable {
                 integerPart = Substring(result.reversed())
                 
             case .G23:
+                // 最初の3桁
                 let last3 = chars.suffix(3)
-                var rem = chars.dropLast(3)
-                var groups: [String] = []
-                while rem.count > 2 {
-                    groups.insert(String(rem.suffix(2)), at: 0)
-                    rem.removeLast(2)
+                if 3 < chars.count {
+                    // 2桁区切り
+                    let groupSize = 2
+                    // 最初の3桁を除いて逆順に
+                    let rev = chars.dropLast(3).reversed()
+                    var result = ""
+                    for (i, c) in rev.enumerated() {
+                        if i > 0 && i % groupSize == 0 {
+                            result.append(contentsOf: SBCD_Config.groupSeparator)
+                        }
+                        result.append(c)
+                    }
+                    integerPart = Substring(result.reversed() + SBCD_Config.groupSeparator + last3)
+                }else{
+                    integerPart = Substring(last3)
                 }
-                if !rem.isEmpty {
-                    groups.insert(String(rem), at: 0)
-                }
-                integerPart = Substring(groups.joined(separator: SBCD_Config.groupSeparator) + SBCD_Config.groupSeparator + String(last3))
                 
             case .none:
                 break

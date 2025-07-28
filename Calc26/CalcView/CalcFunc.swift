@@ -27,7 +27,12 @@ final class CalcFunc {
     
     /*
      数式 ⇒ 逆ポーランド記法(Reverse Polish Notation)
-     "5 + 4 - 3"    ⇒ "5 4 3 - +"
+     -------
+     "5 + 4" ⇒ "5 4 +"
+     "5 + 4 - 3" ⇒ "5 4 + 3 -"
+     "5 + 4 * 3" ⇒ "5 4 3 * +"      乗除優先
+     "(5 + 4) * 3" ⇒ "5 4 + 3 *"    括弧優先
+     -------
      "5 + 4 * 3 + 2 / 6" ⇒ "5 4 3 * 2 6 / + +"
      "(1 + 4) * (3 + 7) / 5" ⇒ "1 4 + 3 7 + 5 * /" OR "1 4 + 3 7 + * 5 /"
      "T ( 5 + 2 )" ⇒ "5 2 + T"
@@ -130,29 +135,25 @@ final class CalcFunc {
         var ope: [String] = []
         
         // 優先順位と結合性の定義
-        let prec: [String: Int] = [
-            "+": 1, "-": 1,
-            "×": 2, "÷": 2,
-            "*": 2, "/": 2
+        let opPriority: [String: Int] = [
+            "×": 1, "÷": 1, "*": 1, "/": 1,
+            "+": 2, "-": 2
         ]
 
-        let isLeftAss: (String) -> Bool = { op in
-            return ["+", "-", "*", "/", "×", "÷"].contains(op)
-        }
+//        let isLeftAss: (String) -> Bool = { op in
+//            return ["+", "-", "*", "/", "×", "÷"].contains(op)
+//        }
 
         // 逆ポーランドスタック
         for token in tokens {
-            if let _ = Double(token) {
+            if Double(token) != nil { // 数値
                 // 数値なら出力キューに追加
                 rpn.append(token)
             }
-            else if let _ = prec[token] {
-                // 演算子
+            else if let tokenPri = opPriority[token] { // 演算子の優先順位処理
                 while let op = ope.last {
-                    if let opPrec = prec[op],
-                       let tokenPrec = prec[token],
-                       (tokenPrec < opPrec ||
-                        (tokenPrec == opPrec && isLeftAss(token))) {
+                    if let opPri = opPriority[op], opPri <= tokenPri {
+                       // (tokenPri < opPri || (tokenPri == opPri && isLeftAss(token))) {
                         rpn.append(ope.removeLast())
                     } else {
                         break
@@ -187,7 +188,7 @@ final class CalcFunc {
 
     
     /// RPN記法から答えを計算する
-    private static func evaluateRPN(_ rpnTokens: [String]) -> SBCD {
+    static func evaluateRPN(_ rpnTokens: [String]) -> SBCD {
         var stack: [SBCD] = []
         for token in rpnTokens {
             switch token {

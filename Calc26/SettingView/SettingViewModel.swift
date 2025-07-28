@@ -69,10 +69,10 @@ final class SettingViewModel: ObservableObject {
     
     // 桁区切りタイプ    　　PickerデータソースにするためCaseIterable, Identifiableに準拠
     enum GroupType: String, CaseIterable, Identifiable {
-        case none   = "区切りなし 1234567.0"
-        case G3     = "３桁区切り 1,123,123.0"
-        case G23    = "インド方式 12,12,123.0"
-        case G4     = "４桁区切り 1234,1234.0"
+        case none   = "区切りなし   123456789.0"
+        case G3     = "３桁区切り 123,456,789.0"
+        case G23    = "インド式　12,34,56,789.0"
+        case G4     = "４桁区切り 1,2345,6789.0"
         // Identifiable対応のため
         var id: String { rawValue }
         // SBCD_Config.GroupTypeを返す

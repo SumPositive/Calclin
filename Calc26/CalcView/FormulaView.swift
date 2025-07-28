@@ -18,7 +18,7 @@ struct FormulaView: View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 0) {
-                    Text(viewModel.formulaText)
+                    Text(viewModel.formulaAttr)
                         .font(.system(size: 24.0 * viewModel.setting.numberFontScale,
                                       weight: .bold))
                         .lineLimit(1)
@@ -31,7 +31,7 @@ struct FormulaView: View {
                         .id(scrollId) // スクロール対象
                 }
             }
-            .onChange(of: viewModel.formulaText) {
+            .onChange(of: viewModel.formulaAttr) {
                 scrollId = UUID()
                 // 次のフレームでスクロール実行
                 DispatchQueue.main.async {
