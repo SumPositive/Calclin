@@ -78,4 +78,38 @@ final class CalcViewModel_Test: XCTestCase {
         XCTAssertEqual(plainText, "1-3")
     }
 
+    func test_06() {
+        var plainText: String
+        // [00] => 0
+        viewModel.input(KeyDefinition(code: "00", formula: "00"))
+        plainText = viewModel.formulaAttr.characters.map { String($0) }.joined()
+        XCTAssertEqual(plainText, "0")
+
+        // 0/[000] => 0/0
+        viewModel.input(KeyDefinition(code: "Div", formula: "/"))
+        viewModel.input(KeyDefinition(code: "000", formula: "000"))
+        plainText = viewModel.formulaAttr.characters.map { String($0) }.joined()
+        XCTAssertEqual(plainText, "0/0")
+    }
+
+    func test_Decimal() {
+        var plainText: String
+        // [.][.]1[.]
+        viewModel.input(KeyDefinition(code: "Deci", formula: "."))
+        viewModel.input(KeyDefinition(code: "Deci", formula: ".")) // 無視されること
+        viewModel.input(KeyDefinition(code: "1", formula: "1"))
+        viewModel.input(KeyDefinition(code: "Deci", formula: ".")) // 無視されること
+        plainText = viewModel.formulaAttr.characters.map { String($0) }.joined()
+        XCTAssertEqual(plainText, "0.1")
+
+        // 0.1+[.]2
+        viewModel.input(KeyDefinition(code: "Add", formula: "+"))
+        viewModel.input(KeyDefinition(code: "Deci", formula: "."))
+        viewModel.input(KeyDefinition(code: "Deci", formula: ".")) // 無視されること
+        viewModel.input(KeyDefinition(code: "2", formula: "2"))
+        viewModel.input(KeyDefinition(code: "Deci", formula: ".")) // 無視されること
+        plainText = viewModel.formulaAttr.characters.map { String($0) }.joined()
+        XCTAssertEqual(plainText, "0.1+0.2")
+    }
+
 }

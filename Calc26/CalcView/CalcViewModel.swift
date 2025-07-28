@@ -82,22 +82,6 @@ final class CalcViewModel: ObservableObject {
     }
     @Published var historyRows: [HistoryRow] = []
 
-    
-//    struct  ListRow: Hashable {
-//        struct  Unit: Hashable {
-//            var unit: String    = ""    // 表示単位
-//            var base: String    = ""    // 基準単位
-//            var conv: String    = ""    // 変換式
-//            var rev: String     = ""    // 逆変換式
-//        }
-//        var oper: String    = "→"
-//        var number: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 [(][)]括弧 で構成される実数文字列
-//        var answer: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
-//        var unit: ListRow.Unit?     // 単位
-//    }
-//    // 全行記録
-//    @Published var listRows: [ListRow] = [ListRow()] // 初期1行 .index=0
-
     // 計算式
     @Published var formulaAttr: AttributedString = ""
     // 計算式トークン
@@ -105,12 +89,9 @@ final class CalcViewModel: ObservableObject {
     
     
     // MARK: - Private
-//    // 入力中の行位置
-//    private var listIndex = 0
+
     // セクション内の左括弧"("の数
     private var parenthesesLeft: Int = 0
-//    // 入力中の数字（桁区切り文字を含まない[0]-[9],[.]のみ）
-//    private var numberText: String = ""
     private var isAnswer = false
     
     
@@ -135,13 +116,13 @@ final class CalcViewModel: ObservableObject {
                                                         Double(tokens[tokens.count - 2]) == nil ) {
                                 // 数値 || マイナス符号
                                 if  isAnswer {
+                                    isAnswer = false
                                     last = num
                                 }else{
                                     last += num
                                 }
                                 tokens[tokens.count - 1] = last
                             }else{
-                                // isAnswer==trueならば初期入力にする
                                 tokens.append(num)
                             }
                         }else{
@@ -158,18 +139,18 @@ final class CalcViewModel: ObservableObject {
                                                         Double(tokens[tokens.count - 2]) == nil ) {
                                 // 数値 || マイナス符号
                                 if  isAnswer {
-                                    last = num
+                                    isAnswer = false
+                                    last = "0"
                                 }else{
                                     last += num
                                 }
                                 //TODO: 先頭の0削除
                                 tokens[tokens.count - 1] = last
                             }else{
-                                // isAnswer==trueならば初期入力にする
-                                tokens.append("0")
+                                tokens.append("0" + NUM_DECIMAL)
                             }
                         }else{
-                            tokens.append("0")
+                            tokens.append("0" + NUM_DECIMAL)
                         }
                         formulaUpdate()
                     }
@@ -177,16 +158,16 @@ final class CalcViewModel: ObservableObject {
                 case "Deci":  // [.]
                     if let decimal = keyDef.formula {
                         if var last = tokens.last {
-                            if !last.contains(".") {
+                            if !last.contains(NUM_DECIMAL) {
                                 if Double(last) != nil { // 数値
                                     if  isAnswer {
+                                        isAnswer = false
                                         last = "0" + decimal
                                     }else{
                                         last += decimal
                                     }
                                     tokens[tokens.count - 1] = last
                                 }else{
-                                    // isAnswer==trueならば初期入力にする
                                     tokens.append("0" + decimal)
                                 }
                             }
@@ -353,12 +334,29 @@ final class CalcViewModel: ObservableObject {
         for token in tokens {
             if Double(token) != nil { // 数値
                 self.formulaAttr += AttributedString(SBCD(token).format())
+                if token.hasSuffix("000") {
+                    self.formulaAttr += "000"
+                }
+                else if token.hasSuffix("00") {
+                    self.formulaAttr += "00"
+                }
+                else if token.hasSuffix("0") {
+                    self.formulaAttr += "0"
+                }
             }else{
                 var attr = AttributedString(token)
                 attr.foregroundColor = .blue.opacity(0.5)
                 self.formulaAttr += attr
             }
         }
+        // 小数点の予定表示
+        if let last = tokens.last,  Double(last) != nil,
+           (!last.contains(NUM_DECIMAL) || last.hasSuffix(NUM_DECIMAL))  {
+            var attr = AttributedString(NUM_DECIMAL)
+            attr.foregroundColor = .gray.opacity(0.5)
+            self.formulaAttr += attr
+        }
+        // 右括弧の予定表示
         if 0 < parenthesesLeft {
             // 待機中の右括弧を表示
             var attr = AttributedString(String(repeating: NUM_PT_RIGHT, count: parenthesesLeft))
