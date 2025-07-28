@@ -94,21 +94,34 @@ struct KeyView: View {
         }
     }
     
+    @State private var isTapped = false
+    
     var body: some View {
         GeometryReader { geo in
             Button(action: {
+                isTapped = true // 押された
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    // 一定時間後に元に戻す
+                    isTapped = false
+                }
+                // .onTap 処理
                 if let keyDef = keyDef {
                     self.onTap(keyDef)
                 }
             }) {
-                EmptyView()
+                // KeyButtonStyle方式では、Image切替の反応が悪いため、直埋めにした
+                ZStack {
+                    Image(isTapped ? "keyDown" : "keyUp")
+                        .resizable()
+                    
+                    Text(keyTop)
+                        .foregroundColor(.black)
+                        .font(.system(size: 24, weight: .bold))
+                        .shadow(radius: 1)
+                }
             }
-            //.aspectRatio(128/80, contentMode: .fit)
-            .buttonStyle(
-                KeyButtonStyle(labelText: keyTop)
-            )
             .simultaneousGesture(
-                LongPressGesture(minimumDuration: 0.5) // 0.5秒以上の長押し
+                LongPressGesture(minimumDuration: 0.7) // 長押し
                     .onEnded { _ in
                         var global = geo.frame(in: .global).center
                         global.y -= 325
@@ -123,6 +136,7 @@ struct KeyView: View {
         }
     }
 }
+
 
 extension CGRect {
     var center: CGPoint {
@@ -207,33 +221,4 @@ struct Triangle: Shape {
     }
 }
 
-
-// カスタムスタイル：押下時に画像を切り替える
-struct KeyButtonStyle: ButtonStyle {
-    var normalImage: String = "keyUp"
-    var pressedImage: String = "keyDown"
-    
-    var labelText: String
-    
-//    var rzUnit: String = ""
-//    var page: Int = 0
-//    var column: Int = 0
-//    var row: Int = 0
-//    var colorNo: Int = 0
-    var fontSize: CGFloat = 24
-//    var isDirty: Bool = false
-    
-    
-    func makeBody(configuration: Configuration) -> some View {
-        ZStack {
-            Image(configuration.isPressed ? pressedImage : normalImage)
-                .resizable()
-            
-            Text(labelText)
-                .foregroundColor(.black)
-                .font(.system(size: fontSize, weight: .bold))
-                .shadow(radius: 1)
-        }
-    }
-}
 

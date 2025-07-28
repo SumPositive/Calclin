@@ -13,7 +13,7 @@ extension Notification.Name {
     static let SBCD_Config_Change = Notification.Name("SBCD_Config_Change")
 }
 
-// 小数部の表示最大桁数（この桁まで0埋めする）
+// 小数部の表示最大桁数（この桁まで可変、0埋めしない）
 let SETTING_decimalDigits_MAX: Double = 10.0
 
 
@@ -45,8 +45,8 @@ final class SettingViewModel: ObservableObject {
         }
     }
     @Published var roundType: RoundType = .R55
-    /// 丸め：小数部の桁数（例：2 → 小数点以下3桁目を丸めて2桁表示する） Slider引数にするためDouble型
-    @Published var decimalDigits: Double = SETTING_decimalDigits_MAX + 1.0 // 初期「F」小数末尾0可変
+    /// 丸め：小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する） Slider引数にするためDouble型
+    @Published var decimalDigits: Double = 3.0 // 初期
 
     /// 小数点記号
     enum DecimalSeparator: String, CaseIterable, Identifiable {

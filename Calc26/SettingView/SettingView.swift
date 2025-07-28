@@ -78,27 +78,16 @@ struct SettingView: View {
                 HStack() {
                     // 小数桁数スライダー
                     Text("桁数") //.frame(width: 80, alignment: .trailing)
-
-                    if viewModel.decimalDigits <= SETTING_decimalDigits_MAX {
-                        Text(" \(Int(viewModel.decimalDigits)) ")
-                    }else{
-                        Text(" F ")
-                    }
+                    Text(" \(Int(viewModel.decimalDigits)) ")
                     Slider(value: $viewModel.decimalDigits,
-                           in: 0...(SETTING_decimalDigits_MAX + 1.0), step: 1)
+                           in: 0...(SETTING_decimalDigits_MAX), step: 1.0)
                         .onChange(of: viewModel.decimalDigits, { oldValue, newValue in
                             // @State decDigi 更新により描画
                             viewModel.decimalDigits = newValue // Double型
                             // SBCD_Configにセットする
-                            if viewModel.decimalDigits <= SETTING_decimalDigits_MAX {
-                                // 小数部桁数「固定」末尾0埋め
-                                SBCD_Config.decimalDigits = Int(viewModel.decimalDigits)
-                                SBCD_Config.decimalTrailZero = true
-                            }else{
-                                // 小数部桁数「可変」末尾0削除
-                                SBCD_Config.decimalDigits = Int(SETTING_decimalDigits_MAX)
-                                SBCD_Config.decimalTrailZero = false
-                            }
+                            SBCD_Config.decimalDigits = Int(viewModel.decimalDigits)
+                            // 小数部桁数「可変」末尾0削除
+                            SBCD_Config.decimalTrailZero = false
                             // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
                             NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                         })

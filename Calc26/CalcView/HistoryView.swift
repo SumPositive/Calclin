@@ -98,7 +98,6 @@ struct CustomCell: View {
                 var equal = AttributedString("=")
                 equal.foregroundColor = Color.blue //.opacity(0.5)
                 var answer = AttributedString(row.answer)
-                answer.foregroundColor = Color.black
                 var attrStr = row.formula + equal + answer
                 // 演算子の前で改行させるための処理
                 for index in attrStr.characters.indices.reversed() {

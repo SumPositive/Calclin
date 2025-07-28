@@ -24,7 +24,7 @@ final class CalcViewModel: ObservableObject {
         /// 小数点記号（例: "." or "．"）
         SBCD_Config.decimalSeparator = "."
         /// 小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する）
-        SBCD_Config.decimalDigits = Int(SETTING_decimalDigits_MAX)
+        SBCD_Config.decimalDigits = 3
         /// 小数部の桁数まで0埋めする／false=末尾0削除する
         SBCD_Config.decimalTrailZero = false  // 「F」小数末尾0可変
         /// 丸め方法（R54 = 四捨五入 など）
@@ -337,7 +337,7 @@ final class CalcViewModel: ObservableObject {
                 self.formulaAttr += AttributedString(SBCD(token).format())
             }else{
                 var attr = AttributedString(token)
-                attr.foregroundColor = .blue.opacity(0.5)
+                attr.foregroundColor = .blue //.opacity(0.5)
                 self.formulaAttr += attr
             }
         }
