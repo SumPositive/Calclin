@@ -24,11 +24,8 @@ struct HistoryView: View {
                     .background(Color(.systemGray6))
                     .swipeActions(edge: .trailing) { // 左スワイプ：削除
                         Button(role: .destructive) {
-                            // 削除アクション
-                            let originalIndex = viewModel.historyRows.count - 1 - index
-                            if 0 <= originalIndex && originalIndex < viewModel.historyRows.count {
-                                viewModel.historyRows.remove(at: originalIndex)
-                            }
+                            // 削除アクション  index行を削除する
+                            viewModel.delateHistory(index)
                         } label: {
                             Text("×")
                                 .font(.system(size: 44.0, weight: .bold))
@@ -36,9 +33,8 @@ struct HistoryView: View {
                     }
                     .swipeActions(edge: .leading) { // 右スワイプ：追加
                         Button() {
-                            // 式コピペ　tokens を戻してformulaTextを再現する
-                            viewModel.tokens = row.tokens
-                            viewModel.formulaUpdate()
+                            // 式コピペ　row.tokenからformulaTextを再現する
+                            viewModel.formulaFromHistoryToken(row)
                         } label: {
                             Text("＋")
                                 .font(.system(size: 44.0, weight: .bold))
@@ -46,10 +42,8 @@ struct HistoryView: View {
                         .tint(.green) // スワイプ背景色
 
                         Button() {
-                            // 答えコピペ
-                            viewModel.tokens = []
-                            viewModel.tokens.append(SBCD(row.answer).value)
-                            viewModel.formulaUpdate() //(true)
+                            // 答えコピペ  row.answerからformulaTextを再現する
+                            viewModel.formulaFromHistoryAnswer(row)
                         } label: {
                             Text("＝")
                                 .font(.system(size: 44.0, weight: .bold))
@@ -58,9 +52,8 @@ struct HistoryView: View {
 
                     }
                     .onTapGesture(count: 2) { // ダブルタップ時の処理
-                        // 式コピペ　tokens を戻してformulaTextを再現する
-                        viewModel.tokens = row.tokens
-                        viewModel.formulaUpdate()
+                        // 式コピペ　row.tokenからformulaTextを再現する
+                        viewModel.formulaFromHistoryToken(row)
                     }
             }
         }
@@ -72,6 +65,7 @@ struct HistoryView: View {
         .padding(0)
         .padding(.top, 20.0)
     }
+    
 }
 
 // カスタム明細セル

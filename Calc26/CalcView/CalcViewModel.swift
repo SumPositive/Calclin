@@ -92,8 +92,14 @@ final class CalcViewModel: ObservableObject {
     
     // MARK: - Private
 
-    // セクション内の左括弧"("の数
-    private var parenthesesLeft: Int = 0
+    // 右括弧")"の不足数
+    private var needRightParentheses: Int {
+        get {
+            // "("の数 ー ")"の数
+            tokens.filter{$0 == NUM_PT_LEFT}.count - tokens.filter{$0 == NUM_PT_RIGHT}.count
+        }
+    }
+
     private var isAnswer = false
     
     
@@ -251,14 +257,7 @@ final class CalcViewModel: ObservableObject {
                 case "Ans":
                     if let last = tokens.last {
                         if Double(last) != nil { // 数値
-                            if 0 < parenthesesLeft {
-                                // 括弧を閉じる
-                                for _ in 0..<parenthesesLeft {
-                                    tokens.append(NUM_PT_RIGHT)
-                                }
-                                parenthesesLeft = 0
-                            }
-                            // Answer用フォーマット（true:末尾[0]表示と予定[.][)]表示なし）
+                            // Answer用フォーマット（true:末尾[0]表示と予定[.][)]表示なし、右括弧を閉じる）
                             formulaUpdate(true)
                             //print(type(of: formulaAttr))
                             //BUG//let plainText = String(formulaAttr)
@@ -292,14 +291,12 @@ final class CalcViewModel: ObservableObject {
                     if let last = tokens.last {
                         if Double(last) != nil || last == NUM_PT_RIGHT {
                             // 数値 or ")"
-                            if 0 < parenthesesLeft {
+                            if 0 < needRightParentheses {
                                 tokens.append(NUM_PT_RIGHT)
-                                parenthesesLeft -= 1
                                 formulaUpdate()
                             }
                         }else{
                             tokens.append(NUM_PT_LEFT)
-                            parenthesesLeft += 1
                             formulaUpdate()
                         }
                     }
@@ -341,9 +338,50 @@ final class CalcViewModel: ObservableObject {
         }
     }
     
-    func formulaUpdate(_ isAnswer: Bool = false) {
+    // HistoryView // 履歴削除
+    func delateHistory(_ index: Int) {
+        let originalIndex = historyRows.count - 1 - index
+        if 0 <= originalIndex && originalIndex < historyRows.count {
+            historyRows.remove(at: originalIndex)
+        }
+    }
+    
+    // HistoryView // 式コピペ　rowからformulaTextを再現する
+    func formulaFromHistoryToken(_ row: HistoryRow) {
+        tokens = row.tokens
+        // 末尾の[)]を連続カウントしながら取り除き、予定[)]表示されるようにする
+        for token in tokens.reversed() {
+            if token == NUM_PT_RIGHT {
+                tokens.removeLast()
+            }else{
+                break // [)]でなければ終了
+            }
+        }
+        formulaUpdate()
+    }
+
+    // HistoryView // 答えコピペ　rowからformulaTextを再現する
+    func formulaFromHistoryAnswer(_ row: HistoryRow) {
+        tokens = []
+        tokens.append(SBCD(row.answer).value)
+        formulaUpdate() //(true)
+    }
+
+    
+    // MARK: - Private Methods
+    
+    private func formulaUpdate(_ isAnswer: Bool = false) {
         self.isAnswer = isAnswer
         self.formulaAttr = ""
+
+        if isAnswer, 0 < needRightParentheses {
+            // Answer用フォーマット（true:末尾[0]表示と予定[.][)]表示なし、右括弧を閉じる）
+            // 右括弧を閉じる
+            for _ in 0..<needRightParentheses {
+                tokens.append(NUM_PT_RIGHT)
+            }
+        }
+        
         for token in tokens {
             if Double(token) != nil { // 数値
                 // .format()は小数制限丸め処理しないので SettingViewModel.decimalDigits は影響しない
@@ -354,9 +392,13 @@ final class CalcViewModel: ObservableObject {
                 self.formulaAttr += attr
             }
         }
+
         if isAnswer {
             return
         }
+
+        //以下、FormulaView表示のための処理
+
         // 小数表示　末尾[0]表示と予定[.]表示
         if let last = tokens.last,  Double(last) != nil {
             // 小数末尾の0がformat()により削除されるため改めて追加表示する
@@ -371,9 +413,9 @@ final class CalcViewModel: ObservableObject {
             }
         }
         // 予定[)]表示
-        if 0 < parenthesesLeft {
+        if 0 < needRightParentheses {
             // 待機中の右括弧を表示
-            var attr = AttributedString(String(repeating: NUM_PT_RIGHT, count: parenthesesLeft))
+            var attr = AttributedString(String(repeating: NUM_PT_RIGHT, count: needRightParentheses))
             attr.foregroundColor = .gray.opacity(0.5)
             self.formulaAttr += attr // 予定[)]表示
         }
@@ -407,6 +449,7 @@ final class CalcViewModel: ObservableObject {
         
         
     }
+    
     
 }
 
