@@ -305,13 +305,14 @@ final class CalcViewModel: ObservableObject {
                     }
                     
                 case "CA": // [CA] Clear All
-                    //handleAllClear()
                     tokens.removeAll()
                     formulaUpdate()
 
-                case "CS": // [SC] Clear Section：1行クリア
-                    tokens.removeLast()
-                    formulaUpdate()
+                case "CS": // [SC] Clear Section：Token単位のクリア
+                    if 0 < tokens.count {
+                        tokens.removeLast()
+                        formulaUpdate()
+                    }
 
                 case "BS": // [BS] Back Space
                     if var last = tokens.last {
