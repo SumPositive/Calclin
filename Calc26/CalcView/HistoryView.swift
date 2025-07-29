@@ -11,6 +11,9 @@ import SwiftUI
 struct HistoryView: View {
     @ObservedObject var viewModel: CalcViewModel
     
+//    let flippedTrash: UIImage? = UIImage(systemName: "trash")?.flippedVertically()
+    
+
     var body: some View {
 
         List {
@@ -38,6 +41,9 @@ struct HistoryView: View {
                         } label: {
                             Image(systemName: "trash")
                                 //.scaleEffect(y: -1) //TODO: swipeActions内で無効なので上下反転した画像を用意する
+//                            Image(uiImage: flippedTrash)
+//                                .resizable()
+//                                .frame(width: 200, height: 200)
                         }
                     }
                     .swipeActions(edge: .leading) { // 右スワイプ：追加
@@ -97,7 +103,7 @@ struct CustomCell: View {
             Text({
                 var equal = AttributedString("=")
                 equal.foregroundColor = Color.blue //.opacity(0.5)
-                var answer = AttributedString(row.answer)
+                let answer = AttributedString(row.answer)
                 var attrStr = row.formula + equal + answer
                 // 演算子の前で改行させるための処理
                 for index in attrStr.characters.indices.reversed() {
@@ -108,15 +114,39 @@ struct CustomCell: View {
                 return attrStr
             }()).scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
                 .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .regular))
+                .multilineTextAlignment(.trailing) // 複数行で右寄せ
                 .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
                 .padding(.top, 8.0)
 
             // 下線
-//            Divider()
-//                .padding(0)
-//                .padding(.top, 18.0)
+            //Divider()
+            //    .padding(0)
+            //    .padding(.top, 18.0)
         }
         .frame(maxWidth: .infinity) // 親View内側一杯に広げる
     }
 }
+
+
+extension UIImage {
+
+    // 上下反転する
+    func flippedVertically() -> UIImage? {
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        guard let context = UIGraphicsGetCurrentContext() else { return nil }
+        
+        // ① Y軸反転
+        context.translateBy(x: 0, y: size.height)
+        context.scaleBy(x: 1.0, y: -1.0)
+        
+        // ② 元画像を描画
+        context.draw(cgImage!, in: CGRect(origin: .zero, size: size))
+        
+        // ③ 新しいUIImageを生成
+        let flippedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return flippedImage
+    }
+}
+
 
