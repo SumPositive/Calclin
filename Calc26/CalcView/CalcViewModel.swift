@@ -78,6 +78,7 @@ final class CalcViewModel: ObservableObject {
     var tax_rate: Double = 0.10
     
     struct  HistoryRow: Hashable {
+        var tokens: [String] = []   // 式コピペのため記録する
         var formula: AttributedString = ""
         var answer: String  = "" // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
     }
@@ -265,8 +266,9 @@ final class CalcViewModel: ObservableObject {
                             // 計算結果（小数制限丸め処理済み）
                             let answer = CalcFunc.answer(plainText)
                             // add History
-                            let row = HistoryRow(formula: formulaAttr,
-                                                 answer: SBCD(answer).format())
+                            let row = HistoryRow( tokens: tokens,
+                                                  formula: formulaAttr,
+                                                  answer: SBCD(answer).format())
                             // History追加
                             historyRows.append(row)
                             if CalcViewModel.HISTORY_MAX < historyRows.count {

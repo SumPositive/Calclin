@@ -132,8 +132,8 @@ struct SettingView: View {
             VStack(spacing: 0) {
                 
                 HStack() {
-                    // 数字倍率スライダー
-                    Text("数字倍率")
+                    // 数字表示倍率スライダー
+                    Text("表示倍率")
                     Text(String(format: " %.1f ", viewModel.numberFontScale))
                     Slider(value: $viewModel.numberFontScale, in: (0.5)...(3.0), step: 0.1)
                         .onChange(of: viewModel.numberFontScale, { oldValue, newValue in

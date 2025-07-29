@@ -30,38 +30,37 @@ struct HistoryView: View {
                                 viewModel.historyRows.remove(at: originalIndex)
                             }
                         } label: {
-                            Image(systemName: "trash")
+                            Text("×")
+                                .font(.system(size: 44.0, weight: .bold))
                         }
                     }
                     .swipeActions(edge: .leading) { // 右スワイプ：追加
                         Button() {
-                            // 編集アクション
-                            //TODO: 計算式をformulaTextに戻す
-                            //TODO: 答えだけをformulaTextに戻す
-
+                            // 式コピペ　tokens を戻してformulaTextを再現する
+                            viewModel.tokens = row.tokens
+                            viewModel.formulaUpdate()
                         } label: {
-                            Text("計算式").scaleEffect(y: -1)
-                            //.scaleEffect(y: -1) //TODO: swipeActions内で無効なので上下反転した画像を用意する
+                            Text("＋")
+                                .font(.system(size: 44.0, weight: .bold))
                         }
                         .tint(.green) // スワイプ背景色
 
                         Button() {
-                            // 編集アクション
-                            //TODO: 計算式をformulaTextに戻す
-                            //TODO: 答えだけをformulaTextに戻す
-                            
+                            // 答えコピペ
+                            viewModel.tokens = []
+                            viewModel.tokens.append(SBCD(row.answer).value)
+                            viewModel.formulaUpdate() //(true)
                         } label: {
-                            Text("答え").scaleEffect(y: -1)
-                            //.scaleEffect(y: -1) //TODO: swipeActions内で無効なので上下反転した画像を用意する
+                            Text("＝")
+                                .font(.system(size: 44.0, weight: .bold))
                         }
                         .tint(.blue) // スワイプ背景色
 
                     }
                     .onTapGesture(count: 2) { // ダブルタップ時の処理
-                        //TODO: 答えだけをformulaTextに戻す
-                        viewModel.tokens = []
-                        viewModel.tokens.append(SBCD(row.answer).value)
-                        viewModel.formulaUpdate(true)
+                        // 式コピペ　tokens を戻してformulaTextを再現する
+                        viewModel.tokens = row.tokens
+                        viewModel.formulaUpdate()
                     }
             }
         }
