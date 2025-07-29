@@ -11,23 +11,14 @@ import SwiftUI
 struct HistoryView: View {
     @ObservedObject var viewModel: CalcViewModel
     
-//    let flippedTrash: UIImage? = UIImage(systemName: "trash")?.flippedVertically()
-    
-
     var body: some View {
 
         List {
-            //ForEach(viewModel.historyRows.reversed(), id: \.self) { row in
             ForEach(Array(viewModel.historyRows.reversed().enumerated()), id: \.element) { index, row in
                 // カスタム明細セル
                 CustomCell(viewModel: viewModel, row: row)
-                    //.listRowSeparator(.hidden) // 既定の下線を非表示
-//                    .listRowSeparator(.automatic, edges: .all)
-//                    .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
-                
                     .listRowInsets(EdgeInsets()) // ← これが肝
                     .listRowSeparator(.visible, edges: .all)
-                
                     .padding(.bottom, 8.0)  // 下の余白
                     .padding(.horizontal, 12.0) // 左右の余白
                     .background(Color(.systemGray6))
@@ -40,10 +31,6 @@ struct HistoryView: View {
                             }
                         } label: {
                             Image(systemName: "trash")
-                                //.scaleEffect(y: -1) //TODO: swipeActions内で無効なので上下反転した画像を用意する
-//                            Image(uiImage: flippedTrash)
-//                                .resizable()
-//                                .frame(width: 200, height: 200)
                         }
                     }
                     .swipeActions(edge: .leading) { // 右スワイプ：追加

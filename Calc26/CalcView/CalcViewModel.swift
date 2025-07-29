@@ -67,11 +67,13 @@ final class CalcViewModel: ObservableObject {
     
     
     // MARK: - Constants
-    static let ROWS_MAX: Int = 100      // 最大行数
+    static let HISTORY_MAX: Int = 100   // HistoryView最大行数　超過時古い行から削除する
+    // 入力中の最大桁数＝整数桁＋小数桁（小数点は含まない）！！！入力中は小数桁制限丸め処理しない
+    static let PRECISION_MAX: Int = 30  // <= SBCD_PRECISION/2 = 60/2
+
     
     // MARK: - Public Properties
-    // 有効桁数＝整数桁＋小数桁（小数点は含まない）
-    var num_precision: Int = 9
+
     // 税率
     var tax_rate: Double = 0.10
     
@@ -117,7 +119,8 @@ final class CalcViewModel: ObservableObject {
                                 if  isAnswer {
                                     isAnswer = false
                                     last = num
-                                }else{
+                                }
+                                else if last.count < CalcViewModel.PRECISION_MAX {
                                     last += num
                                 }
                                 tokens[tokens.count - 1] = last
@@ -140,7 +143,8 @@ final class CalcViewModel: ObservableObject {
                                 if  isAnswer {
                                     isAnswer = false
                                     last = "0" + NUM_DECIMAL
-                                }else{
+                                }
+                                else if last.count < CalcViewModel.PRECISION_MAX {
                                     last += num
                                 }
                                 //TODO: 先頭の0削除
@@ -258,11 +262,16 @@ final class CalcViewModel: ObservableObject {
                             //print(type(of: formulaAttr))
                             //BUG//let plainText = String(formulaAttr)
                             let plainText = formulaAttr.characters.map { String($0) }.joined()
+                            // 計算結果（小数制限丸め処理済み）
                             let answer = CalcFunc.answer(plainText)
                             // add History
                             let row = HistoryRow(formula: formulaAttr,
                                                  answer: SBCD(answer).format())
+                            // History追加
                             historyRows.append(row)
+                            if CalcViewModel.HISTORY_MAX < historyRows.count {
+                                historyRows.removeFirst() // 最初の履歴を削除
+                            }
                             // New
                             tokens.removeAll()
                             tokens.append(answer)
@@ -334,6 +343,7 @@ final class CalcViewModel: ObservableObject {
         self.formulaAttr = ""
         for token in tokens {
             if Double(token) != nil { // 数値
+                // .format()は小数制限丸め処理しないので SettingViewModel.decimalDigits は影響しない
                 self.formulaAttr += AttributedString(SBCD(token).format())
             }else{
                 var attr = AttributedString(token)
