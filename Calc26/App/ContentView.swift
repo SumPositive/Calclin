@@ -6,6 +6,16 @@
 //
 
 import SwiftUI
+import SafariServices
+
+struct SafariView: UIViewControllerRepresentable {
+    let url: URL
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        return SFSafariViewController(url: url)
+    }
+    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
+}
+
 
 struct ContentView: View {
     // SettingView
@@ -30,13 +40,27 @@ struct ContentView: View {
     @Environment(\.colorScheme) var colorScheme
     // 設定　表示状態
     @State private var isShowingSetting = false
-    
+    @State private var showSafari = false
     
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
             VStack() {
                 
                 HStack {
+                    // 情報（ボタン）
+                    Button(action: {
+                        withAnimation {
+                            // SafariでURLを表示する
+                            showSafari = true
+                        }
+                    }) {
+                        Image(systemName: "info.circle")
+                            .imageScale(.large)
+                    }
+                    .sheet(isPresented: $showSafari) {
+                        SafariView(url: URL(string: "https://info.art.jp")!)
+                    }
+                    
                     Spacer()
                     
                     Text("CalcRoll")
@@ -46,7 +70,7 @@ struct ContentView: View {
                         )
                     
                     Spacer()
-                    // トグルボタン
+                    // 設定（トグルボタン）
                     Button(action: {
                         withAnimation {
                             isShowingSetting.toggle()
