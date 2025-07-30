@@ -16,31 +16,95 @@ struct KeyboardView: View {
     // @State 変化あればViewが更新される
     @State private var selectedPage = 1 // 初期で2ページ目（インデックス1）を表示
 
-    private let spacing: CGFloat = 4.0
-    private let pageCount = 3
+    // キーボード・ページ数
+    private let pageCount = KeyboardViewModel.pageCount
     
     var body: some View {
-
         VStack {
-            // KeyPageViewを3個横に並べ、1ページずつ左右にスワイプできる
-            TabView(selection: $selectedPage) {
-                ForEach(0..<pageCount, id: \.self) { index in
-                    KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
-                        .padding(spacing)
-                        .tag(index)
+            // キーボード
+            //  KeyPageViewを3個横に並べ、1ページずつ左右に切り替える
+            //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
+            //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
+            GeometryReader { geometry in
+                HStack(spacing: 0) {
+                    ForEach(0..<pageCount, id: \.self) { index in
+                        KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
+                            .frame(width: geometry.size.width)
+                    }
                 }
+                .offset(x: -CGFloat(selectedPage) * geometry.size.width)
+                .animation(.easeInOut, value: selectedPage)
             }
-            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never)) // ページインジケータ非表示
             .padding(0)
-            // カスタム ページインジケータ
+            
+            // 下部メニュー
             HStack(spacing: 8) {
-                ForEach(0..<pageCount, id: \.self) { index in
-                    Circle()
-                        .fill(index == selectedPage ? Color.primary : Color.gray.opacity(0.4))
-                        .frame(width: 10, height: 10)
-                        .animation(.easeInOut(duration: 0.2), value: selectedPage)
+                // 左ボタン
+                Button(action: {
+                    withAnimation {
+                        // SafariでURLを表示する
+                    }
+                }) {
+                    Image(systemName: "info.circle")
+                        .imageScale(.large)
                 }
+                .padding(.leading, 12)
+
+                Spacer()
+
+                // カスタム・ページインジケータ
+                GeometryReader { geoIndicator in
+                    HStack {
+                        Spacer()
+                        // 中央　インジケータ
+                        ForEach(0..<pageCount, id: \.self) { index in
+                            Circle()
+                                .fill(index == selectedPage ? Color.primary : Color.gray.opacity(0.4))
+                                .frame(width: 10, height: 10)
+                                .animation(.easeInOut(duration: 0.2), value: selectedPage)
+                                .padding(.vertical)
+                        }
+                        Spacer()
+                    }
+                    .contentShape(Rectangle()) // ← ヒットエリアをHStack全体に広げる
+                    .gesture( // インジケータ行のスワイプでページ切替
+                        DragGesture()
+                            .onEnded { value in
+                                if value.translation.width < -20 {
+                                    selectedPage = min(selectedPage + 1, pageCount - 1)
+                                } else if value.translation.width > 20 {
+                                    selectedPage = max(selectedPage - 1, 0)
+                                }
+                            }
+                    )
+                    .onTapGesture { location in  // インジケータ中央より左右のタップでページ切替
+                        let midX = geoIndicator.size.width / 2
+                        let midY = geoIndicator.size.height / 2
+                        if midY < location.y {
+                            // 下半分に制限する（上半分はキーボードに干渉しないように無効にする）
+                            if location.x < midX { // 左側タップ
+                                selectedPage = max(selectedPage - 1, 0)
+                            } else { // 右側タップ
+                                selectedPage = min(selectedPage + 1, pageCount - 1)
+                            }
+                        }
+                    }
+                }
+                .frame(width: 60) // 左右タップが有効な範囲になる
+
+                Spacer()
+                // 右ボタン
+                Button(action: {
+                    withAnimation {
+                        // SafariでURLを表示する
+                    }
+                }) {
+                    Image(systemName: "info.circle")
+                        .imageScale(.large)
+                }
+                .padding(.trailing, 12)
             }
+            .frame(height: 30) // 操作エリアの高さ
             .padding(0)
         }
         .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
@@ -52,17 +116,71 @@ struct KeyPageView: View {
     let onTap: (KeyDefinition) -> Void
     let page: Int
     
+    // 縦や横に連結拡大可能にするため、LazyVGridやV-HStackを使用せずにposition配置している
+    
     var body: some View {
-        // LazyVGridで縦横5x5に等間隔で配置
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 5), spacing: 4) {
-            ForEach(0..<25, id: \.self) { index in
-                KeyView(viewModel: viewModel, onTap: onTap, page: page, index: index)
-                    .aspectRatio(128/80, contentMode: .fit)
+        let colCount: Int = KeyboardViewModel.colCount //列
+        let rowCount: Int = KeyboardViewModel.rowCount //行
+        let space: CGFloat = 4
+        let keyCodes = viewModel.keyboard[page]
+
+        GeometryReader { geometry in
+            // KeyPageView.size
+            let width = geometry.size.width / CGFloat(colCount)
+            let height = geometry.size.height / CGFloat(rowCount)
+
+            ForEach(0..<rowCount, id: \.self) { row in
+                ForEach(0..<colCount, id: \.self) { col in
+                    let index = row * colCount + col
+                    if index < keyCodes.count {
+                        if keyCodes[index] != "",
+                           index < rowCount * colCount - 1,
+                           keyCodes[index] == keyCodes[index + 1] {
+                            // 右に連結：幅2倍
+                            KeyView(viewModel: viewModel, onTap: onTap, page: page, index: index)
+                                .frame(width: width * 2 - space, height: height - space)
+                                .position(
+                                    x: CGFloat(col) * width + width,
+                                    y: CGFloat(row) * height + height / 2
+                                )
+                        }
+                        else if keyCodes[index] != "",
+                                1 <= index,
+                                keyCodes[index - 1] == keyCodes[index] {
+                            // 左に連結：非表示
+                        }
+                        else if keyCodes[index] != "",
+                                index < rowCount * colCount - colCount,
+                                keyCodes[index] == keyCodes[index + colCount] {
+                            // 下に連結：高さ2倍
+                            KeyView(viewModel: viewModel, onTap: onTap, page: page, index: index)
+                                .frame(width: width - space, height: height * 2 - space)
+                                .position(
+                                    x: CGFloat(col) * width + width / 2,
+                                    y: CGFloat(row) * height + height
+                                )
+                        }
+                        else if keyCodes[index] != "",
+                                colCount <= index,
+                                keyCodes[index - colCount] == keyCodes[index] {
+                            // 上に連結：非表示
+                        }
+                        else {
+                            // 通常サイズキー
+                            KeyView(viewModel: viewModel, onTap: onTap, page: page, index: index)
+                                .frame(width: width - space, height: height - space)
+                                .position(
+                                    x: CGFloat(col) * width + width / 2,
+                                    y: CGFloat(row) * height + height / 2
+                                )
+                        }
+                    }
+                }
             }
         }
-        .padding(0)
     }
 }
+
 
 struct KeyView: View {
     @ObservedObject var viewModel: KeyboardViewModel
@@ -94,24 +212,37 @@ struct KeyView: View {
         }
     }
     
+    @State private var isTapped = false
+    
     var body: some View {
         GeometryReader { geo in
             Button(action: {
+                isTapped = true // 押された
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    // 一定時間後に元に戻す
+                    isTapped = false
+                }
+                // .onTap 処理
                 if let keyDef = keyDef {
                     self.onTap(keyDef)
                 }
             }) {
-                EmptyView()
+                // KeyButtonStyle方式では、Image切替の反応が悪いため、直埋めにした
+                ZStack {
+                    Image(isTapped ? "keyDown" : "keyUp")
+                        .resizable()
+                    
+                    Text(keyTop)
+                        .foregroundColor(.black)
+                        .font(.system(size: 24, weight: .bold))
+                        .shadow(radius: 1)
+                }
             }
-            //.aspectRatio(128/80, contentMode: .fit)
-            .buttonStyle(
-                KeyButtonStyle(labelText: keyTop)
-            )
             .simultaneousGesture(
-                LongPressGesture(minimumDuration: 0.5) // 0.5秒以上の長押し
+                LongPressGesture(minimumDuration: 0.7) // 長押し
                     .onEnded { _ in
                         var global = geo.frame(in: .global).center
-                        global.y -= 225
+                        global.y -= 325
                         viewModel.popupInfo = (
                             page: self.page,
                             index: self.index,
@@ -123,6 +254,7 @@ struct KeyView: View {
         }
     }
 }
+
 
 extension CGRect {
     var center: CGPoint {
@@ -184,7 +316,7 @@ struct PopupListView: View {
                 }
             }
             .background(.white)
-            .cornerRadius(15.0)
+            .cornerRadius(10.0)
             .padding(0) // 吹き出しとの間隔(0)
             // 吹き出しの三角形部分（下向き）
             Triangle()
@@ -192,7 +324,7 @@ struct PopupListView: View {
                 .frame(width: 30, height: 15)
                 .rotationEffect(.degrees(180)) // 上下反転
         }
-        .frame(width: 150, height: 500, alignment: .center)
+        .frame(width: 90, height: 500, alignment: .bottom)
     }
 }
 
@@ -207,33 +339,4 @@ struct Triangle: Shape {
     }
 }
 
-
-// カスタムスタイル：押下時に画像を切り替える
-struct KeyButtonStyle: ButtonStyle {
-    var normalImage: String = "keyUp"
-    var pressedImage: String = "keyDown"
-    
-    var labelText: String
-    
-//    var rzUnit: String = ""
-//    var page: Int = 0
-//    var column: Int = 0
-//    var row: Int = 0
-//    var colorNo: Int = 0
-    var fontSize: CGFloat = 24
-//    var isDirty: Bool = false
-    
-    
-    func makeBody(configuration: Configuration) -> some View {
-        ZStack {
-            Image(configuration.isPressed ? pressedImage : normalImage)
-                .resizable()
-            
-            Text(labelText)
-                .foregroundColor(.black)
-                .font(.system(size: fontSize, weight: .bold))
-                .shadow(radius: 1)
-        }
-    }
-}
 

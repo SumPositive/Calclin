@@ -4,6 +4,12 @@
 <array>
 	<dict>
 		<key>code</key>
+		<string>nop</string>
+		<key>keyTop</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>code</key>
 		<string>1</string>
 		<key>formula</key>
 		<string>1</string>
@@ -41,6 +47,8 @@
 	<dict>
 		<key>code</key>
 		<string>7</string>
+		<key>New item</key>
+		<string></string>
 		<key>formula</key>
 		<string>7</string>
 	</dict>
@@ -60,7 +68,7 @@
 		<key>code</key>
 		<string>0</string>
 		<key>formula</key>
-		<string>9</string>
+		<string>0</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -84,9 +92,9 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>@Separator</string>
+		<string>nop</string>
 		<key>keyTop</key>
-		<string>--------</string>
+		<string></string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -142,21 +150,17 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>(</string>
-		<key>formula</key>
-		<string>(</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>)</string>
-		<key>formula</key>
-		<string>)</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>@Separator</string>
+		<string>Parentheses</string>
 		<key>keyTop</key>
-		<string>--------</string>
+		<string>( )</string>
+		<key>comment</key>
+		<string>前後の丸括弧を判断して入力する</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>nop</string>
+		<key>keyTop</key>
+		<string></string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -212,9 +216,9 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>@Separator</string>
+		<string>nop</string>
 		<key>keyTop</key>
-		<string>--------</string>
+		<string></string>
 	</dict>
 	<dict>
 		<key>code</key>

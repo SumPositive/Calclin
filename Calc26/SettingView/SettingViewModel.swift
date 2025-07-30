@@ -13,8 +13,8 @@ extension Notification.Name {
     static let SBCD_Config_Change = Notification.Name("SBCD_Config_Change")
 }
 
-// 小数部の表示最大桁数（この桁まで0埋めする）
-let SETTING_decimalDigits_MAX: Int = 10
+// 小数部の表示最大桁数（この桁まで可変、0埋めしない）
+let SETTING_decimalDigits_MAX: Double = 10.0
 
 
 final class SettingViewModel: ObservableObject {
@@ -45,8 +45,8 @@ final class SettingViewModel: ObservableObject {
         }
     }
     @Published var roundType: RoundType = .R55
-    /// 丸め：小数部の桁数（例：2 → 小数点以下3桁目を丸めて2桁表示する）
-    @Published var decimalDigits: Int = SETTING_decimalDigits_MAX // 初期「F」小数末尾0可変
+    /// 丸め：小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する） Slider引数にするためDouble型
+    @Published var decimalDigits: Double = 3.0 // 初期
 
     /// 小数点記号
     enum DecimalSeparator: String, CaseIterable, Identifiable {
@@ -69,10 +69,10 @@ final class SettingViewModel: ObservableObject {
     
     // 桁区切りタイプ    　　PickerデータソースにするためCaseIterable, Identifiableに準拠
     enum GroupType: String, CaseIterable, Identifiable {
-        case none   = "区切りなし 1234567.0"
-        case G3     = "３桁区切り 1,123,123.0"
-        case G23    = "インド方式 12,12,123.0"
-        case G4     = "４桁区切り 1234,1234.0"
+        case none   = "区切りなし   123456789.0"
+        case G3     = "３桁区切り 123,456,789.0"
+        case G23    = "インド式　12,34,56,789.0"
+        case G4     = "４桁区切り 1,2345,6789.0"
         // Identifiable対応のため
         var id: String { rawValue }
         // SBCD_Config.GroupTypeを返す
@@ -106,8 +106,8 @@ final class SettingViewModel: ObservableObject {
     }
     @Published var groupSeparator: GroupSeparator = .conma
 
-    //
-    @Published var numberFontScale = Double(1.5)
+    // フォント倍率
+    @Published var numberFontScale: Double = 1.5
     
 }
 

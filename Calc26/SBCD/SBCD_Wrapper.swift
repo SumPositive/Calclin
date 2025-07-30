@@ -132,10 +132,10 @@ final class SBCD: Equatable {
     }
     
     /// 数字文字列を SBCD_Config設定値に従い書式付にする
-    /// - Parameter trailNoZero: True=小数末尾0埋めしない   false=SBCD_Config.decimalTrailZeroに従う
+    /// 　　小数制限丸めはしない、先に.round()で行うこと
     /// - Returns: String    桁区切り、記号など装飾された文字列
     @MainActor
-    func format( trailNoZero: Bool = false ) -> String {
+    func format() -> String {
         var value = self.value
         // マイナス記号の処理
         var minus = false
@@ -165,17 +165,24 @@ final class SBCD: Equatable {
                 integerPart = Substring(result.reversed())
                 
             case .G23:
+                // 最初の3桁
                 let last3 = chars.suffix(3)
-                var rem = chars.dropLast(3)
-                var groups: [String] = []
-                while rem.count > 2 {
-                    groups.insert(String(rem.suffix(2)), at: 0)
-                    rem.removeLast(2)
+                if 3 < chars.count {
+                    // 2桁区切り
+                    let groupSize = 2
+                    // 最初の3桁を除いて逆順に
+                    let rev = chars.dropLast(3).reversed()
+                    var result = ""
+                    for (i, c) in rev.enumerated() {
+                        if i > 0 && i % groupSize == 0 {
+                            result.append(contentsOf: SBCD_Config.groupSeparator)
+                        }
+                        result.append(c)
+                    }
+                    integerPart = Substring(result.reversed() + SBCD_Config.groupSeparator + last3)
+                }else{
+                    integerPart = Substring(last3)
                 }
-                if !rem.isEmpty {
-                    groups.insert(String(rem), at: 0)
-                }
-                integerPart = Substring(groups.joined(separator: SBCD_Config.groupSeparator) + SBCD_Config.groupSeparator + String(last3))
                 
             case .none:
                 break
@@ -183,12 +190,11 @@ final class SBCD: Equatable {
         // 整数部
         var result = String(integerPart)
         // 小数部
-        var decimalStr = String(decimalPart.prefix(SBCD_Config.decimalDigits)) // 小数桁数（decimalDigits）以内でカット
+        var decimalStr = String(decimalPart) //.prefix(SBCD_Config.decimalDigits)) // 小数桁数（decimalDigits）以内でカット
 
         // 小数末尾0 // Option:trailNoZero
-        let tZero = trailNoZero ? false : SBCD_Config.decimalTrailZero
-        if tZero {
-            // 小数部末尾に0補充する
+        if SBCD_Config.decimalTrailZero {
+            // 小数部末尾に0補充する。ただし、SBCD_Config.decimalDigitsまで
             if decimalStr.count < SBCD_Config.decimalDigits {
                 decimalStr = decimalStr.padding(toLength: SBCD_Config.decimalDigits, withPad: "0", startingAt: 0)
             }

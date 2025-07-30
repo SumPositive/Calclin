@@ -6,13 +6,22 @@
 //
 
 import SwiftUI
+import SafariServices
+
+struct SafariView: UIViewControllerRepresentable {
+    let url: URL
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        return SFSafariViewController(url: url)
+    }
+    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
+}
+
 
 struct ContentView: View {
     // SettingView
     let setting: SettingViewModel // 全Viewで共通のインスタンス
     // CalcView
     @StateObject var calcViewModel: CalcViewModel
-    @StateObject var calc2ViewModel: CalcViewModel
     // KeyboardView
     @StateObject var keyboardViewModel: KeyboardViewModel
 
@@ -22,7 +31,6 @@ struct ContentView: View {
         self.setting = setting
         // CalcView
         _calcViewModel = StateObject(wrappedValue: CalcViewModel(settingViewModel: setting))
-        _calc2ViewModel = StateObject(wrappedValue: CalcViewModel(settingViewModel: setting))
         // KeyboardView
         _keyboardViewModel = StateObject(wrappedValue: KeyboardViewModel())
     }
@@ -32,19 +40,27 @@ struct ContentView: View {
     @Environment(\.colorScheme) var colorScheme
     // 設定　表示状態
     @State private var isShowingSetting = false
-    // アクティブ（フォーカス）ListView番号　＜＜＜TODO:配列で複数対応
-    @State private var activeList: Int = 0
-    // ListView1　表示状態
-    @State private var isShowList1 = true
-    // ListView2　表示状態
-    @State private var isShowList2 = true
-
+    @State private var showSafari = false
     
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
             VStack() {
                 
                 HStack {
+                    // 情報（ボタン）
+                    Button(action: {
+                        withAnimation {
+                            // SafariでURLを表示する
+                            showSafari = true
+                        }
+                    }) {
+                        Image(systemName: "info.circle")
+                            .imageScale(.large)
+                    }
+                    .sheet(isPresented: $showSafari) {
+                        SafariView(url: URL(string: "https://info.art.jp")!)
+                    }
+                    
                     Spacer()
                     
                     Text("CalcRoll")
@@ -54,7 +70,7 @@ struct ContentView: View {
                         )
                     
                     Spacer()
-                    // トグルボタン
+                    // 設定（トグルボタン）
                     Button(action: {
                         withAnimation {
                             isShowingSetting.toggle()
@@ -73,62 +89,16 @@ struct ContentView: View {
                         .padding(.horizontal)
                 }
                 
-                HStack(spacing: 3) {
-                    // 計算式リスト
-                    if isShowList1 {
-                        CalcView(viewModel: calcViewModel)
-                        //.frame(maxHeight: .infinity) // 高さを均等にする
-                            .contentShape(Rectangle())
-                            .border( activeList == 0 ? Color.blue : Color.gray.opacity(0.3), width: 2.0)
-                            .transition(.opacity) // フェード
-                            .onTapGesture {
-                                // タップでフォーカス切替
-                                activeList = 0
-                            }
-                            .onTapGesture(count: 2) {
-                                // ダブルタップで最大化（他方のListViewを非表示にする
-                                withAnimation {
-                                    isShowList2.toggle()
-                                }
-                                // 同時にフォーカス切替
-                                activeList = 0
-                            }
-                        //.cornerRadius(10)
-                    }
-                    
-                    // 計算式リスト2
-                    if isShowList2 {
-                        CalcView(viewModel: calc2ViewModel)
-                        //.frame(maxHeight: .infinity) // 高さを均等にする
-                            .contentShape(Rectangle())
-                            .border( activeList == 1 ? Color.blue : Color.gray.opacity(0.3), width: 2.0)
-                            .transition(.opacity) // フェード
-                            .onTapGesture {
-                                // タップでフォーカス切替
-                                activeList = 1
-                            }
-                            .onTapGesture(count: 2) {
-                                // ダブルタップで最大化（他方のListViewを非表示にする
-                                withAnimation {
-                                    isShowList1.toggle()
-                                }
-                                // 同時にフォーカス切替
-                                activeList = 1
-                            }
-                        //.cornerRadius(20)
-                    }
-                }
-                .padding(.horizontal, 4.0)
-                //.padding(.horizontal)
+
+                CalcView(viewModel: calcViewModel)
+                    .contentShape(Rectangle())
+                    .border(Color.gray.opacity(0.3), width: 2.0)
+                    .transition(.opacity) // フェード
                 
                 // キーボード
                 KeyboardView(viewModel: keyboardViewModel,
                              onTap: { keyDef in
-                    if activeList == 1 {
-                        calc2ViewModel.input(keyDef)
-                    }else{
-                        calcViewModel.input(keyDef)
-                    }
+                    calcViewModel.input(keyDef)
                 })
                 .padding(.horizontal, 4.0)
                 .frame(height: 280)

@@ -11,13 +11,24 @@ import SwiftUI
 
 // KeyDefinition.plist 構造
 struct KeyDefinition: Codable, Hashable {
-    let code: String        //必須!固定! calcViewModel.inputに与える文字　nilならばkeyTopを使う
+    let code: String      //必須!固定! calcViewModel.inputに与える文字　nilならばkeyTopを使う
     //------------------------
-    let formula: String?    // 計算式に追加する文字　nilならば計算式に追加しない（計算対象外キーである）
-    let keyTop: String?     // キートップ表示文字　nilならばcodeを使う
-    let unitBase: String?   //=nil:単位処理しない
+    let formula: String?  // 計算式に追加する文字　nilならば計算式に追加しない（計算対象外キーである）
+    let keyTop: String?   // キートップ表示文字　nilならばcodeを使う
+    let unitBase: String? //=nil:単位処理しない
     let unitConv: String?
     let unitRev: String?
+    //------------------------
+    init(code: String,
+         formula: String? = nil, keyTop: String? = nil,
+         unitBase: String? = nil, unitConv: String? = nil, unitRev: String? = nil) {
+        self.code = code
+        self.formula = formula
+        self.keyTop = keyTop
+        self.unitBase = unitBase
+        self.unitConv = unitConv
+        self.unitRev = unitRev
+    }
 }
 
 
@@ -26,11 +37,16 @@ final class KeyboardViewModel: ObservableObject {
     @Published var popupInfo: (page: Int, index: Int, keyCode: String, position: CGPoint)? = nil
 
     var keyDefs: [KeyDefinition] = []
-    
-   // .keyboard[page][key]
-   var keyboard: [[String]] = [Array(repeating: "", count: 25),
-                               Array(repeating: "", count: 25),
-                               Array(repeating: "", count: 25)]
+
+    // キーボード配列（固定）
+    static let colCount: Int = 5 //列
+    static let rowCount: Int = 5 //行
+    // キーボードページ数
+    static let pageCount: Int = 3
+    // .keyboard[page][key]
+    var keyboard: [[String]] = [Array(repeating: "", count: colCount * rowCount),
+                                Array(repeating: "", count: colCount * rowCount),
+                                Array(repeating: "", count: colCount * rowCount)]
  
     // Popoverで直前に選択したkeyCode（空キーを長押しした時、初期選択に使用する）
     var prevSelectKeyCode: String = ""
