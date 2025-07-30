@@ -79,12 +79,14 @@ struct KeyboardView: View {
                     )
                     .onTapGesture { location in  // インジケータ中央より左右のタップでページ切替
                         let midX = geoIndicator.size.width / 2
-                        if location.x < midX {
-                            // 左側タップ
-                            selectedPage = max(selectedPage - 1, 0)
-                        } else {
-                            // 右側タップ
-                            selectedPage = min(selectedPage + 1, pageCount - 1)
+                        let midY = geoIndicator.size.height / 2
+                        if midY < location.y {
+                            // 下半分に制限する（上半分はキーボードに干渉しないように無効にする）
+                            if location.x < midX { // 左側タップ
+                                selectedPage = max(selectedPage - 1, 0)
+                            } else { // 右側タップ
+                                selectedPage = min(selectedPage + 1, pageCount - 1)
+                            }
                         }
                     }
                 }
