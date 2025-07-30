@@ -16,31 +16,93 @@ struct KeyboardView: View {
     // @State 変化あればViewが更新される
     @State private var selectedPage = 1 // 初期で2ページ目（インデックス1）を表示
 
-    private let spacing: CGFloat = 4.0
+    // キーボード・ページ数
     private let pageCount = KeyboardViewModel.pageCount
     
     var body: some View {
-
         VStack {
-            // KeyPageViewを3個横に並べ、1ページずつ左右にスワイプできる
-            TabView(selection: $selectedPage) {
-                ForEach(0..<pageCount, id: \.self) { index in
-                    KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
-                        .padding(spacing)
-                        .tag(index)
+            // キーボード
+            //  KeyPageViewを3個横に並べ、1ページずつ左右に切り替える
+            //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
+            //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
+            GeometryReader { geometry in
+                HStack(spacing: 0) {
+                    ForEach(0..<pageCount, id: \.self) { index in
+                        KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
+                            .frame(width: geometry.size.width)
+                    }
                 }
+                .offset(x: -CGFloat(selectedPage) * geometry.size.width)
+                .animation(.easeInOut, value: selectedPage)
             }
-            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never)) // ページインジケータ非表示
             .padding(0)
-            // カスタム ページインジケータ
+            
+            // 下部メニュー
             HStack(spacing: 8) {
-                ForEach(0..<pageCount, id: \.self) { index in
-                    Circle()
-                        .fill(index == selectedPage ? Color.primary : Color.gray.opacity(0.4))
-                        .frame(width: 10, height: 10)
-                        .animation(.easeInOut(duration: 0.2), value: selectedPage)
+                // 左ボタン
+                Button(action: {
+                    withAnimation {
+                        // SafariでURLを表示する
+                    }
+                }) {
+                    Image(systemName: "info.circle")
+                        .imageScale(.large)
                 }
+                .padding(.leading, 12)
+
+                Spacer()
+
+                // カスタム・ページインジケータ
+                GeometryReader { geoIndicator in
+                    HStack {
+                        Spacer()
+                        // 中央　インジケータ
+                        ForEach(0..<pageCount, id: \.self) { index in
+                            Circle()
+                                .fill(index == selectedPage ? Color.primary : Color.gray.opacity(0.4))
+                                .frame(width: 10, height: 10)
+                                .animation(.easeInOut(duration: 0.2), value: selectedPage)
+                                .padding(.vertical)
+                        }
+                        Spacer()
+                    }
+                    .contentShape(Rectangle()) // ← ヒットエリアをHStack全体に広げる
+                    .gesture( // インジケータ行のスワイプでページ切替
+                        DragGesture()
+                            .onEnded { value in
+                                if value.translation.width < -20 {
+                                    selectedPage = min(selectedPage + 1, pageCount - 1)
+                                } else if value.translation.width > 20 {
+                                    selectedPage = max(selectedPage - 1, 0)
+                                }
+                            }
+                    )
+                    .onTapGesture { location in  // インジケータ中央より左右のタップでページ切替
+                        let midX = geoIndicator.size.width / 2
+                        if location.x < midX {
+                            // 左側タップ
+                            selectedPage = max(selectedPage - 1, 0)
+                        } else {
+                            // 右側タップ
+                            selectedPage = min(selectedPage + 1, pageCount - 1)
+                        }
+                    }
+                }
+                .frame(width: 60) // 左右タップが有効な範囲になる
+
+                Spacer()
+                // 右ボタン
+                Button(action: {
+                    withAnimation {
+                        // SafariでURLを表示する
+                    }
+                }) {
+                    Image(systemName: "info.circle")
+                        .imageScale(.large)
+                }
+                .padding(.trailing, 12)
             }
+            .frame(height: 30) // 操作エリアの高さ
             .padding(0)
         }
         .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
