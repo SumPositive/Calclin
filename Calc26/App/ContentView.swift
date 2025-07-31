@@ -21,18 +21,25 @@ struct ContentView: View {
     // SettingView
     let setting: SettingViewModel // 全Viewで共通のインスタンス
     // CalcView
-    @StateObject var calcViewModel: CalcViewModel
+    var calcViewModels: [CalcViewModel] = []
     // KeyboardView
-    @StateObject var keyboardViewModel: KeyboardViewModel
+    //@StateObject
+    var keyboardViewModel: KeyboardViewModel
+
+    // Calc数
+    let CALC_COUNT: Int = 3
 
     init() {
         // SettingView
         let setting = SettingViewModel()
         self.setting = setting
         // CalcView
-        _calcViewModel = StateObject(wrappedValue: CalcViewModel(settingViewModel: setting))
+        for _ in 0..<CALC_COUNT {
+            calcViewModels.append( CalcViewModel(settingViewModel: setting) )
+        }
         // KeyboardView
-        _keyboardViewModel = StateObject(wrappedValue: KeyboardViewModel())
+        //_keyboardViewModel = StateObject(wrappedValue: KeyboardViewModel())
+        keyboardViewModel = KeyboardViewModel()
     }
 
     // @State 変化あればViewが更新される
@@ -41,7 +48,9 @@ struct ContentView: View {
     // 設定　表示状態
     @State private var isShowingSetting = false
     @State private var showSafari = false
-    
+    // @State 変化あればViewが更新される
+    @State private var selectedCalc: Int = 0
+
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
             VStack {
@@ -89,16 +98,27 @@ struct ContentView: View {
                         .padding(.horizontal)
                 }
                 
-
-                CalcView(viewModel: calcViewModel)
-                    .contentShape(Rectangle())
-                    .border(Color.gray.opacity(0.3), width: 2.0)
-                    .transition(.opacity) // フェード
+                // 複数Calc横スクロールView
+                CalcRollView(
+                    settingViewModel: setting,
+                    calcViewModels: calcViewModels,
+                    onCalcChange: { newCalc in
+                        withAnimation {
+                            selectedCalc = newCalc
+                        }
+                    }
+                )
+                .padding(.horizontal, 4)
+                //.contentShape(Rectangle())
+                //.border(Color.gray.opacity(0.3), width: 2.0)
+                //.transition(.opacity) // フェード
                 
-                // キーボード
+                // キーボードView
                 KeyboardView(viewModel: keyboardViewModel,
                              onTap: { keyDef in
-                    calcViewModel.input(keyDef)
+                    // 選択中のCalcViewへkeyDefを送る
+                    let calc = calcViewModels[selectedCalc]
+                    calc.input(keyDef)
                 })
                 .padding(.horizontal, 4.0)
                 .frame(height: 280)
