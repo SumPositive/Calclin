@@ -248,7 +248,8 @@ struct KeyView: View {
     }
     
     @State private var isTapped = false
-    
+    @State private var isLongTapped = false
+
     var body: some View {
         GeometryReader { geo in
             Button(action: {
@@ -258,9 +259,10 @@ struct KeyView: View {
                     isTapped = false
                 }
                 // .onTap 処理
-                if let keyDef = keyDef {
+                if let keyDef = keyDef, isLongTapped == false {
                     self.onTap(keyDef)
                 }
+                isLongTapped = false
             }) {
                 // KeyButtonStyle方式では、Image切替の反応が悪いため、直埋めにした
                 ZStack {
@@ -275,14 +277,15 @@ struct KeyView: View {
                         Text(keyTop)
                             .foregroundColor(.black)
                             .font(.system(size: 24, weight: .bold))
-                            .shadow(radius: 1)
+                            //.shadow(radius: 1)
 
                     }
                 }
             }
             .simultaneousGesture(
-                LongPressGesture(minimumDuration: 0.7) // 長押し
+                LongPressGesture(minimumDuration: 0.6) // 長押し
                     .onEnded { _ in
+                        isLongTapped = true
                         var global = geo.frame(in: .global).center
                         global.y -= 325
                         viewModel.popupInfo = (
@@ -319,24 +322,44 @@ struct PopupListView: View {
                 ScrollViewReader { proxy in
                     List {
                         ForEach(viewModel.keyDefs, id:\.self) { keyDef in
-                            let keyTop = keyDef.keyTop ?? keyDef.code
-                            Text(keyTop)
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(.accentColor)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .listRowSeparator(.hidden) // 既定の下線を非表示
-                                .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
-                                .padding(.vertical, 2)  // 上下の余白
-                                .padding(.horizontal, 4)// 左右の余白
-                                .background(
-                                    selectedKeyCode == keyDef.code
-                                    ? Color.accentColor.opacity(0.3) // 初期選択色
-                                    : Color.white
-                                )
-                                .id(keyDef.code) // ScrollViewReaderのための id を指定
-                                .onTapGesture {
-                                    onSelect(keyDef)
-                                }
+                            if let symbol = keyDef.symbol {
+                                Image(systemName: symbol)
+                                    //.imageScale(.large)
+                                    .foregroundColor(.accentColor)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .listRowSeparator(.hidden) // 既定の下線を非表示
+                                    .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
+                                    .padding(.vertical, 2)  // 上下の余白
+                                    .padding(.horizontal, 4)// 左右の余白
+                                    .background(
+                                        selectedKeyCode == keyDef.code
+                                        ? Color.accentColor.opacity(0.3) // 初期選択色
+                                        : Color.white
+                                    )
+                                    .id(keyDef.code) // ScrollViewReaderのための id を指定
+                                    .onTapGesture {
+                                        onSelect(keyDef)
+                                    }
+                            }else{
+                                let keyTop = keyDef.keyTop ?? keyDef.code
+                                Text(keyTop)
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundColor(.accentColor)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .listRowSeparator(.hidden) // 既定の下線を非表示
+                                    .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
+                                    .padding(.vertical, 2)  // 上下の余白
+                                    .padding(.horizontal, 4)// 左右の余白
+                                    .background(
+                                        selectedKeyCode == keyDef.code
+                                        ? Color.accentColor.opacity(0.3) // 初期選択色
+                                        : Color.white
+                                    )
+                                    .id(keyDef.code) // ScrollViewReaderのための id を指定
+                                    .onTapGesture {
+                                        onSelect(keyDef)
+                                    }
+                            }
                         }
                     }
                     .listStyle(.plain)

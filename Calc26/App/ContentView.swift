@@ -22,9 +22,8 @@ struct ContentView: View {
     let setting: SettingViewModel // 全Viewで共通のインスタンス
     // CalcView
     var calcViewModels: [CalcViewModel] = []
-    // KeyboardView
-    //@StateObject
-    var keyboardViewModel: KeyboardViewModel
+    // KeyboardView   popupInfoのため@StateObjectにする
+    @StateObject var keyboardViewModel: KeyboardViewModel
 
     // Calc数
     let CALC_COUNT: Int = 3
@@ -38,8 +37,7 @@ struct ContentView: View {
             calcViewModels.append( CalcViewModel(settingViewModel: setting) )
         }
         // KeyboardView
-        //_keyboardViewModel = StateObject(wrappedValue: KeyboardViewModel())
-        keyboardViewModel = KeyboardViewModel()
+        _keyboardViewModel = StateObject(wrappedValue: KeyboardViewModel())
     }
 
     // @State 変化あればViewが更新される
