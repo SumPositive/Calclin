@@ -59,11 +59,9 @@ struct HistoryView: View {
         }
         .scaleEffect(y: -1) // 上下反転：下から上にするため ここで元に戻る
         .listStyle(.plain)
-        .background(Color(.systemGray6))
-        //.environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
+        .environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
         .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
         .padding(0)
-        .padding(.top, 20.0)
     }
     
 }

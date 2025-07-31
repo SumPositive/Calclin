@@ -100,10 +100,13 @@ struct CalcRollHeaderView: View {
         HStack(alignment: .center) {
             // 左ボタン
             Button(action: {
-                // SafariでURLを表示する処理など
+                // グループ減少
+                groupMinus()
             }) {
-                Image(systemName: "square.and.pencil")
+                Image(systemName: "minus")
+                    .imageScale(.large)
             }
+            .opacity(groupCount == 1 ? 0.3 : 1.0)
             
             Spacer()
             
@@ -151,23 +154,12 @@ struct CalcRollHeaderView: View {
                     // ダブルタップで　2列＞3列＞1列　に切り替える
                     let midX = geoIndicator.size.width / 2
                     if location.x < midX + Double(selectedPage - 1) * IND_CIRCLE_SIZE * 2.0 {
-                        // 左側でダブルタップ
-                        if groupStart < selectedPage {
-                            // 前ページへ
-                            onPageChange(max(selectedPage - 1, 0))
-                        }
-                        // グループ減少
-                        onGroupChange(groupStart, max(groupCount - 1, 1))
+                        // 左側でダブルタップ：グループ減少
+                        groupMinus()
                     }
                     else{
-                        // 右側でダブルタップ
-                        if selectedPage == groupStart + groupCount - 1  {
-                            // グループ左へ増加
-                            onGroupChange(max(groupStart - 1, 0), min(groupCount + 1, pageCount))
-                        }else{
-                            // グループ右へ増加
-                            onGroupChange(groupStart, min(groupCount + 1, pageCount))
-                        }
+                        // 右側でダブルタップ：グループ増加
+                        groupPlus()
                     }
                 }
             }
@@ -178,10 +170,13 @@ struct CalcRollHeaderView: View {
             
             // 右ボタン
             Button(action: {
-                // SafariでURLを表示する処理など
+                // グループ増加
+                groupPlus()
             }) {
-                Image(systemName: "tray.and.arrow.down")
+                Image(systemName: "plus")
+                    .imageScale(.large)
             }
+            .opacity(groupCount == pageCount ? 0.3 : 1.0)
         }
         .frame(height: HEADER_HEIGHT)
         .padding(.horizontal, 20)
@@ -208,6 +203,26 @@ struct CalcRollHeaderView: View {
         onPageChange(min(selectedPage + 1, pageCount - 1))
     }
 
-    
+    // グループ減少
+    private func groupMinus() {
+        if groupStart < selectedPage {
+            // 前ページへ
+            onPageChange(max(selectedPage - 1, 0))
+        }
+        // グループ減少
+        onGroupChange(groupStart, max(groupCount - 1, 1))
+    }
+
+    // グループ増加
+    private func groupPlus() {
+        if selectedPage == groupStart + groupCount - 1  {
+            // グループ左へ増加
+            onGroupChange(max(groupStart - 1, 0), min(groupCount + 1, pageCount))
+        }else{
+            // グループ右へ増加
+            onGroupChange(groupStart, min(groupCount + 1, pageCount))
+        }
+    }
+
 }
 
