@@ -27,8 +27,8 @@ struct HistoryView: View {
                             // 削除アクション  index行を削除する
                             viewModel.delateHistory(index)
                         } label: {
-                            Text("×")
-                                .font(.system(size: 44.0, weight: .bold))
+                            //Text("×").font(.system(size: 44.0, weight: .bold))
+                            Image("trash.fill_rev").imageScale(.large)
                         }
                     }
                     .swipeActions(edge: .leading) { // 右スワイプ：追加
@@ -36,8 +36,7 @@ struct HistoryView: View {
                             // 式コピペ　row.tokenからformulaTextを再現する
                             viewModel.formulaFromHistoryToken(row)
                         } label: {
-                            Text("＋")
-                                .font(.system(size: 44.0, weight: .bold))
+                            Text("+-×÷").font(.system(size: 44.0, weight: .bold))
                         }
                         .tint(.green) // スワイプ背景色
 
