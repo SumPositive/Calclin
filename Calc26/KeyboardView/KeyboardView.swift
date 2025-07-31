@@ -139,7 +139,7 @@ struct KeyPageView: View {
                 ForEach(0..<colCount, id: \.self) { col in
                     let index = row * colCount + col
                     if index < keyCodes.count {
-                        if keyCodes[index] != "",
+                        if keyCodes[index] != "", keyCodes[index] != "nop",
                            index < rowCount * colCount - 1,
                            keyCodes[index] == keyCodes[index + 1] {
                             // 右に連結：幅2倍
@@ -150,12 +150,12 @@ struct KeyPageView: View {
                                     y: CGFloat(row) * height + height / 2
                                 )
                         }
-                        else if keyCodes[index] != "",
+                        else if keyCodes[index] != "", keyCodes[index] != "nop",
                                 1 <= index,
                                 keyCodes[index - 1] == keyCodes[index] {
                             // 左に連結：非表示
                         }
-                        else if keyCodes[index] != "",
+                        else if keyCodes[index] != "", keyCodes[index] != "nop",
                                 index < rowCount * colCount - colCount,
                                 keyCodes[index] == keyCodes[index + colCount] {
                             // 下に連結：高さ2倍
@@ -166,7 +166,7 @@ struct KeyPageView: View {
                                     y: CGFloat(row) * height + height
                                 )
                         }
-                        else if keyCodes[index] != "",
+                        else if keyCodes[index] != "", keyCodes[index] != "nop",
                                 colCount <= index,
                                 keyCodes[index - colCount] == keyCodes[index] {
                             // 上に連結：非表示
