@@ -111,6 +111,8 @@
 		<string>+</string>
 		<key>keyTop</key>
 		<string>+</string>
+		<key>symbol</key>
+		<string>plus</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -119,6 +121,8 @@
 		<string>-</string>
 		<key>keyTop</key>
 		<string>-</string>
+		<key>symbol</key>
+		<string>minus</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -127,6 +131,8 @@
 		<string>×</string>
 		<key>keyTop</key>
 		<string>×</string>
+		<key>symbol</key>
+		<string>multiply</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -135,6 +141,8 @@
 		<string>÷</string>
 		<key>keyTop</key>
 		<string>÷</string>
+		<key>symbol</key>
+		<string>divide</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -143,6 +151,8 @@
 		<string>=</string>
 		<key>keyTop</key>
 		<string>=</string>
+		<key>symbol</key>
+		<string>equal</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -153,6 +163,8 @@
 		<string>Parentheses</string>
 		<key>keyTop</key>
 		<string>( )</string>
+		<key>symbol</key>
+		<string>parentheses</string>
 		<key>comment</key>
 		<string>前後の丸括弧を判断して入力する</string>
 	</dict>
@@ -165,14 +177,20 @@
 	<dict>
 		<key>code</key>
 		<string>CA</string>
+		<key>symbol</key>
+		<string>eraser.line.dashed</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>BS</string>
+		<key>symbol</key>
+		<string>delete.left</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>CS</string>
+		<key>symbol</key>
+		<string>clear</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -183,12 +201,16 @@
 		<string>Sign</string>
 		<key>keyTop</key>
 		<string>+/-</string>
+		<key>symbol</key>
+		<string>minus.forwardslash.plus</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>Perc</string>
 		<key>keyTop</key>
 		<string>%</string>
+		<key>symbol</key>
+		<string>percent</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -201,6 +223,8 @@
 		<string>Sroot</string>
 		<key>keyTop</key>
 		<string>√</string>
+		<key>symbol</key>
+		<string>squareroot</string>
 	</dict>
 	<dict>
 		<key>code</key>

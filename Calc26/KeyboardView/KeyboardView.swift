@@ -68,9 +68,10 @@ struct KeyboardFooterView: View {
         HStack {
             // 左ボタン
             Button(action: {
-                // SafariでURLを表示する処理など
+                // コンテンツ共有
+                shareContent()
             }) {
-                Image(systemName: "square.and.pencil")
+                Image(systemName: "square.and.arrow.up")
             }
             
             Spacer()
@@ -112,7 +113,7 @@ struct KeyboardFooterView: View {
                     }
                 }
             }
-            .frame(width: IND_CIRCLE_SIZE * Double(pageCount) + 50.0 + 50.0)
+            //制限しない//.frame(width: IND_CIRCLE_SIZE * Double(pageCount) + 50.0 + 50.0)
             
             Spacer()
             
@@ -120,11 +121,25 @@ struct KeyboardFooterView: View {
             Button(action: {
                 // SafariでURLを表示する処理など
             }) {
-                Image(systemName: "tray.and.arrow.down")
+                Image(systemName: "square.and.arrow.down")
             }
         }
-        .frame(height: 30)
+        .frame(height: 40)
         .padding(.horizontal, 20)
+        //debug//.border(Color.red)
+    }
+}
+
+// コンテンツ共有
+@MainActor
+private func shareContent() {
+    let text = "こんにちは！共有するテキストです。"
+    let activityVC = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+    
+    // iPhoneやiPadに応じた表示（iPadはPopoverに注意）
+    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+       let rootVC = windowScene.windows.first?.rootViewController {
+        rootVC.present(activityVC, animated: true, completion: nil)
     }
 }
 
@@ -207,6 +222,7 @@ struct KeyView: View {
     
     private var keyDef: KeyDefinition?
     private var keyTop: String = ""
+    private var symbol: String = ""
     private var page: Int
     private var index: Int
 
@@ -225,6 +241,7 @@ struct KeyView: View {
             let keyCode = viewModel.keyboard[page][index]
             if let def = viewModel.keyDefs.first(where: { $0.code == keyCode }).self {
                 keyTop = def.keyTop ?? def.code
+                symbol = def.symbol ?? ""
                 keyDef = def
             }
         }
@@ -250,10 +267,17 @@ struct KeyView: View {
                     Image(isTapped ? "keyDown" : "keyUp")
                         .resizable()
                     
-                    Text(keyTop)
-                        .foregroundColor(.black)
-                        .font(.system(size: 24, weight: .bold))
-                        .shadow(radius: 1)
+                    if symbol != "" {
+                        Image(systemName: symbol)
+                            .imageScale(.large)
+                            .foregroundColor(.black)
+                    }else{
+                        Text(keyTop)
+                            .foregroundColor(.black)
+                            .font(.system(size: 24, weight: .bold))
+                            .shadow(radius: 1)
+
+                    }
                 }
             }
             .simultaneousGesture(

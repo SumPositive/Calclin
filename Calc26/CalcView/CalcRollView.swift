@@ -95,7 +95,7 @@ struct CalcRollHeaderView: View {
         // メニュー関係の固定値
         let IND_CIRCLE_SIZE: CGFloat = 10.0
         let IND_SWIPE_RANGE: CGFloat = 20.0
-        let HEADER_HEIGHT: CGFloat = 50.0
+        let HEADER_HEIGHT: CGFloat = 44.0
         
         HStack(alignment: .center) {
             // 左ボタン
@@ -104,7 +104,7 @@ struct CalcRollHeaderView: View {
                 groupMinus()
             }) {
                 Image(systemName: "minus")
-                    .imageScale(.large)
+                    //.imageScale(.large)
             }
             .opacity(groupCount == 1 ? 0.3 : 1.0)
             
@@ -174,13 +174,13 @@ struct CalcRollHeaderView: View {
                 groupPlus()
             }) {
                 Image(systemName: "plus")
-                    .imageScale(.large)
+                    //.imageScale(.large)
             }
             .opacity(groupCount == pageCount ? 0.3 : 1.0)
         }
         .frame(height: HEADER_HEIGHT)
-        .padding(.horizontal, 20)
-        //debug//.border(Color.red)
+        .padding(.horizontal, 60)
+        //debug// .border(Color.red)
     }
 
     // 前ページへ

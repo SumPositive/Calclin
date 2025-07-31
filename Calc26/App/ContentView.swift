@@ -89,6 +89,7 @@ struct ContentView: View {
                             .imageScale(.large)
                     }
                 }
+                .frame(height: 30)
                 .padding(.horizontal)
                 
                 // 設定画面（表示・非表示）
