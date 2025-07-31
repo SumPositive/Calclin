@@ -44,7 +44,7 @@ struct ContentView: View {
     
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
-            VStack() {
+            VStack {
                 
                 HStack {
                     // 情報（ボタン）
@@ -55,7 +55,7 @@ struct ContentView: View {
                         }
                     }) {
                         Image(systemName: "info.circle")
-                            .imageScale(.large)
+                            //.imageScale(.large)
                     }
                     .sheet(isPresented: $showSafari) {
                         SafariView(url: URL(string: "https://info.art.jp")!)

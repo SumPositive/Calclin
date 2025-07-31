@@ -14,12 +14,16 @@ struct KeyboardView: View {
     let onTap: (KeyDefinition) -> Void
 
     // @State 変化あればViewが更新される
-    @State private var selectedPage = 1 // 初期で2ページ目（インデックス1）を表示
-
-    // キーボード・ページ数
-    private let pageCount = KeyboardViewModel.pageCount
+    @State private var selectedPage: Int = 1 // 初期で2ページ目（インデックス1）を表示
     
+
     var body: some View {
+        // キーボード・ページ数
+        let KB_PAGE_COUNT: Int = 3
+        // 下部メニュー関係の固定値
+        let IND_CIRCLE_SIZE: CGFloat = 10.0
+        let IND_SWIPE_RANGE: CGFloat = 20.0
+
         VStack {
             // キーボード
             //  KeyPageViewを3個横に並べ、1ページずつ左右に切り替える
@@ -27,7 +31,7 @@ struct KeyboardView: View {
             //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
             GeometryReader { geometry in
                 HStack(spacing: 0) {
-                    ForEach(0..<pageCount, id: \.self) { index in
+                    ForEach(0..<KB_PAGE_COUNT, id: \.self) { index in
                         KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
                             .frame(width: geometry.size.width)
                     }
@@ -38,17 +42,17 @@ struct KeyboardView: View {
             .padding(0)
             
             // 下部メニュー
-            HStack(spacing: 8) {
+            HStack {
                 // 左ボタン
                 Button(action: {
                     withAnimation {
                         // SafariでURLを表示する
                     }
                 }) {
-                    Image(systemName: "info.circle")
-                        .imageScale(.large)
+                    Image(systemName: "square.and.pencil")
+                        //.imageScale(.large)
                 }
-                .padding(.leading, 12)
+                //.padding(.leading, 20)
 
                 Spacer()
 
@@ -57,22 +61,23 @@ struct KeyboardView: View {
                     HStack {
                         Spacer()
                         // 中央　インジケータ
-                        ForEach(0..<pageCount, id: \.self) { index in
+                        ForEach(0..<KB_PAGE_COUNT, id: \.self) { index in
                             Circle()
                                 .fill(index == selectedPage ? Color.primary : Color.gray.opacity(0.4))
-                                .frame(width: 10, height: 10)
+                                .frame(width: IND_CIRCLE_SIZE, height: IND_CIRCLE_SIZE)
                                 .animation(.easeInOut(duration: 0.2), value: selectedPage)
-                                .padding(.vertical)
+                                .padding(.vertical) // 上下中央
+                                .padding(.horizontal, 0) // Circleの間隔
                         }
                         Spacer()
                     }
                     .contentShape(Rectangle()) // ← ヒットエリアをHStack全体に広げる
-                    .gesture( // インジケータ行のスワイプでページ切替
+                    .gesture( // インジケータ行のスワイプでページ切替（IND_SWIPE_RANGE：スワイプ感度）
                         DragGesture()
                             .onEnded { value in
-                                if value.translation.width < -20 {
-                                    selectedPage = min(selectedPage + 1, pageCount - 1)
-                                } else if value.translation.width > 20 {
+                                if value.translation.width < -1*IND_SWIPE_RANGE {
+                                    selectedPage = min(selectedPage + 1, KB_PAGE_COUNT - 1)
+                                } else if value.translation.width > IND_SWIPE_RANGE {
                                     selectedPage = max(selectedPage - 1, 0)
                                 }
                             }
@@ -82,15 +87,16 @@ struct KeyboardView: View {
                         let midY = geoIndicator.size.height / 2
                         if midY < location.y {
                             // 下半分に制限する（上半分はキーボードに干渉しないように無効にする）
-                            if location.x < midX { // 左側タップ
+                            if location.x < midX + Double(selectedPage - 1) * IND_CIRCLE_SIZE*2.0  {
+                                // 選択中のCircle中心より左側タップ
                                 selectedPage = max(selectedPage - 1, 0)
                             } else { // 右側タップ
-                                selectedPage = min(selectedPage + 1, pageCount - 1)
+                                selectedPage = min(selectedPage + 1, KB_PAGE_COUNT - 1)
                             }
                         }
                     }
                 }
-                .frame(width: 60) // 左右タップが有効な範囲になる
+                .frame(width: IND_CIRCLE_SIZE * Double(KB_PAGE_COUNT) + 50.0 + 50.0) // 左右タップが有効な範囲
 
                 Spacer()
                 // 右ボタン
@@ -99,13 +105,13 @@ struct KeyboardView: View {
                         // SafariでURLを表示する
                     }
                 }) {
-                    Image(systemName: "info.circle")
-                        .imageScale(.large)
+                    Image(systemName: "tray.and.arrow.down")
+                        //.imageScale(.large)
                 }
-                .padding(.trailing, 12)
+                //.padding(.trailing, 20)
             }
             .frame(height: 30) // 操作エリアの高さ
-            .padding(0)
+            .padding(.horizontal, 20)
         }
         .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
     }
