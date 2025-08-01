@@ -51,8 +51,7 @@ struct ContentView: View {
 
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
-            VStack {
-                
+            VStack(spacing: 0) {
                 HStack {
                     // 情報（ボタン）
                     Button(action: {
@@ -62,8 +61,10 @@ struct ContentView: View {
                         }
                     }) {
                         Image(systemName: "info.circle")
-                            //.imageScale(.large)
+                            .imageScale(.large)
                     }
+                    .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
+                    .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
                     .sheet(isPresented: $showSafari) {
                         SafariView(url: URL(string: "https://info.art.jp")!)
                     }
@@ -86,6 +87,8 @@ struct ContentView: View {
                         Image(systemName: isShowingSetting ? "gearshape.fill" : "gearshape")
                             .imageScale(.large)
                     }
+                    .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
+                    .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
                 }
                 .frame(height: 30)
                 .padding(.horizontal)
@@ -108,9 +111,7 @@ struct ContentView: View {
                     }
                 )
                 .padding(.horizontal, 4)
-                //.contentShape(Rectangle())
-                //.border(Color.gray.opacity(0.3), width: 2.0)
-                //.transition(.opacity) // フェード
+                .padding(.bottom, 4)
                 
                 // キーボードView
                 KeyboardView(viewModel: keyboardViewModel,
@@ -138,7 +139,7 @@ struct ContentView: View {
                         keyboardViewModel.popupInfo = nil
                     }
                 // ポップアップを開く
-                PopupListView(viewModel: keyboardViewModel) { selectedKeyDef in
+                PopupKeyListView(viewModel: keyboardViewModel) { selectedKeyDef in
                     log(.info, "PopupListView selected: \(selectedKeyDef.code)")
                     keyboardViewModel.popupInfo = nil
                     // 最終選択を記録

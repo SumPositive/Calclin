@@ -58,7 +58,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Assets.xcassets,
-				KeyboardView/Keyboard.plist,
 				KeyboardView/KeyDefinition.plist,
 			);
 			target = C30A78AF2E10EE8700212729 /* Calc26Tests */;

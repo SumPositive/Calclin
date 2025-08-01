@@ -8,6 +8,7 @@
 import SwiftUI
 
 
+/// 複数のCalcViewを切り替える
 struct CalcRollView: View {
     @ObservedObject var settingViewModel: SettingViewModel
     let calcViewModels: [CalcViewModel]
@@ -15,8 +16,8 @@ struct CalcRollView: View {
 
     // @State 変化あればViewが更新される
     @State private var selectedPage: Int = 0 // 初期で2ページ目（インデックス1）を表示
-    @State private var groupStart: Int = 0
-    @State private var groupCount: Int = 1
+    @State private var showStart: Int = 0
+    @State private var showCount: Int = 1
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,25 +25,25 @@ struct CalcRollView: View {
             CalcRollHeaderView(
                 selectedPage: selectedPage,
                 pageCount: calcViewModels.count,
-                groupStart: groupStart,
-                groupCount: groupCount,
+                showStart: showStart,
+                showCount: showCount,
                 onPageChange: { newPage in
                     withAnimation {
                         selectedPage = newPage
                         //
-                        if selectedPage < groupStart {
-                            groupStart = selectedPage
+                        if selectedPage < showStart {
+                            showStart = selectedPage
                         }
-                        else if groupStart + groupCount <= selectedPage {
-                            groupStart = selectedPage - groupCount + 1
+                        else if showStart + showCount <= selectedPage {
+                            showStart = selectedPage - showCount + 1
                         }
                     }
                     onCalcChange(newPage)
                 },
-                onGroupChange: { newStart, newCount in
+                onShowChange: { newStart, newCount in
                     withAnimation {
-                        groupStart = newStart
-                        groupCount = newCount
+                        showStart = newStart
+                        showCount = newCount
                     }
                 }
             )
@@ -54,7 +55,7 @@ struct CalcRollView: View {
                 HStack(spacing: 0) {
                     ForEach(0..<calcViewModels.count, id: \.self) { index in
                         CalcView(viewModel: calcViewModels[index])
-                            .frame(width: geometry.size.width / CGFloat(groupCount))
+                            .frame(width: geometry.size.width / CGFloat(showCount))
                             .border( index == selectedPage ?
                                      Color.blue.opacity(0.5) :  Color.gray.opacity(0.1), width: 2.0)
                             .onTapGesture {
@@ -71,7 +72,7 @@ struct CalcRollView: View {
                             }
                     }
                 }
-                .offset(x: -CGFloat(groupStart) * geometry.size.width / CGFloat(groupCount))
+                .offset(x: -CGFloat(showStart) * geometry.size.width / CGFloat(showCount))
                 .animation(.easeInOut, value: selectedPage)
             }
             .padding(0)
@@ -86,10 +87,10 @@ struct CalcRollView: View {
 struct CalcRollHeaderView: View {
     let selectedPage: Int
     let pageCount: Int
-    let groupStart: Int
-    let groupCount: Int
+    let showStart: Int
+    let showCount: Int
     let onPageChange: (Int) -> Void
-    let onGroupChange: (Int, Int) -> Void
+    let onShowChange: (Int, Int) -> Void
     
     var body: some View {
         // メニュー関係の固定値
@@ -101,12 +102,15 @@ struct CalcRollHeaderView: View {
             // 左ボタン
             Button(action: {
                 // グループ減少
-                groupMinus()
+                showMinus()
             }) {
-                Image(systemName: "minus")
-                    //.imageScale(.large)
+                Image(systemName: "minus.square")
+                    .imageScale(.large)
             }
-            .opacity(groupCount == 1 ? 0.3 : 1.0)
+            .opacity(showCount == 1 ? 0.3 : 1.0)
+            .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
+            .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
+            //debug// .border(Color.red)
             
             Spacer()
             
@@ -114,14 +118,26 @@ struct CalcRollHeaderView: View {
             GeometryReader { geoIndicator in
                 HStack(alignment: .center) {
                     Spacer()
+
+                    Image(systemName: "arrowtriangle.left")
+                        .foregroundColor(.accentColor)
+                        .opacity(selectedPage == 0 ? 0.3 : 1.0)
+                        .padding(10)
+
                     ForEach(0..<pageCount, id: \.self) { index in
                         Circle()
-                            .fill(groupStart <= index && index < groupStart + groupCount ?
+                            .fill(showStart <= index && index < showStart + showCount ?
                                   Color.blue : Color.gray.opacity(0.4))
                             .frame(width:  selectedPage == index ? IND_CIRCLE_SIZE*1.5 : IND_CIRCLE_SIZE,
                                    height: selectedPage == index ? IND_CIRCLE_SIZE*1.5 : IND_CIRCLE_SIZE)
                             .animation(.easeInOut(duration: 0.2), value: selectedPage)
                     }
+
+                    Image(systemName: "arrowtriangle.right")
+                        .foregroundColor(.accentColor)
+                        .opacity(selectedPage == pageCount - 1 ? 0.3 : 1.0)
+                        .padding(10)
+
                     Spacer()
                 }
                 .frame(height: HEADER_HEIGHT)
@@ -154,12 +170,12 @@ struct CalcRollHeaderView: View {
                     // ダブルタップで　2列＞3列＞1列　に切り替える
                     let midX = geoIndicator.size.width / 2
                     if location.x < midX + Double(selectedPage - 1) * IND_CIRCLE_SIZE * 2.0 {
-                        // 左側でダブルタップ：グループ減少
-                        groupMinus()
+                        // 左側でダブルタップ：表示CalcView減少
+                        showMinus()
                     }
                     else{
-                        // 右側でダブルタップ：グループ増加
-                        groupPlus()
+                        // 右側でダブルタップ：表示CalcView増加
+                        showPlus()
                     }
                 }
             }
@@ -170,13 +186,16 @@ struct CalcRollHeaderView: View {
             
             // 右ボタン
             Button(action: {
-                // グループ増加
-                groupPlus()
+                // 表示CalcView増加
+                showPlus()
             }) {
-                Image(systemName: "plus")
-                    //.imageScale(.large)
+                Image(systemName: "plus.square.on.square")
+                    .imageScale(.large)
             }
-            .opacity(groupCount == pageCount ? 0.3 : 1.0)
+            .opacity(showCount == pageCount ? 0.3 : 1.0)
+            .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
+            .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
+            //debug// .border(Color.red)
         }
         .frame(height: HEADER_HEIGHT)
         .padding(.horizontal, 60)
@@ -185,9 +204,9 @@ struct CalcRollHeaderView: View {
 
     // 前ページへ
     private func pagePrev() {
-        if groupStart == selectedPage {
-            // グループ前方へ
-            onGroupChange(max(groupStart - 1, 0), groupCount)
+        if showStart == selectedPage {
+            // 表示CalcView前方へ
+            onShowChange(max(showStart - 1, 0), showCount)
         }
         // 前ページへ
         onPageChange(max(selectedPage - 1, 0))
@@ -195,32 +214,32 @@ struct CalcRollHeaderView: View {
 
     // 次ページへ
     private func pageNext() {
-        if groupStart + groupCount == selectedPage {
-            // グループ後方へ
-            onGroupChange(max(groupStart + 1, pageCount - 1), groupCount)
+        if showStart + showCount == selectedPage {
+            // 表示CalcView後方へ
+            onShowChange(max(showStart + 1, pageCount - 1), showCount)
         }
         // 次ページへ
         onPageChange(min(selectedPage + 1, pageCount - 1))
     }
 
-    // グループ減少
-    private func groupMinus() {
-        if groupStart < selectedPage {
+    // 表示CalcView減少
+    private func showMinus() {
+        if showStart < selectedPage {
             // 前ページへ
             onPageChange(max(selectedPage - 1, 0))
         }
-        // グループ減少
-        onGroupChange(groupStart, max(groupCount - 1, 1))
+        // 表示CalcView減少
+        onShowChange(showStart, max(showCount - 1, 1))
     }
 
-    // グループ増加
-    private func groupPlus() {
-        if selectedPage == groupStart + groupCount - 1  {
-            // グループ左へ増加
-            onGroupChange(max(groupStart - 1, 0), min(groupCount + 1, pageCount))
+    // 表示CalcView増加
+    private func showPlus() {
+        if showStart + showCount < pageCount {
+            // 表示CalcView右へ増加
+            onShowChange(showStart, min(showCount + 1, pageCount))
         }else{
-            // グループ右へ増加
-            onGroupChange(groupStart, min(groupCount + 1, pageCount))
+            // 表示CalcView左へ増加
+            onShowChange(max(showStart - 1, 0), min(showCount + 1, pageCount))
         }
     }
 

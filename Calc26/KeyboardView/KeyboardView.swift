@@ -21,7 +21,7 @@ struct KeyboardView: View {
         // キーボード・ページ数
         let KB_PAGE_COUNT: Int = 3
 
-        VStack {
+        VStack(spacing: 0) {
             // キーボード
             //  KeyPageViewを3個横に並べ、1ページずつ左右に切り替える
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
@@ -66,13 +66,13 @@ struct KeyboardFooterView: View {
         let IND_SWIPE_RANGE: CGFloat = 20.0
 
         HStack {
-            // 左ボタン
-            Button(action: {
-                // コンテンツ共有
-                shareContent()
-            }) {
-                Image(systemName: "square.and.arrow.up")
-            }
+//            // 左ボタン
+//            Button(action: {
+//                // コンテンツ共有
+//                shareContent()
+//            }) {
+//                Image(systemName: "square.and.arrow.up")
+//            }
             
             Spacer()
             
@@ -80,6 +80,12 @@ struct KeyboardFooterView: View {
             GeometryReader { geoIndicator in
                 HStack {
                     Spacer()
+
+                    Image(systemName: "arrowtriangle.left")
+                        .foregroundColor(Color.gray.opacity(0.4))
+                        .opacity(selectedPage == 0 ? 0.3 : 1.0)
+                        .padding(10)
+
                     ForEach(0..<pageCount, id: \.self) { index in
                         Circle()
                             .fill(index == selectedPage ? Color.primary : Color.gray.opacity(0.4))
@@ -88,9 +94,15 @@ struct KeyboardFooterView: View {
                             .padding(.vertical)
                             .padding(.horizontal, 0)
                     }
+
+                    Image(systemName: "arrowtriangle.right")
+                        .foregroundColor(Color.gray.opacity(0.4))
+                        .opacity(selectedPage == pageCount - 1 ? 0.3 : 1.0)
+                        .padding(10)
+
                     Spacer()
                 }
-                .contentShape(Rectangle())
+                .contentShape(Rectangle()) // paddingを含む領域全体がタップ対象になる
                 .gesture(
                     DragGesture()
                         .onEnded { value in
@@ -117,16 +129,17 @@ struct KeyboardFooterView: View {
             
             Spacer()
             
-            // 右ボタン
-            Button(action: {
-                // SafariでURLを表示する処理など
-            }) {
-                Image(systemName: "square.and.arrow.down")
-            }
+//            // 右ボタン
+//            Button(action: {
+//                // SafariでURLを表示する処理など
+//            }) {
+//                Image(systemName: "square.and.arrow.down")
+//            }
         }
-        .frame(height: 40)
+        .frame(height: 30)
+        .padding(.bottom, 25)
         .padding(.horizontal, 20)
-        //debug//.border(Color.red)
+        //debug// .border(Color.red)
     }
 }
 
@@ -307,7 +320,8 @@ extension CGRect {
     }
 }
 
-struct PopupListView: View {
+/// ポップアップ・キー定義一覧
+struct PopupKeyListView: View {
     @ObservedObject var viewModel: KeyboardViewModel
     let onSelect: (KeyDefinition) -> Void
 
@@ -322,43 +336,32 @@ struct PopupListView: View {
                 ScrollViewReader { proxy in
                     List {
                         ForEach(viewModel.keyDefs, id:\.self) { keyDef in
-                            if let symbol = keyDef.symbol {
-                                Image(systemName: symbol)
-                                    //.imageScale(.large)
-                                    .foregroundColor(.accentColor)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .listRowSeparator(.hidden) // 既定の下線を非表示
-                                    .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
-                                    .padding(.vertical, 2)  // 上下の余白
-                                    .padding(.horizontal, 4)// 左右の余白
-                                    .background(
-                                        selectedKeyCode == keyDef.code
-                                        ? Color.accentColor.opacity(0.3) // 初期選択色
-                                        : Color.white
-                                    )
-                                    .id(keyDef.code) // ScrollViewReaderのための id を指定
-                                    .onTapGesture {
-                                        onSelect(keyDef)
-                                    }
-                            }else{
-                                let keyTop = keyDef.keyTop ?? keyDef.code
-                                Text(keyTop)
-                                    .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(.accentColor)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .listRowSeparator(.hidden) // 既定の下線を非表示
-                                    .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
-                                    .padding(.vertical, 2)  // 上下の余白
-                                    .padding(.horizontal, 4)// 左右の余白
-                                    .background(
-                                        selectedKeyCode == keyDef.code
-                                        ? Color.accentColor.opacity(0.3) // 初期選択色
-                                        : Color.white
-                                    )
-                                    .id(keyDef.code) // ScrollViewReaderのための id を指定
-                                    .onTapGesture {
-                                        onSelect(keyDef)
-                                    }
+                            ZStack {
+                                if let symbol = keyDef.symbol {
+                                    // SF Symbol
+                                    Image(systemName: symbol)
+                                        .imageScale(.large)
+                                }else{
+                                    let keyTop = keyDef.keyTop ?? keyDef.code
+                                    Text(keyTop)
+                                        .font(.system(size: 24, weight: .bold))
+                                }
+                            }
+                            .frame(height: 44)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .listRowSeparator(.hidden) // 既定の下線を非表示
+                            .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
+                            .padding(.vertical, 2)  // 上下の余白
+                            .padding(.horizontal, 4)// 左右の余白
+                            .foregroundColor(.accentColor)
+                            .background(
+                                selectedKeyCode == keyDef.code
+                                ? Color.accentColor.opacity(0.3) // 初期選択色
+                                : Color.white
+                            )
+                            .id(keyDef.code) // ScrollViewReaderのための id を指定
+                            .onTapGesture {
+                                onSelect(keyDef)
                             }
                         }
                     }
