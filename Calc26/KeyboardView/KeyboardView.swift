@@ -18,35 +18,43 @@ struct KeyboardView: View {
     
 
     var body: some View {
-        // キーボード・ページ数
-        let KB_PAGE_COUNT: Int = 3
-
+        
+        let pageGap = 10.0 // ページ間隔 padding以上無ければ隣ページが見えてしまう
+        let SWIPE_RANGE = 80.0
+        
         VStack(spacing: 0) {
             // キーボード
             //  KeyPageViewを3個横に並べ、1ページずつ左右に切り替える
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
             //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
             GeometryReader { geometry in
-                HStack(spacing: 0) {
-                    ForEach(0..<KB_PAGE_COUNT, id: \.self) { index in
+                HStack(spacing: pageGap) {
+                    ForEach(0..<KeyboardViewModel.pageCount, id: \.self) { index in
                         KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
                             .frame(width: geometry.size.width)
                     }
                 }
-                .offset(x: -CGFloat(selectedPage) * geometry.size.width)
+                .offset(x: -CGFloat(selectedPage) * (geometry.size.width + pageGap))
                 .animation(.easeInOut, value: selectedPage)
             }
             .padding(0)
-            
+            .gesture(
+                DragGesture()
+                    .onEnded { value in
+                        if SWIPE_RANGE < value.translation.width {
+                            // 右へスワイプ：前KeyPageViewへ
+                            selectedPage = max(selectedPage - 1, 0)
+                        }
+                        else if value.translation.width < -1 * SWIPE_RANGE {
+                            // 左へスワイプ：次KeyPageViewへ
+                            selectedPage = min(selectedPage + 1, KeyboardViewModel.pageCount - 1)
+                        }
+                    }
+            )
             // 下部メニュー
             KeyboardFooterView(
                 selectedPage: selectedPage,
-                pageCount: KB_PAGE_COUNT,
-                onPageChange: { newPage in
-                    withAnimation {
-                        selectedPage = newPage
-                    }
-                }
+                pageCount: KeyboardViewModel.pageCount
             )
         }
         .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
@@ -57,88 +65,26 @@ struct KeyboardView: View {
 struct KeyboardFooterView: View {
     let selectedPage: Int
     let pageCount: Int
-    let onPageChange: (Int) -> Void
 
     
     var body: some View {
         // 下部メニュー関係の固定値
         let IND_CIRCLE_SIZE: CGFloat = 10.0
-        let IND_SWIPE_RANGE: CGFloat = 20.0
 
         HStack {
-//            // 左ボタン
-//            Button(action: {
-//                // コンテンツ共有
-//                shareContent()
-//            }) {
-//                Image(systemName: "square.and.arrow.up")
-//            }
-            
             Spacer()
-            
             // インジケータ部（タップ・スワイプ切り替え含む）
-            GeometryReader { geoIndicator in
-                HStack {
-                    Spacer()
-
-                    Image(systemName: "arrowtriangle.left")
-                        .foregroundColor(Color.gray.opacity(0.4))
-                        .opacity(selectedPage == 0 ? 0.3 : 1.0)
-                        .padding(10)
-
-                    ForEach(0..<pageCount, id: \.self) { index in
-                        Circle()
-                            .fill(index == selectedPage ? Color.primary : Color.gray.opacity(0.4))
-                            .frame(width: IND_CIRCLE_SIZE, height: IND_CIRCLE_SIZE)
-                            .animation(.easeInOut(duration: 0.2), value: selectedPage)
-                            .padding(.vertical)
-                            .padding(.horizontal, 0)
-                    }
-
-                    Image(systemName: "arrowtriangle.right")
-                        .foregroundColor(Color.gray.opacity(0.4))
-                        .opacity(selectedPage == pageCount - 1 ? 0.3 : 1.0)
-                        .padding(10)
-
-                    Spacer()
-                }
-                .contentShape(Rectangle()) // paddingを含む領域全体がタップ対象になる
-                .gesture(
-                    DragGesture()
-                        .onEnded { value in
-                            if value.translation.width < -1 * IND_SWIPE_RANGE {
-                                onPageChange(min(selectedPage + 1, pageCount - 1))
-                            } else if value.translation.width > IND_SWIPE_RANGE {
-                                onPageChange(max(selectedPage - 1, 0))
-                            }
-                        }
-                )
-                .onTapGesture { location in
-                    let midX = geoIndicator.size.width / 2
-                    let midY = geoIndicator.size.height / 2
-                    if midY < location.y {
-                        if location.x < midX + Double(selectedPage - 1) * IND_CIRCLE_SIZE * 2.0 {
-                            onPageChange(max(selectedPage - 1, 0))
-                        } else {
-                            onPageChange(min(selectedPage + 1, pageCount - 1))
-                        }
-                    }
-                }
+            ForEach(0..<pageCount, id: \.self) { index in
+                Circle()
+                    .fill(index == selectedPage ? Color.primary : Color.gray.opacity(0.4))
+                    .frame(width: IND_CIRCLE_SIZE, height: IND_CIRCLE_SIZE)
+                    .animation(.easeInOut(duration: 0.2), value: selectedPage)
+                    .padding(.horizontal, 0)
             }
-            //制限しない//.frame(width: IND_CIRCLE_SIZE * Double(pageCount) + 50.0 + 50.0)
-            
             Spacer()
-            
-//            // 右ボタン
-//            Button(action: {
-//                // SafariでURLを表示する処理など
-//            }) {
-//                Image(systemName: "square.and.arrow.down")
-//            }
         }
-        .frame(height: 30)
-        .padding(.bottom, 25)
-        .padding(.horizontal, 20)
+        .frame(height: 20)
+        .padding(0)
         //debug// .border(Color.red)
     }
 }

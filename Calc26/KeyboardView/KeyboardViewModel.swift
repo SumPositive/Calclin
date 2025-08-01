@@ -46,10 +46,9 @@ final class KeyboardViewModel: ObservableObject {
     // キーボードページ数
     static let pageCount: Int = 3
     // .keyboard[page][key]
-    var keyboard: [[String]] = [Array(repeating: "", count: colCount * rowCount),
-                                Array(repeating: "", count: colCount * rowCount),
-                                Array(repeating: "", count: colCount * rowCount)]
- 
+    var keyboard: [[String]] = Array(repeating: Array(repeating: "", count: colCount * rowCount),
+                                     count: pageCount)
+    
     // Popoverで直前に選択したkeyCode（空キーを長押しした時、初期選択に使用する）
     var prevSelectKeyCode: String = ""
     

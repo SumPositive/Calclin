@@ -105,7 +105,7 @@ struct CalcRollHeaderView: View {
                 showMinus()
             }) {
                 Image(systemName: "minus.square")
-                    .imageScale(.large)
+                    //.imageScale(.large)
             }
             .opacity(showCount == 1 ? 0.3 : 1.0)
             .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
@@ -180,7 +180,7 @@ struct CalcRollHeaderView: View {
                 }
             }
             //制限しない//.frame(width: IND_CIRCLE_SIZE * Double(pageCount) + 50.0 + 50.0)
-            //debug//.border(Color.green)
+            //debug//   .border(Color.green)
             
             Spacer()
             
@@ -190,7 +190,7 @@ struct CalcRollHeaderView: View {
                 showPlus()
             }) {
                 Image(systemName: "plus.square.on.square")
-                    .imageScale(.large)
+                    //.imageScale(.large)
             }
             .opacity(showCount == pageCount ? 0.3 : 1.0)
             .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
@@ -198,7 +198,7 @@ struct CalcRollHeaderView: View {
             //debug// .border(Color.red)
         }
         .frame(height: HEADER_HEIGHT)
-        .padding(.horizontal, 60)
+        .padding(.horizontal, 40)
         //debug// .border(Color.red)
     }
 
