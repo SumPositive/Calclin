@@ -1,7 +1,7 @@
 //
 //  sbcd-Bridging-Header.h
 //
-//  Created by sumpo on 2025/07/10.
+//  Created by azukid on 2025/07/10.
 //
 
 #ifndef sbcd_Bridging_Header_h

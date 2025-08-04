@@ -2,7 +2,7 @@
 //  FormulaView.swift
 //  Calc26
 //
-//  Created by sumpo on 2025/07/22.
+//  Created by azukid on 2025/07/22.
 //
 
 import SwiftUI

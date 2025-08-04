@@ -2,7 +2,7 @@
  * SBCD.h
  * char1バイト1桁ＢＣＤ型　10進演算ライブラリ
  *
- * Originally created by MSPO/masa on 1998/09/15
+ * Originally created by MSPO/azukid on 1998/09/15
  *
  */
 #ifndef _SBCD_H_

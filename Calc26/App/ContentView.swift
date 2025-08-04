@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  Calc26
 //
-//  Created by sumpo on 2025/06/29.
+//  Created by azukid on 2025/06/29.
 //
 
 import SwiftUI
@@ -18,23 +18,18 @@ struct SafariView: UIViewControllerRepresentable {
 
 
 struct ContentView: View {
-    // SettingView
-    let setting: SettingViewModel // 全Viewで共通のインスタンス
-    // CalcView
-    var calcViewModels: [CalcViewModel] = []
-    // KeyboardView   popupInfoのため@StateObjectにする
-    @StateObject var keyboardViewModel: KeyboardViewModel
-
+    @StateObject private var setting: SettingViewModel
+    @StateObject private var keyboardViewModel: KeyboardViewModel
+    private var calcViewModels: [CalcViewModel]
     // Calc数
     let CALC_COUNT: Int = 3
 
     init() {
-        // SettingView
-        let setting = SettingViewModel()
-        self.setting = setting
-        // CalcView
-        for _ in 0..<CALC_COUNT {
-            calcViewModels.append( CalcViewModel(settingViewModel: setting) )
+        let settingVM = SettingViewModel()
+        _setting = StateObject(wrappedValue: settingVM)
+        
+        self.calcViewModels = (0..<3).map { _ in
+            CalcViewModel(settingViewModel: settingVM)
         }
         // KeyboardView
         _keyboardViewModel = StateObject(wrappedValue: KeyboardViewModel())
@@ -49,6 +44,7 @@ struct ContentView: View {
     // @State 変化あればViewが更新される
     @State private var selectedCalc: Int = 0
 
+    
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
             VStack(spacing: 0) {

@@ -2,7 +2,7 @@
 //  CalcViewModel.swift
 //  Calc26
 //
-//  Created by sumpo on 2025/07/22.
+//  Created by azukid on 2025/07/22.
 //
 
 import SwiftUI
@@ -39,6 +39,7 @@ final class CalcViewModel: ObservableObject {
         NotificationCenter.default.publisher(for: .SBCD_Config_Change)
             .sink { [weak self] _ in
                 Task { @MainActor in
+                    log(.info, "Notification sink .SBCD_Config_Change CALC_COUNT回発生する")
                     self?.formulaUpdate()
                 }
             }
@@ -371,6 +372,7 @@ final class CalcViewModel: ObservableObject {
     // MARK: - Private Methods
     
     private func formulaUpdate(_ isAnswer: Bool = false) {
+        log(.info, "Start")
         self.isAnswer = isAnswer
         self.formulaAttr = ""
 
@@ -394,6 +396,7 @@ final class CalcViewModel: ObservableObject {
         }
 
         if isAnswer {
+            log(.info, "End Answer")
             return
         }
 
@@ -419,6 +422,7 @@ final class CalcViewModel: ObservableObject {
             attr.foregroundColor = .gray.opacity(0.5)
             self.formulaAttr += attr // 予定[)]表示
         }
+        log(.info, "End")
     }
     
 

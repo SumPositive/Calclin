@@ -2,7 +2,7 @@
 //  SettingView.swift
 //  Calc26
 //
-//  Created by sumpo on 2025/06/29.
+//  Created by azukid on 2025/06/29.
 //
 
 import SwiftUI
@@ -35,6 +35,7 @@ struct SettingView: View {
                     }
                     .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
                     .onChange(of: viewModel.groupType) { oldValue, newValue in
+                        log(.info, ".onChange groupType")
                         // 選択されたときに呼ばれる処理
                         viewModel.groupType = newValue
                         // SBCD_Configにセットする
@@ -56,6 +57,7 @@ struct SettingView: View {
                     }
                     .pickerStyle(SegmentedPickerStyle()) // メニュー型 or SegmentedPickerStyle()
                     .onChange(of: viewModel.groupSeparator) { oldValue, newValue in
+                        log(.info, ".onChange groupSeparator")
                         // 選択されたときに呼ばれる処理
                         viewModel.groupSeparator = newValue
                         // SBCD_Configにセットする
@@ -82,6 +84,7 @@ struct SettingView: View {
                     Slider(value: $viewModel.decimalDigits,
                            in: 0...(SETTING_decimalDigits_MAX), step: 1.0)
                         .onChange(of: viewModel.decimalDigits, { oldValue, newValue in
+                            log(.info, ".onChange decimalDigits")
                             // @State decDigi 更新により描画
                             viewModel.decimalDigits = newValue // Double型
                             // SBCD_Configにセットする
@@ -100,6 +103,7 @@ struct SettingView: View {
                     }
                     .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
                     .onChange(of: viewModel.roundType) { oldValue, newValue in
+                        log(.info, ".onChange roundType")
                         // SBCD_Configにセットする
                         SBCD_Config.decimalRoundType = newValue.sbcd_config_roundType
                         // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
@@ -116,6 +120,7 @@ struct SettingView: View {
                     }
                     .pickerStyle(SegmentedPickerStyle()) // メニュー型 or SegmentedPickerStyle()
                     .onChange(of: viewModel.decimalSeparator) { oldValue, newValue in
+                        log(.info, ".onChange decimalSeparator")
                         // 選択されたときに呼ばれる処理
                         viewModel.decimalSeparator = newValue
                         // SBCD_Configにセットする
@@ -137,6 +142,7 @@ struct SettingView: View {
                     Text(String(format: " %.1f ", viewModel.numberFontScale))
                     Slider(value: $viewModel.numberFontScale, in: (0.5)...(3.0), step: 0.1)
                         .onChange(of: viewModel.numberFontScale, { oldValue, newValue in
+                            log(.info, ".onChange numberFontScale")
                             // SettingViewModel
                             viewModel.numberFontScale = newValue // Double型
                             // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため

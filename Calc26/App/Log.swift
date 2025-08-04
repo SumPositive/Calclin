@@ -2,7 +2,7 @@
 //  Log.swift
 //  Calc26
 //
-//  Created by sumpo on 2025/07/07.
+//  Created by azukid on 2025/07/07.
 //
 
 import Foundation
@@ -15,7 +15,9 @@ enum LogLevel: String {
 func log(_ level: LogLevel,
          _ message: String,
          file: String = #file,
-         line: Int = #line) {
+         line: Int = #line,
+         function: String = #function) {
     let fileName = (file as NSString).lastPathComponent
-    print("\(fileName) \(line) \(level.rawValue) \(message)")
+    print("\(fileName)(\(line))\(function) \(level.rawValue) \(message)")
+
 }

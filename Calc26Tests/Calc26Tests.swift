@@ -2,7 +2,7 @@
 //  Calc26Tests.swift
 //  Calc26Tests
 //
-//  Created by Sum Positive on 2025/06/29.
+//  Created by azukid on 2025/06/29.
 //
 
 import Testing

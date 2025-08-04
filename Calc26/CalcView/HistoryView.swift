@@ -2,7 +2,7 @@
 //  HistoryView.swift
 //  Calc26
 //
-//  Created by sumpo on 2025/07/27.
+//  Created by azukid on 2025/07/27.
 //
 
 import SwiftUI

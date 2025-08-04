@@ -2,7 +2,7 @@
 //  CalcView.swift
 //  Calc26
 //
-//  Created by sumpo on 2025/07/22.
+//  Created by azukid on 2025/07/22.
 //
 
 import SwiftUI
@@ -11,6 +11,7 @@ import SwiftUI
 struct CalcView: View {
     @ObservedObject var viewModel: CalcViewModel
 
+    
     var body: some View {
         
         VStack(spacing: 0) {

@@ -24,7 +24,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		C301F6EB2E3D091500AB29BD /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C30A78A32E10EE8500212729 /* Calc26.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Calc26.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C30A78B02E10EE8700212729 /* Calc26Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Calc26Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C30A78BA2E10EE8700212729 /* Calc26UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Calc26UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -138,7 +137,6 @@
 		C30A789A2E10EE8500212729 = {
 			isa = PBXGroup;
 			children = (
-				C301F6EB2E3D091500AB29BD /* README.md */,
 				C3308AFD2E2F3F34009ED6D6 /* Calc26 */,
 				C30A78B32E10EE8700212729 /* Calc26Tests */,
 				C30A78BD2E10EE8700212729 /* Calc26UITests */,

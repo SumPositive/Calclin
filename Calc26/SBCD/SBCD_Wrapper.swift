@@ -2,8 +2,8 @@
 //  SBCD_Wrapper.swift
 //  Objective-C/C++ --> Swift Wrapper
 //
-//  Originally created by MSPO/masa on 1998/09/15
-//  Converted from Objective-C to Swift6 by sumpo on 2025/07/10
+//  Originally created by MSPO/azukid on 1998/09/15
+//  Converted from Objective-C to Swift6 by azukid on 2025/07/10
 //
 /*
  

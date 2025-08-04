@@ -2,7 +2,7 @@
 //  Calc26App.swift
 //  Calc26
 //
-//  Created by sumpo on 2025/06/29. SwiftUI練習のためにCalcRoll移植を開始
+//  Created by azukid on 2025/06/29. SwiftUI練習のためにCalcRoll移植を開始
 //
 
 import SwiftUI
@@ -14,7 +14,6 @@ let APP_MAX_WIDTH : CGFloat = 480
 @main
 struct Calc26App: App {
 //    @Environment(\.scenePhase) private var scenePhase
-//    @StateObject private var viewModel = KeyboardViewModel() // ← @Published keyboard を持っていると仮定
 
     
     var body: some Scene {
