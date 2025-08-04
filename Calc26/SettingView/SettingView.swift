@@ -15,7 +15,6 @@ struct SettingView: View {
     var body: some View {
 
         VStack(spacing: 4) {
-            
             // 整数部
             VStack(spacing: 0) {
             

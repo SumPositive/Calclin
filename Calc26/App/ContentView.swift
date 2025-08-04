@@ -47,6 +47,30 @@ struct ContentView: View {
     
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
+
+            if isShowingSetting {
+                VStack(spacing: 0) {
+                    HStack {
+                        Spacer()
+                        // 吹き出しの三角形部分（上向き）
+                        Triangle()
+                            .fill(Color(.systemGray5))
+                            .frame(width: 30, height: 15)
+                            .padding(.top, 25)
+                            .padding(.trailing, 30)
+                    }
+                    // 設定画面（表示・非表示）
+                    SettingView()
+                        .environmentObject(setting) // settingに変化あればSettingViewが再生成される
+                        .transition(.opacity) // フェード
+                        .padding(.horizontal)
+                        .padding(.top, 0)
+                    
+                    Spacer()
+                }
+                .zIndex(1)
+            }
+
             VStack(spacing: 0) {
                 HStack {
                     // 情報（ボタン）
@@ -69,7 +93,6 @@ struct ContentView: View {
                     
                     Text("CalcRoll")
                         .font(.headline)
-                        .opacity(colorScheme == .dark ? 0.40 : 1.0)
 
                     Spacer()
                     // 設定（トグルボタン）
@@ -84,16 +107,9 @@ struct ContentView: View {
                     .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
                     .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
                 }
+                .opacity(colorScheme == .dark ? 0.50 : 1.0)
                 .frame(height: 30)
                 .padding(.horizontal)
-                
-                // 設定画面（表示・非表示）
-                if isShowingSetting {
-                    SettingView()
-                        .environmentObject(setting) // settingに変化あればSettingViewが再生成される
-                        .transition(.opacity) // フェード
-                        .padding(.horizontal)
-                }
                 
                 // 複数Calc横スクロールView
                 CalcRollView(
@@ -106,6 +122,7 @@ struct ContentView: View {
                     }
                 )
                 .environmentObject(setting)
+                .transition(.opacity) // フェード
                 .padding(.horizontal, 4)
                 .padding(.bottom, 4)
                 
@@ -132,6 +149,7 @@ struct ContentView: View {
                 // ポップアップ外部タップで閉じるための半透明背景レイヤー
                 Color.black.opacity(0.2) // タップ判定される
                     .ignoresSafeArea()
+                    .zIndex(2)
                     .onTapGesture {
                         // ポップアップを閉じる
                         keyboardViewModel.popupInfo = nil
@@ -152,7 +170,7 @@ struct ContentView: View {
                     }
                 }
                 .position(popup.position) // 画面全体の座標で表示
-                .zIndex(1)
+                .zIndex(2)
             }
         }
     }
