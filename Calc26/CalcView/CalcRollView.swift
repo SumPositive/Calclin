@@ -10,7 +10,7 @@ import SwiftUI
 
 /// 複数のCalcViewを切り替える
 struct CalcRollView: View {
-    @ObservedObject var settingViewModel: SettingViewModel
+    @EnvironmentObject var setting: SettingViewModel
     let calcViewModels: [CalcViewModel]
     let onCalcChange: (Int) -> Void
 
@@ -19,6 +19,7 @@ struct CalcRollView: View {
     @State private var showStart: Int = 0
     @State private var showCount: Int = 1
 
+    
     var body: some View {
         VStack(spacing: 0) {
             // 上部メニュー
@@ -55,6 +56,7 @@ struct CalcRollView: View {
                 HStack(spacing: 0) {
                     ForEach(0..<calcViewModels.count, id: \.self) { index in
                         CalcView(viewModel: calcViewModels[index])
+                            .environmentObject(setting) // settingに変化あればCalcViewが再生成される
                             .frame(width: geometry.size.width / CGFloat(showCount))
                             .border( index == selectedPage ?
                                      Color.blue.opacity(0.5) :  Color.gray.opacity(0.1), width: 2.0)

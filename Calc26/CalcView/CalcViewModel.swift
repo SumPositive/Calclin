@@ -11,15 +11,10 @@ import Combine // AnyCancellable
 
 @MainActor
 final class CalcViewModel: ObservableObject {
-    @ObservedObject var setting: SettingViewModel
-    
     
     private var cancellables = Set<AnyCancellable>()
     /// 初期化
-    init(settingViewModel: SettingViewModel) {
-        // 親モデル
-        self.setting = settingViewModel
-        
+    init() {
         // SBCD初期化
         /// 小数点記号（例: "." or "．"）
         SBCD_Config.decimalSeparator = "."
@@ -37,11 +32,10 @@ final class CalcViewModel: ObservableObject {
         
         // ローカル通知 受信：SBCD_Configが変更された ＞ CalcView表示更新
         NotificationCenter.default.publisher(for: .SBCD_Config_Change)
+            .receive(on: RunLoop.main)   // メインで受ける
             .sink { [weak self] _ in
-                Task { @MainActor in
-                    log(.info, "Notification sink .SBCD_Config_Change CALC_COUNT回発生する")
-                    self?.formulaUpdate()
-                }
+                self?.formulaUpdate()    // asyncでない await不要
+                log(.info, "Notification sink .SBCD_Config_Change CALC_COUNT回発生する")
             }
             .store(in: &cancellables)
     }
@@ -52,7 +46,6 @@ final class CalcViewModel: ObservableObject {
     let NUM_PT_LEFT  = "(" // 左括弧
     let NUM_PT_RIGHT = ")" // 右括弧
     // 制御文字 Operator String
-//    let OP_START    = "→" // 願いましては
     let OP_ADD      = "+" // 加算
     let OP_SUBTRACT = "-" // 減算 Unicode[002D] 内部用文字（String ⇒ doubleValue)変換のために必須
     let OP_MULTIPLY = "×" // 掛算

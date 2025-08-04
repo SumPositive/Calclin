@@ -18,21 +18,20 @@ struct SafariView: UIViewControllerRepresentable {
 
 
 struct ContentView: View {
-    @StateObject private var setting: SettingViewModel
+    @StateObject private var setting: SettingViewModel  // 必要なViewに.environmentObject(setting)で注入する
     @StateObject private var keyboardViewModel: KeyboardViewModel
     private var calcViewModels: [CalcViewModel]
     // Calc数
     let CALC_COUNT: Int = 3
 
     init() {
-        let settingVM = SettingViewModel()
-        _setting = StateObject(wrappedValue: settingVM)
-        
-        self.calcViewModels = (0..<3).map { _ in
-            CalcViewModel(settingViewModel: settingVM)
-        }
-        // KeyboardView
+        _setting = StateObject(wrappedValue: SettingViewModel())
         _keyboardViewModel = StateObject(wrappedValue: KeyboardViewModel())
+
+        self.calcViewModels = (0..<3).map { _ in
+            CalcViewModel()
+        }
+        log(.info, "init() 1回だけ通ること。もしFormulaViewなどがクリアされるならば再生成されている間違いあり")
     }
 
     // @State 変化あればViewが更新される
@@ -91,14 +90,14 @@ struct ContentView: View {
                 
                 // 設定画面（表示・非表示）
                 if isShowingSetting {
-                    SettingView(viewModel: setting)
+                    SettingView()
+                        .environmentObject(setting) // settingに変化あればSettingViewが再生成される
                         .transition(.opacity) // フェード
                         .padding(.horizontal)
                 }
                 
                 // 複数Calc横スクロールView
                 CalcRollView(
-                    settingViewModel: setting,
                     calcViewModels: calcViewModels,
                     onCalcChange: { newCalc in
                         withAnimation {
@@ -106,6 +105,7 @@ struct ContentView: View {
                         }
                     }
                 )
+                .environmentObject(setting)
                 .padding(.horizontal, 4)
                 .padding(.bottom, 4)
                 

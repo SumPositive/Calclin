@@ -9,9 +9,7 @@ import SwiftUI
 
 
 struct SettingView: View {
-    @ObservedObject var viewModel: SettingViewModel
-
-    // @State 変化あればViewが更新される
+    @EnvironmentObject var viewModel: SettingViewModel
 
     
     var body: some View {
@@ -40,7 +38,7 @@ struct SettingView: View {
                         viewModel.groupType = newValue
                         // SBCD_Configにセットする
                         SBCD_Config.groupType = newValue.sbcd_config_groupType
-                        // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
+                        // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                     }
                     
@@ -62,7 +60,7 @@ struct SettingView: View {
                         viewModel.groupSeparator = newValue
                         // SBCD_Configにセットする
                         SBCD_Config.groupSeparator = newValue.symbol
-                        // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
+                        // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                     }
                 }
@@ -91,7 +89,7 @@ struct SettingView: View {
                             SBCD_Config.decimalDigits = Int(viewModel.decimalDigits)
                             // 小数部桁数「可変」末尾0削除
                             SBCD_Config.decimalTrailZero = false
-                            // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
+                            // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                             NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                         })
                     
@@ -106,7 +104,7 @@ struct SettingView: View {
                         log(.info, ".onChange roundType")
                         // SBCD_Configにセットする
                         SBCD_Config.decimalRoundType = newValue.sbcd_config_roundType
-                        // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
+                        // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                     }
                 }
@@ -125,7 +123,7 @@ struct SettingView: View {
                         viewModel.decimalSeparator = newValue
                         // SBCD_Configにセットする
                         SBCD_Config.decimalSeparator = newValue.symbol
-                        // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
+                        // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                     }
                 }
@@ -145,7 +143,7 @@ struct SettingView: View {
                             log(.info, ".onChange numberFontScale")
                             // SettingViewModel
                             viewModel.numberFontScale = newValue // Double型
-                            // ローカル通知 送信：SBCD_Configが変更された　＞再描画させるため
+                            // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                             NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                         })
                 }

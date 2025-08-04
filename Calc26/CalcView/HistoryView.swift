@@ -9,7 +9,9 @@ import SwiftUI
 
 
 struct HistoryView: View {
+    @EnvironmentObject var setting: SettingViewModel
     @ObservedObject var viewModel: CalcViewModel
+    
     
     var body: some View {
 
@@ -67,6 +69,7 @@ struct HistoryView: View {
 
 // カスタム明細セル
 struct CustomCell: View {
+    @EnvironmentObject var setting: SettingViewModel
     @ObservedObject var viewModel: CalcViewModel
     let row: CalcViewModel.HistoryRow
 
@@ -90,7 +93,7 @@ struct CustomCell: View {
                 }
                 return attrStr
             }()).scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
-                .font(.system(size: fontSize * viewModel.setting.numberFontScale, weight: .regular))
+                .font(.system(size: fontSize * setting.numberFontScale, weight: .regular))
                 .multilineTextAlignment(.trailing) // 複数行で右寄せ
                 .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
                 .padding(.top, 8.0)
