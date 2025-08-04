@@ -11,14 +11,15 @@ import SwiftUI
 /// 複数のCalcViewを切り替える
 struct CalcRollView: View {
     @EnvironmentObject var setting: SettingViewModel
+    //let historyViewModel: FHistoryViewModel
     let calcViewModels: [CalcViewModel]
     let onCalcChange: (Int) -> Void
-
+    
     // @State 変化あればViewが更新される
     @State private var selectedPage: Int = 0 // 初期で2ページ目（インデックス1）を表示
     @State private var showStart: Int = 0
     @State private var showCount: Int = 1
-
+    
     
     var body: some View {
         VStack(spacing: 0) {
@@ -48,7 +49,7 @@ struct CalcRollView: View {
                     }
                 }
             )
-
+            
             // CalcViewを3個横に並べ、1ページずつ左右に切り替える
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
             //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
@@ -70,7 +71,20 @@ struct CalcRollView: View {
                                 }
                             }
                             .onTapGesture(count: 2) { location in
-                                // ダブルタップで
+                                // ダブルタップで拡大（1ページにする）、縮小（ページ増加）
+                                withAnimation {
+                                    if showCount == 1 {
+                                        showStart = 0
+                                        showCount = calcViewModels.count
+                                    }else{
+                                        if index != selectedPage {
+                                            selectedPage = index
+                                            onCalcChange(index)
+                                        }
+                                        showStart = selectedPage
+                                        showCount = 1
+                                    }
+                                }
                             }
                     }
                 }
@@ -82,6 +96,7 @@ struct CalcRollView: View {
         }
         .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
     }
+    
 }
 
 
@@ -227,16 +242,21 @@ struct CalcRollHeaderView: View {
     // 表示CalcView減少
     private func showMinus() {
         if showStart < selectedPage {
-            // 前ページへ
-            onPageChange(max(selectedPage - 1, 0))
+            // 表示CalcView減少
+            onShowChange(min(showStart + 1, pageCount), max(showCount - 1, 1))
+        }else{
+            // 表示CalcView減少
+            onShowChange(showStart, max(showCount - 1, 1))
         }
-        // 表示CalcView減少
-        onShowChange(showStart, max(showCount - 1, 1))
     }
 
     // 表示CalcView増加
     private func showPlus() {
-        if showStart + showCount < pageCount {
+        if 0 < showStart, showStart == selectedPage {
+            // 表示CalcView左へ増加
+            onShowChange(max(showStart - 1, 0), min(showCount + 1, pageCount))
+        }
+        else if showStart + showCount < pageCount {
             // 表示CalcView右へ増加
             onShowChange(showStart, min(showCount + 1, pageCount))
         }else{

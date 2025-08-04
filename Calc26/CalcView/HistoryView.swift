@@ -92,11 +92,13 @@ struct CustomCell: View {
                     }
                 }
                 return attrStr
-            }()).scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
-                .font(.system(size: fontSize * setting.numberFontScale, weight: .regular))
-                .multilineTextAlignment(.trailing) // 複数行で右寄せ
-                .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
-                .padding(.top, 8.0)
+            }())
+            .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
+            .font(.system(size: fontSize * setting.numberFontScale, weight: .regular))
+            .multilineTextAlignment(.trailing) // 複数行で右寄せ
+            .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
+            .padding(.top, 8.0)
+//            .textSelection(.enabled)
 
             // 下線
             //Divider()
@@ -104,6 +106,18 @@ struct CustomCell: View {
             //    .padding(.top, 18.0)
         }
         .frame(maxWidth: .infinity) // 親View内側一杯に広げる
+        .contextMenu {
+            Button {
+                UIPasteboard.general.string = "JSON"
+            } label: {
+                Label("計算式をコピー", systemImage: "doc.on.doc")
+            }
+            Button {
+                UIPasteboard.general.string = "12345"
+            } label: {
+                Label("答えをコピー", systemImage: "doc.on.doc")
+            }
+        }
     }
 }
 

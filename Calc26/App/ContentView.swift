@@ -27,8 +27,9 @@ struct ContentView: View {
     init() {
         _setting = StateObject(wrappedValue: SettingViewModel())
         _keyboardViewModel = StateObject(wrappedValue: KeyboardViewModel())
+        //_historyViewModel = StateObject(wrappedValue: FHistoryViewModel())
 
-        self.calcViewModels = (0..<3).map { _ in
+        self.calcViewModels = (0..<CALC_COUNT).map { _ in
             CalcViewModel()
         }
         log(.info, "init() 1回だけ通ること。もしFormulaViewなどがクリアされるならば再生成されている間違いあり")
@@ -98,6 +99,7 @@ struct ContentView: View {
                 
                 // 複数Calc横スクロールView
                 CalcRollView(
+                    //historyViewModel: historyViewModel,
                     calcViewModels: calcViewModels,
                     onCalcChange: { newCalc in
                         withAnimation {
@@ -117,7 +119,9 @@ struct ContentView: View {
                     calc.input(keyDef)
                 })
                 .padding(.horizontal, 4.0)
-                .frame(height: 280)
+                .frame(height: UIScreen.main.bounds.width) // 280
+                
+                //let screenWidth = UIScreen.main.bounds.width
             }
             .background(Color(.systemGray6))
             .onAppear {

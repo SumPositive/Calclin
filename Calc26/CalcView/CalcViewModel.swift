@@ -362,9 +362,7 @@ final class CalcViewModel: ObservableObject {
     }
 
     
-    // MARK: - Private Methods
-    
-    private func formulaUpdate(_ isAnswer: Bool = false) {
+    func formulaUpdate(_ isAnswer: Bool = false) {
         log(.info, "Start")
         self.isAnswer = isAnswer
         self.formulaAttr = ""
@@ -417,6 +415,10 @@ final class CalcViewModel: ObservableObject {
         }
         log(.info, "End")
     }
+    
+    
+    
+    // MARK: - Private Methods
     
 
     /// 小数末尾の"0"を抽出する

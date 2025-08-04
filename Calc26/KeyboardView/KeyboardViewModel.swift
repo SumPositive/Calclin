@@ -42,7 +42,7 @@ final class KeyboardViewModel: ObservableObject {
 
     // キーボード配列（固定）
     static let colCount: Int = 5 //列
-    static let rowCount: Int = 5 //行
+    static let rowCount: Int = 6 //行
     // キーボードページ数
     static let pageCount: Int = 3
     // .keyboard[page][key]
@@ -87,11 +87,23 @@ final class KeyboardViewModel: ObservableObject {
         let decoder = PropertyListDecoder()
         do {
             let kb = try decoder.decode([[String]].self, from: data)
+            //
+            if kb.count != KeyboardViewModel.pageCount {
+                // ページ数が変わった
+                log(.warning, "load OLD pages: \(kb.count)")
+                return
+            }
+            if let pg = kb.first,
+               // ページ内のキー数が変わった
+                pg.count != KeyboardViewModel.rowCount * KeyboardViewModel.colCount {
+                log(.warning, "load OLD keys: \(pg.count)")
+                return
+            }
             self.keyboard = kb
             return
         }
         catch (let error) {
-            log(.error, "loadKeyboard error: \(error)")
+            log(.error, "catch: \(error)")
             return
         }
     }
