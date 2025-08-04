@@ -69,10 +69,8 @@ struct ContentView: View {
                     
                     Text("CalcRoll")
                         .font(.headline)
-                        .foregroundColor(
-                            colorScheme == .dark ? .gray : .black
-                        )
-                    
+                        .opacity(colorScheme == .dark ? 0.40 : 1.0)
+
                     Spacer()
                     // 設定（トグルボタン）
                     Button(action: {
@@ -119,11 +117,11 @@ struct ContentView: View {
                     calc.input(keyDef)
                 })
                 .padding(.horizontal, 4.0)
-                .frame(height: UIScreen.main.bounds.width) // 280
+                .frame(height: UIScreen.main.bounds.width) // 高さ
                 
-                //let screenWidth = UIScreen.main.bounds.width
             }
-            .background(Color(.systemGray6))
+            //.background(Color(.systemGray6))
+            .background(Color.primary.opacity(0.05)) // 控えめな背景
             .onAppear {
                 // 不揮発記録よりkeyboardを読み込み再現する
                 keyboardViewModel.loadKeyboard()

@@ -14,6 +14,8 @@ struct FormulaView: View {
     
     @State private var scrollId = UUID()
     let hSpace: CGFloat = 20.0
+    // ダークモード対応
+    @Environment(\.colorScheme) var colorScheme
 
     
     var body: some View {
@@ -23,6 +25,7 @@ struct FormulaView: View {
                     Text( viewModel.formulaAttr )
                         .font(.system(size: 24.0 * setting.numberFontScale,
                                       weight: .bold))
+                        .opacity(colorScheme == .dark ? 0.60 : 1.0)
                         .lineLimit(1)
                         .fixedSize() // 高さと幅を最小限にする
                         .frame(minWidth: geo.size.width, // - hSpace*2, // GeometryReaderで取得した現在の幅

@@ -76,7 +76,10 @@ struct CustomCell: View {
     private let fontSize: CGFloat = 16.0
     private let lineFeedChars = "+-*/×÷=(√" // この文字の前で改行させる
     private let zeroWidthSpace = AttributedString("\u{200B}") // 改行させるための「幅ゼロのスペース」
+    // ダークモード対応
+    @Environment(\.colorScheme) var colorScheme
 
+    
     var body: some View {
         VStack(spacing: 0.0) {
             // 計算式 = 答え
@@ -95,6 +98,7 @@ struct CustomCell: View {
             }())
             .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
             .font(.system(size: fontSize * setting.numberFontScale, weight: .regular))
+            .opacity(colorScheme == .dark ? 0.55 : 1.0)
             .multilineTextAlignment(.trailing) // 複数行で右寄せ
             .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
             .padding(.top, 8.0)

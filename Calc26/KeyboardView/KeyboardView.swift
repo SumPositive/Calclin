@@ -15,7 +15,9 @@ struct KeyboardView: View {
 
     // @State 変化あればViewが更新される
     @State private var selectedPage: Int = 1 // 初期で2ページ目（インデックス1）を表示
-    
+    // ダークモード対応
+    @Environment(\.colorScheme) var colorScheme
+
 
     var body: some View {
         
@@ -56,6 +58,7 @@ struct KeyboardView: View {
                 selectedPage: selectedPage,
                 pageCount: KeyboardViewModel.pageCount
             )
+            .opacity(colorScheme == .dark ? 0.60 : 1.0)
         }
         .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
     }
@@ -208,7 +211,10 @@ struct KeyView: View {
     
     @State private var isTapped = false
     @State private var isLongTapped = false
+    // ダークモード対応
+    @Environment(\.colorScheme) var colorScheme
 
+    
     var body: some View {
         GeometryReader { geo in
             Button(action: {
@@ -227,7 +233,9 @@ struct KeyView: View {
                 ZStack {
                     Image(isTapped ? "keyDown" : "keyUp")
                         .resizable()
-                    
+                        //.colorMultiply(colorScheme == .dark ? .gray : .white)
+                        .opacity(colorScheme == .dark ? 0.40 : 1.0)
+
                     if symbol != "" {
                         Image(systemName: symbol)
                             .imageScale(.large)

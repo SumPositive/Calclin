@@ -19,7 +19,9 @@ struct CalcRollView: View {
     @State private var selectedPage: Int = 0 // 初期で2ページ目（インデックス1）を表示
     @State private var showStart: Int = 0
     @State private var showCount: Int = 1
-    
+    // ダークモード対応
+    @Environment(\.colorScheme) var colorScheme
+
     
     var body: some View {
         VStack(spacing: 0) {
@@ -49,7 +51,8 @@ struct CalcRollView: View {
                     }
                 }
             )
-            
+            .opacity(colorScheme == .dark ? 0.60 : 1.0)
+
             // CalcViewを3個横に並べ、1ページずつ左右に切り替える
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
             //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
@@ -108,6 +111,7 @@ struct CalcRollHeaderView: View {
     let showCount: Int
     let onPageChange: (Int) -> Void
     let onShowChange: (Int, Int) -> Void
+
     
     var body: some View {
         // メニュー関係の固定値
