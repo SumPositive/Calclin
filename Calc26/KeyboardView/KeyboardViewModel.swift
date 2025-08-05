@@ -78,25 +78,37 @@ final class KeyboardViewModel: ObservableObject {
     // Popoverで直前に選択したkeyCode（空キーを長押しした時、初期選択に使用する）
     var prevSelectKeyCode: String = ""
     
+    private var hasLaunched = false
+
     // MARK: - init
 
     init(setting: SettingViewModel) {
         self.setting = setting
-        
-        // KeyTag.plistを読み込んでkeyTagsを更新する
-        if let kts = loadKeyDefinitionPlist() {
-            keyDefs = kts
+
+        if !hasLaunched {
+            hasLaunched = true
+            log(.info, "Cold Start： Init KeyDefinition")
+            /// キー定義初期化（Cold start時に実行）
+            // KeyTag.plistを読み込んでkeyTagsを更新する
+            if let kts = loadKeyDefinitionPlist() {
+                keyDefs = kts
+            }
+            // キー配置を復元
+            loadKeyboard()
         }
-        //
-        loadKeyboard()
     }
-    
+
 
     
     // MARK: - Public Methods
+
+    /// keyCodeからkeyDefを取得する
+    func keyDef( code: String ) -> KeyDefinition? {
+        return keyDefs.first { $0.code == code }
+    }
     
     // KeyDefinition.plist を読み込む
-    func loadKeyDefinitionPlist() -> [KeyDefinition]? {
+    private func loadKeyDefinitionPlist() -> [KeyDefinition]? {
         guard let url = Bundle.main.url(forResource: "KeyDefinition", withExtension: "plist"),
               let data = try? Data(contentsOf: url),
               let result = try? PropertyListDecoder().decode([KeyDefinition].self, from: data) else {
@@ -222,7 +234,18 @@ final class KeyboardViewModel: ObservableObject {
     
     // MARK: - Private Methods
 
-    
+//    /// Build number が変更された時だけ処理する
+//    private func runIfBuildNumberIncreased(_ action: () -> Void) {
+//        let currentBuild = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
+//        let previousBuild = UserDefaults.standard.string(forKey: "lastBuildNumber") ?? ""
+//        if currentBuild != previousBuild {
+//            log(.info,"ビルド番号が変更されたため処理を実行")
+//            action()
+//            UserDefaults.standard.set(currentBuild, forKey: "lastBuildNumber")
+//        } else {
+//            log(.info, "ビルド番号が同じなのでスキップ")
+//        }
+//    }
 
 }
 

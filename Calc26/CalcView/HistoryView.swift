@@ -86,8 +86,13 @@ struct CustomCell: View {
             Text({
                 var equal = AttributedString("=")
                 equal.foregroundColor = Color.blue //.opacity(0.5)
+                // Answer
                 let answer = AttributedString(row.answer)
-                var attrStr = row.formula + equal + answer
+                // Unit Base
+                var unitBase = AttributedString(row.unitBase)
+                unitBase.foregroundColor = Color.brown //.opacity(0.5)
+                // Formula
+                var attrStr = row.formula + equal + answer + unitBase
                 // 演算子の前で改行させるための処理
                 for index in attrStr.characters.indices.reversed() {
                     if lineFeedChars.contains(attrStr.characters[index]) {

@@ -13,12 +13,12 @@ struct KeyboardView: View {
     @ObservedObject var viewModel: KeyboardViewModel
     let onTap: (KeyDefinition) -> Void
 
-    // @State 変化あればViewが更新される
-    @State private var selectedPage: Int = 1 // 初期で2ページ目（インデックス1）を表示
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
+    // @State 変化あればViewが更新される
+    @State private var selectedPage: Int = 1 // 初期で2ページ目（インデックス1）を表示
 
-
+    
     var body: some View {
         
         let pageGap = 10.0 // ページ間隔 padding以上無ければ隣ページが見えてしまう
@@ -201,7 +201,7 @@ struct KeyView: View {
         if page < viewModel.keyboard.count,
            index < viewModel.keyboard[page].count {
             let keyCode = viewModel.keyboard[page][index]
-            if let def = viewModel.keyDefs.first(where: { $0.code == keyCode }).self {
+            if let def = viewModel.keyDef(code: keyCode) {
                 keyTop = def.keyTop ?? def.code
                 symbol = def.symbol ?? ""
                 keyDef = def
@@ -239,10 +239,10 @@ struct KeyView: View {
                     if symbol != "" {
                         Image(systemName: symbol)
                             .imageScale(.large)
-                            .foregroundColor(.black)
+                            .foregroundColor(keyDef?.unitBase==nil ? .black : .brown)
                     }else{
                         Text(keyTop)
-                            .foregroundColor(.black)
+                            .foregroundColor(keyDef?.unitBase==nil ? .black : .brown)
                             .font(.system(size: 24, weight: .bold))
                             //.shadow(radius: 1)
 

@@ -152,7 +152,7 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>Parentheses</string>
+		<string>Paren</string>
 		<key>keyTop</key>
 		<string>( )</string>
 		<key>symbol</key>
@@ -194,20 +194,6 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>Perc</string>
-		<key>keyTop</key>
-		<string>%</string>
-		<key>symbol</key>
-		<string>percent</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>Perm</string>
-		<key>keyTop</key>
-		<string>‰</string>
-	</dict>
-	<dict>
-		<key>code</key>
 		<string>Sroot</string>
 		<key>keyTop</key>
 		<string>√</string>
@@ -234,23 +220,59 @@
 	</dict>
 	<dict>
 		<key>code</key>
+		<string>Pi</string>
+		<key>keyTop</key>
+		<string>π</string>
+		<key>symbol</key>
+		<string>pi</string>
+		<key>unitBase</key>
+		<string>1</string>
+		<key>unitConv</key>
+		<string>*3.141592653589793238462643383279</string>
+		<key>unitRev</key>
+		<string>/3.141592653589793238462643383279</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Perc</string>
+		<key>keyTop</key>
+		<string>%</string>
+		<key>symbol</key>
+		<string>percent</string>
+		<key>unitBase</key>
+		<string>1</string>
+		<key>unitConv</key>
+		<string>/100</string>
+		<key>unitRev</key>
+		<string>*100</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Perm</string>
+		<key>keyTop</key>
+		<string>‰</string>
+		<key>unitBase</key>
+		<string>1</string>
+		<key>unitConv</key>
+		<string>/1000</string>
+		<key>unitRev</key>
+		<string>*1000</string>
+	</dict>
+	<dict>
+		<key>code</key>
 		<string>mg</string>
 		<key>unitBase</key>
 		<string>g</string>
 		<key>unitConv</key>
-		<string>(#/1000)</string>
+		<string>/1000</string>
 		<key>unitRev</key>
-		<string>(#*1000)</string>
+		<string>*1000</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>g</string>
 		<key>unitBase</key>
 		<string>g</string>
-		<key>unitConv</key>
-		<string>#</string>
-		<key>unitRev</key>
-		<string>#</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -258,9 +280,9 @@
 		<key>unitBase</key>
 		<string>g</string>
 		<key>unitConv</key>
-		<string>(#*1000)</string>
+		<string>*1000</string>
 		<key>unitRev</key>
-		<string>(#/1000)</string>
+		<string>/1000</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -268,9 +290,9 @@
 		<key>unitBase</key>
 		<string>g</string>
 		<key>unitConv</key>
-		<string>(#*1000000)</string>
+		<string>*1000000</string>
 		<key>unitRev</key>
-		<string>(#/1000000)</string>
+		<string>/1000000</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -278,9 +300,9 @@
 		<key>unitBase</key>
 		<string>g</string>
 		<key>unitConv</key>
-		<string>(#*1000000000)</string>
+		<string>*1000000000</string>
 		<key>unitRev</key>
-		<string>(#/1000000000)</string>
+		<string>/1000000000</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -288,9 +310,9 @@
 		<key>unitBase</key>
 		<string>m</string>
 		<key>unitConv</key>
-		<string>(#/1000)</string>
+		<string>/1000</string>
 		<key>unitRev</key>
-		<string>(#*1000)</string>
+		<string>*1000</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -298,19 +320,15 @@
 		<key>unitBase</key>
 		<string>m</string>
 		<key>unitConv</key>
-		<string>(#/100)</string>
+		<string>/100</string>
 		<key>unitRev</key>
-		<string>(#*100)</string>
+		<string>*100</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>m</string>
 		<key>unitBase</key>
 		<string>m</string>
-		<key>unitConv</key>
-		<string>#</string>
-		<key>unitRev</key>
-		<string>#</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -318,9 +336,19 @@
 		<key>unitBase</key>
 		<string>m</string>
 		<key>unitConv</key>
-		<string>(#*1000)</string>
+		<string>*1000</string>
 		<key>unitRev</key>
-		<string>(#/1000)</string>
+		<string>/1000</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>里</string>
+		<key>unitBase</key>
+		<string>m</string>
+		<key>unitConv</key>
+		<string>*3927.27</string>
+		<key>unitRev</key>
+		<string>/3927.27</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -328,9 +356,9 @@
 		<key>unitBase</key>
 		<string>㎡</string>
 		<key>unitConv</key>
-		<string>(#/1000000)</string>
+		<string>/1000000</string>
 		<key>unitRev</key>
-		<string>(#*1000000)</string>
+		<string>*1000000</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -338,19 +366,15 @@
 		<key>unitBase</key>
 		<string>㎡</string>
 		<key>unitConv</key>
-		<string>(#/10000)</string>
+		<string>/10000</string>
 		<key>unitRev</key>
-		<string>(#*10000)</string>
+		<string>*10000</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>㎡</string>
 		<key>unitBase</key>
 		<string>㎡</string>
-		<key>unitConv</key>
-		<string>#</string>
-		<key>unitRev</key>
-		<string>#</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -358,9 +382,9 @@
 		<key>unitBase</key>
 		<string>㎡</string>
 		<key>unitConv</key>
-		<string>(#*100)</string>
+		<string>*100</string>
 		<key>unitRev</key>
-		<string>(#/100)</string>
+		<string>/100</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -368,9 +392,9 @@
 		<key>unitBase</key>
 		<string>㎡</string>
 		<key>unitConv</key>
-		<string>(#*10000)</string>
+		<string>*10000</string>
 		<key>unitRev</key>
-		<string>(#/10000)</string>
+		<string>/10000</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -378,9 +402,9 @@
 		<key>unitBase</key>
 		<string>㎡</string>
 		<key>unitConv</key>
-		<string>(#*1000000)</string>
+		<string>*1000000</string>
 		<key>unitRev</key>
-		<string>(#/1000000)</string>
+		<string>/1000000</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -388,9 +412,9 @@
 		<key>unitBase</key>
 		<string>㎡</string>
 		<key>unitConv</key>
-		<string>(#*3.305785)</string>
+		<string>*3.305785</string>
 		<key>unitRev</key>
-		<string>(#/3.305785)</string>
+		<string>/3.305785</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -398,9 +422,9 @@
 		<key>unitBase</key>
 		<string>㎡</string>
 		<key>unitConv</key>
-		<string>(#*99.17355)</string>
+		<string>*99.17355</string>
 		<key>unitRev</key>
-		<string>(#/99.17355)</string>
+		<string>/99.17355</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -408,9 +432,9 @@
 		<key>unitBase</key>
 		<string>㎡</string>
 		<key>unitConv</key>
-		<string>(#*991.7355)</string>
+		<string>*991.7355</string>
 		<key>unitRev</key>
-		<string>(#/991.7355)</string>
+		<string>/991.7355</string>
 	</dict>
 </array>
 </plist>

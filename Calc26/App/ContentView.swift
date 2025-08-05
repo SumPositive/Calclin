@@ -19,10 +19,12 @@ struct ContentView: View {
     init() {
         let setting = SettingViewModel()
         _setting = StateObject(wrappedValue: setting)
-        _keyboardViewModel = StateObject(wrappedValue: KeyboardViewModel(setting: setting))
+
+        let keyboardViewModel = KeyboardViewModel(setting: setting)
+        _keyboardViewModel = StateObject(wrappedValue: keyboardViewModel)
 
         self.calcViewModels = (0..<CALC_COUNT).map { _ in
-            CalcViewModel()
+            CalcViewModel(keyboardViewModel: keyboardViewModel)
         }
         log(.info, "init() 1回だけ通ること。もしFormulaViewなどがクリアされるならば再生成されている間違いあり")
     }
