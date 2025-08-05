@@ -6,10 +6,11 @@
 //
 
 import SwiftUI
-
+import UIKit
 
 struct SettingView: View {
     @EnvironmentObject var viewModel: SettingViewModel
+    @EnvironmentObject var keyboardViewModel: KeyboardViewModel
 
     
     var body: some View {
@@ -150,11 +151,36 @@ struct SettingView: View {
             .padding(4)
             .background(Color(.systemGray6))
 
+            VStack(spacing: 0) {
+                Text("キーボード配置")
+                HStack {
+                    Button("現在の配置を保存する") {
+                        keyboardViewModel.saveKeyboardJson()
+                    }
+                    .foregroundStyle(.blue)
+                    .padding(2)
+                    Button("保存した配置に戻す") {
+                        keyboardViewModel.loadKeyboardJson()
+                    }
+                    .foregroundStyle(.green)
+                    .padding(2)
+                    Spacer()
+                    Button("初期の配置に戻す") {
+                        keyboardViewModel.initKeyboardJson()
+                    }
+                    .foregroundStyle(.red)
+                    .padding(2)
+                }
+            }
+            .padding(4)
+            .background(Color(.systemGray6))
         }
         .padding(6)
         .background(Color(.systemGray5))
         .cornerRadius(10)
         .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
     }
+
+    
 }
 

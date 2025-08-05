@@ -33,9 +33,36 @@ struct KeyDefinition: Codable, Hashable {
     }
 }
 
+//// KeyLayout.plist 構造
+//struct KeyLayout: Codable, Hashable {
+//    let page: Int       // ページ [0〜2]
+//    let row: Int        // 行 [0〜24]
+//    let col: Int        // 列 [0〜24]
+//    let code: String    // KeyDefinition.code
+//    //------------------------
+//    let memo: String?  //
+//    //------------------------
+//    init(page: Int, row: Int, col: Int, code: String, memo: String?) {
+//        self.page = page
+//        self.row = row
+//        self.col = col
+//        self.code = code
+//        self.memo = memo
+//    }
+//}
 
+struct KeyboardJSON: Codable {
+    let appName: String
+    let appVersion: String
+    let keyboard_1: [[String]]?
+}
+
+
+@MainActor
 final class KeyboardViewModel: ObservableObject {
-
+    let setting: SettingViewModel  // init()で取得
+    
+    
     @Published var popupInfo: (page: Int, index: Int, keyCode: String, position: CGPoint)? = nil
 
     var keyDefs: [KeyDefinition] = []
@@ -48,12 +75,14 @@ final class KeyboardViewModel: ObservableObject {
     // .keyboard[page][key]
     var keyboard: [[String]] = Array(repeating: Array(repeating: "", count: colCount * rowCount),
                                      count: pageCount)
-    
     // Popoverで直前に選択したkeyCode（空キーを長押しした時、初期選択に使用する）
     var prevSelectKeyCode: String = ""
     
-    
-    init() {
+    // MARK: - init
+
+    init(setting: SettingViewModel) {
+        self.setting = setting
+        
         // KeyTag.plistを読み込んでkeyTagsを更新する
         if let kts = loadKeyDefinitionPlist() {
             keyDefs = kts
@@ -61,9 +90,13 @@ final class KeyboardViewModel: ObservableObject {
         //
         loadKeyboard()
     }
+    
 
+    
+    // MARK: - Public Methods
+    
     // KeyDefinition.plist を読み込む
-    private func loadKeyDefinitionPlist() -> [KeyDefinition]? {
+    func loadKeyDefinitionPlist() -> [KeyDefinition]? {
         guard let url = Bundle.main.url(forResource: "KeyDefinition", withExtension: "plist"),
               let data = try? Data(contentsOf: url),
               let result = try? PropertyListDecoder().decode([KeyDefinition].self, from: data) else {
@@ -72,16 +105,19 @@ final class KeyboardViewModel: ObservableObject {
         return result
     }
     
-    // UserDefaultsにPropertyList形式で保存する
+    // 現在のKeyboard配置を不揮発保存する（UserDefaultsにPropertyList形式で保存）
+    // キー配置変更の都度保存するため、JSONファイル保存とは別に軽量保存している（しかし、誤差だろうからJSONファイル保存で共通化しても良いかも）
     func saveKeyboard() {
         let encoder = PropertyListEncoder()
         if let data = try? encoder.encode(self.keyboard) {
             UserDefaults.standard.set(data, forKey: "keyboard_data")
         }
     }
-    // UserDefaultsからPropertyList形式で読み出す
+    // 不揮発保存したKeyboard配置を復元する
     func loadKeyboard() {
         guard let data = UserDefaults.standard.data(forKey: "keyboard_data") else {
+            // 初期の配置に戻す
+            initKeyboardJson(isToast: false)
             return
         }
         let decoder = PropertyListDecoder()
@@ -108,20 +144,85 @@ final class KeyboardViewModel: ObservableObject {
         }
     }
     
-    // Plistファイルに保存する
-    func saveToPlistFile(_ keyboard: [[String]]) {
-        let encoder = PropertyListEncoder()
-        encoder.outputFormat = .xml
+    
+    // keyboard JSON
+    //    {
+    //        "appName": "CalcRoll",
+    //        "appVersion": "2.0.0",
+    //        "keyboard_1": [["CA","1","2","3"・・・"="],
+    //                       ["CA","1","2","3"・・・"="],
+    //                       ["CA","1","2","3"・・・"="]]
+    //    }
+    
+    // 現在の配置をJSONファイルに保存する
+    func saveKeyboardJson() {
+        let keyboardData = KeyboardJSON(appName: "CalcRoll",
+                                        appVersion: "2.0.0",
+                                        keyboard_1: keyboard)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys] // .prettyPrinted
         do {
-            let data = try encoder.encode(keyboard)
-            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                .appendingPathComponent("keyboard.plist")
+            let data = try encoder.encode(keyboardData)
+            // JSONを文字列に変換してログ出力
+            if let jsonString = String(data: data, encoding: .utf8) {
+                // このログ出力をコピーして"initKeyboard.json"を作成してbundleに入れた
+                log(.info, "keyboard.json:\n\(jsonString)")
+            }
+            // ファイルに保存
+            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+                .appendingPathComponent("keyboard.json")
             try data.write(to: url)
-            print("ファイル保存成功: \(url)")
+            setting.toast("保存しました")
         } catch {
-            print("ファイル保存失敗: \(error)")
+            log(.error, "書き込み失敗: \(error)")
+            setting.toast("できません", wait: 2.0)
         }
     }
+    // JSONファイルに保存した配置に戻す
+    func loadKeyboardJson() {
+        let docsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fileURL = docsURL.appendingPathComponent("keyboard.json")
+        do {
+            let data = try Data(contentsOf: fileURL)
+            let decoded = try JSONDecoder().decode(KeyboardJSON.self, from: data)
+            if decoded.appName == "CalcRoll",
+               decoded.appVersion == "2.0.0",
+               let kb = decoded.keyboard_1 {
+                keyboard = kb
+                setting.toast("保存した配置に戻しました", wait: 3.0)
+            }
+        } catch {
+            log(.error, "読み込み失敗: \(error)")
+            setting.toast("できません", wait: 2.0)
+        }
+    }
+    
+    // 初期の配置に戻す　　初期インストール直後の初期でも使用(isToast:false)
+    func initKeyboardJson( isToast: Bool = true ) {
+        guard let fileURL = Bundle.main.url(forResource: "initKeyboard", withExtension: "json") else {
+            log(.fatal, "initKeyboard.json がバンドル内に存在しない")
+            return
+        }
+        do {
+            let data = try Data(contentsOf: fileURL)
+            let decoded = try JSONDecoder().decode(KeyboardJSON.self, from: data)
+            if decoded.appName == "CalcRoll",
+               decoded.appVersion == "2.0.0",
+               let kb = decoded.keyboard_1 {
+                keyboard = kb
+                if isToast {setting.toast("初期の配置に\n戻しました", wait: 3.0)}
+            }
+        } catch {
+            log(.error, "読み込み失敗: \(error)")
+            if isToast {setting.toast("できません", wait: 2.0)}
+        }
+    }
+    
+    
+    
+    // MARK: - Private Methods
+
+    
 
 }
 

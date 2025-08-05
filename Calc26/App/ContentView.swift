@@ -8,14 +8,6 @@
 import SwiftUI
 import SafariServices
 
-struct SafariView: UIViewControllerRepresentable {
-    let url: URL
-    func makeUIViewController(context: Context) -> SFSafariViewController {
-        return SFSafariViewController(url: url)
-    }
-    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
-}
-
 
 struct ContentView: View {
     @StateObject private var setting: SettingViewModel  // 必要なViewに.environmentObject(setting)で注入する
@@ -25,9 +17,9 @@ struct ContentView: View {
     let CALC_COUNT: Int = 3
 
     init() {
-        _setting = StateObject(wrappedValue: SettingViewModel())
-        _keyboardViewModel = StateObject(wrappedValue: KeyboardViewModel())
-        //_historyViewModel = StateObject(wrappedValue: FHistoryViewModel())
+        let setting = SettingViewModel()
+        _setting = StateObject(wrappedValue: setting)
+        _keyboardViewModel = StateObject(wrappedValue: KeyboardViewModel(setting: setting))
 
         self.calcViewModels = (0..<CALC_COUNT).map { _ in
             CalcViewModel()
@@ -43,34 +35,10 @@ struct ContentView: View {
     @State private var showSafari = false
     // @State 変化あればViewが更新される
     @State private var selectedCalc: Int = 0
-
+    
     
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
-
-            if isShowingSetting {
-                VStack(spacing: 0) {
-                    HStack {
-                        Spacer()
-                        // 吹き出しの三角形部分（上向き）
-                        Triangle()
-                            .fill(Color(.systemGray5))
-                            .frame(width: 30, height: 15)
-                            .padding(.top, 25)
-                            .padding(.trailing, 30)
-                    }
-                    // 設定画面（表示・非表示）
-                    SettingView()
-                        .environmentObject(setting) // settingに変化あればSettingViewが再生成される
-                        .transition(.opacity) // フェード
-                        .padding(.horizontal)
-                        .padding(.top, 0)
-                    
-                    Spacer()
-                }
-                .zIndex(1)
-            }
-
             VStack(spacing: 0) {
                 HStack {
                     // 情報（ボタン）
@@ -88,7 +56,7 @@ struct ContentView: View {
                     .sheet(isPresented: $showSafari) {
                         SafariView(url: URL(string: "https://info.art.jp")!)
                     }
-                    
+
                     Spacer()
                     
                     Text("CalcRoll")
@@ -143,8 +111,35 @@ struct ContentView: View {
                 // 不揮発記録よりkeyboardを読み込み再現する
                 keyboardViewModel.loadKeyboard()
             }
-            // ZStack
-            // ポップアップの表示
+            
+            // ZStack ------------------------------------
+            
+            //(ZStack 1) SettingView表示
+            if isShowingSetting {
+                VStack(spacing: 0) {
+                    HStack {
+                        Spacer()
+                        // 吹き出しの三角形部分（上向き）
+                        Triangle()
+                            .fill(Color(.systemGray5))
+                            .frame(width: 30, height: 15)
+                            .padding(.top, 25)
+                            .padding(.trailing, 30)
+                    }
+                    // 設定画面（表示・非表示）
+                    SettingView()
+                        .environmentObject(setting) // settingに変化あればSettingViewが再生成される
+                        .environmentObject(keyboardViewModel)
+                        .transition(.opacity) // フェード
+                        .padding(.horizontal)
+                        .padding(.top, 0)
+                    
+                    Spacer()
+                }
+                .zIndex(1)
+            }
+
+            //(ZStack 2) PopupKeyListView表示
             if let popup = keyboardViewModel.popupInfo {
                 // ポップアップ外部タップで閉じるための半透明背景レイヤー
                 Color.black.opacity(0.2) // タップ判定される
@@ -171,10 +166,51 @@ struct ContentView: View {
                 }
                 .position(popup.position) // 画面全体の座標で表示
                 .zIndex(2)
+
             }
+            
+            //(ZStack 3) ToastView表示
+            if setting.showToast {
+                VStack {
+                    Spacer()
+                    ToastView(message: setting.toastMessage)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .padding(.top, 50)
+                    Spacer()
+                }
+                .zIndex(3)
+            }
+            
         }
     }
+
+    /// カスタムSafariシート
+    struct SafariView: UIViewControllerRepresentable {
+        let url: URL
+        func makeUIViewController(context: Context) -> SFSafariViewController {
+            return SFSafariViewController(url: url)
+        }
+        func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
+    }
+    
+    /// ToastメッセージView
+    struct ToastView: View {
+        let message: String
+        
+        var body: some View {
+            Text(message)
+                .font(.largeTitle)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.black.opacity(0.8))
+                .foregroundColor(.white)
+                .cornerRadius(10)
+                .shadow(radius: 4)
+        }
+    }
+    
 }
+
 
 #Preview {
     ContentView()

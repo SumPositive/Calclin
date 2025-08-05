@@ -98,14 +98,6 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>Start</string>
-		<key>formula</key>
-		<string>→</string>
-		<key>keyTop</key>
-		<string>→</string>
-	</dict>
-	<dict>
-		<key>code</key>
 		<string>Add</string>
 		<key>formula</key>
 		<string>+</string>
@@ -191,10 +183,6 @@
 		<string>CS</string>
 		<key>symbol</key>
 		<string>clear</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>CL</string>
 	</dict>
 	<dict>
 		<key>code</key>
