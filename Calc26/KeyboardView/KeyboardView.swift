@@ -239,11 +239,13 @@ struct KeyView: View {
                     if symbol != "" {
                         Image(systemName: symbol)
                             .imageScale(.large)
-                            .foregroundColor(keyDef?.unitBase==nil ? .black : .brown)
+                            .foregroundColor(keyDef?.unitBase == nil ? .black : .brown)
                     }else{
                         Text(keyTop)
-                            .foregroundColor(keyDef?.unitBase==nil ? .black : .brown)
-                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(keyDef?.unitBase == nil ? .black : .brown)
+                            .font(.system(size: 24,
+                                          weight: (keyDef?.unitBase == nil ||
+                                                   keyDef?.unitBase == keyDef?.code) ? .bold : .light)) //.light.regular.bold.heavy
                             //.shadow(radius: 1)
 
                     }

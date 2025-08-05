@@ -75,7 +75,7 @@ final class CalcViewModel: ObservableObject {
     let TOKEN_UNIT_PREFIX = "@"
     
     
-    // MARK: - Private
+    // MARK: - Private value
 
     // 右括弧")"の不足数
     private var needRightParentheses: Int {
@@ -91,75 +91,14 @@ final class CalcViewModel: ObservableObject {
     
     // MARK: - Public Methods
     
+    
     /// KeyViewからKeyを受け取り listRows と formulaText を更新する
     @MainActor
     func input(_ keyDef: KeyDefinition)
     {
         if let unitBase  = keyDef.unitBase, !unitBase.isEmpty {
             // Unit
-            if let last = tokens.last {
-                if Double(last) != nil { // 数値
-                    var exist_unitBase = ""
-                    // 先に存在する単位の unitBase を取得する
-                    for token in tokens {
-                        if token.hasPrefix(TOKEN_UNIT_PREFIX) {
-                            // UNIT
-                            let code = String(token.dropFirst())
-                            if let def = keyboardViewModel.keyDef(code: code),
-                               let ub = def.unitBase {
-                                exist_unitBase = ub // 既存のunitBase
-                                break
-                            }
-                        }
-                    }
-                    if exist_unitBase == "" || exist_unitBase == unitBase {
-                        if tokens.count < 2 ||
-                            tokens[tokens.count - 2] == "+" ||
-                            tokens[tokens.count - 2] == "-" {
-                            // [*][/]の後には単位禁止
-                            // UNIT 有効
-                            let uc = TOKEN_UNIT_PREFIX + keyDef.code
-                            tokens.append(uc)
-                            formulaUpdate()
-                        }
-                    }
-                }
-                else if last.hasPrefix(TOKEN_UNIT_PREFIX) {
-                    let code = String(last.dropFirst())
-                    if let def = keyboardViewModel.keyDef(code: code),
-                       let ub = def.unitBase,
-                       ub == keyDef.unitBase { //<==Baseが共通であることが変換の必要条件
-                        if tokens.count == 2, code != keyDef.code {
-                            // 単位換算
-                            if var form = tokens.first {
-                                // unitBaseに戻す
-                                if def.code != def.unitBase, let conv = def.unitConv {
-                                    form += conv
-                                }
-                                // 新しい単位に変換する
-                                if keyDef.code != keyDef.unitBase, let rev = keyDef.unitRev {
-                                    form += rev
-                                }
-                                // 計算結果（小数制限丸め処理済み）
-                                let ans = CalcFunc.answer(form)
-                                // New Formula
-                                tokens = []
-                                tokens.append(ans)
-                                // 変換後の単位
-                                let uc = TOKEN_UNIT_PREFIX + keyDef.code
-                                tokens.append(uc)
-                                formulaUpdate()
-                            }
-                        }else{
-                            // 単位変更だけ
-                            let uc = TOKEN_UNIT_PREFIX + keyDef.code
-                            tokens[tokens.count - 1] = uc
-                            formulaUpdate()
-                        }
-
-                    }
-                }
-            }
+            inputUnit(keyDef, unitBase: unitBase)
         }
         else{
             switch keyDef.code {
@@ -305,53 +244,7 @@ final class CalcViewModel: ObservableObject {
                     }
                     
                 case "Ans":
-                    if let last = tokens.last {
-                        if Double(last) != nil || last.hasPrefix(TOKEN_UNIT_PREFIX) {
-                            // last が 数値 or UNIT
-                            // Answer用フォーマット（true:末尾[0]表示と予定[.][)]表示なし、右括弧を閉じる）
-                            formulaUpdate(true)
-                            // tokens からUNITに対応した計算式を生成する
-                            let formula = makeFormula()
-                            // 計算結果（小数制限丸め処理済み）
-                            let answer = CalcFunc.answer(formula)
-                            // 先に存在する単位の unitBase を取得する
-                            var ans_unitBase = ""
-                            for token in tokens {
-                                let code = String(token.dropFirst())
-                                if let def = keyboardViewModel.keyDef(code: code),
-                                   let unitBase = def.unitBase {
-                                    // unitBase 有効
-                                    ans_unitBase = unitBase
-                                    break
-                                }
-                            }
-                            // add History
-                            let row = HistoryRow( tokens: tokens,
-                                                  formula: formulaAttr,
-                                                  answer: SBCD(answer).format(),
-                                                  unitBase: ans_unitBase)
-                            // History追加
-                            historyRows.append(row)
-                            if CalcViewModel.HISTORY_MAX < historyRows.count {
-                                historyRows.removeFirst() // 最初の履歴を削除
-                            }
-                            // New
-                            tokens.removeAll()
-                            tokens.append(answer)
-                            if ans_unitBase != "" {
-                                let ub = TOKEN_UNIT_PREFIX + ans_unitBase
-                                tokens.append(ub)
-                            }
-                            // Answer用フォーマット
-                            formulaUpdate(true)
-                        }
-                        else if 3 < tokens.count {
-                            tokens.removeLast()
-                            formulaUpdate()
-                            // [=] 再帰呼び出し
-                            input(keyDef)
-                        }
-                    }
+                    inputAnswer(keyDef)
 
                 case "Paren": // 前"("後")"の丸括弧を判定して追加する
                     if let last = tokens.last {
@@ -521,9 +414,131 @@ final class CalcViewModel: ObservableObject {
     
     
     
-    // MARK: - Private Methods
+    // MARK: - input Private Methods
     
+    /// UNIT 単位キー入力
+    private func inputUnit(_ keyDef: KeyDefinition, unitBase: String) {
+        if let last = tokens.last {
+            if Double(last) != nil { // 数値
+                var exist_unitBase = ""
+                // 先に存在する単位の unitBase を取得する
+                for token in tokens {
+                    if token.hasPrefix(TOKEN_UNIT_PREFIX) {
+                        // UNIT
+                        let code = String(token.dropFirst())
+                        if let def = keyboardViewModel.keyDef(code: code),
+                           let ub = def.unitBase {
+                            exist_unitBase = ub // 既存のunitBase
+                            break
+                        }
+                    }
+                }
+                if exist_unitBase == "" || exist_unitBase == unitBase {
+                    if tokens.count < 2 ||
+                        tokens[tokens.count - 2] == "+" ||
+                        tokens[tokens.count - 2] == "-" {
+                        // [*][/]の後には単位禁止
+                        // UNIT 有効
+                        let uc = TOKEN_UNIT_PREFIX + keyDef.code
+                        tokens.append(uc)
+                        formulaUpdate()
+                    }
+                }
+            }
+            else if last.hasPrefix(TOKEN_UNIT_PREFIX) {
+                let code = String(last.dropFirst())
+                if let def = keyboardViewModel.keyDef(code: code),
+                   let ub = def.unitBase,
+                   ub == keyDef.unitBase { //<==Baseが共通であることが変換の必要条件
+                    if tokens.count == 2, code != keyDef.code {
+                        // 単位換算
+                        if var form = tokens.first {
+                            // unitBaseに戻す
+                            if def.code != def.unitBase, let conv = def.unitConv {
+                                form += conv
+                            }
+                            // 新しい単位に変換する
+                            if keyDef.code != keyDef.unitBase, let rev = keyDef.unitRev {
+                                form += rev
+                            }
+                            // 計算結果（小数制限丸め処理済み）
+                            let ans = CalcFunc.answer(form)
+                            // New Formula
+                            tokens = []
+                            tokens.append(ans)
+                            // 変換後の単位
+                            let uc = TOKEN_UNIT_PREFIX + keyDef.code
+                            tokens.append(uc)
+                            formulaUpdate()
+                        }
+                    }else{
+                        // 単位変更だけ
+                        let uc = TOKEN_UNIT_PREFIX + keyDef.code
+                        tokens[tokens.count - 1] = uc
+                        formulaUpdate()
+                    }
+                    
+                }
+            }
+        }
+    }
+    
+    /// [=] 答えキー入力
+    private func inputAnswer(_ keyDef: KeyDefinition) {
+        if let last = tokens.last {
+            if Double(last) != nil || last.hasPrefix(TOKEN_UNIT_PREFIX) {
+                // last が 数値 or UNIT
+                // Answer用フォーマット（true:末尾[0]表示と予定[.][)]表示なし、右括弧を閉じる）
+                formulaUpdate(true)
+                // tokens からUNITに対応した計算式を生成する
+                let formula = makeFormula()
+                // 計算結果（小数制限丸め処理済み）
+                let answer = CalcFunc.answer(formula)
+                // 先に存在する単位の unitBase を取得する
+                var ans_unitBase = ""
+                for token in tokens {
+                    let code = String(token.dropFirst())
+                    if let def = keyboardViewModel.keyDef(code: code),
+                       let unitBase = def.unitBase {
+                        // unitBase 有効
+                        ans_unitBase = unitBase
+                        break
+                    }
+                }
+                // add History
+                let row = HistoryRow( tokens: tokens,
+                                      formula: formulaAttr,
+                                      answer: SBCD(answer).format(),
+                                      unitBase: ans_unitBase)
+                // History追加
+                historyRows.append(row)
+                if CalcViewModel.HISTORY_MAX < historyRows.count {
+                    historyRows.removeFirst() // 最初の履歴を削除
+                }
+                // New
+                tokens.removeAll()
+                tokens.append(answer)
+                if ans_unitBase != "" {
+                    let ub = TOKEN_UNIT_PREFIX + ans_unitBase
+                    tokens.append(ub)
+                }
+                // Answer用フォーマット
+                formulaUpdate(true)
+            }
+            else if 3 < tokens.count {
+                tokens.removeLast()
+                formulaUpdate()
+                // [=] 再帰呼び出し
+                input(keyDef)
+            }
+        }
+    }
 
+    
+    
+    // MARK: - Private Methods
+
+    
     /// 小数末尾の"0"を抽出する
     private func extractTrailingZerosAfterDecimal(_ token: String) -> String {
         guard let dotIndex = token.firstIndex(of: NUM_DECIMAL.first!) else {
