@@ -14,6 +14,7 @@ struct CalcRollView: View {
     //let historyViewModel: FHistoryViewModel
     let calcViewModels: [CalcViewModel]
     let onCalcChange: (Int) -> Void
+
     
     // @State 変化あればViewが更新される
     @State private var selectedPage: Int = 0 // 初期で2ページ目（インデックス1）を表示

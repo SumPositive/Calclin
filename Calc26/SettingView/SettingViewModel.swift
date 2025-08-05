@@ -17,8 +17,42 @@ extension Notification.Name {
 let SETTING_decimalDigits_MAX: Double = 10.0
 
 
+@MainActor
 final class SettingViewModel: ObservableObject {
     
+    /// 初期化
+    init() {
+        // iOS設定＞一般＞言語と地域＞数値の書式 をSetting初期値にする
+        let locale = Locale.current
+        log(.info, "iOS設定 小数点記号: \(locale.decimalSeparator ?? "nil")")
+        
+        if let ds = locale.decimalSeparator,
+           let matched = DecimalSeparator.allCases.first(where: { $0.symbol == ds }) {
+            decimalSeparator = matched
+        }
+        log(.info, "iOS設定 桁区切り記号: \(locale.groupingSeparator ?? "nil")")
+        if let gs = locale.groupingSeparator,
+           let matched = GroupSeparator.allCases.first(where: { $0.symbol == gs }) {
+            groupSeparator = matched
+        }
+        
+        // SBCD初期化
+        /// 小数点記号（例: "." or "．"）
+        SBCD_Config.decimalSeparator = decimalSeparator.symbol
+        /// 小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する）
+        SBCD_Config.decimalDigits = 3
+        /// 小数部の桁数まで0埋めする／false=末尾0削除する
+        SBCD_Config.decimalTrailZero = false  // 「F」小数末尾0可変
+        /// 丸め方法（R54 = 四捨五入 など）
+        SBCD_Config.decimalRoundType  = .R55 // 五捨五超入　偶数丸め
+        
+        /// 桁区切り記号（例: "," or "，"）
+        SBCD_Config.groupSeparator = groupSeparator.symbol
+        /// 桁区切りの方式（3桁区切り、4桁区切り、インド式など）
+        SBCD_Config.groupType = .G3
+    }
+    
+
     /// 丸めタイプ　　　PickerデータソースにするためCaseIterable, Identifiableに準拠
     enum RoundType: String, CaseIterable, Identifiable {
         // この順序（.rawValue）は、Picker等への表示順になる

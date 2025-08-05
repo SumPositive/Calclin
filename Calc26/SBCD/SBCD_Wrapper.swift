@@ -26,13 +26,25 @@ struct SBCD_Config {
     /// 小数：丸めタイプ
     enum DecimalRoundType: Int {
         // この順序（.rawValue）は、C-func:stringRounding.iTypeの値と一致すること
-        case Rup    = 0 // 切り上げ
+        case Rup    = 0 // 切り上げ （絶対値型）
+                        // 常に無限遠点へ近づくことになるから「無限大への丸め」と言われる
+                        //  [RP+1]以降に0でない数値があれば、[RP]++ する
         case Rplus      // 正方向丸め
-        case R54        // 四捨五入
+                        // 常に増えるから「正の無限大への丸め」と言われる
+                        // (+)絶対値切上　(-)切捨
+        case R54        // 四捨五入 （絶対値型）[JIS Z 8401 規則Ｂ]
+                        // [RP+1] >= 5 ならば、[RP]++ する
         case R55        // 五捨五超入　偶数丸め
-        case R65        // 五捨六入
+                        // 「最近接偶数への丸め」[JIS Z 8401 規則Ａ] （偶数丸め、JIS丸め、ISO丸め、銀行家の丸め）
+                        // [RP]が偶数で、[RP+1]以降が5より大きいならば [RP]++ する
+                        // [RP]が奇数で、[RP+1]以降が5以上ならば [RP]++ する
+        case R65        // 五捨六入 （絶対値型）
+                        // [RP+1] >= 6 ならば、[RP]++ する
         case Rminus     // 負方向丸め
-        case Rdown      // 切り捨て（丸めない）
+                        // 常に減るから「負の無限大への丸め」と言われる
+                        // (+)切捨　(-)絶対値切上
+        case Rdown      // 切り捨て（丸めない）（絶対値型）
+                        // 常に0に近づくことになるから「0への丸め」と言われる
     }
     static var decimalRoundType: DecimalRoundType = .Rdown
     /// 小数桁数まで0埋めする／false=末尾0削除する
