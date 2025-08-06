@@ -59,7 +59,7 @@ struct ContentView: View {
 
                     Spacer()
                     
-                    Text("CalcRoll")
+                    Text(APP_NAME)
                         .font(.headline)
 
                     Spacer()

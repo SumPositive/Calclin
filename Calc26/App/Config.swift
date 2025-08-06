@@ -11,6 +11,9 @@ import Foundation
 // MARK: - Global let value
 // 全モジュールで参照される固定値(let) （#define 同様の使い方）
 
+
+let APP_NAME = "カルメモ"
+
 // 入力中の最大桁数＝整数桁＋小数桁（小数点は含まない）！！！入力中は小数桁制限丸め処理しない
 let CALC_PRECISION_MAX: Int = 30  // <= SBCD_PRECISION/2 = 60/2
 
