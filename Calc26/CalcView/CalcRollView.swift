@@ -74,22 +74,27 @@ struct CalcRollView: View {
                                     onCalcChange(index)
                                 }
                             }
-                            .onTapGesture(count: 2) { location in
-                                // ダブルタップで拡大（1ページにする）、縮小（ページ増加）
-                                withAnimation {
-                                    if showCount == 1 {
-                                        showStart = 0
-                                        showCount = calcViewModels.count
-                                    }else{
-                                        if index != selectedPage {
-                                            selectedPage = index
-                                            onCalcChange(index)
+                            //.onTapGesture(count: 2) { location in
+                            // 上ではListが埋まったとき無視されるため下のように対策
+                            .contentShape(Rectangle())
+                            .highPriorityGesture( // 親ビューで優先的に処理する。Listへ伝えない
+                                TapGesture(count: 2).onEnded {
+                                    // ダブルタップで拡大（1ページにする）、縮小（ページ増加）
+                                    withAnimation {
+                                        if showCount == 1 {
+                                            showStart = 0
+                                            showCount = calcViewModels.count
+                                        } else {
+                                            if index != selectedPage {
+                                                selectedPage = index
+                                                onCalcChange(index)
+                                            }
+                                            showStart = selectedPage
+                                            showCount = 1
                                         }
-                                        showStart = selectedPage
-                                        showCount = 1
                                     }
                                 }
-                            }
+                            )
                     }
                 }
                 .offset(x: -CGFloat(showStart) * geometry.size.width / CGFloat(showCount))
