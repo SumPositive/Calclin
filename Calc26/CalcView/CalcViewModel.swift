@@ -560,7 +560,7 @@ final class CalcViewModel: ObservableObject {
                 let answer = CalcFunc.answer(formula)
                 if Double(answer) == nil {
                     // 数値でない ＞ERROR メッセージをToastで表示
-                    keyboardViewModel.setting.toast(answer)
+                    Manager.shared.toast(answer)
                     // 何も変えずに戻る
                     return
                 }

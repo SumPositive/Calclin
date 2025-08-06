@@ -47,3 +47,4 @@ func log(_ level: LogLevel,
     let fileName = (file as NSString).lastPathComponent
     print("\(fileName)(\(line)) \(function) \(level.prefix) \(message)")
 }
+

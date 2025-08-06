@@ -187,10 +187,10 @@ final class KeyboardViewModel: ObservableObject {
             let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
                 .appendingPathComponent("keyboard.json")
             try data.write(to: url)
-            setting.toast("保存しました")
+            Manager.shared.toast("保存しました")
         } catch {
             log(.error, "書き込み失敗: \(error)")
-            setting.toast("できません", wait: 2.0)
+            Manager.shared.toast("できません", wait: 2.0)
         }
     }
     // JSONファイルに保存した配置に戻す
@@ -204,11 +204,11 @@ final class KeyboardViewModel: ObservableObject {
                decoded.appVersion == "2.0.0",
                let kb = decoded.keyboard_1 {
                 keyboard = kb
-                setting.toast("保存した配置に戻しました", wait: 3.0)
+                Manager.shared.toast("保存した配置に戻しました", wait: 3.0)
             }
         } catch {
             log(.error, "読み込み失敗: \(error)")
-            setting.toast("できません", wait: 2.0)
+            Manager.shared.toast("できません", wait: 2.0)
         }
     }
     
@@ -225,11 +225,11 @@ final class KeyboardViewModel: ObservableObject {
                decoded.appVersion == "2.0.0",
                let kb = decoded.keyboard_1 {
                 keyboard = kb
-                if isToast {setting.toast("初期の配置に\n戻しました", wait: 3.0)}
+                if isToast {Manager.shared.toast("初期の配置に\n戻しました", wait: 3.0)}
             }
         } catch {
             log(.error, "読み込み失敗: \(error)")
-            if isToast {setting.toast("できません", wait: 2.0)}
+            if isToast {Manager.shared.toast("できません", wait: 2.0)}
         }
     }
     

@@ -140,17 +140,18 @@ final class SettingViewModel: ObservableObject {
     // フォント倍率
     @Published var numberFontScale: Double = 1.5
  
-    
-    // Toastメッセージ表示　　ToastViewはContentView上に配置
-    @Published var showToast = false
-    @Published var toastMessage = ""
-    func toast(_ message: String, wait: Double = 2) {
-        self.showToast = true
-        self.toastMessage = message
-        DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
-            self.showToast = false
-        }
-    }
+
+// Manager へ移行
+//    // Toastメッセージ表示　　ToastViewはContentView上に配置
+//    @Published var showToast = false
+//    @Published var toastMessage = ""
+//    func toast(_ message: String, wait: Double = 2) {
+//        self.showToast = true
+//        self.toastMessage = message
+//        DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
+//            self.showToast = false
+//        }
+//    }
     
     
 }

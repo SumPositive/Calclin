@@ -12,6 +12,7 @@ import SafariServices
 struct ContentView: View {
     @StateObject private var setting: SettingViewModel  // 必要なViewに.environmentObject(setting)で注入する
     @StateObject private var keyboardViewModel: KeyboardViewModel
+    @StateObject private var manager = Manager.shared  // シングルトン生成
     private var calcViewModels: [CalcViewModel]
 
     init() {
@@ -170,10 +171,10 @@ struct ContentView: View {
             }
             
             //(ZStack 3) ToastView表示
-            if setting.showToast {
+            if manager.showToast {
                 VStack {
                     Spacer()
-                    ToastView(message: setting.toastMessage)
+                    ToastView(message: manager.toastMessage)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                         .padding(.top, 50)
                     Spacer()
