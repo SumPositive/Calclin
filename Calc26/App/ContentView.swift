@@ -141,33 +141,53 @@ struct ContentView: View {
             }
 
             //(ZStack 2) PopupKeyListView表示
-            if let popup = keyboardViewModel.popupInfo {
-                // ポップアップ外部タップで閉じるための半透明背景レイヤー
-                Color.black.opacity(0.2) // タップ判定される
-                    .ignoresSafeArea()
-                    .zIndex(2)
-                    .onTapGesture {
-                        // ポップアップを閉じる
-                        keyboardViewModel.popupInfo = nil
-                    }
-                // ポップアップを開く
-                PopupKeyListView(viewModel: keyboardViewModel) { selectedKeyDef in
-                    log(.info, "PopupListView selected: \(selectedKeyDef.code)")
-                    keyboardViewModel.popupInfo = nil
-                    // 最終選択を記録
-                    keyboardViewModel.prevSelectKeyCode = selectedKeyDef.code
-                    // keyboardを更新する
-                    if popup.page < keyboardViewModel.keyboard.count,
-                       popup.index < keyboardViewModel.keyboard[popup.page].count {
-                        // keyboardを更新する
-                        keyboardViewModel.keyboard[popup.page][popup.index] = selectedKeyDef.code
-                        // 都度、不揮発記録にkeyboardを保存する
-                        keyboardViewModel.saveKeyboard()
-                    }
-                }
-                .position(popup.position) // 画面全体の座標で表示
-                .zIndex(2)
+            GeometryReader { geometry in
+                let screenSize = geometry.size
+                let popupSize = CGSize(width: screenSize.width - 40, height: 400)
+                
+                if let popup = keyboardViewModel.popupInfo {
+                    //
 
+                    // ポップアップ外部タップで閉じるための半透明背景レイヤー
+                    Color.black.opacity(0.2) // タップ判定される
+                        .ignoresSafeArea()
+                        .zIndex(2)
+                        .onTapGesture {
+                            // ポップアップを閉じる
+                            keyboardViewModel.popupInfo = nil
+                        }
+                    // ポップアップを開く
+                    PopupKeyListView(viewModel: keyboardViewModel,
+                                     popupSize: popupSize) { selectedKeyDef in
+                        log(.info, "PopupListView selected: \(selectedKeyDef.code)")
+                        keyboardViewModel.popupInfo = nil
+                        // 最終選択を記録
+                        keyboardViewModel.prevSelectKeyCode = selectedKeyDef.code
+                        // keyboardを更新する
+                        if popup.page < keyboardViewModel.keyboard.count,
+                           popup.index < keyboardViewModel.keyboard[popup.page].count {
+                            // keyboardを更新する
+                            keyboardViewModel.keyboard[popup.page][popup.index] = selectedKeyDef.code
+                            // 都度、不揮発記録にkeyboardを保存する
+                            keyboardViewModel.saveKeyboard()
+                        }
+                    }
+                    .zIndex(2)
+                    //.position(popup.position) // 画面全体の座標で表示
+                    .frame(width: popupSize.width, height: popupSize.height)
+                    .offset({
+                        var x = popup.position.x - popupSize.width / 2
+                        var y = popup.position.y - popupSize.height
+                        // 横方向はみ出しチェック
+                        if x < 0 { x = 0 }
+                        if x + popupSize.width > screenSize.width {
+                            x = screenSize.width - popupSize.width
+                        }
+                        // 縦方向はみ出しチェック
+                        if y < 0 { y = 0 }
+                        return CGSize(width: x, height: y)
+                    }())
+                }
             }
             
             //(ZStack 3) ToastView表示

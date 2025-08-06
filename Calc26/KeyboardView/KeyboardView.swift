@@ -279,78 +279,83 @@ extension CGRect {
 /// ポップアップ・キー定義一覧
 struct PopupKeyListView: View {
     @ObservedObject var viewModel: KeyboardViewModel
+    let popupSize: CGSize
     let onSelect: (KeyDefinition) -> Void
-
-    @State private var selectedKeyCode: String = ""  // 選択状態のキーコードを管理
-
+    
+    @State private var selectedKeyCode: String = ""
+    
     var body: some View {
-        VStack(spacing: 0) {
+        //GeometryReader { geometry in
+            let keyWidth: Int = 75
+            
             VStack(spacing: 0) {
-                Text("キー定義")
-                    .padding(4.0)
-                // 吹き出し本体
-                ScrollViewReader { proxy in
-                    List {
-                        ForEach(viewModel.keyDefs, id:\.self) { keyDef in
-                            ZStack {
-                                if let symbol = keyDef.symbol {
-                                    // SF Symbol
-                                    Image(systemName: symbol)
-                                        .imageScale(.large)
-                                }else{
-                                    let keyTop = keyDef.keyTop ?? keyDef.code
-                                    Text(keyTop)
-                                        .font(.system(size: 24, weight: .bold))
+                VStack(spacing: 0) {
+                    Text("キー定義")
+                        .padding(4.0)
+                    
+                    // グリッドやスクロールなどここに配置
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4),
+                                                     count: Int(popupSize.width)/keyWidth), spacing: 4) {
+                                ForEach(viewModel.keyDefs, id: \.self) { keyDef in
+                                    let isSelected = selectedKeyCode == keyDef.code
+                                    ZStack {
+                                        if let symbol = keyDef.symbol {
+                                            Image(systemName: symbol)
+                                                .imageScale(.large)
+                                        } else {
+                                            let keyTop = keyDef.keyTop ?? keyDef.code
+                                            Text(keyTop)
+                                                .font(.system(size: 20, weight: .bold))
+                                        }
+                                    }
+                                    .frame(height: 44)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(6)
+                                    .background(
+                                        isSelected ? Color.accentColor.opacity(0.3) : Color.white
+                                    )
+                                    .foregroundColor(.accentColor)
+                                    .cornerRadius(6)
+                                    .id(keyDef.code)
+                                    .onTapGesture {
+                                        onSelect(keyDef)
+                                    }
                                 }
                             }
-                            .frame(height: 44)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .listRowSeparator(.hidden) // 既定の下線を非表示
-                            .listRowInsets(EdgeInsets()) // デフォルトの余白を除去
-                            .padding(.vertical, 2)  // 上下の余白
-                            .padding(.horizontal, 4)// 左右の余白
-                            .foregroundColor(.accentColor)
-                            .background(
-                                selectedKeyCode == keyDef.code
-                                ? Color.accentColor.opacity(0.3) // 初期選択色
-                                : Color.white
-                            )
-                            .id(keyDef.code) // ScrollViewReaderのための id を指定
-                            .onTapGesture {
-                                onSelect(keyDef)
-                            }
+                            .padding(8)
                         }
-                    }
-                    .listStyle(.plain)
-                    .environment(\.defaultMinListRowHeight, 16) // デフォルトの最小行高を縮小
-                    .onAppear {
-                        if let pi = viewModel.popupInfo {
-                            selectedKeyCode = pi.keyCode // 初期選択code
-                            if selectedKeyCode.isEmpty {
-                                selectedKeyCode = viewModel.prevSelectKeyCode
-                            }else{
-                                viewModel.prevSelectKeyCode = selectedKeyCode
-                            }
-                            // 表示時に中央スクロール
-                            DispatchQueue.main.async {
-                                proxy.scrollTo(selectedKeyCode, anchor: .center)
+                        .onAppear {
+                            if let pi = viewModel.popupInfo {
+                                selectedKeyCode = pi.keyCode
+                                if selectedKeyCode.isEmpty {
+                                    selectedKeyCode = viewModel.prevSelectKeyCode
+                                } else {
+                                    viewModel.prevSelectKeyCode = selectedKeyCode
+                                }
+                                
+                                DispatchQueue.main.async {
+                                    proxy.scrollTo(selectedKeyCode, anchor: .center)
+                                }
                             }
                         }
                     }
                 }
+                .background(Color.white)
+                .cornerRadius(10)
+                
+                Triangle()
+                    .fill(Color.white)
+                    .frame(width: 30, height: 15)
+                    .rotationEffect(.degrees(180))
             }
-            .background(.white)
-            .cornerRadius(10.0)
-            .padding(0) // 吹き出しとの間隔(0)
-            // 吹き出しの三角形部分（下向き）
-            Triangle()
-                .fill(.white)
-                .frame(width: 30, height: 15)
-                .rotationEffect(.degrees(180)) // 上下反転
-        }
-        .frame(width: 90, height: 500, alignment: .bottom)
+            //.frame(width: popupSize.width, height: popupSize.height, alignment: .bottom)
+            //.position(x: geometry.size.width / 2, y: geometry.size.height / 2) // 中央に配置（必要に応じて）
+        //}
     }
 }
+
 
 struct Triangle: Shape {
     func path(in rect: CGRect) -> Path {
