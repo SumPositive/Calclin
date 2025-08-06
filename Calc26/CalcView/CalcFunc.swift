@@ -46,15 +46,15 @@ final class CalcFunc {
     static func answer(_ formula: String) -> String {
         if formula.count == 0 {
             log(.warning, "formula: なし")
-            return ""
+            return "No data"
         }
-        if formula.count <= 2 {
-            log(.warning, "formula: \(formula) 式を構成できない")
+        if formula.count <= 1 {
+            log(.debug, "formula: \(formula) 式を構成できない（数字だけ）")
             return formula
         }
         if FORMULA_LENGTH_MAX <= formula.count {
             log(.warning, "formula: FORMULA_MAX_LENGTH=\(FORMULA_LENGTH_MAX) OVER")
-            return "OVER"
+            return "Too long"
         }
 
         log(.info, "formula: \(formula)")

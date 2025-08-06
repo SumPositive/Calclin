@@ -558,6 +558,12 @@ final class CalcViewModel: ObservableObject {
                 let formula = makeFormula()
                 // 計算結果（小数制限丸め処理済み）
                 let answer = CalcFunc.answer(formula)
+                if Double(answer) == nil {
+                    // 数値でない ＞ERROR メッセージをToastで表示
+                    keyboardViewModel.setting.toast(answer)
+                    // 何も変えずに戻る
+                    return
+                }
                 // 先に存在する単位の unitBase を取得する
                 var ans_unitBase = ""
                 var ans_unitKeyTop = ""
@@ -584,7 +590,7 @@ final class CalcViewModel: ObservableObject {
                     historyRows.removeFirst() // 最初の履歴を削除
                 }
                 // New
-                tokens.removeAll()
+                tokens = [] //.removeAll()
                 tokens.append(answer)
                 if ans_unitBase != "" {
                     let ub = TOKEN_UNIT_PREFIX + ans_unitBase
