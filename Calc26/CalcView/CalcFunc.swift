@@ -8,8 +8,6 @@
 import Foundation
 
 
-let FORMULA_MAX_LENGTH = 200
-
 
 /// 数式処理と計算ロジックを提供するユーティリティ
 final class CalcFunc {
@@ -17,12 +15,12 @@ final class CalcFunc {
     // 数値構成文字
     static let numberChars = SBCD.VA_NUMBER + SBCD.VA_MINUS + SBCD.VA_DECIMAL
     // 演算子構成文字
-    static let operatorChars = "+-*/×÷()√" // [×,÷]は計算式では許可
-    // スペース文字
-    static let spaceChar = " "
+    static let operatorChars = "+-*/×÷√∛()" // [×,÷]は計算式では許可
+//    // スペース文字
+//    static let spaceChar = " "
     // 計算式に許可された文字セット
     static let formulaCharacters = CharacterSet(
-        charactersIn: numberChars + operatorChars + spaceChar)
+        charactersIn: numberChars + operatorChars)
 
     
     /*
@@ -54,8 +52,8 @@ final class CalcFunc {
             log(.warning, "formula: \(formula) 式を構成できない")
             return formula
         }
-        if FORMULA_MAX_LENGTH <= formula.count {
-            log(.warning, "formula: FORMULA_MAX_LENGTH=\(FORMULA_MAX_LENGTH) OVER")
+        if FORMULA_LENGTH_MAX <= formula.count {
+            log(.warning, "formula: FORMULA_MAX_LENGTH=\(FORMULA_LENGTH_MAX) OVER")
             return "OVER"
         }
 
@@ -85,14 +83,9 @@ final class CalcFunc {
         let operators: Set<Character> = Set(CalcFunc.operatorChars)
         let minusNumbers: Set<Character> = Set("+-*/×÷(")
 
-//        // 計算式では許可されている[×,÷]を[*,/]に置換する
-//        let formula = formula
-//            .replacingOccurrences(of: "×", with: "*")
-//            .replacingOccurrences(of: "÷", with: "/")
-
         for (index, char) in formula.enumerated() {
             if operators.contains(char) {
-                if char == "-" {
+                if char == Character(KD_SUB) {
                     // マイナス記号が符号か演算子かを判定処理する
                     // 先頭ならば符号
                     // "*-" "/-" "+-" "--" "(-" の "-" は符号、以外は演算子だと解釈
@@ -136,13 +129,10 @@ final class CalcFunc {
         
         // 優先順位と結合性の定義
         let opPriority: [String: Int] = [
-            "×": 1, "÷": 1, "*": 1, "/": 1,
-            "+": 2, "-": 2
+            KD_2ROOT: 0, KD_3ROOT: 0,
+            KD_MUL: 1, KD_DIV: 1, KD_MUL_: 1, KD_DIV_: 1,
+            KD_ADD: 2, KD_SUB: 2
         ]
-
-//        let isLeftAss: (String) -> Bool = { op in
-//            return ["+", "-", "*", "/", "×", "÷"].contains(op)
-//        }
 
         // 逆ポーランドスタック
         for token in tokens {
@@ -161,14 +151,14 @@ final class CalcFunc {
                 }
                 ope.append(token)
             }
-            else if token == "(" {
+            else if token == KD_PT_LEFT {
                 ope.append(token)
             }
-            else if token == ")" {
-                while let op = ope.last, op != "(" {
+            else if token == KD_PT_RIGHT {
+                while let op = ope.last, op != KD_PT_LEFT {
                     rpn.append(ope.removeLast())
                 }
-                if ope.last == "(" {
+                if ope.last == KD_PT_LEFT {
                     ope.removeLast()
                 }
             }
@@ -192,38 +182,78 @@ final class CalcFunc {
         var stack: [SBCD] = []
         for token in rpnTokens {
             switch token {
-            case "+":
-                let b = stack.removeLast()
-                let a = stack.removeLast()
-                    stack.append(a.add(b))
+                case KD_ADD:
+                    if 2 <= stack.count {
+                        let b = stack.removeLast()
+                        let a = stack.removeLast()
+                        stack.append(a.add(b))
+                    }else{
+                        log(.error, "RPN stack empty:\(stack) token:\(token)")
+                        return SBCD("-0")
+                    }
                     
-            case "-":
-                let b = stack.removeLast()
-                let a = stack.removeLast()
-                    stack.append(a.subtract(b))
-
-            case "*", "×":
-                let b = stack.removeLast()
-                let a = stack.removeLast()
-                    stack.append(a.multiply(b))
+                case KD_SUB:
+                    if 2 <= stack.count {
+                        let b = stack.removeLast()
+                        let a = stack.removeLast()
+                        stack.append(a.subtract(b))
+                    }else{
+                        log(.error, "RPN stack empty:\(stack) token:\(token)")
+                        return SBCD("-0")
+                    }
                     
-            case "/", "÷":
-                let b = stack.removeLast()
-                let a = stack.removeLast()
-                    stack.append(a.divide(b))
+                case KD_MUL, KD_MUL_:
+                    if 2 <= stack.count {
+                        let b = stack.removeLast()
+                        let a = stack.removeLast()
+                        stack.append(a.multiply(b))
+                    }else{
+                        log(.error, "RPN stack empty:\(stack) token:\(token)")
+                        return SBCD("-0")
+                    }
                     
-            case "√":
-                let a = stack.removeLast()
-                    let approx = sqrt(Double(a.value.replacingOccurrences(of: "-", with: "")) ?? 0)
-                    stack.append(SBCD(String(approx)))
+                case KD_DIV, KD_DIV_:
+                    if 2 <= stack.count {
+                        let b = stack.removeLast()
+                        let a = stack.removeLast()
+                        stack.append(a.divide(b))
+                    }else{
+                        log(.error, "RPN stack empty:\(stack) token:\(token)")
+                        return SBCD("-0")
+                    }
                     
-            default:
+                case KD_2ROOT:
+                    if 1 <= stack.count {
+                        let a = stack.removeLast()
+                        let approx = sqrt(Double(a.value.replacingOccurrences(of: KD_SUB, with: "")) ?? 0)
+                        stack.append(SBCD(String(approx)))
+                    }else{
+                        log(.error, "RPN stack empty:\(stack) token:\(token)")
+                        return SBCD("-0")
+                    }
+                    
+                case KD_3ROOT:
+                    if 1 <= stack.count {
+                        let a = stack.removeLast()
+                        let approx = cubeRoot(Double(a.value) ?? 0)
+                        stack.append(SBCD(String(approx)))
+                    }else{
+                        log(.error, "RPN stack empty:\(stack) token:\(token)")
+                        return SBCD("-0")
+                    }
+                    
+                default:
                     stack.append(SBCD(token))
             }
         }
         return stack.first ?? SBCD("0")
     }
-    
+
+    /// 立方根（マイナス対応）
+    static func cubeRoot(_ x: Double) -> Double {
+        return x < 0 ? -pow(-x, 1.0 / 3.0) : pow(x, 1.0 / 3.0)
+    }
+
 }
 
 

@@ -78,8 +78,11 @@ final class KeyboardViewModel: ObservableObject {
     // Popoverで直前に選択したkeyCode（空キーを長押しした時、初期選択に使用する）
     var prevSelectKeyCode: String = ""
     
+    // Cold Start時にキー定義初期化するための揮発性（Cold Start時にfalseに戻る）フラグ
     private var hasLaunched = false
 
+    
+    
     // MARK: - init
 
     init(setting: SettingViewModel) {

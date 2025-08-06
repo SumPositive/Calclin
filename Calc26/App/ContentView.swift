@@ -13,8 +13,6 @@ struct ContentView: View {
     @StateObject private var setting: SettingViewModel  // 必要なViewに.environmentObject(setting)で注入する
     @StateObject private var keyboardViewModel: KeyboardViewModel
     private var calcViewModels: [CalcViewModel]
-    // Calc数
-    let CALC_COUNT: Int = 3
 
     init() {
         let setting = SettingViewModel()
@@ -23,7 +21,7 @@ struct ContentView: View {
         let keyboardViewModel = KeyboardViewModel(setting: setting)
         _keyboardViewModel = StateObject(wrappedValue: keyboardViewModel)
 
-        self.calcViewModels = (0..<CALC_COUNT).map { _ in
+        self.calcViewModels = (0..<CALC_COUNT_MAX).map { _ in
             CalcViewModel(keyboardViewModel: keyboardViewModel)
         }
         log(.info, "init() 1回だけ通ること。もしFormulaViewなどがクリアされるならば再生成されている間違いあり")

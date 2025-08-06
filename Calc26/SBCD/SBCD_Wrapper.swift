@@ -69,8 +69,8 @@ final class SBCD: Equatable {
     static let PRECISION = 60
 
     // self.value 構成文字
-    static let VA_MINUS   = "-"          // [-]符号
-    static let VA_DECIMAL = "."          // [.]小数点
+    static let VA_MINUS   = KD_SUB       // [-]符号
+    static let VA_DECIMAL = KD_DECIMAL   // [.]小数点
     static let VA_NUMBER  = "0123456789" // [0]-[9]数字
 
     // SBCD.プロパティ

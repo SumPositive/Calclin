@@ -84,7 +84,7 @@ struct CustomCell: View {
         VStack(spacing: 0.0) {
             // 計算式 = 答え
             Text({
-                var equal = AttributedString("=")
+                var equal = AttributedString(KD_ANS)
                 equal.foregroundColor = Color.blue //.opacity(0.5)
                 // Answer
                 let answer = AttributedString(row.answer)

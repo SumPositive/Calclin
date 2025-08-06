@@ -25,7 +25,7 @@ struct FormulaView: View {
                     Text( viewModel.formulaAttr )
                         .font(.system(size: 24.0 * setting.numberFontScale,
                                       weight: .bold))
-                        .foregroundStyle(viewModel.isAnswerMode ?  Color.purple :  Color.black)
+                        .foregroundStyle(viewModel.isAnswerMode ?  Color.purple :  Color.primary)
                         .opacity(colorScheme == .dark ? 0.60 : 1.0)
                         .lineLimit(1)
                         .fixedSize() // 高さと幅を最小限にする

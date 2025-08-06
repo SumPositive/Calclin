@@ -13,9 +13,6 @@ extension Notification.Name {
     static let SBCD_Config_Change = Notification.Name("SBCD_Config_Change")
 }
 
-// 小数部の表示最大桁数（この桁まで可変、0埋めしない）
-let SETTING_decimalDigits_MAX: Double = 10.0
-
 
 @MainActor
 final class SettingViewModel: ObservableObject {
