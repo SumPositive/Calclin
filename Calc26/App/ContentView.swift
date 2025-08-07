@@ -143,11 +143,9 @@ struct ContentView: View {
             //(ZStack 2) PopupKeyListView表示
             GeometryReader { geometry in
                 let screenSize = geometry.size
-                let popupSize = CGSize(width: screenSize.width - 40, height: 400)
-                
+                let popupWidth = screenSize.width - 20
+                // popupInfo.positionを起点に最大の領域に展開させる
                 if let popup = keyboardViewModel.popupInfo {
-                    //
-
                     // ポップアップ外部タップで閉じるための半透明背景レイヤー
                     Color.black.opacity(0.2) // タップ判定される
                         .ignoresSafeArea()
@@ -158,7 +156,8 @@ struct ContentView: View {
                         }
                     // ポップアップを開く
                     PopupKeyListView(viewModel: keyboardViewModel,
-                                     popupSize: popupSize) { selectedKeyDef in
+                                     popupWidth: popupWidth,
+                                     position: popup.position) { selectedKeyDef in
                         log(.info, "PopupListView selected: \(selectedKeyDef.code)")
                         keyboardViewModel.popupInfo = nil
                         // 最終選択を記録
@@ -174,17 +173,22 @@ struct ContentView: View {
                     }
                     .zIndex(2)
                     //.position(popup.position) // 画面全体の座標で表示
-                    .frame(width: popupSize.width, height: popupSize.height)
+                    .frame(width: popupWidth,
+                           height: popup.position.y - 90)
                     .offset({
-                        var x = popup.position.x - popupSize.width / 2
-                        var y = popup.position.y - popupSize.height
+                        let popupHeight = popup.position.y - 10
+                        var x = popup.position.x - popupWidth / 2
+                        var y = popup.position.y - popupHeight - 50
+                        
+                        log(.info, "geometry W\(geometry.size.width) H\(geometry.size.height)")
+                        log(.info, "H\(screenSize.height) Y\(popup.position.y)   y\(y)")
                         // 横方向はみ出しチェック
-                        if x < 0 { x = 0 }
-                        if x + popupSize.width > screenSize.width {
-                            x = screenSize.width - popupSize.width
+                        if x < 10 { x = 10 }
+                        if screenSize.width < x + popupWidth  {
+                            x = screenSize.width - popupWidth - 10
                         }
                         // 縦方向はみ出しチェック
-                        if y < 0 { y = 0 }
+                        if y < 10 { y = 10 }
                         return CGSize(width: x, height: y)
                     }())
                 }

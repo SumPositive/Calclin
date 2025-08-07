@@ -255,8 +255,7 @@ struct KeyView: View {
                 LongPressGesture(minimumDuration: 0.6) // 長押し
                     .onEnded { _ in
                         isLongTapped = true
-                        var global = geo.frame(in: .global).center
-                        global.y -= 325
+                        let global = geo.frame(in: .global).center //.global:全画面座標系
                         viewModel.popupInfo = (
                             page: self.page,
                             index: self.index,
@@ -279,80 +278,78 @@ extension CGRect {
 /// ポップアップ・キー定義一覧
 struct PopupKeyListView: View {
     @ObservedObject var viewModel: KeyboardViewModel
-    let popupSize: CGSize
+    let popupWidth: CGFloat
+    let position: CGPoint
     let onSelect: (KeyDefinition) -> Void
-    
+
     @State private var selectedKeyCode: String = ""
     
     var body: some View {
-        //GeometryReader { geometry in
-            let keyWidth: Int = 75
-            
+        let keyWidth: Int = 75
+        
+        VStack(spacing: 0) {
             VStack(spacing: 0) {
-                VStack(spacing: 0) {
-                    Text("キー定義")
-                        .padding(4.0)
-                    
-                    // グリッドやスクロールなどここに配置
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4),
-                                                     count: Int(popupSize.width)/keyWidth), spacing: 4) {
-                                ForEach(viewModel.keyDefs, id: \.self) { keyDef in
-                                    let isSelected = selectedKeyCode == keyDef.code
-                                    ZStack {
-                                        if let symbol = keyDef.symbol {
-                                            Image(systemName: symbol)
-                                                .imageScale(.large)
-                                        } else {
-                                            let keyTop = keyDef.keyTop ?? keyDef.code
-                                            Text(keyTop)
-                                                .font(.system(size: 20, weight: .bold))
-                                        }
+                Text("キー定義")
+                    .padding(4.0)
+                
+                // グリッドやスクロールなどここに配置
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4),
+                                                 count: Int(popupWidth)/keyWidth), spacing: 4) {
+                            ForEach(viewModel.keyDefs, id: \.self) { keyDef in
+                                let isSelected = selectedKeyCode == keyDef.code
+                                ZStack {
+                                    if let symbol = keyDef.symbol {
+                                        Image(systemName: symbol)
+                                            .imageScale(.large)
+                                    } else {
+                                        let keyTop = keyDef.keyTop ?? keyDef.code
+                                        Text(keyTop)
+                                            .font(.system(size: 20, weight: .bold))
                                     }
-                                    .frame(height: 44)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(6)
-                                    .background(
-                                        isSelected ? Color.accentColor.opacity(0.3) : Color.white
-                                    )
-                                    .foregroundColor(.accentColor)
-                                    .cornerRadius(6)
-                                    .id(keyDef.code)
-                                    .onTapGesture {
-                                        onSelect(keyDef)
-                                    }
+                                }
+                                .frame(height: 44)
+                                .frame(maxWidth: .infinity)
+                                .padding(6)
+                                .background(
+                                    isSelected ? Color.accentColor.opacity(0.3) : Color.white
+                                )
+                                .foregroundColor(.accentColor)
+                                .cornerRadius(6)
+                                .id(keyDef.code)
+                                .onTapGesture {
+                                    onSelect(keyDef)
                                 }
                             }
-                            .padding(8)
                         }
-                        .onAppear {
-                            if let pi = viewModel.popupInfo {
-                                selectedKeyCode = pi.keyCode
-                                if selectedKeyCode.isEmpty {
-                                    selectedKeyCode = viewModel.prevSelectKeyCode
-                                } else {
-                                    viewModel.prevSelectKeyCode = selectedKeyCode
-                                }
-                                
-                                DispatchQueue.main.async {
-                                    proxy.scrollTo(selectedKeyCode, anchor: .center)
-                                }
+                                                 .padding(8)
+                    }
+                    .onAppear {
+                        if let pi = viewModel.popupInfo {
+                            selectedKeyCode = pi.keyCode
+                            if selectedKeyCode.isEmpty {
+                                selectedKeyCode = viewModel.prevSelectKeyCode
+                            } else {
+                                viewModel.prevSelectKeyCode = selectedKeyCode
+                            }
+                            
+                            DispatchQueue.main.async {
+                                proxy.scrollTo(selectedKeyCode, anchor: .center)
                             }
                         }
                     }
                 }
-                .background(Color.white)
-                .cornerRadius(10)
-                
-                Triangle()
-                    .fill(Color.white)
-                    .frame(width: 30, height: 15)
-                    .rotationEffect(.degrees(180))
             }
-            //.frame(width: popupSize.width, height: popupSize.height, alignment: .bottom)
-            //.position(x: geometry.size.width / 2, y: geometry.size.height / 2) // 中央に配置（必要に応じて）
-        //}
+            .background(Color.white)
+            .cornerRadius(10)
+            
+            Triangle()
+                .fill(Color.white)
+                .frame(width: 30, height: 15)
+                .rotationEffect(.degrees(180))
+                .offset(CGSize(width: position.x - popupWidth/2.0 - 30/2.0, height: 0))
+        }
     }
 }
 
