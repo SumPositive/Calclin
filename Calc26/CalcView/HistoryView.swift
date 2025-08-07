@@ -51,6 +51,15 @@ struct HistoryView: View {
                         }
                         .tint(.blue) // スワイプ背景色
 
+                        Button() {
+                            // メモする
+                            viewModel.memo(row)
+                        } label: {
+                            //Text("メモ").font(.system(size: 44.0, weight: .bold))
+                            Image("edit_rev").imageScale(.large)
+                        }
+                        .tint(.purple) // スワイプ背景色
+                        
                     }
                     .onTapGesture(count: 2) { // ダブルタップ時の処理
                         // 式コピペ　row.tokenからformulaTextを再現する
@@ -88,16 +97,26 @@ struct CustomCell: View {
                 equal.foregroundColor = Color.blue //.opacity(0.5)
                 // Answer
                 let answer = AttributedString(row.answer)
-                // UNIT.keyTop ?? .code
-                var unitKeyTop = AttributedString(row.unitKeyTop)
-                unitKeyTop.foregroundColor = Color.brown //.opacity(0.5)
                 // Formula
-                var attrStr = row.formula + equal + answer + unitKeyTop
+                var attrStr = row.formula + equal + answer
+                // UNIT.keyTop ?? .code
+                if let kt = row.unitKeyTop {
+                    var unitKt = AttributedString(kt)
+                    unitKt.foregroundColor = Color.brown //.opacity(0.5)
+                    attrStr += unitKt
+                }
                 // 演算子の前で改行させるための処理
                 for index in attrStr.characters.indices.reversed() {
                     if lineFeedChars.contains(attrStr.characters[index]) {
                         attrStr.insert(zeroWidthSpace, at: index)
                     }
+                }
+                // メモ
+                if let memo = row.memo {
+                    var memoAt = AttributedString("\n" + memo)
+                    memoAt.foregroundColor = Color.purple.opacity(0.7)
+                    memoAt.font = .system(size: fontSize * 0.8 * setting.numberFontScale, weight: .light)
+                    attrStr += memoAt
                 }
                 return attrStr
             }())

@@ -37,7 +37,8 @@ final class CalcViewModel: ObservableObject {
         var tokens: [String] = []   // 式コピペのため記録する
         var formula: AttributedString = ""
         var answer: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
-        var unitKeyTop: String = "" //= .keyTop ?? .code
+        var unitKeyTop: String?     //= .keyTop ?? .code
+        var memo: String?           // メモ
     }
     @Published var historyRows: [HistoryRow] = []
 
@@ -271,6 +272,12 @@ final class CalcViewModel: ObservableObject {
         tokens = []
         tokens.append(SBCD(row.answer).value)
         formulaUpdate() //(true)
+    }
+
+    // HistoryView // メモする
+    func memo(_ row: HistoryRow) {
+        // ポップアップでMemoViewを表示する
+        
     }
 
     /// tokens からUNITに対応した計算式を生成する
@@ -566,7 +573,7 @@ final class CalcViewModel: ObservableObject {
                 }
                 // 先に存在する単位の unitBase を取得する
                 var ans_unitBase = ""
-                var ans_unitKeyTop = ""
+                var ans_unitKeyTop: String?
                 for token in tokens {
                     let code = String(token.dropFirst())
                     if let def = keyboardViewModel.keyDef(code: code),
@@ -583,7 +590,8 @@ final class CalcViewModel: ObservableObject {
                 let row = HistoryRow( tokens: tokens,
                                       formula: formulaAttr,
                                       answer: SBCD(answer).format(),
-                                      unitKeyTop: ans_unitKeyTop)
+                                      unitKeyTop: ans_unitKeyTop,
+                                      memo: nil)
                 // History追加
                 historyRows.append(row)
                 if CALC_HISTORY_MAX < historyRows.count {
