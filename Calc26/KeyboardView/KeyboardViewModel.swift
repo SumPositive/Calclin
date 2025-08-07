@@ -11,19 +11,24 @@ import SwiftUI
 
 // KeyDefinition.plist 構造
 struct KeyDefinition: Codable, Hashable {
-    let code: String      //必須!固定! calcViewModel.inputに与える文字　nilならばkeyTopを使う
+    let code: String        //必須!固定! calcViewModel.inputに与える文字　nilならばkeyTopを使う
     //------------------------
-    let formula: String?  // 計算式に追加する文字　nilならば計算式に追加しない（計算対象外キーである）
-    let keyTop: String?   // キートップ表示文字　nilならばcodeを使う
-    let symbol: String?   // SF Symbol Name
-    let unitBase: String? //=nil:単位処理しない
-    let unitConv: String?
-    let unitRev: String?
+    let hidden: Bool?       // true:非表示＆無効
+    let formula: String?    // 計算式に追加する文字　nilならば計算式に追加しない（計算対象外キーである）
+    let keyTop: String?     // キートップ表示文字　nilならばcodeを使う
+    let symbol: String?     // SF Symbol Name
+    let unitBase: String?   // 基準単位　 =nil:単位処理しない
+    let unitConv: String?   // 単位から基準単位への変換式  [km]"*1000"=>[m]
+    let unitRev: String?    // 基準単位から単位への変換式  [m]"/1000"=>[km]
+    //------------------------
+    //  memo: String?       // メモ コメント 覚書
     //------------------------
     init(code: String,
+         hidden: Bool? = false,
          formula: String? = nil, keyTop: String? = nil, symbol: String? = nil,
          unitBase: String? = nil, unitConv: String? = nil, unitRev: String? = nil) {
         self.code = code
+        self.hidden = hidden
         self.formula = formula
         self.keyTop = keyTop
         self.symbol = symbol

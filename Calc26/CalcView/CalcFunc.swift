@@ -129,7 +129,7 @@ final class CalcFunc {
         
         // 優先順位と結合性の定義
         let opPriority: [String: Int] = [
-            KD_2ROOT: 0, KD_3ROOT: 0,
+            KD_sqROOT: 0, KD_cuROOT: 0,
             KD_MUL: 1, KD_DIV: 1, KD_MUL_: 1, KD_DIV_: 1,
             KD_ADD: 2, KD_SUB: 2
         ]
@@ -222,7 +222,7 @@ final class CalcFunc {
                         return SBCD("-0")
                     }
                     
-                case KD_2ROOT:
+                case KD_sqROOT:
                     if 1 <= stack.count {
                         let a = stack.removeLast()
                         let approx = sqrt(Double(a.value.replacingOccurrences(of: KD_SUB, with: "")) ?? 0)
@@ -232,7 +232,7 @@ final class CalcFunc {
                         return SBCD("-0")
                     }
                     
-                case KD_3ROOT:
+                case KD_cuROOT:
                     if 1 <= stack.count {
                         let a = stack.removeLast()
                         let approx = cubeRoot(Double(a.value) ?? 0)

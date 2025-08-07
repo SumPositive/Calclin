@@ -112,7 +112,9 @@ struct ContentView: View {
                 // 不揮発記録よりkeyboardを読み込み再現する
                 keyboardViewModel.loadKeyboard()
             }
-            
+            .zIndex(0)
+
+
             // ZStack ------------------------------------
             
             //(ZStack 1) SettingView表示
@@ -171,7 +173,6 @@ struct ContentView: View {
                             keyboardViewModel.saveKeyboard()
                         }
                     }
-                    .zIndex(2)
                     //.position(popup.position) // 画面全体の座標で表示
                     .frame(width: popupWidth,
                            height: popup.position.y - 90)
@@ -191,6 +192,7 @@ struct ContentView: View {
                         if y < 10 { y = 10 }
                         return CGSize(width: x, height: y)
                     }())
+                    .zIndex(2)
                 }
             }
             

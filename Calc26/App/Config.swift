@@ -45,8 +45,8 @@ let KD_MUL      = "×"   // 掛算 表示用
 let KD_MUL_     = "*"   // 掛算 内部利用
 let KD_DIV      = "÷"   // 割算 表示用
 let KD_DIV_     = "/"   // 割算 内部利用
-let KD_2ROOT    = "√"   // 平方根
-let KD_3ROOT    = "∛"   // 立方根　Unicode："\u{221B}"
+let KD_sqROOT   = "√"   // square 平方根
+let KD_cuROOT   = "∛"   // cubic 立方根　Unicode："\u{221B}"
 // 制御文字
 let KD_GT       = "GT"  //">GT" // 総計 ＜＜1字目を OP_START にして「開始行」扱いすることを示す＞＞
 

@@ -91,12 +91,10 @@ final class CalcViewModel: ObservableObject {
         }
         else{
             switch keyDef.code {
-                //case "1"..."9": NG  [1*]...[9*]
-                case let s where s.count == 1 && ("1"..."9").contains(s): // [1]...[9]
+                case "#1"..."#9": // [1]...[9] 　数字で始まる文字列をcaseで範囲判定しないため#付加した
                     inputNumber(keyDef)
                     
-                //case "0", "00", "000": NG
-                case let s where ["0", "00", "000"].contains(s):
+                case "#0", "#00", "#000":
                     if let num = keyDef.formula {
                         if var last = tokens.last {
                             if Double(last) != nil || ( last == KD_SUB &&
@@ -173,7 +171,7 @@ final class CalcViewModel: ObservableObject {
                         }
                     }
                     
-                case "Add","Sub","Mul","Div","2Root","3Root":
+                case "Add","Sub","Mul","Div","sqRoot","cuRoot":
                     inputOperator(keyDef)
                     
                 case "Ans":
@@ -412,13 +410,13 @@ final class CalcViewModel: ObservableObject {
     /// 演算子キー入力
     private func inputOperator(_ keyDef: KeyDefinition) {
         if let op = keyDef.formula {
-            if op == KD_2ROOT || op == KD_3ROOT { // 平方根 or 立方根
+            if op == KD_sqROOT || op == KD_cuROOT { // 平方根 or 立方根
                 if let last = tokens.last {
                     if last == KD_SUB { // 先頭が[-]ならば[-1*]に置き換える
                         tokens.append("1")          // [1]
-                        tokens.append(KD_MUL)  // [*]
+                        tokens.append(KD_MUL)       // [*]
                         tokens.append(op)           // [√]
-                        tokens.append(KD_PT_LEFT)  // [(]
+                        tokens.append(KD_PT_LEFT)   // [(]
                     }
                     else if Double(last) != nil { // 数値
                         tokens[tokens.count - 1] = op

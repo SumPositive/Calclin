@@ -285,46 +285,59 @@ struct PopupKeyListView: View {
     @State private var selectedKeyCode: String = ""
     
     var body: some View {
-        let keyWidth: Int = 75
-        
+        let keyWidth: Int = 70
+        let triangleWidth: CGFloat = 30.0
+        let triangleHeight: CGFloat = 15.0
+
         VStack(spacing: 0) {
             VStack(spacing: 0) {
-                Text("キー定義")
-                    .padding(4.0)
-                
+                HStack {
+                    Spacer()
+                    Text("キー定義")
+                        .padding(4.0)
+                    Spacer()
+                    Button(action: {
+                        // 未定義キー
+                        let kd = KeyDefinition(code: "nop", hidden: false, symbol: nil)
+                        onSelect(kd)
+                    }) {
+                        Image(systemName: "eraser.line.dashed")
+                            .imageScale(.large)
+                    }
+                    .padding(4)
+                }
                 // グリッドやスクロールなどここに配置
                 ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4),
-                                                 count: Int(popupWidth)/keyWidth), spacing: 4) {
-                            ForEach(viewModel.keyDefs, id: \.self) { keyDef in
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 1),
+                                                 count: Int(popupWidth)/keyWidth), spacing: 1) {
+                            ForEach(viewModel.keyDefs.filter { $0.hidden != true }, id: \.self) { keyDef in
                                 let isSelected = selectedKeyCode == keyDef.code
                                 ZStack {
                                     if let symbol = keyDef.symbol {
                                         Image(systemName: symbol)
                                             .imageScale(.large)
-                                    } else {
-                                        let keyTop = keyDef.keyTop ?? keyDef.code
-                                        Text(keyTop)
+                                    }else{
+                                        Text(keyDef.keyTop ?? keyDef.code)
                                             .font(.system(size: 20, weight: .bold))
                                     }
                                 }
-                                .frame(height: 44)
+                                .frame(height: 34)
                                 .frame(maxWidth: .infinity)
-                                .padding(6)
+                                .padding(3)
                                 .background(
                                     isSelected ? Color.accentColor.opacity(0.3) : Color.white
                                 )
                                 .foregroundColor(.accentColor)
-                                .cornerRadius(6)
+                                .cornerRadius(8)
                                 .id(keyDef.code)
                                 .onTapGesture {
                                     onSelect(keyDef)
                                 }
                             }
                         }
-                                                 .padding(8)
                     }
+                    .padding(8)
                     .onAppear {
                         if let pi = viewModel.popupInfo {
                             selectedKeyCode = pi.keyCode
@@ -342,13 +355,13 @@ struct PopupKeyListView: View {
                 }
             }
             .background(Color.white)
-            .cornerRadius(10)
+            .cornerRadius(8)
             
             Triangle()
                 .fill(Color.white)
-                .frame(width: 30, height: 15)
-                .rotationEffect(.degrees(180))
-                .offset(CGSize(width: position.x - popupWidth/2.0 - 30/2.0, height: 0))
+                .frame(width: triangleWidth, height: triangleHeight)
+                .rotationEffect(.degrees(180)) // 下向きに
+                .offset(CGSize(width: position.x - popupWidth/2.0 - triangleWidth/2.0, height: 0))
         }
     }
 }
