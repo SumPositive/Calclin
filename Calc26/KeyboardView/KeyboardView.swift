@@ -283,28 +283,47 @@ struct PopupKeyListView: View {
     let onSelect: (KeyDefinition) -> Void
 
     @State private var selectedKeyCode: String = ""
+    // ダークモード対応
+    @Environment(\.colorScheme) var colorScheme
+
     
     var body: some View {
         let keyWidth: Int = 70
         let triangleWidth: CGFloat = 30.0
-        let triangleHeight: CGFloat = 15.0
-
+        let triangleHeight: CGFloat = 20.0
+        let backColor: Color = (colorScheme == .dark ? Color(.systemGray5) : Color.white)
+        
         VStack(spacing: 0) {
             VStack(spacing: 0) {
                 HStack {
-                    Spacer()
-                    Text("キー定義")
-                        .padding(4.0)
-                    Spacer()
+                    // [未定義]にするボタン
                     Button(action: {
                         // 未定義キー
                         let kd = KeyDefinition(code: "nop", hidden: false, symbol: nil)
                         onSelect(kd)
                     }) {
                         Image(systemName: "eraser.line.dashed")
-                            .imageScale(.large)
+                            //.imageScale(.large)
                     }
-                    .padding(4)
+                    .padding(6)
+                    .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
+
+                    Spacer()
+                    // タイトル
+                    Text("キー定義")
+                        .padding(4.0)
+
+                    Spacer()
+                    // [×]閉じるボタン
+                    Button(action: {
+                        // ポップアップを閉じる
+                        viewModel.popupInfo = nil
+                    }) {
+                        Image(systemName: "xmark")
+                            //.imageScale(.large)
+                    }
+                    .padding(6)
+                    .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
                 }
                 // グリッドやスクロールなどここに配置
                 ScrollViewReader { proxy in
@@ -324,12 +343,12 @@ struct PopupKeyListView: View {
                                 }
                                 .frame(height: 34)
                                 .frame(maxWidth: .infinity)
-                                .padding(3)
+                                .padding(2)
                                 .background(
-                                    isSelected ? Color.accentColor.opacity(0.3) : Color.white
+                                    isSelected ? Color.accentColor.opacity(0.3) : backColor
                                 )
                                 .foregroundColor(.accentColor)
-                                .cornerRadius(8)
+                                //.cornerRadius(10)
                                 .id(keyDef.code)
                                 .onTapGesture {
                                     onSelect(keyDef)
@@ -338,6 +357,7 @@ struct PopupKeyListView: View {
                         }
                     }
                     .padding(8)
+                    .scrollIndicators(.hidden)
                     .onAppear {
                         if let pi = viewModel.popupInfo {
                             selectedKeyCode = pi.keyCode
@@ -354,11 +374,12 @@ struct PopupKeyListView: View {
                     }
                 }
             }
-            .background(Color.white)
+            .background(backColor)
             .cornerRadius(8)
-            
+
+            // 吹き出し
             Triangle()
-                .fill(Color.white)
+                .fill(backColor)
                 .frame(width: triangleWidth, height: triangleHeight)
                 .rotationEffect(.degrees(180)) // 下向きに
                 .offset(CGSize(width: position.x - popupWidth/2.0 - triangleWidth/2.0, height: 0))

@@ -142,13 +142,14 @@ struct ContentView: View {
                 .zIndex(1)
             }
 
-            //(ZStack 2) PopupKeyListView表示
+            //(ZStack 2) 外部タップで閉じるための半透明背景レイヤー
+            //(ZStack 3) PopupKeyListView表示
             GeometryReader { geometry in
                 let screenSize = geometry.size
                 let popupWidth = screenSize.width - 20
                 // popupInfo.positionを起点に最大の領域に展開させる
                 if let popup = keyboardViewModel.popupInfo {
-                    // ポップアップ外部タップで閉じるための半透明背景レイヤー
+                    // ポップアップ外部タップで閉じるための半透明背景レイヤー(ZStack 2)
                     Color.black.opacity(0.2) // タップ判定される
                         .ignoresSafeArea()
                         .zIndex(2)
@@ -173,7 +174,6 @@ struct ContentView: View {
                             keyboardViewModel.saveKeyboard()
                         }
                     }
-                    //.position(popup.position) // 画面全体の座標で表示
                     .frame(width: popupWidth,
                            height: popup.position.y - 90)
                     .offset({
@@ -192,11 +192,12 @@ struct ContentView: View {
                         if y < 10 { y = 10 }
                         return CGSize(width: x, height: y)
                     }())
-                    .zIndex(2)
+                    .zIndex(3) // これが無いと半透明背景レイヤーの下になる
                 }
             }
-            
-            //(ZStack 3) ToastView表示
+            .zIndex(3) // これが無いとSettingViewの下になる
+
+            //(ZStack 4) ToastView表示
             if manager.showToast {
                 VStack {
                     Spacer()
@@ -205,7 +206,7 @@ struct ContentView: View {
                         .padding(.top, 50)
                     Spacer()
                 }
-                .zIndex(3)
+                .zIndex(4)
             }
             
         }

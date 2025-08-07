@@ -184,10 +184,6 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>GT</string>
-	</dict>
-	<dict>
-		<key>code</key>
 		<string>Paren</string>
 		<key>keyTop</key>
 		<string>( )</string>
@@ -294,42 +290,6 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>Up10%</string>
-		<key>keyTop</key>
-		<string>↑10%</string>
-		<key>unitBase</key>
-		<string>Bare</string>
-		<key>unitConv</key>
-		<string>*1.1</string>
-		<key>unitRev</key>
-		<string>/1.1</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>Up8%</string>
-		<key>keyTop</key>
-		<string>↑8%</string>
-		<key>unitBase</key>
-		<string>Bare</string>
-		<key>unitConv</key>
-		<string>*1.08</string>
-		<key>unitRev</key>
-		<string>/1.08</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>Up5%</string>
-		<key>keyTop</key>
-		<string>↑5%</string>
-		<key>unitBase</key>
-		<string>Bare</string>
-		<key>unitConv</key>
-		<string>*1.05</string>
-		<key>unitRev</key>
-		<string>/1.05</string>
-	</dict>
-	<dict>
-		<key>code</key>
 		<string>Dw20%</string>
 		<key>keyTop</key>
 		<string>↓20%</string>
@@ -339,6 +299,18 @@
 		<string>/1.2</string>
 		<key>unitRev</key>
 		<string>*1.2</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Up10%</string>
+		<key>keyTop</key>
+		<string>↑10%</string>
+		<key>unitBase</key>
+		<string>Bare</string>
+		<key>unitConv</key>
+		<string>*1.1</string>
+		<key>unitRev</key>
+		<string>/1.1</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -354,6 +326,18 @@
 	</dict>
 	<dict>
 		<key>code</key>
+		<string>Up8%</string>
+		<key>keyTop</key>
+		<string>↑8%</string>
+		<key>unitBase</key>
+		<string>Bare</string>
+		<key>unitConv</key>
+		<string>*1.08</string>
+		<key>unitRev</key>
+		<string>/1.08</string>
+	</dict>
+	<dict>
+		<key>code</key>
 		<string>Dw8%</string>
 		<key>keyTop</key>
 		<string>↓8%</string>
@@ -363,6 +347,18 @@
 		<string>/1.08</string>
 		<key>unitRev</key>
 		<string>*1.08</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Up5%</string>
+		<key>keyTop</key>
+		<string>↑5%</string>
+		<key>unitBase</key>
+		<string>Bare</string>
+		<key>unitConv</key>
+		<string>*1.05</string>
+		<key>unitRev</key>
+		<string>/1.05</string>
 	</dict>
 	<dict>
 		<key>code</key>
