@@ -11,8 +11,22 @@ import Foundation
 // MARK: - Global let value
 // 全モジュールで参照される固定値(let) （#define 同様の使い方）
 
-
 let APP_NAME = "カルメモ"
+
+// CalcRollView 幅
+let APP_CALC_WIDTH_MIN : CGFloat = 320      // 最小（SEの幅、全機能が見切れず使用できる状態）
+let APP_CALC_WIDTH_MAX : CGFloat = 9999     // Free
+// CalcRollView 高さ
+let APP_CALC_HEIGHT_MIN : CGFloat = 150     // 最小（入力行と履歴1行が見える）
+let APP_CALC_HEIGHT_MAX : CGFloat = 9999    // Free
+
+// KeyboardView 幅
+let APP_KB_WIDTH_MIN : CGFloat = 320        // 最小（SEの幅、全機能が見切れず使用できる状態）
+let APP_KB_WIDTH_MAX : CGFloat = 480        // 最大（見栄えで決める）
+// KeyboardView 高さ
+let APP_KB_HEIGHT_MIN : CGFloat = 320       // 最小（SEの幅、全機能が見切れず使用できる状態）
+let APP_KB_HEIGHT_MAX : CGFloat = 500       // 最大（見栄えで決める）
+
 
 // 入力中の最大桁数＝整数桁＋小数桁（小数点は含まない）！！！入力中は小数桁制限丸め処理しない
 let CALC_PRECISION_MAX: Int = 30  // <= SBCD_PRECISION/2 = 60/2

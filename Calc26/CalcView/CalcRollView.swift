@@ -65,6 +65,7 @@ struct CalcRollView: View {
                             .frame(width: geometry.size.width / CGFloat(showCount))
                             .border( index == selectedPage ?
                                      Color.blue.opacity(0.5) :  Color.gray.opacity(0.1), width: 2.0)
+                            .contentShape(Rectangle()) // paddingを含む領域全体がタップ対象になる
                             .onTapGesture {
                                 // タップでページを切り替える
                                 if index != selectedPage {
@@ -101,11 +102,8 @@ struct CalcRollView: View {
                 .animation(.easeInOut, value: selectedPage)
             }
             .padding(0)
-            
         }
-        .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
     }
-    
 }
 
 

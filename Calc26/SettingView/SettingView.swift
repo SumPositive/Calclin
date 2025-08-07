@@ -178,7 +178,7 @@ struct SettingView: View {
         .padding(6)
         .background(Color(.systemGray5))
         .cornerRadius(10)
-        .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
+        .frame(minWidth: APP_KB_WIDTH_MIN, maxWidth: APP_KB_WIDTH_MAX)
     }
 
     

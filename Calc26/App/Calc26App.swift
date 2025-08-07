@@ -7,9 +7,6 @@
 
 import SwiftUI
 
-let APP_MIN_WIDTH : CGFloat = 320
-let APP_MAX_WIDTH : CGFloat = 480
-
 
 @main
 struct Calc26App: App {

@@ -39,6 +39,7 @@ struct KeyboardView: View {
                 .offset(x: -CGFloat(selectedPage) * (geometry.size.width + pageGap))
                 .animation(.easeInOut, value: selectedPage)
             }
+            .clipped() // 選択中の1ページだけ見せるため
             .padding(0)
             .gesture(
                 DragGesture()
@@ -60,7 +61,6 @@ struct KeyboardView: View {
             )
             .opacity(colorScheme == .dark ? 0.60 : 1.0)
         }
-        .frame(minWidth: APP_MIN_WIDTH, maxWidth: APP_MAX_WIDTH)
     }
 }
 
@@ -246,8 +246,9 @@ struct KeyView: View {
                             .font(.system(size: 24,
                                           weight: (keyDef?.unitBase == nil ||
                                                    keyDef?.unitBase == keyDef?.code) ? .bold : .light)) //.light.regular.bold.heavy
-                            //.shadow(radius: 1)
-
+                            .minimumScaleFactor(0.5) // 最小で50%まで縮小
+                            .lineLimit(1)            // 複数行にしない
+                            .padding(.horizontal, 8)
                     }
                 }
             }
@@ -279,7 +280,7 @@ extension CGRect {
 struct PopupKeyListView: View {
     @ObservedObject var viewModel: KeyboardViewModel
     let popupWidth: CGFloat
-    let position: CGPoint
+//    let offsetX: CGFloat
     let onSelect: (KeyDefinition) -> Void
 
     @State private var selectedKeyCode: String = ""
@@ -339,6 +340,9 @@ struct PopupKeyListView: View {
                                     }else{
                                         Text(keyDef.keyTop ?? keyDef.code)
                                             .font(.system(size: 20, weight: .bold))
+                                            .minimumScaleFactor(0.5)  // 最小で50%まで縮小
+                                            .lineLimit(1)             // 複数行にしない
+                                            .padding(.horizontal, 8)
                                     }
                                 }
                                 .frame(height: 34)
@@ -377,12 +381,12 @@ struct PopupKeyListView: View {
             .background(backColor)
             .cornerRadius(8)
 
-            // 吹き出し
-            Triangle()
-                .fill(backColor)
-                .frame(width: triangleWidth, height: triangleHeight)
-                .rotationEffect(.degrees(180)) // 下向きに
-                .offset(CGSize(width: position.x - popupWidth/2.0 - triangleWidth/2.0, height: 0))
+//            // 吹き出し   offsetX=0 だと中央に表示される
+//            Triangle()
+//                .fill(backColor)
+//                .frame(width: triangleWidth, height: triangleHeight)
+//                .rotationEffect(.degrees(180)) // 下向きに
+//                .offset(CGSize(width: offsetX - triangleWidth/2.0, height: 0))
         }
     }
 }

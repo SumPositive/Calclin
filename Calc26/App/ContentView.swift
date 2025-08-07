@@ -94,7 +94,9 @@ struct ContentView: View {
                 .transition(.opacity) // フェード
                 .padding(.horizontal, 4)
                 .padding(.bottom, 4)
-                
+                .frame(minWidth: APP_CALC_WIDTH_MIN, maxWidth: APP_CALC_WIDTH_MAX,
+                       minHeight: APP_CALC_HEIGHT_MIN, maxHeight: APP_CALC_HEIGHT_MAX)
+
                 // キーボードView
                 KeyboardView(viewModel: keyboardViewModel,
                              onTap: { keyDef in
@@ -103,8 +105,8 @@ struct ContentView: View {
                     calc.input(keyDef)
                 })
                 .padding(.horizontal, 4.0)
-                .frame(height: UIScreen.main.bounds.width) // 高さ
-                
+                .frame(minWidth: APP_KB_WIDTH_MIN, maxWidth: APP_KB_WIDTH_MAX,
+                       minHeight: APP_KB_HEIGHT_MIN, maxHeight: APP_KB_HEIGHT_MAX)
             }
             //.background(Color(.systemGray6))
             .background(Color.primary.opacity(0.05)) // 控えめな背景
@@ -129,14 +131,16 @@ struct ContentView: View {
                             .padding(.top, 25)
                             .padding(.trailing, 30)
                     }
-                    // 設定画面（表示・非表示）
-                    SettingView()
-                        .environmentObject(setting) // settingに変化あればSettingViewが再生成される
-                        .environmentObject(keyboardViewModel)
-                        .transition(.opacity) // フェード
-                        .padding(.horizontal)
-                        .padding(.top, 0)
-                    
+                    HStack {
+                        Spacer()
+                        // 設定画面（表示・非表示）
+                        SettingView()
+                            .environmentObject(setting) // settingに変化あればSettingViewが再生成される
+                            .environmentObject(keyboardViewModel)
+                            .transition(.opacity) // フェード
+                            .padding(.top, 0)
+                            .padding(.trailing, 10)
+                    }
                     Spacer()
                 }
                 .zIndex(1)
@@ -146,7 +150,10 @@ struct ContentView: View {
             //(ZStack 3) PopupKeyListView表示
             GeometryReader { geometry in
                 let screenSize = geometry.size
-                let popupWidth = screenSize.width - 20
+                let popupWidth = (screenSize.width < APP_KB_WIDTH_MAX
+                                  ? screenSize.width : APP_KB_WIDTH_MAX) - 10
+                let popupHeight = screenSize.height/1.5
+
                 // popupInfo.positionを起点に最大の領域に展開させる
                 if let popup = keyboardViewModel.popupInfo {
                     // ポップアップ外部タップで閉じるための半透明背景レイヤー(ZStack 2)
@@ -157,41 +164,40 @@ struct ContentView: View {
                             // ポップアップを閉じる
                             keyboardViewModel.popupInfo = nil
                         }
-                    // ポップアップを開く
-                    PopupKeyListView(viewModel: keyboardViewModel,
-                                     popupWidth: popupWidth,
-                                     position: popup.position) { selectedKeyDef in
-                        log(.info, "PopupListView selected: \(selectedKeyDef.code)")
-                        keyboardViewModel.popupInfo = nil
-                        // 最終選択を記録
-                        keyboardViewModel.prevSelectKeyCode = selectedKeyDef.code
-                        // keyboardを更新する
-                        if popup.page < keyboardViewModel.keyboard.count,
-                           popup.index < keyboardViewModel.keyboard[popup.page].count {
-                            // keyboardを更新する
-                            keyboardViewModel.keyboard[popup.page][popup.index] = selectedKeyDef.code
-                            // 都度、不揮発記録にkeyboardを保存する
-                            keyboardViewModel.saveKeyboard()
+
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            // ポップアップを開く
+                            PopupKeyListView(viewModel: keyboardViewModel,
+                                             popupWidth: popupWidth) { selectedKeyDef in
+                                log(.info, "PopupListView selected: \(selectedKeyDef.code)")
+                                keyboardViewModel.popupInfo = nil
+                                // 最終選択を記録
+                                keyboardViewModel.prevSelectKeyCode = selectedKeyDef.code
+                                // keyboardを更新する
+                                if popup.page < keyboardViewModel.keyboard.count,
+                                   popup.index < keyboardViewModel.keyboard[popup.page].count {
+                                    // keyboardを更新する
+                                    keyboardViewModel.keyboard[popup.page][popup.index] = selectedKeyDef.code
+                                    // 都度、不揮発記録にkeyboardを保存する
+                                    keyboardViewModel.saveKeyboard()
+                                }
+                            }
+                                             .frame(width: popupWidth,
+                                                    height: popupHeight)
+                            //                         .offset({
+                            //                             // x 横位置は常にキーボード幅内でセンター
+                            //                             var y = popup.position.y - popupHeight - 35
+                            //                             // 縦方向はみ出しチェック
+                            //                             if y < 10 { y = 10 }
+                            //                             return CGSize(width: 0, height: y)
+                            //                         }())
+                            Spacer()
                         }
+                        Spacer()
                     }
-                    .frame(width: popupWidth,
-                           height: popup.position.y - 90)
-                    .offset({
-                        let popupHeight = popup.position.y - 10
-                        var x = popup.position.x - popupWidth / 2
-                        var y = popup.position.y - popupHeight - 50
-                        
-                        log(.info, "geometry W\(geometry.size.width) H\(geometry.size.height)")
-                        log(.info, "H\(screenSize.height) Y\(popup.position.y)   y\(y)")
-                        // 横方向はみ出しチェック
-                        if x < 10 { x = 10 }
-                        if screenSize.width < x + popupWidth  {
-                            x = screenSize.width - popupWidth - 10
-                        }
-                        // 縦方向はみ出しチェック
-                        if y < 10 { y = 10 }
-                        return CGSize(width: x, height: y)
-                    }())
                     .zIndex(3) // これが無いと半透明背景レイヤーの下になる
                 }
             }
