@@ -290,8 +290,8 @@ struct PopupKeyListView: View {
     
     var body: some View {
         let keyWidth: Int = 70
-        let triangleWidth: CGFloat = 30.0
-        let triangleHeight: CGFloat = 20.0
+//        let triangleWidth: CGFloat = 30.0
+//        let triangleHeight: CGFloat = 20.0
         let backColor: Color = (colorScheme == .dark ? Color(.systemGray5) : Color.white)
         
         VStack(spacing: 0) {
@@ -392,15 +392,15 @@ struct PopupKeyListView: View {
 }
 
 
-struct Triangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        Path { path in
-            path.move(to: CGPoint(x: rect.midX, y: rect.minY))     // 上
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))  // 右下
-            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))  // 左下
-            path.closeSubpath()
-        }
-    }
-}
+//struct Triangle: Shape {
+//    func path(in rect: CGRect) -> Path {
+//        Path { path in
+//            path.move(to: CGPoint(x: rect.midX, y: rect.minY))     // 上
+//            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))  // 右下
+//            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))  // 左下
+//            path.closeSubpath()
+//        }
+//    }
+//}
 
 

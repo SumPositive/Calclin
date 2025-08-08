@@ -59,8 +59,8 @@ struct HistoryView: View {
                         Button() {
                             // メモする
                             setting.balloonMemoInfo = (     // = CGPointMake(300, 500) //anchorRect
-                                anchor: CGPointMake(300, 500),
-                                index: 0
+                                anchor: CGPointMake(400, 300),
+                                index: index
                             )
                         } label: {
                             Image("edit_rev").imageScale(.large)

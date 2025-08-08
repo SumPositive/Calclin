@@ -34,13 +34,5 @@ final class Manager: ObservableObject {
         }
     }
 
-    /// Popup 中にViewを入れる
-    @Published var showPopup: Bool = false
-    @Published var popupView = {} // popupの中に入れるView
-
-    func popup( anker: CGPoint? = nil ) {
-        
-    }
-    
 
 }

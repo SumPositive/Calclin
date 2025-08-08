@@ -40,7 +40,8 @@ struct ContentView: View {
     
     @State private var anchorRect: CGRect = .zero
     @State private var showPopup = false
-    
+    @State private var editingMemo: String = ""
+
     
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
@@ -151,22 +152,25 @@ struct ContentView: View {
                 }
                 .zIndex(1)
             }
-            
             //(ZStack 2) 外部タップで閉じるための半透明背景レイヤー
             //(ZStack 3) PopupKeyListView表示
             if let info = setting.balloonMemoInfo {
-                @State var editingMemo = calcViewModels[selectedCalc].historyRows[info.index].memo ?? ""
                 GeometryReader { geo in
-                    Balloon(anchor: info.anchor, screenSize: geo.size) {
-                        setting.balloonMemoInfo = nil
-                    } content: {
-                        VStack {
-                            MemoView(memoText: $editingMemo) {
-                                calcViewModels[selectedCalc].historyRows[info.index].memo = editingMemo
-                                // Close
-                                setting.balloonMemoInfo = nil
-                            }
+                    BalloonPopup(
+                        anchor: info.anchor,
+                        arrowAlignment: .leading,
+                        onDismiss: { showPopup = false }
+                    ) {
+                        MemoView(memo: $editingMemo) {
+                            // Save
+                            calcViewModels[selectedCalc].historyRows[info.index].memo = editingMemo
+                            // Close
+                            setting.balloonMemoInfo = nil
                         }
+                        .onAppear {
+                            editingMemo = calcViewModels[selectedCalc].historyRows[info.index].memo ?? ""
+                        }
+                        .frame(width: 300, height: 200)
                     }
                 }
             }
@@ -245,24 +249,24 @@ struct ContentView: View {
     }
     
     struct MemoView: View {
-        @Binding var memoText: String
+        @Binding var memo: String
         var onSave: () -> Void
         
         var body: some View {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("メモを入力")
                     .font(.headline)
-                TextEditor(text: $memoText)
-                    .frame(minHeight: 100)
+                TextEditor(text: $memo)
+                    .frame(minHeight: 50)
                     .border(Color.gray.opacity(0.4))
                 Button("保存") {
                     onSave()
                 }
-                .padding(.top, 8)
+                .padding(.top, 4)
                 .frame(maxWidth: .infinity, alignment: .center)
             }
-            .padding()
-            .frame(width: 300)
+            .padding(4)
+            //.frame(width: 300)
         }
     }
 
@@ -279,90 +283,6 @@ struct ContentView: View {
                 .foregroundColor(.white)
                 .cornerRadius(10)
                 .shadow(radius: 4)
-        }
-    }
-    
-
-    struct Balloon<Content: View>: View {
-        let anchor: CGPoint              // ← CGPoint に変更
-        let screenSize: CGSize
-        let onDismiss: () -> Void
-        let content: () -> Content
-        
-        @State private var appear = false
-        
-        init(anchor: CGPoint,
-             screenSize: CGSize,
-             onDismiss: @escaping () -> Void,
-             @ViewBuilder content: @escaping () -> Content) {
-            self.anchor = anchor
-            self.screenSize = screenSize
-            self.onDismiss = onDismiss
-            self.content = content
-        }
-        
-        var body: some View {
-            ZStack {
-                Color.black.opacity(0.001)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation { appear = false }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                            onDismiss()
-                        }
-                    }
-                
-                GeometryReader { geo in
-                    let contentSize = CGSize(width: 240, height: 120)
-                    let isUp = anchor.y > screenSize.height / 2
-                    
-                    let offsetX = min(
-                        max(anchor.x - contentSize.width / 2, 10),
-                        screenSize.width - contentSize.width - 10
-                    )
-                    let offsetY = isUp
-                    ? anchor.y - contentSize.height - 20
-                    : anchor.y + 20
-                    
-                    VStack(spacing: 0) {
-                        if isUp {
-                            Triangle()
-                                .fill(Color.white)
-                                .frame(width: 20, height: 10)
-                                .rotationEffect(.degrees(180))
-                                .offset(x: triangleOffsetX(contentWidth: contentSize.width))
-                        }
-                        
-                        content()
-                            .frame(width: contentSize.width, height: contentSize.height)
-                            .padding()
-                            .background(Color.white)
-                            .cornerRadius(12)
-                            .shadow(radius: 5)
-                            .scaleEffect(appear ? 1.0 : 0.8)
-                            .opacity(appear ? 1.0 : 0.0)
-                            .animation(.easeOut(duration: 0.2), value: appear)
-                        
-                        if !isUp {
-                            Triangle()
-                                .fill(Color.white)
-                                .frame(width: 20, height: 10)
-                                .offset(x: triangleOffsetX(contentWidth: contentSize.width))
-                        }
-                    }
-                    .position(x: offsetX + contentSize.width / 2,
-                              y: offsetY)
-                    .onAppear {
-                        appear = true
-                    }
-                }
-            }
-        }
-        
-        private func triangleOffsetX(contentWidth: CGFloat) -> CGFloat {
-            let balloonLeft = max(anchor.x - contentWidth / 2, 10)
-            let adjustedLeft = min(balloonLeft, screenSize.width - contentWidth - 10)
-            return anchor.x - (adjustedLeft + contentWidth / 2)
         }
     }
 
