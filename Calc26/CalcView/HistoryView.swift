@@ -15,7 +15,8 @@ struct HistoryView: View {
     @State private var showMemoPopover = false
     @State private var currentMemoText = ""
     @State private var selectedIndex: Int = 0
-
+    @State private var anchorRect: CGRect = .zero
+    
     
     var body: some View {
 
@@ -57,14 +58,25 @@ struct HistoryView: View {
 
                         Button() {
                             // メモする
-                            selectedIndex = index
-                            currentMemoText = row.memo ?? ""
-                            showMemoPopover = true
+                            setting.balloonMemoInfo = (     // = CGPointMake(300, 500) //anchorRect
+                                anchor: CGPointMake(300, 500),
+                                index: 0
+                            )
                         } label: {
                             Image("edit_rev").imageScale(.large)
                         }
+//                        .background(
+//                            GeometryReader { innerGeo in
+//                                Color.clear
+//                                    .onAppear {
+//                                        anchorRect = innerGeo.frame(in: .global)
+//                                    }
+//                                    .onChange(of: innerGeo.frame(in: .global)) { newValue in
+//                                        anchorRect = newValue
+//                                    }
+//                            }
+//                        )
                         .tint(COLOR_MEMO) // スワイプ背景色
-                        
                     }
                     .onTapGesture(count: 2) { // ダブルタップ時の処理
                         // 式コピペ　row.tokenからformulaTextを再現する
@@ -77,13 +89,6 @@ struct HistoryView: View {
         .environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
         .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
         .padding(0)
-        // ポップオーバーを画面のどこかで表示
-        .popover(isPresented: $showMemoPopover, arrowEdge: .bottom) {
-            MemoView(memoText: $currentMemoText) {
-                viewModel.historyRows[selectedIndex].memo = currentMemoText
-                showMemoPopover = false
-            }
-        }
     }
     
 }
@@ -162,27 +167,6 @@ struct CustomCell: View {
 }
 
 
-struct MemoView: View {
-    @Binding var memoText: String
-    var onSave: () -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("メモを入力")
-                .font(.headline)
-            TextEditor(text: $memoText)
-                .frame(minHeight: 100)
-                .border(Color.gray.opacity(0.4))
-            Button("保存") {
-                onSave()
-            }
-            .padding(.top, 8)
-            .frame(maxWidth: .infinity, alignment: .center)
-        }
-        .padding()
-        .frame(width: 300)
-    }
-}
 
 
 //extension UIImage {

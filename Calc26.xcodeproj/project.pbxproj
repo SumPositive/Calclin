@@ -61,6 +61,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Assets.xcassets,
+				Info.plist,
 				KeyboardView/KeyDefinition.plist,
 			);
 			target = C30A78AF2E10EE8700212729 /* Calc26Tests */;
@@ -467,7 +468,9 @@
 				DEVELOPMENT_TEAM = 5C2UYK6F45;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Calc26/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "カルメモ";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -501,7 +504,9 @@
 				DEVELOPMENT_TEAM = 5C2UYK6F45;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Calc26/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "カルメモ";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

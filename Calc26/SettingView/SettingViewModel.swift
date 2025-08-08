@@ -153,6 +153,14 @@ final class SettingViewModel: ObservableObject {
 //        }
 //    }
     
+//    @Published var balloonAnchor: CGPoint?
+//    @Published var balloonEditMemo: String?
+//    @Published var balloonKeyDef: KeyDefinition?
+    
+    @Published var balloonMemoInfo: (anchor: CGPoint, index: Int)? = nil
+    @Published var balloonKeyDefInfo: (anchor: CGPoint, page: Int, index: Int, keyCode: String)? = nil
+
+
     
 }
 

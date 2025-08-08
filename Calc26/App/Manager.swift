@@ -13,17 +13,14 @@ import Combine
 final class Manager: ObservableObject {
     // シングルトン
     static let shared = Manager()
-
-    
-    @Published var showToast: Bool = false
-    @Published var toastMessage: String = ""
-    
     
     private init() {
         
     }
 
-    
+    /// Toast
+    @Published var showToast: Bool = false
+    @Published var toastMessage: String = ""
     /// Toastを表示する　　ToastViewはContentView上に配置
     /// - Parameters:
     ///   - message: メッセージ
@@ -36,4 +33,14 @@ final class Manager: ObservableObject {
             self.showToast = false
         }
     }
+
+    /// Popup 中にViewを入れる
+    @Published var showPopup: Bool = false
+    @Published var popupView = {} // popupの中に入れるView
+
+    func popup( anker: CGPoint? = nil ) {
+        
+    }
+    
+
 }

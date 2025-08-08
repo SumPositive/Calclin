@@ -14,20 +14,20 @@ struct ContentView: View {
     @StateObject private var keyboardViewModel: KeyboardViewModel
     @StateObject private var manager = Manager.shared  // シングルトン生成
     private var calcViewModels: [CalcViewModel]
-
+    
     init() {
         let setting = SettingViewModel()
         _setting = StateObject(wrappedValue: setting)
-
+        
         let keyboardViewModel = KeyboardViewModel(setting: setting)
         _keyboardViewModel = StateObject(wrappedValue: keyboardViewModel)
-
+        
         self.calcViewModels = (0..<CALC_COUNT_MAX).map { _ in
             CalcViewModel(keyboardViewModel: keyboardViewModel)
         }
         log(.info, "init() 1回だけ通ること。もしFormulaViewなどがクリアされるならば再生成されている間違いあり")
     }
-
+    
     // @State 変化あればViewが更新される
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
@@ -36,6 +36,10 @@ struct ContentView: View {
     @State private var showSafari = false
     // @State 変化あればViewが更新される
     @State private var selectedCalc: Int = 0
+    
+    
+    @State private var anchorRect: CGRect = .zero
+    @State private var showPopup = false
     
     
     var body: some View {
@@ -50,7 +54,7 @@ struct ContentView: View {
                         }
                     }) {
                         Image(systemName: "info.circle")
-                            //.imageScale(.large)
+                        //.imageScale(.large)
                             .accentColor(.accentColor)
                     }
                     .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
@@ -58,13 +62,13 @@ struct ContentView: View {
                     .sheet(isPresented: $showSafari) {
                         SafariView(url: URL(string: "https://info.art.jp")!)
                     }
-
+                    
                     Spacer()
                     
                     Text(APP_NAME)
                         .font(.headline)
                         .foregroundColor(COLOR_TITLE)
-
+                    
                     Spacer()
                     // 設定（トグルボタン）
                     Button(action: {
@@ -73,7 +77,7 @@ struct ContentView: View {
                         }
                     }) {
                         Image(systemName: isShowingSetting ? "gearshape.fill" : "gearshape")
-                            //.imageScale(.large)
+                        //.imageScale(.large)
                             .accentColor(.accentColor)
                     }
                     .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
@@ -99,7 +103,7 @@ struct ContentView: View {
                 .padding(.bottom, 4)
                 .frame(minWidth: APP_CALC_WIDTH_MIN, maxWidth: APP_CALC_WIDTH_MAX,
                        minHeight: APP_CALC_HEIGHT_MIN, maxHeight: APP_CALC_HEIGHT_MAX)
-
+                
                 // キーボードView
                 KeyboardView(viewModel: keyboardViewModel,
                              onTap: { keyDef in
@@ -117,8 +121,8 @@ struct ContentView: View {
                 keyboardViewModel.loadKeyboard()
             }
             .zIndex(0)
-
-
+            
+            
             // ZStack ------------------------------------
             
             //(ZStack 1) SettingView表示
@@ -147,7 +151,25 @@ struct ContentView: View {
                 }
                 .zIndex(1)
             }
-
+            
+            //(ZStack 2) 外部タップで閉じるための半透明背景レイヤー
+            //(ZStack 3) PopupKeyListView表示
+            if let info = setting.balloonMemoInfo {
+                @State var editingMemo = calcViewModels[selectedCalc].historyRows[info.index].memo ?? ""
+                GeometryReader { geo in
+                    Balloon(anchor: info.anchor, screenSize: geo.size) {
+                        setting.balloonMemoInfo = nil
+                    } content: {
+                        VStack {
+                            MemoView(memoText: $editingMemo) {
+                                calcViewModels[selectedCalc].historyRows[info.index].memo = editingMemo
+                                // Close
+                                setting.balloonMemoInfo = nil
+                            }
+                        }
+                    }
+                }
+            }
             //(ZStack 2) 外部タップで閉じるための半透明背景レイヤー
             //(ZStack 3) PopupKeyListView表示
             GeometryReader { geometry in
@@ -155,7 +177,7 @@ struct ContentView: View {
                 let popupWidth = (screenSize.width < APP_KB_WIDTH_MAX
                                   ? screenSize.width : APP_KB_WIDTH_MAX) - 20
                 let popupHeight = screenSize.height/1.5
-
+                
                 // popupInfo.positionを起点に最大の領域に展開させる
                 if let popup = keyboardViewModel.popupInfo {
                     // ポップアップ外部タップで閉じるための半透明背景レイヤー(ZStack 2)
@@ -166,7 +188,7 @@ struct ContentView: View {
                             // ポップアップを閉じる
                             keyboardViewModel.popupInfo = nil
                         }
-
+                    
                     VStack {
                         Spacer()
                         HStack {
@@ -197,7 +219,7 @@ struct ContentView: View {
                 }
             }
             .zIndex(3) // これが無いとSettingViewの下になる
-
+            
             //(ZStack 4) ToastView表示
             if manager.showToast {
                 VStack {
@@ -212,7 +234,7 @@ struct ContentView: View {
             
         }
     }
-
+    
     /// カスタムSafariシート
     struct SafariView: UIViewControllerRepresentable {
         let url: URL
@@ -222,6 +244,28 @@ struct ContentView: View {
         func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
     }
     
+    struct MemoView: View {
+        @Binding var memoText: String
+        var onSave: () -> Void
+        
+        var body: some View {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("メモを入力")
+                    .font(.headline)
+                TextEditor(text: $memoText)
+                    .frame(minHeight: 100)
+                    .border(Color.gray.opacity(0.4))
+                Button("保存") {
+                    onSave()
+                }
+                .padding(.top, 8)
+                .frame(maxWidth: .infinity, alignment: .center)
+            }
+            .padding()
+            .frame(width: 300)
+        }
+    }
+
     /// ToastメッセージView
     struct ToastView: View {
         let message: String
@@ -238,8 +282,91 @@ struct ContentView: View {
         }
     }
     
-}
 
+    struct Balloon<Content: View>: View {
+        let anchor: CGPoint              // ← CGPoint に変更
+        let screenSize: CGSize
+        let onDismiss: () -> Void
+        let content: () -> Content
+        
+        @State private var appear = false
+        
+        init(anchor: CGPoint,
+             screenSize: CGSize,
+             onDismiss: @escaping () -> Void,
+             @ViewBuilder content: @escaping () -> Content) {
+            self.anchor = anchor
+            self.screenSize = screenSize
+            self.onDismiss = onDismiss
+            self.content = content
+        }
+        
+        var body: some View {
+            ZStack {
+                Color.black.opacity(0.001)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation { appear = false }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            onDismiss()
+                        }
+                    }
+                
+                GeometryReader { geo in
+                    let contentSize = CGSize(width: 240, height: 120)
+                    let isUp = anchor.y > screenSize.height / 2
+                    
+                    let offsetX = min(
+                        max(anchor.x - contentSize.width / 2, 10),
+                        screenSize.width - contentSize.width - 10
+                    )
+                    let offsetY = isUp
+                    ? anchor.y - contentSize.height - 20
+                    : anchor.y + 20
+                    
+                    VStack(spacing: 0) {
+                        if isUp {
+                            Triangle()
+                                .fill(Color.white)
+                                .frame(width: 20, height: 10)
+                                .rotationEffect(.degrees(180))
+                                .offset(x: triangleOffsetX(contentWidth: contentSize.width))
+                        }
+                        
+                        content()
+                            .frame(width: contentSize.width, height: contentSize.height)
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .shadow(radius: 5)
+                            .scaleEffect(appear ? 1.0 : 0.8)
+                            .opacity(appear ? 1.0 : 0.0)
+                            .animation(.easeOut(duration: 0.2), value: appear)
+                        
+                        if !isUp {
+                            Triangle()
+                                .fill(Color.white)
+                                .frame(width: 20, height: 10)
+                                .offset(x: triangleOffsetX(contentWidth: contentSize.width))
+                        }
+                    }
+                    .position(x: offsetX + contentSize.width / 2,
+                              y: offsetY)
+                    .onAppear {
+                        appear = true
+                    }
+                }
+            }
+        }
+        
+        private func triangleOffsetX(contentWidth: CGFloat) -> CGFloat {
+            let balloonLeft = max(anchor.x - contentWidth / 2, 10)
+            let adjustedLeft = min(balloonLeft, screenSize.width - contentWidth - 10)
+            return anchor.x - (adjustedLeft + contentWidth / 2)
+        }
+    }
+
+}
 
 #Preview {
     ContentView()
