@@ -12,6 +12,10 @@ struct HistoryView: View {
     @EnvironmentObject var setting: SettingViewModel
     @ObservedObject var viewModel: CalcViewModel
     
+    @State private var showMemoPopover = false
+    @State private var currentMemoText = ""
+    @State private var selectedIndex: Int = 0
+
     
     var body: some View {
 
@@ -23,7 +27,7 @@ struct HistoryView: View {
                     .listRowSeparator(.visible, edges: .all)
                     .padding(.bottom, 8.0)  // 下の余白
                     .padding(.horizontal, 12.0) // 左右の余白
-                    .background(Color(.systemGray6))
+                    .background(COLOR_BACK_FORMULA)
                     .swipeActions(edge: .trailing) { // 左スワイプ：削除
                         Button(role: .destructive) {
                             // 削除アクション  index行を削除する
@@ -40,7 +44,7 @@ struct HistoryView: View {
                         } label: {
                             Text("+-×÷").font(.system(size: 44.0, weight: .bold))
                         }
-                        .tint(.green) // スワイプ背景色
+                        .tint(COLOR_NUMBER) // スワイプ背景色
 
                         Button() {
                             // 答えコピペ  row.answerからformulaTextを再現する
@@ -49,16 +53,17 @@ struct HistoryView: View {
                             Text("＝")
                                 .font(.system(size: 44.0, weight: .bold))
                         }
-                        .tint(.blue) // スワイプ背景色
+                        .tint(COLOR_ANSWER) // スワイプ背景色
 
                         Button() {
                             // メモする
-                            viewModel.memo(row)
+                            selectedIndex = index
+                            currentMemoText = row.memo ?? ""
+                            showMemoPopover = true
                         } label: {
-                            //Text("メモ").font(.system(size: 44.0, weight: .bold))
                             Image("edit_rev").imageScale(.large)
                         }
-                        .tint(.purple) // スワイプ背景色
+                        .tint(COLOR_MEMO) // スワイプ背景色
                         
                     }
                     .onTapGesture(count: 2) { // ダブルタップ時の処理
@@ -72,6 +77,13 @@ struct HistoryView: View {
         .environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
         .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
         .padding(0)
+        // ポップオーバーを画面のどこかで表示
+        .popover(isPresented: $showMemoPopover, arrowEdge: .bottom) {
+            MemoView(memoText: $currentMemoText) {
+                viewModel.historyRows[selectedIndex].memo = currentMemoText
+                showMemoPopover = false
+            }
+        }
     }
     
 }
@@ -94,7 +106,7 @@ struct CustomCell: View {
             // 計算式 = 答え
             Text({
                 var equal = AttributedString(KD_ANS)
-                equal.foregroundColor = Color.blue //.opacity(0.5)
+                equal.foregroundColor = COLOR_OPERATOR //.opacity(0.5)
                 // Answer
                 let answer = AttributedString(row.answer)
                 // Formula
@@ -102,7 +114,7 @@ struct CustomCell: View {
                 // UNIT.keyTop ?? .code
                 if let kt = row.unitKeyTop {
                     var unitKt = AttributedString(kt)
-                    unitKt.foregroundColor = Color.brown //.opacity(0.5)
+                    unitKt.foregroundColor = COLOR_UNIT //.opacity(0.5)
                     attrStr += unitKt
                 }
                 // 演算子の前で改行させるための処理
@@ -114,7 +126,7 @@ struct CustomCell: View {
                 // メモ
                 if let memo = row.memo {
                     var memoAt = AttributedString("\n" + memo)
-                    memoAt.foregroundColor = Color.purple.opacity(0.7)
+                    memoAt.foregroundColor = COLOR_MEMO.opacity(0.7)
                     memoAt.font = .system(size: fontSize * 0.8 * setting.numberFontScale, weight: .light)
                     attrStr += memoAt
                 }
@@ -150,25 +162,48 @@ struct CustomCell: View {
 }
 
 
-extension UIImage {
-
-    // 上下反転する
-    func flippedVertically() -> UIImage? {
-        UIGraphicsBeginImageContextWithOptions(size, false, scale)
-        guard let context = UIGraphicsGetCurrentContext() else { return nil }
-        
-        // ① Y軸反転
-        context.translateBy(x: 0, y: size.height)
-        context.scaleBy(x: 1.0, y: -1.0)
-        
-        // ② 元画像を描画
-        context.draw(cgImage!, in: CGRect(origin: .zero, size: size))
-        
-        // ③ 新しいUIImageを生成
-        let flippedImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return flippedImage
+struct MemoView: View {
+    @Binding var memoText: String
+    var onSave: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("メモを入力")
+                .font(.headline)
+            TextEditor(text: $memoText)
+                .frame(minHeight: 100)
+                .border(Color.gray.opacity(0.4))
+            Button("保存") {
+                onSave()
+            }
+            .padding(.top, 8)
+            .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .padding()
+        .frame(width: 300)
     }
 }
+
+
+//extension UIImage {
+//
+//    // 上下反転する
+//    func flippedVertically() -> UIImage? {
+//        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+//        guard let context = UIGraphicsGetCurrentContext() else { return nil }
+//        
+//        // ① Y軸反転
+//        context.translateBy(x: 0, y: size.height)
+//        context.scaleBy(x: 1.0, y: -1.0)
+//        
+//        // ② 元画像を描画
+//        context.draw(cgImage!, in: CGRect(origin: .zero, size: size))
+//        
+//        // ③ 新しいUIImageを生成
+//        let flippedImage = UIGraphicsGetImageFromCurrentImageContext()
+//        UIGraphicsEndImageContext()
+//        return flippedImage
+//    }
+//}
 
 

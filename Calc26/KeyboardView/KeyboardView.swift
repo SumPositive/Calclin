@@ -79,7 +79,7 @@ struct KeyboardFooterView: View {
             // インジケータ部（タップ・スワイプ切り替え含む）
             ForEach(0..<pageCount, id: \.self) { index in
                 Circle()
-                    .fill(index == selectedPage ? Color.primary : Color.gray.opacity(0.4))
+                    .fill(index == selectedPage ? Color.primary : Color.secondary.opacity(0.4))
                     .frame(width: IND_CIRCLE_SIZE, height: IND_CIRCLE_SIZE)
                     .animation(.easeInOut(duration: 0.2), value: selectedPage)
                     .padding(.horizontal, 0)
@@ -239,10 +239,10 @@ struct KeyView: View {
                     if symbol != "" {
                         Image(systemName: symbol)
                             .imageScale(.large)
-                            .foregroundColor(keyDef?.unitBase == nil ? .black : .brown)
+                            .foregroundColor(keyDef?.unitBase == nil ? COLOR_NUMBER : COLOR_UNIT)
                     }else{
                         Text(keyTop)
-                            .foregroundColor(keyDef?.unitBase == nil ? .black : .brown)
+                            .foregroundColor(keyDef?.unitBase == nil ? COLOR_NUMBER : COLOR_UNIT)
                             .font(.system(size: 24,
                                           weight: (keyDef?.unitBase == nil ||
                                                    keyDef?.unitBase == keyDef?.code) ? .bold : .light)) //.light.regular.bold.heavy

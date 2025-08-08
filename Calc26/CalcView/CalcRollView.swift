@@ -17,6 +17,7 @@ struct CalcRollView: View {
 
     
     // @State 変化あればViewが更新される
+    @State private var singleMode = true    // 初期やダブルクリックで1面になったとき、上部メニューを消してスッキリ
     @State private var selectedPage: Int = 0 // 初期で2ページ目（インデックス1）を表示
     @State private var showStart: Int = 0
     @State private var showCount: Int = 1
@@ -26,34 +27,36 @@ struct CalcRollView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // 上部メニュー
-            CalcRollHeaderView(
-                selectedPage: selectedPage,
-                pageCount: calcViewModels.count,
-                showStart: showStart,
-                showCount: showCount,
-                onPageChange: { newPage in
-                    withAnimation {
-                        selectedPage = newPage
-                        //
-                        if selectedPage < showStart {
-                            showStart = selectedPage
+            if singleMode == false {
+                // 上部メニュー
+                CalcRollHeaderView(
+                    selectedPage: selectedPage,
+                    pageCount: calcViewModels.count,
+                    showStart: showStart,
+                    showCount: showCount,
+                    onPageChange: { newPage in
+                        withAnimation {
+                            selectedPage = newPage
+                            //
+                            if selectedPage < showStart {
+                                showStart = selectedPage
+                            }
+                            else if showStart + showCount <= selectedPage {
+                                showStart = selectedPage - showCount + 1
+                            }
                         }
-                        else if showStart + showCount <= selectedPage {
-                            showStart = selectedPage - showCount + 1
+                        onCalcChange(newPage)
+                    },
+                    onShowChange: { newStart, newCount in
+                        withAnimation {
+                            showStart = newStart
+                            showCount = newCount
                         }
                     }
-                    onCalcChange(newPage)
-                },
-                onShowChange: { newStart, newCount in
-                    withAnimation {
-                        showStart = newStart
-                        showCount = newCount
-                    }
-                }
-            )
-            .opacity(colorScheme == .dark ? 0.60 : 1.0)
-
+                )
+                .opacity(colorScheme == .dark ? 0.60 : 1.0)
+            }
+            
             // CalcViewを3個横に並べ、1ページずつ左右に切り替える
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
             //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
@@ -63,8 +66,10 @@ struct CalcRollView: View {
                         CalcView(viewModel: calcViewModels[index])
                             .environmentObject(setting) // settingに変化あればCalcViewが再生成される
                             .frame(width: geometry.size.width / CGFloat(showCount))
-                            .border( index == selectedPage ?
-                                     Color.blue.opacity(0.5) :  Color.gray.opacity(0.1), width: 2.0)
+                            .border( index == selectedPage
+                                     ? COLOR_CALC_ACTIVE.opacity(0.5)
+                                     : COLOR_CALC_INACTIVE.opacity(0.1), width: 2.0)
+                            .cornerRadius(4)
                             .contentShape(Rectangle()) // paddingを含む領域全体がタップ対象になる
                             .onTapGesture {
                                 // タップでページを切り替える
@@ -77,7 +82,6 @@ struct CalcRollView: View {
                             }
                             //.onTapGesture(count: 2) { location in
                             // 上ではListが埋まったとき無視されるため下のように対策
-                            .contentShape(Rectangle())
                             .highPriorityGesture( // 親ビューで優先的に処理する。Listへ伝えない
                                 TapGesture(count: 2).onEnded {
                                     // ダブルタップで拡大（1ページにする）、縮小（ページ増加）
@@ -85,6 +89,7 @@ struct CalcRollView: View {
                                         if showCount == 1 {
                                             showStart = 0
                                             showCount = calcViewModels.count
+                                            singleMode = false
                                         } else {
                                             if index != selectedPage {
                                                 selectedPage = index
@@ -92,6 +97,7 @@ struct CalcRollView: View {
                                             }
                                             showStart = selectedPage
                                             showCount = 1
+                                            singleMode = true
                                         }
                                     }
                                 }
@@ -152,7 +158,7 @@ struct CalcRollHeaderView: View {
                     ForEach(0..<pageCount, id: \.self) { index in
                         Circle()
                             .fill(showStart <= index && index < showStart + showCount ?
-                                  Color.blue : Color.gray.opacity(0.4))
+                                  Color.accentColor : Color.secondary.opacity(0.4))
                             .frame(width:  selectedPage == index ? IND_CIRCLE_SIZE*1.5 : IND_CIRCLE_SIZE,
                                    height: selectedPage == index ? IND_CIRCLE_SIZE*1.5 : IND_CIRCLE_SIZE)
                             .animation(.easeInOut(duration: 0.2), value: selectedPage)

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUICore
 
 
 // MARK: - Global let value
@@ -13,6 +14,7 @@ import Foundation
 
 let APP_NAME = "カルメモ"
 
+//-------------------------------------- Layout関係
 // CalcRollView 幅
 let APP_CALC_WIDTH_MIN : CGFloat = 320      // 最小（SEの幅、全機能が見切れず使用できる状態）
 let APP_CALC_WIDTH_MAX : CGFloat = 9999     // Free
@@ -27,6 +29,24 @@ let APP_KB_WIDTH_MAX : CGFloat = 480        // 最大（見栄えで決める）
 let APP_KB_HEIGHT_MIN : CGFloat = 320       // 最小（SEの幅、全機能が見切れず使用できる状態）
 let APP_KB_HEIGHT_MAX : CGFloat = 500       // 最大（見栄えで決める）
 
+//-------------------------------------- Color関係
+
+let COLOR_TITLE: Color = .secondary         // App Name
+// CALC Parts
+let COLOR_CALC_ACTIVE: Color = .accentColor // Calc活性枠
+let COLOR_CALC_INACTIVE: Color = .secondary // Calc非活性枠
+let COLOR_NUMBER: Color = .primary          // 数値
+let COLOR_ANSWER: Color = .accentColor      // 答え
+let COLOR_OPERATOR: Color = .cyan           // 演算子
+let COLOR_OPERATOR_WAIT: Color = .gray      // 待機演算子　右端の[.]や[)]
+let COLOR_UNIT: Color = .secondary          // 単位
+let COLOR_MEMO: Color = .purple             // メモ
+// 背景色
+let COLOR_BACK_FORMULA: Color = Color(.systemGray6)  // FormulaView
+let COLOR_BACK_SETTING: Color = Color(.systemGray4)  // SettingView
+
+
+//-------------------------------------- CALC関係
 
 // 入力中の最大桁数＝整数桁＋小数桁（小数点は含まない）！！！入力中は小数桁制限丸め処理しない
 let CALC_PRECISION_MAX: Int = 30  // <= SBCD_PRECISION/2 = 60/2

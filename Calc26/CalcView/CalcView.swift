@@ -28,6 +28,7 @@ struct CalcView: View {
                 .padding(.horizontal, 8)
                 //debug//  .border(Color.red)
         }
+        .padding(0)
     }
 }
 

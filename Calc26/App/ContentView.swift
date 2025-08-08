@@ -50,7 +50,8 @@ struct ContentView: View {
                         }
                     }) {
                         Image(systemName: "info.circle")
-                            .imageScale(.large)
+                            //.imageScale(.large)
+                            .accentColor(.accentColor)
                     }
                     .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
                     .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
@@ -62,6 +63,7 @@ struct ContentView: View {
                     
                     Text(APP_NAME)
                         .font(.headline)
+                        .foregroundColor(COLOR_TITLE)
 
                     Spacer()
                     // 設定（トグルボタン）
@@ -71,7 +73,8 @@ struct ContentView: View {
                         }
                     }) {
                         Image(systemName: isShowingSetting ? "gearshape.fill" : "gearshape")
-                            .imageScale(.large)
+                            //.imageScale(.large)
+                            .accentColor(.accentColor)
                     }
                     .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
                     .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
@@ -108,7 +111,6 @@ struct ContentView: View {
                 .frame(minWidth: APP_KB_WIDTH_MIN, maxWidth: APP_KB_WIDTH_MAX,
                        minHeight: APP_KB_HEIGHT_MIN, maxHeight: APP_KB_HEIGHT_MAX)
             }
-            //.background(Color(.systemGray6))
             .background(Color.primary.opacity(0.05)) // 控えめな背景
             .onAppear {
                 // 不揮発記録よりkeyboardを読み込み再現する
@@ -126,10 +128,10 @@ struct ContentView: View {
                         Spacer()
                         // 吹き出しの三角形部分（上向き）
                         Triangle()
-                            .fill(Color(.systemGray5))
+                            .fill(COLOR_BACK_SETTING)
                             .frame(width: 30, height: 15)
                             .padding(.top, 25)
-                            .padding(.trailing, 30)
+                            .padding(.trailing, 27)
                     }
                     HStack {
                         Spacer()
@@ -151,7 +153,7 @@ struct ContentView: View {
             GeometryReader { geometry in
                 let screenSize = geometry.size
                 let popupWidth = (screenSize.width < APP_KB_WIDTH_MAX
-                                  ? screenSize.width : APP_KB_WIDTH_MAX) - 10
+                                  ? screenSize.width : APP_KB_WIDTH_MAX) - 20
                 let popupHeight = screenSize.height/1.5
 
                 // popupInfo.positionを起点に最大の領域に展開させる
@@ -187,13 +189,6 @@ struct ContentView: View {
                             }
                                              .frame(width: popupWidth,
                                                     height: popupHeight)
-                            //                         .offset({
-                            //                             // x 横位置は常にキーボード幅内でセンター
-                            //                             var y = popup.position.y - popupHeight - 35
-                            //                             // 縦方向はみ出しチェック
-                            //                             if y < 10 { y = 10 }
-                            //                             return CGSize(width: 0, height: y)
-                            //                         }())
                             Spacer()
                         }
                         Spacer()

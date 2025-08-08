@@ -18,7 +18,6 @@ struct SettingView: View {
         VStack(spacing: 4) {
             // 整数部
             VStack(spacing: 0) {
-            
                 Text("整数部（桁区切り）")
                     .font(.system(size: 14, weight: .regular, design: .default))
                     .frame(maxHeight: 10)
@@ -176,8 +175,8 @@ struct SettingView: View {
             .background(Color(.systemGray6))
         }
         .padding(6)
-        .background(Color(.systemGray5))
-        .cornerRadius(10)
+        .background(COLOR_BACK_SETTING)
+        .cornerRadius(8)
         .frame(minWidth: APP_KB_WIDTH_MIN, maxWidth: APP_KB_WIDTH_MAX)
     }
 

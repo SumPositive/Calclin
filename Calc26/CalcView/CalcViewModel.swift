@@ -322,13 +322,13 @@ final class CalcViewModel: ObservableObject {
                    let _ = def.unitBase {
                     // UNIT.keyTop を計算式に表示する
                     var attr = AttributedString(def.keyTop ?? def.code)
-                    attr.foregroundColor = .brown //.opacity(0.5)
+                    attr.foregroundColor = COLOR_UNIT //.opacity(0.5)
                     self.formulaAttr += attr
                 }
             }
             else{
                 var attr = AttributedString(token)
-                attr.foregroundColor = .blue //.opacity(0.5)
+                attr.foregroundColor = COLOR_OPERATOR //.opacity(0.5)
                 self.formulaAttr += attr
             }
         }
@@ -350,7 +350,7 @@ final class CalcViewModel: ObservableObject {
             }
             else if !last.contains(KD_DECIMAL) {
                 var attr = AttributedString(KD_DECIMAL)
-                attr.foregroundColor = .gray.opacity(0.5)
+                attr.foregroundColor = COLOR_OPERATOR_WAIT.opacity(0.5)
                 self.formulaAttr += attr // 予定[.]表示
             }
         }
@@ -359,7 +359,7 @@ final class CalcViewModel: ObservableObject {
         if 0 < needRightParentheses {
             // 待機中の右括弧を表示
             var attr = AttributedString(String(repeating: KD_PT_RIGHT, count: needRightParentheses))
-            attr.foregroundColor = .gray.opacity(0.5)
+            attr.foregroundColor = COLOR_OPERATOR_WAIT.opacity(0.5)
             self.formulaAttr += attr // 予定[)]表示
         }
         log(.info, "End")
