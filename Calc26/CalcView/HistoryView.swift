@@ -33,7 +33,6 @@ struct HistoryView: View {
                             // 削除アクション  index行を削除する
                             viewModel.delateHistory(index)
                         } label: {
-                            //Text("×").font(.system(size: 44.0, weight: .bold))
                             Image("trash.fill_rev").imageScale(.large)
                         }
                     }
@@ -42,16 +41,17 @@ struct HistoryView: View {
                             // 式コピペ　row.tokenからformulaTextを再現する
                             viewModel.formulaFromHistoryToken(row)
                         } label: {
-                            Text("+-×÷").font(.system(size: 44.0, weight: .bold))
+                            Text("＜＝").font(.system(size: 54.0, weight: .bold))
+//                            Image(systemName: "camera.metering.none").imageScale(.large)
                         }
-                        .tint(COLOR_NUMBER) // スワイプ背景色
+                        .tint(COLOR_OPERATOR) // スワイプ背景色
 
                         Button() {
                             // 答えコピペ  row.answerからformulaTextを再現する
                             viewModel.formulaFromHistoryAnswer(row)
                         } label: {
-                            Text("＝")
-                                .font(.system(size: 44.0, weight: .bold))
+  //                          Image(systemName: "equal").imageScale(.large)
+                            Text("＝＞").font(.system(size: 54.0, weight: .bold))
                         }
                         .tint(COLOR_ANSWER) // スワイプ背景色
 
@@ -117,7 +117,7 @@ struct CustomCell: View {
                 // メモ
                 if let memo = row.memo {
                     var memoAt = AttributedString("\n" + memo)
-                    memoAt.foregroundColor = COLOR_MEMO.opacity(0.7)
+                    memoAt.foregroundColor = (colorScheme == .dark ? Color.cyan : COLOR_MEMO.opacity(0.7))
                     memoAt.font = .system(size: fontSize * 0.8 * setting.numberFontScale, weight: .light)
                     attrStr += memoAt
                 }
@@ -138,14 +138,29 @@ struct CustomCell: View {
 struct HistoryMemoView: View {
     @Binding var memo: String
     var onSave: () -> Void
+    // ダークモード対応
+    @Environment(\.colorScheme) var colorScheme
+
+    // 初期フォーカスを得た状態にするため
+    @FocusState private var isFocused: Bool
+
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("メモを入力")
+            Text("メモ")
                 .font(.headline)
+                .foregroundColor(COLOR_TITLE)
+
             TextEditor(text: $memo)
+                .font(.system(size: 24.0, weight: .bold))
                 .frame(minHeight: 50)
-                .border(Color.gray.opacity(0.4))
+                .focused($isFocused) // フォーカス状態とバインド
+                .onAppear {
+                    DispatchQueue.main.async {
+                        isFocused = true // 表示後にフォーカス
+                    }
+                }
+            
             Button("保存") {
                 onSave()
             }

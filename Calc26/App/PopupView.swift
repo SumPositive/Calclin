@@ -1,5 +1,5 @@
 //
-//  Popup.swift
+//  PopupView.swift
 //  Calc26
 //
 //  Created by azukid on 2025/08/08.
@@ -12,7 +12,7 @@ import SwiftUI
 
 
 // 画面中央ポップアップ
-struct Popup<Content: View>: View {
+struct PopupView<Content: View>: View {
     let onDismiss: () -> Void
     let content: Content
     
@@ -46,10 +46,10 @@ struct Popup<Content: View>: View {
                                     .preference(key: SizePreferenceKey.self, value: geo.size)
                             }
                         )
-                        .padding(12)
+                        .padding(4) // Popupの外枠として見える
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white)
+                                .fill(COLOR_BACK_SETTING)
                                 .shadow(radius: 5)
                         )
                         .overlay(

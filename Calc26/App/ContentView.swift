@@ -156,7 +156,7 @@ struct ContentView: View {
             //(ZStack 2) PopupでHistoryMemoView表示
             let cvm = calcViewModels[selectedCalc]
             if let info = setting.popupHistoryMemoInfo {
-                Popup(
+                PopupView(
                     onDismiss: { setting.popupHistoryMemoInfo = nil }
                 ) {
                     HistoryMemoView(memo: $editingMemo) {
@@ -181,7 +181,7 @@ struct ContentView: View {
                     let popupWidth = (screenSize.width < APP_KB_WIDTH_MAX
                                       ? screenSize.width : APP_KB_WIDTH_MAX) - 40
                     let popupHeight = screenSize.height/1.8
-                    Popup(
+                    PopupView(
                         onDismiss: { keyboardViewModel.popupKeyDefInfo = nil }
                     ) {
                         KeyDefListView(viewModel: keyboardViewModel,
