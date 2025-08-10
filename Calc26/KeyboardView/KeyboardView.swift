@@ -9,6 +9,13 @@ import Foundation
 import SwiftUI
 
 
+extension CGRect {
+    var center: CGPoint {
+        CGPoint(x: midX, y: midY)
+    }
+}
+
+
 struct KeyboardView: View {
     @ObservedObject var viewModel: KeyboardViewModel
     let onTap: (KeyDefinition) -> Void
@@ -256,12 +263,10 @@ struct KeyView: View {
                 LongPressGesture(minimumDuration: 0.6) // 長押し
                     .onEnded { _ in
                         isLongTapped = true
-                        let global = geo.frame(in: .global).center //.global:全画面座標系
-                        viewModel.popupInfo = (
+                        viewModel.popupKeyDefInfo = (
                             page: self.page,
                             index: self.index,
-                            keyCode: keyDef?.code ?? "",
-                            position: global
+                            keyCode: keyDef?.code ?? ""
                         )
                     }
             )
@@ -269,138 +274,120 @@ struct KeyView: View {
     }
 }
 
-
-extension CGRect {
-    var center: CGPoint {
-        CGPoint(x: midX, y: midY)
-    }
-}
-
 /// ポップアップ・キー定義一覧
-struct PopupKeyListView: View {
+struct KeyDefListView: View {
     @ObservedObject var viewModel: KeyboardViewModel
     let popupWidth: CGFloat
-//    let offsetX: CGFloat
     let onSelect: (KeyDefinition) -> Void
-
+    
     @State private var selectedKeyCode: String = ""
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
-
+    
+    // 定数は body の外に
+    private let keyWidth: CGFloat = 70
+    private let keyHeight: CGFloat = 34
+    
+    private var backColor: Color {
+        colorScheme == .dark ? Color(.systemGray5) : .white
+    }
+    
+    private var visibleKeyDefs: [KeyDefinition] {
+        viewModel.keyDefs.filter { $0.hidden != true }
+    }
     
     var body: some View {
-        let keyWidth: Int = 70
-//        let triangleWidth: CGFloat = 30.0
-//        let triangleHeight: CGFloat = 20.0
-        let backColor: Color = (colorScheme == .dark ? Color(.systemGray5) : Color.white)
+        // columns は下限1を保証し、先に作る
+        let colCount = max(Int(popupWidth / keyWidth), 1)
+        let columns: [GridItem] = Array(
+            repeating: GridItem(.flexible(), spacing: 1),
+            count: colCount
+        )
         
         VStack(spacing: 0) {
-            VStack(spacing: 0) {
-                HStack {
-                    // [未定義]にするボタン
-                    Button(action: {
-                        // 未定義キー
-                        let kd = KeyDefinition(code: "nop", hidden: false, symbol: nil)
-                        onSelect(kd)
-                    }) {
-                        Image(systemName: "eraser.line.dashed")
-                            //.imageScale(.large)
-                    }
-                    .padding(6)
-                    .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
-
-                    Spacer()
-                    // タイトル
-                    Text("キー定義")
-                        .padding(4.0)
-
-                    Spacer()
-                    // [×]閉じるボタン
-                    Button(action: {
-                        // ポップアップを閉じる
-                        viewModel.popupInfo = nil
-                    }) {
-                        Image(systemName: "xmark")
-                            //.imageScale(.large)
-                    }
-                    .padding(6)
-                    .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
-                }
-                // グリッドやスクロールなどここに配置
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 1),
-                                                 count: Int(popupWidth)/keyWidth), spacing: 1) {
-                            ForEach(viewModel.keyDefs.filter { $0.hidden != true }, id: \.self) { keyDef in
-                                let isSelected = selectedKeyCode == keyDef.code
-                                ZStack {
-                                    if let symbol = keyDef.symbol {
-                                        Image(systemName: symbol)
-                                            .imageScale(.large)
-                                    }else{
-                                        Text(keyDef.keyTop ?? keyDef.code)
-                                            .font(.system(size: 20, weight: .bold))
-                                            .minimumScaleFactor(0.5)  // 最小で50%まで縮小
-                                            .lineLimit(1)             // 複数行にしない
-                                            .padding(.horizontal, 8)
-                                    }
-                                }
-                                .frame(height: 34)
-                                .frame(maxWidth: .infinity)
-                                .padding(2)
-                                .background(
-                                    isSelected ? Color.accentColor.opacity(0.3) : backColor
-                                )
-                                .foregroundColor(.accentColor)
-                                //.cornerRadius(10)
+            // ヘッダ
+            headerBar()
+            // グリッドやスクロールなどここに配置
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 1) {
+                        ForEach(visibleKeyDefs, id: \.code) { keyDef in
+                            keyCell(keyDef)
                                 .id(keyDef.code)
-                                .onTapGesture {
-                                    onSelect(keyDef)
-                                }
-                            }
+                                .onTapGesture { onSelect(keyDef) }
                         }
                     }
-                    .padding(8)
-                    .scrollIndicators(.hidden)
-                    .onAppear {
-                        if let pi = viewModel.popupInfo {
-                            selectedKeyCode = pi.keyCode
-                            if selectedKeyCode.isEmpty {
-                                selectedKeyCode = viewModel.prevSelectKeyCode
-                            } else {
-                                viewModel.prevSelectKeyCode = selectedKeyCode
-                            }
-                            
-                            DispatchQueue.main.async {
-                                proxy.scrollTo(selectedKeyCode, anchor: .center)
-                            }
+                }
+                .padding(8)
+                .scrollIndicators(.hidden)
+                .onAppear {
+                    // 既選択キーをアクティブにする
+                    if let popupInfo = viewModel.popupKeyDefInfo {
+                        selectedKeyCode = popupInfo.keyCode
+                        if selectedKeyCode.isEmpty {
+                            selectedKeyCode = viewModel.prevSelectKeyCode
+                        } else {
+                            viewModel.prevSelectKeyCode = selectedKeyCode
+                        }
+                        
+                        DispatchQueue.main.async {
+                            proxy.scrollTo(selectedKeyCode, anchor: .center)
                         }
                     }
                 }
             }
-            .background(backColor)
-            .cornerRadius(8)
-
-//            // 吹き出し   offsetX=0 だと中央に表示される
-//            Triangle()
-//                .fill(backColor)
-//                .frame(width: triangleWidth, height: triangleHeight)
-//                .rotationEffect(.degrees(180)) // 下向きに
-//                .offset(CGSize(width: offsetX - triangleWidth/2.0, height: 0))
+        }
+        .background(backColor)
+        .cornerRadius(8)
+    }
+    
+    @ViewBuilder
+    private func headerBar() -> some View {
+        HStack {
+            Button {
+                let kd = KeyDefinition(code: "nop", hidden: false, symbol: nil)
+                onSelect(kd)
+            } label: {
+                Image(systemName: "eraser.line.dashed")
+            }
+            .padding(6)
+            .contentShape(Rectangle())
+            
+            Spacer()
+            Text("キー定義").padding(4)
+            Spacer()
+            
+            Button { viewModel.popupKeyDefInfo = nil } label: {
+                Image(systemName: "xmark")
+            }
+            .padding(6)
+            .contentShape(Rectangle())
         }
     }
+    
+    @ViewBuilder
+    private func keyCell(_ keyDef: KeyDefinition) -> some View {
+        ZStack {
+            if let symbol = keyDef.symbol {
+                Image(systemName: symbol).imageScale(.large)
+            } else {
+                Text(keyDef.keyTop ?? keyDef.code)
+                    .font(.system(size: 20, weight: .bold))
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+                    .padding(.horizontal, 8)
+            }
+        }
+        .frame(height: keyHeight)
+        .frame(maxWidth: .infinity)
+        .padding(2)
+        .background(
+            (selectedKeyCode == keyDef.code)
+            ? Color.accentColor.opacity(0.3)
+            : backColor
+        )
+        .foregroundColor(.accentColor)
+    }
 }
-
-
-//struct Triangle: Shape {
-//    func path(in rect: CGRect) -> Path {
-//        Path { path in
-//            path.move(to: CGPoint(x: rect.midX, y: rect.minY))     // 上
-//            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))  // 右下
-//            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))  // 左下
-//            path.closeSubpath()
-//        }
-//    }
-//}
 
 

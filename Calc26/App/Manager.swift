@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import SwiftUICore
 
 
 @MainActor
@@ -36,3 +37,20 @@ final class Manager: ObservableObject {
 
 
 }
+
+/// ToastメッセージView
+struct ToastView: View {
+    let message: String
+    
+    var body: some View {
+        Text(message)
+            .font(.largeTitle)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Color.black.opacity(0.8))
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .shadow(radius: 4)
+    }
+}
+

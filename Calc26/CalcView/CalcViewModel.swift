@@ -52,7 +52,7 @@ final class CalcViewModel: ObservableObject {
     // [Ans]直後の答えが表示されて単位変換が行われている間(true)である
     @Published var isAnswerMode = false
 
-    
+
     // MARK: - Private value
 
     // 右括弧")"の不足数
@@ -270,12 +270,6 @@ final class CalcViewModel: ObservableObject {
         tokens = []
         tokens.append(SBCD(row.answer).value)
         formulaUpdate() //(true)
-    }
-
-    // HistoryView // メモする
-    func memo(_ row: HistoryRow) {
-        // ポップアップでMemoViewを表示する
-        
     }
 
     /// tokens からUNITに対応した計算式を生成する

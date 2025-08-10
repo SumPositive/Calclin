@@ -140,27 +140,8 @@ final class SettingViewModel: ObservableObject {
     // フォント倍率
     @Published var numberFontScale: Double = 1.5
  
-
-// Manager へ移行
-//    // Toastメッセージ表示　　ToastViewはContentView上に配置
-//    @Published var showToast = false
-//    @Published var toastMessage = ""
-//    func toast(_ message: String, wait: Double = 2) {
-//        self.showToast = true
-//        self.toastMessage = message
-//        DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
-//            self.showToast = false
-//        }
-//    }
-    
-//    @Published var balloonAnchor: CGPoint?
-//    @Published var balloonEditMemo: String?
-//    @Published var balloonKeyDef: KeyDefinition?
-    
-    @Published var balloonMemoInfo: (anchor: CGPoint, index: Int)? = nil
-    @Published var balloonKeyDefInfo: (anchor: CGPoint, page: Int, index: Int, keyCode: String)? = nil
-
-
+    // HistoryMemoViewをPopupで表示する
+    @Published var popupHistoryMemoInfo: (maxLength: Int, index: Int)? = nil
     
 }
 

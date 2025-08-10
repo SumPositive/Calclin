@@ -11,17 +11,17 @@ import UIKit
 struct SettingView: View {
     @EnvironmentObject var viewModel: SettingViewModel
     @EnvironmentObject var keyboardViewModel: KeyboardViewModel
-
+    
     
     var body: some View {
-
+        
         VStack(spacing: 4) {
             // 整数部
             VStack(spacing: 0) {
                 Text("整数部（桁区切り）")
                     .font(.system(size: 14, weight: .regular, design: .default))
                     .frame(maxHeight: 10)
-
+                
                 HStack() {
                     // 桁区切りタイプ
                     Text("方式") //.frame(width: 80, alignment: .trailing)
@@ -43,7 +43,7 @@ struct SettingView: View {
                     
                     Spacer()
                 }
-
+                
                 // 桁区切り記号
                 HStack {
                     Text("記号") //.frame(width: 110, alignment: .trailing)
@@ -73,24 +73,24 @@ struct SettingView: View {
                 Text("小数部（有効桁数と丸め処理）")
                     .font(.system(size: 14, weight: .regular, design: .default))
                     .frame(maxHeight: 10)
-
+                
                 HStack() {
                     // 小数桁数スライダー
                     Text("桁数") //.frame(width: 80, alignment: .trailing)
                     Text(" \(Int(viewModel.decimalDigits)) ")
                     Slider(value: $viewModel.decimalDigits,
                            in: 0...(SETTING_decimalDigits_MAX), step: 1.0)
-                        .onChange(of: viewModel.decimalDigits, { oldValue, newValue in
-                            log(.info, ".onChange decimalDigits")
-                            // @State decDigi 更新により描画
-                            viewModel.decimalDigits = newValue // Double型
-                            // SBCD_Configにセットする
-                            SBCD_Config.decimalDigits = Int(viewModel.decimalDigits)
-                            // 小数部桁数「可変」末尾0削除
-                            SBCD_Config.decimalTrailZero = false
-                            // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
-                            NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
-                        })
+                    .onChange(of: viewModel.decimalDigits, { oldValue, newValue in
+                        log(.info, ".onChange decimalDigits")
+                        // @State decDigi 更新により描画
+                        viewModel.decimalDigits = newValue // Double型
+                        // SBCD_Configにセットする
+                        SBCD_Config.decimalDigits = Int(viewModel.decimalDigits)
+                        // 小数部桁数「可変」末尾0削除
+                        SBCD_Config.decimalTrailZero = false
+                        // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
+                        NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                    })
                     
                     // 丸めタイプ
                     Picker("RoundType", selection: $viewModel.roundType) {
@@ -149,7 +149,7 @@ struct SettingView: View {
             }
             .padding(4)
             .background(Color(.systemGray6))
-
+            
             VStack(spacing: 0) {
                 Text("キーボード配置")
                 HStack {
@@ -180,6 +180,5 @@ struct SettingView: View {
         .frame(minWidth: APP_KB_WIDTH_MIN, maxWidth: APP_KB_WIDTH_MAX)
     }
 
-    
 }
 

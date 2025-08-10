@@ -15,13 +15,12 @@ struct HistoryView: View {
     @State private var showMemoPopover = false
     @State private var currentMemoText = ""
     @State private var selectedIndex: Int = 0
-    @State private var anchorRect: CGRect = .zero
     
     
     var body: some View {
 
         List {
-            ForEach(Array(viewModel.historyRows.reversed().enumerated()), id: \.element) { index, row in
+            ForEach(Array(viewModel.historyRows.enumerated().reversed()), id: \.offset) { index, row in
                 // カスタム明細セル
                 CustomCell(viewModel: viewModel, row: row)
                     .listRowInsets(EdgeInsets()) // ← これが肝
@@ -58,24 +57,11 @@ struct HistoryView: View {
 
                         Button() {
                             // メモする
-                            setting.balloonMemoInfo = (     // = CGPointMake(300, 500) //anchorRect
-                                anchor: CGPointMake(400, 300),
-                                index: index
-                            )
+                            setting.popupHistoryMemoInfo = (maxLength: 0,
+                                                            index: index)
                         } label: {
                             Image("edit_rev").imageScale(.large)
                         }
-//                        .background(
-//                            GeometryReader { innerGeo in
-//                                Color.clear
-//                                    .onAppear {
-//                                        anchorRect = innerGeo.frame(in: .global)
-//                                    }
-//                                    .onChange(of: innerGeo.frame(in: .global)) { newValue in
-//                                        anchorRect = newValue
-//                                    }
-//                            }
-//                        )
                         .tint(COLOR_MEMO) // スワイプ背景色
                     }
                     .onTapGesture(count: 2) { // ダブルタップ時の処理
@@ -143,51 +129,31 @@ struct CustomCell: View {
             .multilineTextAlignment(.trailing) // 複数行で右寄せ
             .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
             .padding(.top, 8.0)
-//            .textSelection(.enabled)
-
-            // 下線
-            //Divider()
-            //    .padding(0)
-            //    .padding(.top, 18.0)
         }
         .frame(maxWidth: .infinity) // 親View内側一杯に広げる
-        .contextMenu {
-            Button {
-                UIPasteboard.general.string = "JSON"
-            } label: {
-                Label("計算式をコピー", systemImage: "doc.on.doc")
-            }
-            Button {
-                UIPasteboard.general.string = "12345"
-            } label: {
-                Label("答えをコピー", systemImage: "doc.on.doc")
-            }
-        }
     }
 }
 
 
-
-
-//extension UIImage {
-//
-//    // 上下反転する
-//    func flippedVertically() -> UIImage? {
-//        UIGraphicsBeginImageContextWithOptions(size, false, scale)
-//        guard let context = UIGraphicsGetCurrentContext() else { return nil }
-//        
-//        // ① Y軸反転
-//        context.translateBy(x: 0, y: size.height)
-//        context.scaleBy(x: 1.0, y: -1.0)
-//        
-//        // ② 元画像を描画
-//        context.draw(cgImage!, in: CGRect(origin: .zero, size: size))
-//        
-//        // ③ 新しいUIImageを生成
-//        let flippedImage = UIGraphicsGetImageFromCurrentImageContext()
-//        UIGraphicsEndImageContext()
-//        return flippedImage
-//    }
-//}
+struct HistoryMemoView: View {
+    @Binding var memo: String
+    var onSave: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("メモを入力")
+                .font(.headline)
+            TextEditor(text: $memo)
+                .frame(minHeight: 50)
+                .border(Color.gray.opacity(0.4))
+            Button("保存") {
+                onSave()
+            }
+            .padding(.top, 4)
+            .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .padding(4)
+    }
+}
 
 

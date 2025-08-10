@@ -68,8 +68,6 @@ final class KeyboardViewModel: ObservableObject {
     let setting: SettingViewModel  // init()で取得
     
     
-    @Published var popupInfo: (page: Int, index: Int, keyCode: String, position: CGPoint)? = nil
-
     var keyDefs: [KeyDefinition] = []
 
     // キーボード配列（固定）
@@ -80,7 +78,10 @@ final class KeyboardViewModel: ObservableObject {
     // .keyboard[page][key]
     var keyboard: [[String]] = Array(repeating: Array(repeating: "", count: colCount * rowCount),
                                      count: pageCount)
-    // Popoverで直前に選択したkeyCode（空キーを長押しした時、初期選択に使用する）
+
+    // キー定義一覧をPopupで表示する
+    @Published var popupKeyDefInfo: (page: Int, index: Int, keyCode: String)? = nil
+    // キー定義一覧で直前に選択したkeyCode（空キーを長押しした時、初期選択に使用する）
     var prevSelectKeyCode: String = ""
     
     // Cold Start時にキー定義初期化するための揮発性（Cold Start時にfalseに戻る）フラグ
@@ -242,18 +243,6 @@ final class KeyboardViewModel: ObservableObject {
     
     // MARK: - Private Methods
 
-//    /// Build number が変更された時だけ処理する
-//    private func runIfBuildNumberIncreased(_ action: () -> Void) {
-//        let currentBuild = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
-//        let previousBuild = UserDefaults.standard.string(forKey: "lastBuildNumber") ?? ""
-//        if currentBuild != previousBuild {
-//            log(.info,"ビルド番号が変更されたため処理を実行")
-//            action()
-//            UserDefaults.standard.set(currentBuild, forKey: "lastBuildNumber")
-//        } else {
-//            log(.info, "ビルド番号が同じなのでスキップ")
-//        }
-//    }
 
 }
 

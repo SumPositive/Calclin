@@ -152,79 +152,60 @@ struct ContentView: View {
                 }
                 .zIndex(1)
             }
-            //(ZStack 2) 外部タップで閉じるための半透明背景レイヤー
-            //(ZStack 3) PopupKeyListView表示
-            if let info = setting.balloonMemoInfo {
+
+            //(ZStack 2) PopupでHistoryMemoView表示
+            let cvm = calcViewModels[selectedCalc]
+            if let info = setting.popupHistoryMemoInfo {
+                Popup(
+                    onDismiss: { setting.popupHistoryMemoInfo = nil }
+                ) {
+                    HistoryMemoView(memo: $editingMemo) {
+                        // Dismiss
+                        setting.popupHistoryMemoInfo = nil
+                        // 編集結果 Save
+                        cvm.historyRows[info.index].memo = editingMemo.trimmingCharacters(in: .newlines) // 両端の改行削除
+                    }
+                    .onAppear {
+                        // 編集初期値
+                        editingMemo = cvm.historyRows[info.index].memo ?? ""
+                    }
+                    .frame(width: 300, height: 200)
+                }
+                .zIndex(2) // これが無いとSettingViewの下になる
+            }
+
+            //(ZStack 2) PopupでKeyDefListView表示
+            if let info = keyboardViewModel.popupKeyDefInfo {
                 GeometryReader { geo in
-                    BalloonPopup(
-                        anchor: info.anchor,
-                        arrowAlignment: .leading,
-                        onDismiss: { showPopup = false }
+                    let screenSize = geo.size
+                    let popupWidth = (screenSize.width < APP_KB_WIDTH_MAX
+                                      ? screenSize.width : APP_KB_WIDTH_MAX) - 40
+                    let popupHeight = screenSize.height/1.8
+                    Popup(
+                        onDismiss: { keyboardViewModel.popupKeyDefInfo = nil }
                     ) {
-                        MemoView(memo: $editingMemo) {
-                            // Save
-                            calcViewModels[selectedCalc].historyRows[info.index].memo = editingMemo
-                            // Close
-                            setting.balloonMemoInfo = nil
-                        }
-                        .onAppear {
-                            editingMemo = calcViewModels[selectedCalc].historyRows[info.index].memo ?? ""
-                        }
-                        .frame(width: 300, height: 200)
-                    }
-                }
-            }
-            //(ZStack 2) 外部タップで閉じるための半透明背景レイヤー
-            //(ZStack 3) PopupKeyListView表示
-            GeometryReader { geometry in
-                let screenSize = geometry.size
-                let popupWidth = (screenSize.width < APP_KB_WIDTH_MAX
-                                  ? screenSize.width : APP_KB_WIDTH_MAX) - 20
-                let popupHeight = screenSize.height/1.5
-                
-                // popupInfo.positionを起点に最大の領域に展開させる
-                if let popup = keyboardViewModel.popupInfo {
-                    // ポップアップ外部タップで閉じるための半透明背景レイヤー(ZStack 2)
-                    Color.black.opacity(0.2) // タップ判定される
-                        .ignoresSafeArea()
-                        .zIndex(2)
-                        .onTapGesture {
-                            // ポップアップを閉じる
-                            keyboardViewModel.popupInfo = nil
-                        }
-                    
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            // ポップアップを開く
-                            PopupKeyListView(viewModel: keyboardViewModel,
-                                             popupWidth: popupWidth) { selectedKeyDef in
-                                log(.info, "PopupListView selected: \(selectedKeyDef.code)")
-                                keyboardViewModel.popupInfo = nil
-                                // 最終選択を記録
-                                keyboardViewModel.prevSelectKeyCode = selectedKeyDef.code
+                        KeyDefListView(viewModel: keyboardViewModel,
+                                       popupWidth: popupWidth) { selectedKeyDef in
+                            log(.info, "PopupListView selected: \(selectedKeyDef.code)")
+                            // Dismiss
+                            keyboardViewModel.popupKeyDefInfo = nil
+                            // 最終選択を記録
+                            keyboardViewModel.prevSelectKeyCode = selectedKeyDef.code
+                            // keyboardを更新する
+                            if info.page < keyboardViewModel.keyboard.count,
+                               info.index < keyboardViewModel.keyboard[info.page].count {
                                 // keyboardを更新する
-                                if popup.page < keyboardViewModel.keyboard.count,
-                                   popup.index < keyboardViewModel.keyboard[popup.page].count {
-                                    // keyboardを更新する
-                                    keyboardViewModel.keyboard[popup.page][popup.index] = selectedKeyDef.code
-                                    // 都度、不揮発記録にkeyboardを保存する
-                                    keyboardViewModel.saveKeyboard()
-                                }
+                                keyboardViewModel.keyboard[info.page][info.index] = selectedKeyDef.code
+                                // 都度、不揮発記録にkeyboardを保存する
+                                keyboardViewModel.saveKeyboard()
                             }
-                                             .frame(width: popupWidth,
-                                                    height: popupHeight)
-                            Spacer()
-                        }
-                        Spacer()
+                        }.frame(width: popupWidth, height: popupHeight)
                     }
-                    .zIndex(3) // これが無いと半透明背景レイヤーの下になる
                 }
+                .zIndex(2) // これが無いとSettingViewの下になる
             }
-            .zIndex(3) // これが無いとSettingViewの下になる
-            
-            //(ZStack 4) ToastView表示
+
+            //(ZStack 3) ToastView表示
             if manager.showToast {
                 VStack {
                     Spacer()
@@ -233,7 +214,7 @@ struct ContentView: View {
                         .padding(.top, 50)
                     Spacer()
                 }
-                .zIndex(4)
+                .zIndex(3)
             }
             
         }
@@ -248,44 +229,7 @@ struct ContentView: View {
         func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
     }
     
-    struct MemoView: View {
-        @Binding var memo: String
-        var onSave: () -> Void
-        
-        var body: some View {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("メモを入力")
-                    .font(.headline)
-                TextEditor(text: $memo)
-                    .frame(minHeight: 50)
-                    .border(Color.gray.opacity(0.4))
-                Button("保存") {
-                    onSave()
-                }
-                .padding(.top, 4)
-                .frame(maxWidth: .infinity, alignment: .center)
-            }
-            .padding(4)
-            //.frame(width: 300)
-        }
-    }
-
-    /// ToastメッセージView
-    struct ToastView: View {
-        let message: String
-        
-        var body: some View {
-            Text(message)
-                .font(.largeTitle)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Color.black.opacity(0.8))
-                .foregroundColor(.white)
-                .cornerRadius(10)
-                .shadow(radius: 4)
-        }
-    }
-
+    
 }
 
 #Preview {
