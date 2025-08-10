@@ -66,7 +66,7 @@ struct ContentView: View {
                     .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
                     .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
                     .sheet(isPresented: $showSafari) {
-                        SafariView(url: URL(string: "https://info.art.jp")!)
+                        SafariView(url: URL(string: "https://docs.azukid.com/CalcRoll/")!)
                     }
                     
                     Spacer()
