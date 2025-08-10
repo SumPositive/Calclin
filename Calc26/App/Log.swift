@@ -42,7 +42,7 @@ func log(_ level: LogLevel,
          line: Int = #line,
          function: String = #function)
 {
-    guard level >= currentLogLevel else { return }
+    guard currentLogLevel <= level else { return }
     
     let fileName = (file as NSString).lastPathComponent
     print("\(fileName)(\(line)) \(function) \(level.prefix) \(message)")

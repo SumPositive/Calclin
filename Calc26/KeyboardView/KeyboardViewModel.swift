@@ -18,15 +18,14 @@ struct KeyDefinition: Codable, Hashable {
     let keyTop: String?     // キートップ表示文字　nilならばcodeを使う
     let symbol: String?     // SF Symbol Name
     let unitBase: String?   // 基準単位　 =nil:単位処理しない
-    let unitConv: String?   // 単位から基準単位への変換式  [km]"*1000"=>[m]
-    let unitRev: String?    // 基準単位から単位への変換式  [m]"/1000"=>[km]
+    let unitConv: String?   // 単位から基準単位への変換倍率   [mm]*"0.001" => [m]/"0.001" => [mm]
     //------------------------
     //  memo: String?       // メモ コメント 覚書
     //------------------------
     init(code: String,
          hidden: Bool? = false,
          formula: String? = nil, keyTop: String? = nil, symbol: String? = nil,
-         unitBase: String? = nil, unitConv: String? = nil, unitRev: String? = nil) {
+         unitBase: String? = nil, unitConv: String? = nil) {
         self.code = code
         self.hidden = hidden
         self.formula = formula
@@ -34,7 +33,6 @@ struct KeyDefinition: Codable, Hashable {
         self.symbol = symbol
         self.unitBase = unitBase
         self.unitConv = unitConv
-        self.unitRev = unitRev
     }
 }
 

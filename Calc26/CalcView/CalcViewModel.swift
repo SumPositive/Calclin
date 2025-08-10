@@ -281,7 +281,7 @@ final class CalcViewModel: ObservableObject {
                 let code = String(token.dropFirst())
                 if let def = keyboardViewModel.keyDef(code: code),
                    let conv = def.unitConv {
-                    formula += conv   // "*100" や "/100" など
+                    formula += "*" + conv   // "*" + 変換倍率
                 }
             }
             else{
@@ -517,13 +517,13 @@ final class CalcViewModel: ObservableObject {
                        ub == keyDef.unitBase { //<==Baseが共通であることが変換の必要条件
                         // 単位換算
                         if var form = tokens.first {
-                            // unitBaseに戻す
+                            // unitBase単位に変換する
                             if def.code != def.unitBase, let conv = def.unitConv {
-                                form += conv
+                                form += "*" + conv
                             }
                             // 新しい単位に変換する
-                            if keyDef.code != keyDef.unitBase, let rev = keyDef.unitRev {
-                                form += rev
+                            if keyDef.code != keyDef.unitBase, let conv = keyDef.unitConv {
+                                form += "/" + conv
                             }
                             // 計算結果（小数制限丸め処理済み）
                             let ans = CalcFunc.answer(form)

@@ -246,9 +246,7 @@
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>/100</string>
-		<key>unitRev</key>
-		<string>*100</string>
+		<string>0.01</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -258,9 +256,7 @@
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>/1000</string>
-		<key>unitRev</key>
-		<string>*1000</string>
+		<string>0.001</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -272,9 +268,7 @@
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>*3.141592653589793238462643383279</string>
-		<key>unitRev</key>
-		<string>/3.141592653589793238462643383279</string>
+		<string>3.141592653589793238462643383279</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -284,9 +278,7 @@
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>*1.2</string>
-		<key>unitRev</key>
-		<string>/1.2</string>
+		<string>1.2</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -296,9 +288,7 @@
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>/1.2</string>
-		<key>unitRev</key>
-		<string>*1.2</string>
+		<string>0.83333333333</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -308,9 +298,7 @@
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>*1.1</string>
-		<key>unitRev</key>
-		<string>/1.1</string>
+		<string>1.1</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -320,9 +308,7 @@
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>/1.1</string>
-		<key>unitRev</key>
-		<string>*1.1</string>
+		<string>0.90909090909090</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -332,9 +318,7 @@
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>*1.08</string>
-		<key>unitRev</key>
-		<string>/1.08</string>
+		<string>1.08</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -344,9 +328,7 @@
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>/1.08</string>
-		<key>unitRev</key>
-		<string>*1.08</string>
+		<string>0.925925925925925</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -356,9 +338,7 @@
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>*1.05</string>
-		<key>unitRev</key>
-		<string>/1.05</string>
+		<string>1.05</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -368,45 +348,37 @@
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>/1.05</string>
-		<key>unitRev</key>
-		<string>*1.05</string>
+		<string>0.952380952380</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>Wari</string>
+		<string>J割</string>
 		<key>keyTop</key>
 		<string>割</string>
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>/10</string>
-		<key>unitRev</key>
-		<string>*10</string>
+		<string>0.1</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>WaBu</string>
+		<string>J分</string>
 		<key>keyTop</key>
 		<string>分</string>
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>/100</string>
-		<key>unitRev</key>
-		<string>*100</string>
+		<string>0.01</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>WaRin</string>
+		<string>J厘</string>
 		<key>keyTop</key>
 		<string>厘</string>
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>/1000</string>
-		<key>unitRev</key>
-		<string>*1000</string>
+		<string>0.001</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -416,9 +388,7 @@
 		<key>unitBase</key>
 		<string>kg</string>
 		<key>unitConv</key>
-		<string>/1000000</string>
-		<key>unitRev</key>
-		<string>*1000000</string>
+		<string>0.000001</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -428,9 +398,27 @@
 		<key>unitBase</key>
 		<string>kg</string>
 		<key>unitConv</key>
-		<string>/1000</string>
-		<key>unitRev</key>
-		<string>*1000</string>
+		<string>0.001</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>J匁</string>
+		<key>keyTop</key>
+		<string>匁</string>
+		<key>unitBase</key>
+		<string>kg</string>
+		<key>unitConv</key>
+		<string>0.00375</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>pondus</string>
+		<key>keyTop</key>
+		<string>lb</string>
+		<key>unitBase</key>
+		<string>kg</string>
+		<key>unitConv</key>
+		<string>0.45359237</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -448,9 +436,7 @@
 		<key>unitBase</key>
 		<string>kg</string>
 		<key>unitConv</key>
-		<string>*1000</string>
-		<key>unitRev</key>
-		<string>/1000</string>
+		<string>1000</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -460,9 +446,17 @@
 		<key>unitBase</key>
 		<string>kg</string>
 		<key>unitConv</key>
-		<string>*1000000</string>
-		<key>unitRev</key>
-		<string>/1000000</string>
+		<string>1000000</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>J貫</string>
+		<key>keyTop</key>
+		<string>貫</string>
+		<key>unitBase</key>
+		<string>kg</string>
+		<key>unitConv</key>
+		<string>3.75</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -472,9 +466,7 @@
 		<key>unitBase</key>
 		<string>m</string>
 		<key>unitConv</key>
-		<string>/1000</string>
-		<key>unitRev</key>
-		<string>*1000</string>
+		<string>0.001</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -484,9 +476,57 @@
 		<key>unitBase</key>
 		<string>m</string>
 		<key>unitConv</key>
-		<string>/100</string>
-		<key>unitRev</key>
-		<string>*100</string>
+		<string>0.01</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>inch</string>
+		<key>keyTop</key>
+		<string>in</string>
+		<key>unitBase</key>
+		<string>m</string>
+		<key>unitConv</key>
+		<string>0.0254</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>J寸</string>
+		<key>keyTop</key>
+		<string>寸</string>
+		<key>unitBase</key>
+		<string>m</string>
+		<key>unitConv</key>
+		<string>0.0303</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>J尺</string>
+		<key>keyTop</key>
+		<string>尺</string>
+		<key>unitBase</key>
+		<string>m</string>
+		<key>unitConv</key>
+		<string>0.303</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>foot</string>
+		<key>keyTop</key>
+		<string>ft</string>
+		<key>unitBase</key>
+		<string>m</string>
+		<key>unitConv</key>
+		<string>0.3048</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>yard</string>
+		<key>keyTop</key>
+		<string>yd</string>
+		<key>unitBase</key>
+		<string>m</string>
+		<key>unitConv</key>
+		<string>0.9144</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -504,31 +544,25 @@
 		<key>unitBase</key>
 		<string>m</string>
 		<key>unitConv</key>
-		<string>*1000</string>
-		<key>unitRev</key>
-		<string>/1000</string>
+		<string>1000</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>里</string>
+		<string>J里</string>
 		<key>keyTop</key>
 		<string>里</string>
 		<key>unitBase</key>
 		<string>m</string>
 		<key>unitConv</key>
-		<string>*3927.27</string>
-		<key>unitRev</key>
-		<string>/3927.27</string>
+		<string>3927.27</string>
 	</dict>
 	<dict>
 		<key>code</key>
 		<string>m㎡</string>
 		<key>unitBase</key>
-		<string>㎡</string>
+		<string>m2</string>
 		<key>unitConv</key>
-		<string>/1000000</string>
-		<key>unitRev</key>
-		<string>*1000000</string>
+		<string>0.000001</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -536,43 +570,47 @@
 		<key>keyTop</key>
 		<string>c㎡</string>
 		<key>unitBase</key>
-		<string>㎡</string>
+		<string>m2</string>
 		<key>unitConv</key>
-		<string>/10000</string>
-		<key>unitRev</key>
-		<string>*10000</string>
+		<string>0.0001</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>㎡</string>
+		<string>m2</string>
 		<key>keyTop</key>
 		<string>㎡</string>
 		<key>unitBase</key>
-		<string>㎡</string>
+		<string>m2</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>Are</string>
+		<string>are</string>
 		<key>keyTop</key>
 		<string>ａ</string>
 		<key>unitBase</key>
-		<string>㎡</string>
+		<string>m2</string>
 		<key>unitConv</key>
-		<string>*100</string>
-		<key>unitRev</key>
-		<string>/100</string>
+		<string>100</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>Hare</string>
+		<string>acre</string>
+		<key>keyTop</key>
+		<string>ac</string>
+		<key>unitBase</key>
+		<string>m2</string>
+		<key>unitConv</key>
+		<string>4046.8564224</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>hectare</string>
 		<key>keyTop</key>
 		<string>ha</string>
 		<key>unitBase</key>
-		<string>㎡</string>
+		<string>m2</string>
 		<key>unitConv</key>
-		<string>*10000</string>
-		<key>unitRev</key>
-		<string>/10000</string>
+		<string>10000</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -580,47 +618,107 @@
 		<key>keyTop</key>
 		<string>k㎡</string>
 		<key>unitBase</key>
-		<string>㎡</string>
+		<string>m2</string>
 		<key>unitConv</key>
-		<string>*1000000</string>
-		<key>unitRev</key>
-		<string>/1000000</string>
+		<string>1000000</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>坪</string>
+		<string>J坪</string>
 		<key>keyTop</key>
 		<string>坪</string>
 		<key>unitBase</key>
-		<string>㎡</string>
+		<string>m2</string>
 		<key>unitConv</key>
-		<string>*3.305785</string>
-		<key>unitRev</key>
-		<string>/3.305785</string>
+		<string>3.305785</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>畝</string>
+		<string>J畝</string>
 		<key>keyTop</key>
 		<string>畝</string>
 		<key>unitBase</key>
-		<string>㎡</string>
+		<string>m2</string>
 		<key>unitConv</key>
-		<string>*99.17355</string>
-		<key>unitRev</key>
-		<string>/99.17355</string>
+		<string>99.17355</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>反</string>
+		<string>J反</string>
 		<key>keyTop</key>
 		<string>反</string>
 		<key>unitBase</key>
-		<string>㎡</string>
+		<string>m2</string>
 		<key>unitConv</key>
-		<string>*991.7355</string>
-		<key>unitRev</key>
-		<string>/991.7355</string>
+		<string>991.7355</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>mLitre</string>
+		<key>keyTop</key>
+		<string>ml</string>
+		<key>unitBase</key>
+		<string>Litre</string>
+		<key>unitConv</key>
+		<string>0.001</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>dLitre</string>
+		<key>keyTop</key>
+		<string>dl</string>
+		<key>unitBase</key>
+		<string>Litre</string>
+		<key>unitConv</key>
+		<string>0.1</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>J合</string>
+		<key>keyTop</key>
+		<string>合</string>
+		<key>unitBase</key>
+		<string>Litre</string>
+		<key>unitConv</key>
+		<string>0.18039</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Litre</string>
+		<key>keyTop</key>
+		<string>L</string>
+		<key>unitBase</key>
+		<string>Litre</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>J升</string>
+		<key>keyTop</key>
+		<string>升</string>
+		<key>unitBase</key>
+		<string>Litre</string>
+		<key>unitConv</key>
+		<string>1.8039</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>oz</string>
+		<key>keyTop</key>
+		<string>oz</string>
+		<key>unitBase</key>
+		<string>Litre</string>
+		<key>unitConv</key>
+		<string>28.349523125</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>m3</string>
+		<key>keyTop</key>
+		<string>㎥</string>
+		<key>unitBase</key>
+		<string>Litre</string>
+		<key>unitConv</key>
+		<string>1000</string>
 	</dict>
 </array>
 </plist>

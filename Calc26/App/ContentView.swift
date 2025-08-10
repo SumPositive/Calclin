@@ -42,6 +42,11 @@ struct ContentView: View {
     @State private var showPopup = false
     @State private var editingMemo: String = ""
 
+    // 選択中のCalcViewModelを返す
+    private var selectedViewModel: CalcViewModel {
+        calcViewModels[selectedCalc]
+    }
+
     
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
@@ -109,8 +114,7 @@ struct ContentView: View {
                 KeyboardView(viewModel: keyboardViewModel,
                              onTap: { keyDef in
                     // 選択中のCalcViewへkeyDefを送る
-                    let calc = calcViewModels[selectedCalc]
-                    calc.input(keyDef)
+                    selectedViewModel.input(keyDef)
                 })
                 .padding(.horizontal, 4.0)
                 .frame(minWidth: APP_KB_WIDTH_MIN, maxWidth: APP_KB_WIDTH_MAX,
@@ -154,7 +158,6 @@ struct ContentView: View {
             }
 
             //(ZStack 2) PopupでHistoryMemoView表示
-            let cvm = calcViewModels[selectedCalc]
             if let info = setting.popupHistoryMemoInfo {
                 PopupView(
                     onDismiss: { setting.popupHistoryMemoInfo = nil }
@@ -163,11 +166,11 @@ struct ContentView: View {
                         // Dismiss
                         setting.popupHistoryMemoInfo = nil
                         // 編集結果 Save
-                        cvm.historyRows[info.index].memo = editingMemo.trimmingCharacters(in: .newlines) // 両端の改行削除
+                        selectedViewModel.historyRows[info.index].memo = editingMemo.trimmingCharacters(in: .newlines) // 両端の改行削除
                     }
                     .onAppear {
                         // 編集初期値
-                        editingMemo = cvm.historyRows[info.index].memo ?? ""
+                        editingMemo = selectedViewModel.historyRows[info.index].memo ?? ""
                     }
                     .frame(width: 300, height: 200)
                 }
