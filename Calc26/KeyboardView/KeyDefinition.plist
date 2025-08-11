@@ -202,19 +202,19 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>BS</string>
-		<key>keyTop</key>
-		<string>BS</string>
-		<key>symbol</key>
-		<string>delete.left</string>
-	</dict>
-	<dict>
-		<key>code</key>
 		<string>CS</string>
 		<key>keyTop</key>
 		<string>CS</string>
 		<key>symbol</key>
 		<string>clear</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>BS</string>
+		<key>keyTop</key>
+		<string>BS</string>
+		<key>symbol</key>
+		<string>delete.left</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -226,15 +226,15 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>Bare</string>
-		<key>hidden</key>
-		<true/>
+		<string>Pi</string>
 		<key>keyTop</key>
-		<string></string>
+		<string>π</string>
+		<key>symbol</key>
+		<string>pi</string>
 		<key>unitBase</key>
 		<string>Bare</string>
-		<key>memo</key>
-		<string>無名数（bare number）の基準単位　hidden=YESにして非表示</string>
+		<key>unitConv</key>
+		<string>3.141592653589793238462643383279</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -260,15 +260,33 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>Pi</string>
+		<string>J割</string>
 		<key>keyTop</key>
-		<string>π</string>
-		<key>symbol</key>
-		<string>pi</string>
+		<string>割</string>
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
-		<string>3.141592653589793238462643383279</string>
+		<string>0.1</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>J分</string>
+		<key>keyTop</key>
+		<string>分</string>
+		<key>unitBase</key>
+		<string>Bare</string>
+		<key>unitConv</key>
+		<string>0.01</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>J厘</string>
+		<key>keyTop</key>
+		<string>厘</string>
+		<key>unitBase</key>
+		<string>Bare</string>
+		<key>unitConv</key>
+		<string>0.001</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -352,141 +370,53 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>J割</string>
+		<string>Bare</string>
+		<key>hidden</key>
+		<true/>
 		<key>keyTop</key>
-		<string>割</string>
+		<string></string>
 		<key>unitBase</key>
 		<string>Bare</string>
-		<key>unitConv</key>
-		<string>0.1</string>
+		<key>memo</key>
+		<string>無名数（bare number）の基準単位　hidden=YESにして非表示</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>J分</string>
+		<string>mm</string>
 		<key>keyTop</key>
-		<string>分</string>
+		<string>mm</string>
 		<key>unitBase</key>
-		<string>Bare</string>
+		<string>m</string>
+		<key>unitConv</key>
+		<string>0.001</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>cm</string>
+		<key>keyTop</key>
+		<string>cm</string>
+		<key>unitBase</key>
+		<string>m</string>
 		<key>unitConv</key>
 		<string>0.01</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>J厘</string>
+		<string>m</string>
 		<key>keyTop</key>
-		<string>厘</string>
+		<string>m</string>
 		<key>unitBase</key>
-		<string>Bare</string>
-		<key>unitConv</key>
-		<string>0.001</string>
+		<string>m</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>mg</string>
+		<string>km</string>
 		<key>keyTop</key>
-		<string>mg</string>
+		<string>km</string>
 		<key>unitBase</key>
-		<string>kg</string>
-		<key>unitConv</key>
-		<string>0.000001</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>g</string>
-		<key>keyTop</key>
-		<string>g</string>
-		<key>unitBase</key>
-		<string>kg</string>
-		<key>unitConv</key>
-		<string>0.001</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>J匁</string>
-		<key>keyTop</key>
-		<string>匁</string>
-		<key>unitBase</key>
-		<string>kg</string>
-		<key>unitConv</key>
-		<string>0.00375</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>pondus</string>
-		<key>keyTop</key>
-		<string>lb</string>
-		<key>unitBase</key>
-		<string>kg</string>
-		<key>unitConv</key>
-		<string>0.45359237</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>kg</string>
-		<key>keyTop</key>
-		<string>kg</string>
-		<key>unitBase</key>
-		<string>kg</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>t</string>
-		<key>keyTop</key>
-		<string>t</string>
-		<key>unitBase</key>
-		<string>kg</string>
+		<string>m</string>
 		<key>unitConv</key>
 		<string>1000</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>kt</string>
-		<key>keyTop</key>
-		<string>kt</string>
-		<key>unitBase</key>
-		<string>kg</string>
-		<key>unitConv</key>
-		<string>1000000</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>J貫</string>
-		<key>keyTop</key>
-		<string>貫</string>
-		<key>unitBase</key>
-		<string>kg</string>
-		<key>unitConv</key>
-		<string>3.75</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>mm</string>
-		<key>keyTop</key>
-		<string>mm</string>
-		<key>unitBase</key>
-		<string>m</string>
-		<key>unitConv</key>
-		<string>0.001</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>cm</string>
-		<key>keyTop</key>
-		<string>cm</string>
-		<key>unitBase</key>
-		<string>m</string>
-		<key>unitConv</key>
-		<string>0.01</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>inch</string>
-		<key>keyTop</key>
-		<string>in</string>
-		<key>unitBase</key>
-		<string>m</string>
-		<key>unitConv</key>
-		<string>0.0254</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -510,6 +440,26 @@
 	</dict>
 	<dict>
 		<key>code</key>
+		<string>J里</string>
+		<key>keyTop</key>
+		<string>里</string>
+		<key>unitBase</key>
+		<string>m</string>
+		<key>unitConv</key>
+		<string>3927.27</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>inch</string>
+		<key>keyTop</key>
+		<string>in</string>
+		<key>unitBase</key>
+		<string>m</string>
+		<key>unitConv</key>
+		<string>0.0254</string>
+	</dict>
+	<dict>
+		<key>code</key>
 		<string>foot</string>
 		<key>keyTop</key>
 		<string>ft</string>
@@ -527,34 +477,6 @@
 		<string>m</string>
 		<key>unitConv</key>
 		<string>0.9144</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>m</string>
-		<key>keyTop</key>
-		<string>m</string>
-		<key>unitBase</key>
-		<string>m</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>km</string>
-		<key>keyTop</key>
-		<string>km</string>
-		<key>unitBase</key>
-		<string>m</string>
-		<key>unitConv</key>
-		<string>1000</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>J里</string>
-		<key>keyTop</key>
-		<string>里</string>
-		<key>unitBase</key>
-		<string>m</string>
-		<key>unitConv</key>
-		<string>3927.27</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -591,16 +513,6 @@
 		<string>m2</string>
 		<key>unitConv</key>
 		<string>100</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>acre</string>
-		<key>keyTop</key>
-		<string>ac</string>
-		<key>unitBase</key>
-		<string>m2</string>
-		<key>unitConv</key>
-		<string>4046.8564224</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -654,6 +566,16 @@
 	</dict>
 	<dict>
 		<key>code</key>
+		<string>acre</string>
+		<key>keyTop</key>
+		<string>ac</string>
+		<key>unitBase</key>
+		<string>m2</string>
+		<key>unitConv</key>
+		<string>4046.8564224</string>
+	</dict>
+	<dict>
+		<key>code</key>
 		<string>mLitre</string>
 		<key>keyTop</key>
 		<string>ml</string>
@@ -674,6 +596,24 @@
 	</dict>
 	<dict>
 		<key>code</key>
+		<string>Litre</string>
+		<key>keyTop</key>
+		<string>L</string>
+		<key>unitBase</key>
+		<string>Litre</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>m3</string>
+		<key>keyTop</key>
+		<string>㎥</string>
+		<key>unitBase</key>
+		<string>Litre</string>
+		<key>unitConv</key>
+		<string>1000</string>
+	</dict>
+	<dict>
+		<key>code</key>
 		<string>J合</string>
 		<key>keyTop</key>
 		<string>合</string>
@@ -681,14 +621,6 @@
 		<string>Litre</string>
 		<key>unitConv</key>
 		<string>0.18039</string>
-	</dict>
-	<dict>
-		<key>code</key>
-		<string>Litre</string>
-		<key>keyTop</key>
-		<string>L</string>
-		<key>unitBase</key>
-		<string>Litre</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -712,13 +644,81 @@
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>m3</string>
+		<string>mg</string>
 		<key>keyTop</key>
-		<string>㎥</string>
+		<string>mg</string>
 		<key>unitBase</key>
-		<string>Litre</string>
+		<string>kg</string>
+		<key>unitConv</key>
+		<string>0.000001</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>g</string>
+		<key>keyTop</key>
+		<string>g</string>
+		<key>unitBase</key>
+		<string>kg</string>
+		<key>unitConv</key>
+		<string>0.001</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>kg</string>
+		<key>keyTop</key>
+		<string>kg</string>
+		<key>unitBase</key>
+		<string>kg</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>t</string>
+		<key>keyTop</key>
+		<string>t</string>
+		<key>unitBase</key>
+		<string>kg</string>
 		<key>unitConv</key>
 		<string>1000</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>kt</string>
+		<key>keyTop</key>
+		<string>kt</string>
+		<key>unitBase</key>
+		<string>kg</string>
+		<key>unitConv</key>
+		<string>1000000</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>J匁</string>
+		<key>keyTop</key>
+		<string>匁</string>
+		<key>unitBase</key>
+		<string>kg</string>
+		<key>unitConv</key>
+		<string>0.00375</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>J貫</string>
+		<key>keyTop</key>
+		<string>貫</string>
+		<key>unitBase</key>
+		<string>kg</string>
+		<key>unitConv</key>
+		<string>3.75</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>pondus</string>
+		<key>keyTop</key>
+		<string>lb</string>
+		<key>unitBase</key>
+		<string>kg</string>
+		<key>unitConv</key>
+		<string>0.45359237</string>
 	</dict>
 </array>
 </plist>
