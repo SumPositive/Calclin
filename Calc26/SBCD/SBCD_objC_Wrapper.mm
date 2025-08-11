@@ -2,7 +2,7 @@
 //  SBCD_objC_Wrapper.mm
 //  C/C++ --> Objective-C/C++ Wrapper
 //
-//  Created by azukid on 2025/07/10.
+//  Created by sumpo/azukid on 2025/07/10.
 //
 
 //#import <Foundation/Foundation.h>

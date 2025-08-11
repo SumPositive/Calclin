@@ -2,7 +2,7 @@
 //  KeyboardViewModel.swift
 //  Calc26
 //
-//  Created by azukid on 2025/07/23.
+//  Created by sumpo/azukid on 2025/07/23.
 //
 
 import Foundation

@@ -2,7 +2,7 @@
 //  SettingViewModel.swift
 //  Calc26
 //
-//  Created by azukid on 2025/06/29.
+//  Created by sumpo/azukid on 2025/06/29.
 //
 
 import SwiftUI

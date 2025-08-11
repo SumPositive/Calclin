@@ -2,7 +2,7 @@
 //  Calc26Tests.swift
 //  Calc26Tests
 //
-//  Created by azukid on 2025/06/29.
+//  Created by sumpo/azukid on 2025/06/29.
 //
 
 import Testing

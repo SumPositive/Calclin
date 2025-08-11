@@ -3,7 +3,7 @@
 //  Objective-C/C++ --> Swift Wrapper
 //
 //  Originally created by MSPO/azukid on 1998/09/15
-//  Converted from Objective-C to Swift6 by azukid on 2025/07/10
+//  Converted from Objective-C to Swift6 by sumpo/azukid on 2025/07/10
 //
 /*
  

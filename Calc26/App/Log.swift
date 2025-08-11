@@ -2,7 +2,7 @@
 //  Log.swift
 //  Calc26
 //
-//  Created by azukid on 2025/07/07.
+//  Created by sumpo/azukid on 2025/07/07.
 //
 
 import Foundation

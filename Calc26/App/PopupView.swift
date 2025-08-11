@@ -2,7 +2,7 @@
 //  PopupView.swift
 //  Calc26
 //
-//  Created by azukid on 2025/08/08.
+//  Created by sumpo/azukid on 2025/08/08.
 //
 
 import Foundation

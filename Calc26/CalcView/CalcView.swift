@@ -2,7 +2,7 @@
 //  CalcView.swift
 //  Calc26
 //
-//  Created by azukid on 2025/07/22.
+//  Created by sumpo/azukid on 2025/07/22.
 //
 
 import SwiftUI
