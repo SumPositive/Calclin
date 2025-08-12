@@ -381,14 +381,10 @@ final class CalcViewModel: ObservableObject {
                     tokens[tokens.count - 1] = last
                 }
                 else if last.hasPrefix(TOKEN_UNIT_PREFIX) {
-                    if isAnswerMode { // [Ans]直後
-                        // [num],[@unit]のとき、初期化
-                        tokens = []
-                        tokens.append(num)
-                        isAnswerMode = false
-                    }else{
-                        // 単位入力後は数字拒否
-                    }
+                    // [num],[@unit]のとき、初期化
+                    tokens = []
+                    tokens.append(num)
+                    isAnswerMode = false
                 }else{
                     tokens.append(num)
                     isAnswerMode = false
@@ -416,7 +412,14 @@ final class CalcViewModel: ObservableObject {
                         tokens[tokens.count - 1] = op
                         tokens.append(KD_PT_LEFT)
                         tokens.append(last)
-                    }else{
+                    }
+                    else if last.hasPrefix(TOKEN_UNIT_PREFIX) { // UNIT
+                        // 単位を削除する
+                        tokens.removeLast()
+                        // 再帰
+                        inputOperator(keyDef)
+                    }
+                    else{
                         tokens.append(op)
                         tokens.append(KD_PT_LEFT)
                     }
@@ -481,7 +484,16 @@ final class CalcViewModel: ObservableObject {
                 formulaUpdate()
                 return
             }
-            
+
+            // Mul[*]  Div[/] があれば以降の単位入力禁止する
+            for token in tokens {
+                if token == KD_MUL || token == KD_MUL_ ||
+                   token == KD_DIV || token == KD_DIV_ {
+                    // Mul[*][×]  Div[/][÷] があれば以降の単位入力禁止
+                    return
+                }
+            }
+
             if Double(last) != nil { // 数値
                 var exist_unitBase = ""
                 // 先に存在する単位の unitBase を取得する
@@ -497,36 +509,24 @@ final class CalcViewModel: ObservableObject {
                         }
                     }
                 }
-                
                 if exist_unitBase == "" || exist_unitBase == unitBase {
-                    if tokens.count < 2 ||
-                        tokens[tokens.count - 2] == KD_ADD || // [+][-]の後にだけ許可　[*][/]の後は禁止
-                        tokens[tokens.count - 2] == KD_SUB {
-                        // UNIT 有効
-                        let uc = TOKEN_UNIT_PREFIX + keyDef.code
-                        tokens.append(uc)
-                        formulaUpdate()
-                    }
+                    // UNIT 有効
+                    let uc = TOKEN_UNIT_PREFIX + keyDef.code
+                    tokens.append(uc)
+                    formulaUpdate()
                 }
             }
-            else if last.hasPrefix(TOKEN_UNIT_PREFIX) {
-                if isAnswerMode { // [Ans]直後ならば単位「変換」に対応
-                    let code = String(last.dropFirst())
-                    if let def = keyboardViewModel.keyDef(code: code),
-                       let ub = def.unitBase,
-                       ub == keyDef.unitBase { //<==Baseが共通であることが変換の必要条件
-                        // 単位換算
-                        if var form = tokens.first {
-                            // unitBase単位に変換する
-                            if def.code != def.unitBase, let conv = def.unitConv {
-                                form += "*" + conv
-                            }
-                            // 新しい単位に変換する
-                            if keyDef.code != keyDef.unitBase, let conv = keyDef.unitConv {
-                                form += "/" + conv
-                            }
-                            // 計算結果（小数制限丸め処理済み）
-                            let ans = CalcFunc.answer(form)
+            else if tokens.count == 2,
+                    last.hasPrefix(TOKEN_UNIT_PREFIX) {
+                // [数値][単位]だけの場合、単位変換する
+                let code = String(last.dropFirst())
+                if let def = keyboardViewModel.keyDef(code: code),
+                   let ub = def.unitBase,
+                   ub == keyDef.unitBase { //<==Baseが共通であることが変換の必要条件
+                    // 単位換算
+                    if let form = tokens.first {
+                        // 単位変換
+                        if let ans = unitConv( num: form, unit: def, toUnit: keyDef) {
                             // New Formula
                             tokens = []
                             tokens.append(ans)
@@ -537,8 +537,9 @@ final class CalcViewModel: ObservableObject {
                         }
                     }
                 }else{
-                    // [Ans]直後でないならば単位「変更」に対応
+                    // Baseが異なる場合、数値はそのまま単位だけ変える
                     let uc = TOKEN_UNIT_PREFIX + keyDef.code
+                    // last 置換
                     tokens[tokens.count - 1] = uc
                     formulaUpdate()
                 }
@@ -546,36 +547,127 @@ final class CalcViewModel: ObservableObject {
         }
     }
     
+    
+    /// 単位変換
+    /// - Parameters:
+    ///   - num: 数値文字列
+    ///   - unit: 単位 KeyDef  =nil: Base or 単位なし
+    ///   - toUnit: 変換後の単位 KeyDef
+    /// - Returns: 変換後の数値文字列
+    private func unitConv( num:String, unit:KeyDefinition? = nil, toUnit:KeyDefinition) -> String? {
+        var form = num
+        if let unit = unit {
+            guard unit.unitBase == toUnit.unitBase  else {
+                log(.fatal, "unitBaseが異なるため、単位変換できない")
+                return nil
+            }
+            // Base単位に変換する
+            if unit.code != unit.unitBase, let conv = unit.unitConv {
+                form += "*" + conv
+            }
+        }
+        // 新しい単位に変換する
+        if toUnit.code != toUnit.unitBase, let conv = toUnit.unitConv {
+            form += "/" + conv
+        }
+        // 計算結果（小数制限丸め処理済み）
+        let ans = CalcFunc.answer(form)
+        return ans
+    }
+    
     /// [=] 答えキー入力
     private func inputAnswer(_ keyDef: KeyDefinition) {
         if let last = tokens.last {
             if Double(last) != nil || last.hasPrefix(TOKEN_UNIT_PREFIX) {
-                // last が 数値 or UNIT
+                // last が 数値 or 単位
                 // Answer用フォーマット（true:末尾[0]表示と予定[.][)]表示なし、右括弧を閉じる）
                 formulaUpdate(true)
                 // tokens からUNITに対応した計算式を生成する
                 let formula = makeFormula()
                 // 計算結果（小数制限丸め処理済み）
-                let answer = CalcFunc.answer(formula)
+                var answer = CalcFunc.answer(formula)
                 if Double(answer) == nil {
                     // 数値でない ＞ERROR メッセージをToastで表示
                     Manager.shared.toast(answer)
                     // 何も変えずに戻る
                     return
                 }
-                // 先に存在する単位の unitBase を取得する
-                var ans_unitBase = ""
+                //
+                // この時点で answer はBase単位である
+                // 次のルールで答えの単位を決める
+                // 1. [和][差]の数値に1つでも単位なしがあれば、答えはBase単位にする
+                // 　　　　　　（[積][商]があれば以後、単位入力禁止である）
+                // 2. 1.で無ければ答えは、単位係数(unitConv)が最小となる単位にする
+                //
                 var ans_unitKeyTop: String?
+                var ans_unit: String?
+                var minUnitConv: Double = Double.greatestFiniteMagnitude
+                var ansKeyDef: KeyDefinition?
+                var prevToken = ""
+                var isNextUnit = false
                 for token in tokens {
-                    let code = String(token.dropFirst())
-                    if let def = keyboardViewModel.keyDef(code: code),
-                       let unitBase = def.unitBase,
-                       unitBase != UNIT_CODE_BARE,
-                       let baseDef = keyboardViewModel.keyDef(code: unitBase){
-                        // unitBaseの.keyTopをHistoryに登録する
-                        ans_unitBase = unitBase
-                        ans_unitKeyTop = baseDef.keyTop ?? def.code
+                    if token.hasPrefix(TOKEN_UNIT_PREFIX) {
+                        let code = String(token.dropFirst())
+                        if let def = keyboardViewModel.keyDef(code: code) {
+                            // tokensには、Baseが異なるunitは無い前提
+                            // 2. 単位係数(unitConv)が最小となる単位にする
+                            if let base = def.unitBase,
+                                base == code,
+                                1.0 < minUnitConv {
+                                // Base単位の場合 .unitConvが未定義
+                                // 現在の最小
+                                minUnitConv = 1.0 // Baseの係数
+                                ansKeyDef = def
+                                // Base単位
+                                ans_unitKeyTop = def.keyTop
+                                ans_unit = def.code
+                            }
+                            else if let uc = def.unitConv,
+                               let unitConv = Double(uc),
+                               unitConv < minUnitConv {
+                                // 現在の最小
+                                minUnitConv = unitConv
+                                ansKeyDef = def
+                            }
+                        }
+                        isNextUnit = false
+                    }
+                    else if isNextUnit {
+                        // 1. [和][差]の数値に1つでも単位なしがあれば、答えはBase単位にする
                         break
+                    }
+                    else if Double(token) != nil,
+                            (prevToken == KD_ADD || prevToken == KD_SUB) {
+                        isNextUnit = true
+                    }else{
+                        isNextUnit = false
+                    }
+                    prevToken = token
+                }
+                if isNextUnit {
+                    // 1. [和][差]の数値に1つでも単位なしがあれば、答えはBase単位にする
+                    if let kd = ansKeyDef,
+                       let code = kd.unitBase,
+                       let def = keyboardViewModel.keyDef(code: code) {
+                        // Base単位にする
+                        ans_unit = code
+                        ans_unitKeyTop = def.keyTop
+                        ansKeyDef = nil
+                        Manager.shared.toast("単位のない和差は、\n基準単位[\(ans_unitKeyTop ?? "")]\nで扱います")
+                    }
+                }
+                //
+                if let ansKeyDef = ansKeyDef,
+                   ansKeyDef.code != ansKeyDef.unitBase {
+                    // 2. 単位係数(unitConv)が最小となる単位にする
+                    // 最小係数の単位がBaseで無い場合、単位変換する
+                    // Answer[Base単位] ==> Answer[def] に変換する
+                    if let ans = unitConv(num: answer, toUnit: ansKeyDef) {
+                        answer = ans
+                        ans_unitKeyTop = ansKeyDef.keyTop
+                        ans_unit = ansKeyDef.code
+                    }else{
+                        // Base単位になる
                     }
                 }
                 // add History
@@ -592,8 +684,8 @@ final class CalcViewModel: ObservableObject {
                 // New
                 tokens = [] //.removeAll()
                 tokens.append(answer)
-                if ans_unitBase != "" {
-                    let ub = TOKEN_UNIT_PREFIX + ans_unitBase
+                if let ans_unit = ans_unit {
+                    let ub = TOKEN_UNIT_PREFIX + ans_unit
                     tokens.append(ub)
                 }
                 // Answer用フォーマット
