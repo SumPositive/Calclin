@@ -144,11 +144,11 @@ final class CalcViewModel_Test: XCTestCase {
         viewModel.input(keyDef("Sub"))
         viewModel.input(keyDef("#1"))
         plainText = viewModel.formulaAttr.characters.map { String($0) }.joined()
-        XCTAssertEqual(plainText, "1cm+1km-1.") // 単位なしがある場合
+        XCTAssertEqual(plainText, "1cm+1km-1.") // 単位なし(-1)は基準単位(m)で計算する
         
         viewModel.input(keyDef("Ans"))
         plainText = viewModel.formulaAttr.characters.map { String($0) }.joined()
-        XCTAssertEqual(plainText, "999.01m")
+        XCTAssertEqual(plainText, "999.01m") // 答えは基準単位(m)にする
     }
     
 }
