@@ -179,8 +179,8 @@ final class CalcViewModel: ObservableObject {
 
                 case "Paren": // 前"("後")"の丸括弧を判定して追加する
                     if let last = tokens.last {
-                        if Double(last) != nil || last == KD_PT_RIGHT {
-                            // 数値 or ")"
+                        if Double(last) != nil || last == KD_PT_RIGHT || last.hasPrefix(TOKEN_UNIT_PREFIX) {
+                            // 数値 or ")" or 単位
                             if 0 < needRightParentheses {
                                 tokens.append(KD_PT_RIGHT)
                                 formulaUpdate()
@@ -369,8 +369,8 @@ final class CalcViewModel: ObservableObject {
             if var last = tokens.last {
                 if Double(last) != nil || ( last == KD_SUB &&
                                             2 < tokens.count &&
-                                            Double(tokens[tokens.count - 2]) == nil ) {
-                    // 数値 || マイナス符号
+                                            KD_OPERATORS.contains(tokens[tokens.count - 2]) ) {
+                    // 数値 || マイナス符号(KD_OPERATORSに続くマイナスは符号）
                     if  isAnswerMode { // [Ans]直後
                         isAnswerMode = false
                         last = num
@@ -595,7 +595,7 @@ final class CalcViewModel: ObservableObject {
                 //
                 // この時点で answer はBase単位である
                 // 次のルールで答えの単位を決める
-                // 1. [和][差]の数値に1つでも単位なしがあれば、答えはBase単位にする
+                // 1. [+][-][(]後の数値に1つでも単位なしがあれば、答えはBase単位にする
                 // 　　　　　　（[積][商]があれば以後、単位入力禁止である）
                 // 2. 1.で無ければ答えは、単位係数(unitConv)が最小となる単位にする
                 //
@@ -637,7 +637,7 @@ final class CalcViewModel: ObservableObject {
                         break
                     }
                     else if Double(token) != nil,
-                            (prevToken == KD_ADD || prevToken == KD_SUB) {
+                            (prevToken == KD_ADD || prevToken == KD_SUB || prevToken == KD_PT_LEFT) {
                         isNextUnit = true
                     }else{
                         isNextUnit = false
@@ -653,7 +653,7 @@ final class CalcViewModel: ObservableObject {
                         ans_unit = code
                         ans_unitKeyTop = def.keyTop
                         ansKeyDef = nil
-                        Manager.shared.toast("単位のない和差は、\n基準単位[\(ans_unitKeyTop ?? "")]\nで扱います")
+                        Manager.shared.toast("単位のない和差は、\n基準単位[\(ans_unitKeyTop ?? "1")]\nで扱います", wait: 3.0)
                     }
                 }
                 //

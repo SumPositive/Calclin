@@ -63,7 +63,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Assets.xcassets,
-				App/PopupView.swift,
 				Info.plist,
 				KeyboardView/KeyDefinition.plist,
 			);
@@ -77,6 +76,7 @@
 				App/ContentView.swift,
 				App/Log.swift,
 				App/Manager.swift,
+				App/PopupView.swift,
 				CalcView/CalcFunc.swift,
 				CalcView/CalcRollView.swift,
 				CalcView/CalcView.swift,

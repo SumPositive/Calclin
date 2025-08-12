@@ -153,18 +153,18 @@ struct SettingView: View {
             VStack(spacing: 0) {
                 Text("キーボード配置")
                 HStack {
-                    Button("現在の配置を保存する") {
+                    Button("現在の配置\nを保存する") {
                         keyboardViewModel.saveKeyboardJson()
                     }
                     .foregroundStyle(.blue)
                     .padding(2)
-                    Button("保存した配置に戻す") {
+                    Button("保存した配置\nに戻す") {
                         keyboardViewModel.loadKeyboardJson()
                     }
                     .foregroundStyle(.green)
                     .padding(2)
                     Spacer()
-                    Button("初期の配置に戻す") {
+                    Button("初期の配置\nに戻す") {
                         keyboardViewModel.initKeyboardJson()
                     }
                     .foregroundStyle(.red)
