@@ -150,6 +150,39 @@ final class CalcViewModel_Test: XCTestCase {
         plainText = viewModel.formulaAttr.characters.map { String($0) }.joined()
         XCTAssertEqual(plainText, "999.01m") // 答えは基準単位(m)にする
     }
-    
+
+    func test_unit_MulPerc() {
+        var plainText: String
+        // [100][*][5][%] => [5]
+        viewModel.input(keyDef("#1"))
+        viewModel.input(keyDef("#00"))
+        viewModel.input(keyDef("Mul"))
+        viewModel.input(keyDef("#5"))
+        viewModel.input(keyDef("Perc"))
+        plainText = viewModel.formulaAttr.characters.map { String($0) }.joined()
+        XCTAssertEqual(plainText, "100×5%")
+        
+        viewModel.input(keyDef("Ans"))
+        plainText = viewModel.formulaAttr.characters.map { String($0) }.joined()
+        XCTAssertEqual(plainText, "5")
+    }
+
+    func test_unit_AddPerc() { // 特殊計算
+        var plainText: String
+        // [100][+][5][%] => [105]
+        viewModel.input(keyDef("#1"))
+        viewModel.input(keyDef("#00"))
+        viewModel.input(keyDef("Add"))
+        viewModel.input(keyDef("#5"))
+        viewModel.input(keyDef("Perc"))
+        plainText = viewModel.formulaAttr.characters.map { String($0) }.joined()
+        XCTAssertEqual(plainText, "100+5%")
+        
+        viewModel.input(keyDef("Ans"))
+        plainText = viewModel.formulaAttr.characters.map { String($0) }.joined()
+        XCTAssertEqual(plainText, "105")
+    }
+
+
 }
 

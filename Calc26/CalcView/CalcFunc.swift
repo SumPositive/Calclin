@@ -15,7 +15,7 @@ final class CalcFunc {
     // 数値構成文字
     static let numberChars = SBCD.VA_NUMBER + SBCD.VA_MINUS + SBCD.VA_DECIMAL
     // 演算子構成文字
-    static let operatorChars = "+-*/×÷√∛()" // [×,÷]は計算式では許可
+    static let operatorChars = "+-*/×÷√∛()%割分厘" // [×,÷]は計算式では許可
 //    // スペース文字
 //    static let spaceChar = " "
     // 計算式に許可された文字セット
@@ -85,7 +85,7 @@ final class CalcFunc {
 
         for (index, char) in formula.enumerated() {
             if operators.contains(char) {
-                if char == Character(KD_SUB) {
+                if char == Character(FM_SUB) {
                     // マイナス記号が符号か演算子かを判定処理する
                     // 先頭ならば符号
                     // "*-" "/-" "+-" "--" "(-" の "-" は符号、以外は演算子だと解釈
@@ -96,6 +96,85 @@ final class CalcFunc {
                         continue
                     }
                     // マイナス演算子である
+                }
+                else if char == Character(FM_PERC)            // [%]系
+                            || char == Character(FM_PER_WARI) // [割]
+                            || char == Character(FM_PER_BU)   // [分]
+                            || char == Character(FM_PER_RI)   // [厘]
+                {
+                    var per = "1"
+                    switch char {
+                        case Character(FM_PER_WARI):
+                            per = "10"
+                        case Character(FM_PERC), Character(FM_PER_BU):
+                            per = "100"
+                        case Character(FM_PER_RI):
+                            per = "1000"
+                        default:
+                            break
+                    }
+                    if tokens.count == 0
+                        || !FM_OPERATORS.contains(tokens.last ?? "") {
+                        // "5%" ⇒ "5 / 100"
+                        tokens.append(current)
+                        tokens.append(FM_DIV)
+                        tokens.append(per)
+                        prevToken = ""
+                        current = ""
+                        continue
+                    }
+                    else if 2 <= tokens.count {
+                        if tokens.last == FM_ADD {
+                            // "100 + 5%" ⇒ "100 * (100 + 5) / 100"    ＜＜100の5%増：税込み＞＞　シャープ式
+                            tokens.removeLast()
+                            // current = "5"
+                            tokens.append(FM_MUL)
+                            tokens.append(FM_PT_LEFT)
+                            tokens.append(per)
+                            tokens.append(FM_ADD)
+                            tokens.append(current)
+                            tokens.append(FM_PT_RIGHT)
+                            tokens.append(FM_DIV)
+                            tokens.append(per)
+                            prevToken = ""
+                            current = ""
+                            continue
+                        }
+                        else if tokens.last == FM_SUB {
+                            // "100 - 5%" ⇒ "100 * 100 / (100 + 5)"    ＜＜100の5%減：税抜き＞＞　シャープ式
+                            tokens.removeLast()
+                            // current = "5"
+                            tokens.append(FM_MUL)
+                            tokens.append(per)
+                            tokens.append(FM_DIV)
+                            tokens.append(FM_PT_LEFT)
+                            tokens.append(per)
+                            tokens.append(FM_ADD)
+                            tokens.append(current)
+                            tokens.append(FM_PT_RIGHT)
+                            prevToken = ""
+                            current = ""
+                            continue
+                        }
+                        else if tokens.last == FM_MUL {
+                            // "100 * 5%" ⇒ "100 * 5 / 100"
+                            tokens.append(current)
+                            tokens.append(FM_DIV)
+                            tokens.append(per)
+                            prevToken = ""
+                            current = ""
+                            continue
+                        }
+                        else if tokens.last == FM_DIV {
+                            // "100 / 5%" ⇒ "100 / 5 * 100"
+                            tokens.append(current)
+                            tokens.append(FM_MUL)
+                            tokens.append(per)
+                            prevToken = ""
+                            current = ""
+                            continue
+                        }
+                    }
                 }
                 // charは、演算子である
                 if !current.isEmpty {
@@ -129,9 +208,9 @@ final class CalcFunc {
         
         // 優先順位と結合性の定義
         let opPriority: [String: Int] = [
-            KD_sqROOT: 0, KD_cuROOT: 0,
-            KD_MUL: 1, KD_DIV: 1, KD_MUL_: 1, KD_DIV_: 1,
-            KD_ADD: 2, KD_SUB: 2
+            FM_sqROOT: 0, FM_cuROOT: 0,
+            FM_MUL: 1, FM_DIV: 1, FM_MUL_: 1, FM_DIV_: 1,
+            FM_ADD: 2, FM_SUB: 2
         ]
 
         // 逆ポーランドスタック
@@ -151,14 +230,14 @@ final class CalcFunc {
                 }
                 ope.append(token)
             }
-            else if token == KD_PT_LEFT {
+            else if token == FM_PT_LEFT {
                 ope.append(token)
             }
-            else if token == KD_PT_RIGHT {
-                while let op = ope.last, op != KD_PT_LEFT {
+            else if token == FM_PT_RIGHT {
+                while let op = ope.last, op != FM_PT_LEFT {
                     rpn.append(ope.removeLast())
                 }
-                if ope.last == KD_PT_LEFT {
+                if ope.last == FM_PT_LEFT {
                     ope.removeLast()
                 }
             }
@@ -182,7 +261,7 @@ final class CalcFunc {
         var stack: [SBCD] = []
         for token in rpnTokens {
             switch token {
-                case KD_ADD:
+                case FM_ADD:
                     if 2 <= stack.count {
                         let b = stack.removeLast()
                         let a = stack.removeLast()
@@ -192,7 +271,7 @@ final class CalcFunc {
                         return SBCD("-0")
                     }
                     
-                case KD_SUB:
+                case FM_SUB:
                     if 2 <= stack.count {
                         let b = stack.removeLast()
                         let a = stack.removeLast()
@@ -202,7 +281,7 @@ final class CalcFunc {
                         return SBCD("-0")
                     }
                     
-                case KD_MUL, KD_MUL_:
+                case FM_MUL, FM_MUL_:
                     if 2 <= stack.count {
                         let b = stack.removeLast()
                         let a = stack.removeLast()
@@ -212,7 +291,7 @@ final class CalcFunc {
                         return SBCD("-0")
                     }
                     
-                case KD_DIV, KD_DIV_:
+                case FM_DIV, FM_DIV_:
                     if 2 <= stack.count {
                         let b = stack.removeLast()
                         let a = stack.removeLast()
@@ -222,17 +301,17 @@ final class CalcFunc {
                         return SBCD("-0")
                     }
                     
-                case KD_sqROOT:
+                case FM_sqROOT:
                     if 1 <= stack.count {
                         let a = stack.removeLast()
-                        let approx = sqrt(Double(a.value.replacingOccurrences(of: KD_SUB, with: "")) ?? 0)
+                        let approx = sqrt(Double(a.value.replacingOccurrences(of: FM_SUB, with: "")) ?? 0)
                         stack.append(SBCD(String(approx)))
                     }else{
                         log(.error, "RPN stack empty:\(stack) token:\(token)")
                         return SBCD("-0")
                     }
                     
-                case KD_cuROOT:
+                case FM_cuROOT:
                     if 1 <= stack.count {
                         let a = stack.removeLast()
                         let approx = cubeRoot(Double(a.value) ?? 0)

@@ -66,23 +66,27 @@ let FORMULA_LENGTH_MAX: Int = 200
 let SETTING_decimalDigits_MAX: Double = 10.0
 
 
-// KeyDef.keyTop や .code で使用されている文字
+// KeyDef.formula で使用されている文字
 // 計算式構成文字
-let KD_DECIMAL  = "."   // 小数点
-let KD_PT_LEFT  = "("   // 左括弧
-let KD_PT_RIGHT = ")"   // 右括弧
-let KD_ANS      = "="   // 答え
+let FM_DECIMAL  = "."   // 小数点
+let FM_PT_LEFT  = "("   // 左括弧
+let FM_PT_RIGHT = ")"   // 右括弧
+let FM_ANS      = "="   // 答え
 // 演算子 Operator
-let KD_OPERATORS = "+-*/×÷"  // 四則演算子
-let KD_ADD      = "+"   // 加算 ASCII+（U+002B） テンキー上のAsciiプラス
-let KD_SUB      = "-"   // 減算 ASCII-（U+002B） テンキー上のAsciiマイナス
-let KD_MUL      = "×"   // 掛算（U+00D7）
-let KD_MUL_     = "*"   // 掛算 内部利用
-let KD_DIV      = "÷"   // 割算（U+00F7）
-let KD_DIV_     = "/"   // 割算 内部利用
-let KD_sqROOT   = "√"   // square 平方根
-let KD_cuROOT   = "∛"   // cubic 立方根　Unicode："\u{221B}"
+let FM_OPERATORS = "+-*/×÷"  // 四則演算子
+let FM_ADD      = "+"   // 加算 ASCII+（U+002B） テンキー上のAsciiプラス
+let FM_SUB      = "-"   // 減算 ASCII-（U+002B） テンキー上のAsciiマイナス
+let FM_MUL      = "×"   // 掛算（U+00D7）
+let FM_MUL_     = "*"   // 掛算 内部利用
+let FM_DIV      = "÷"   // 割算（U+00F7）
+let FM_DIV_     = "/"   // 割算 内部利用
+let FM_sqROOT   = "√"   // square 平方根
+let FM_cuROOT   = "∛"   // cubic 立方根　Unicode："\u{221B}"
+let FM_PERC     = "%"   // パーセント /100
+let FM_PER_WARI = "割"   // J割 /10
+let FM_PER_BU   = "分"   // J分 /100
+let FM_PER_RI   = "厘"   // J厘 /1000
 // 制御文字
-let KD_GT       = "GT"  //">GT" // 総計 ＜＜1字目を OP_START にして「開始行」扱いすることを示す＞＞
+//let KD_GT       = "GT"  //">GT" // 総計 ＜＜1字目を OP_START にして「開始行」扱いすることを示す＞＞
 
 

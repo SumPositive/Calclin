@@ -156,4 +156,62 @@ final class CalcFunc_total_Tests: XCTestCase {
         let answer = "-1"
         XCTAssertEqual(CalcFunc.evaluateRPN(rpn).value, answer)
     }
+    
+    // "100 + 5%" ⇒ "100 * (100 + 5) / 100"    ＜＜100の5%増：税込み＞＞　シャープ式
+    func test_perc_add() {
+        // 計算式
+        let formula = "100+5%"
+        // トークン分割
+        let tokens = ["100", "×", "(", "100", "+", "5", ")", "÷", "100"]
+        XCTAssertEqual(CalcFunc.splitFormula(formula), tokens)
+        // 逆ポーランド
+        let rpn = ["100", "100", "5", "+", "×", "100", "÷"]
+        XCTAssertEqual(CalcFunc.convertToRPN(tokens), rpn)
+        // 答えを計算
+        let answer = "105"
+        XCTAssertEqual(CalcFunc.evaluateRPN(rpn).value, answer)
+    }
+    // "100 - 5%" ⇒ "100 * 100 / (100 + 5)"    ＜＜100の5%減：税抜き＞＞　シャープ式
+    func test_perc_sub() {
+        // 計算式
+        let formula = "100-5%"
+        // トークン分割
+        let tokens = ["100", "×", "100", "÷", "(", "100", "+", "5", ")"]
+        XCTAssertEqual(CalcFunc.splitFormula(formula), tokens)
+        // 逆ポーランド
+        let rpn = ["100", "100", "×", "100", "5", "+", "÷"]
+        XCTAssertEqual(CalcFunc.convertToRPN(tokens), rpn)
+        // 答えを計算
+        let answer = "95.238095238095238095238095238095"
+        XCTAssertEqual(CalcFunc.evaluateRPN(rpn).value, answer)
+    }
+    // "100 * 5%" ⇒ "100 * 5 / 100"
+    func test_perc_mul() {
+        // 計算式
+        let formula = "100×5%"
+        // トークン分割
+        let tokens = ["100", "×", "5", "÷", "100"]
+        XCTAssertEqual(CalcFunc.splitFormula(formula), tokens)
+        // 逆ポーランド
+        let rpn = ["100", "5", "×", "100", "÷"]
+        XCTAssertEqual(CalcFunc.convertToRPN(tokens), rpn)
+        // 答えを計算
+        let answer = "5"
+        XCTAssertEqual(CalcFunc.evaluateRPN(rpn).value, answer)
+    }
+    // "100 / 5%" ⇒ "100 / 5 * 100"
+    func test_perc_div() {
+        // 計算式
+        let formula = "100÷5%"
+        // トークン分割
+        let tokens = ["100", "÷", "5", "×", "100"]
+        XCTAssertEqual(CalcFunc.splitFormula(formula), tokens)
+        // 逆ポーランド
+        let rpn = ["100", "5", "÷", "100", "×"]
+        XCTAssertEqual(CalcFunc.convertToRPN(tokens), rpn)
+        // 答えを計算
+        let answer = "2000"
+        XCTAssertEqual(CalcFunc.evaluateRPN(rpn).value, answer)
+    }
+
 }

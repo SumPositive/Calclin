@@ -69,8 +69,8 @@ final class SBCD: Equatable {
     static let PRECISION = 60
 
     // self.value 構成文字
-    static let VA_MINUS   = KD_SUB       // [-]符号
-    static let VA_DECIMAL = KD_DECIMAL   // [.]小数点
+    static let VA_MINUS   = FM_SUB       // [-]符号
+    static let VA_DECIMAL = FM_DECIMAL   // [.]小数点
     static let VA_NUMBER  = "0123456789" // [0]-[9]数字
 
     // SBCD.プロパティ
@@ -210,7 +210,8 @@ final class SBCD: Equatable {
             if decimalStr.count < SBCD_Config.decimalDigits {
                 decimalStr = decimalStr.padding(toLength: SBCD_Config.decimalDigits, withPad: "0", startingAt: 0)
             }
-        }else{
+        }
+        else if 0 < decimalStr.count {
             // 小数部末尾の0削除する（例: "1204000" → "1204"）
             decimalStr = decimalStr.replacingOccurrences(of: "0+$", with: "", options: .regularExpression)
         }

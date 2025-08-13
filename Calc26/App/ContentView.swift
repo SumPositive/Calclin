@@ -214,8 +214,7 @@ struct ContentView: View {
                     Spacer()
                     ToastView(message: manager.toastMessage)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
-                        .padding(.top, 50)
-                    Spacer()
+                        .padding(.bottom, 80)
                 }
                 .zIndex(3)
             }
