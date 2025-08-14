@@ -50,7 +50,7 @@ final class CalcViewModel: ObservableObject {
         var tokens: [String] = []   // 式コピペのため記録する
         var formula: AttributedString = ""
         var answer: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
-        var unitKeyTop: String?     //= .keyTop ?? .code
+        var unitFormula: String?     //= .formula
         var memo: String?           // メモ
     }
     @Published var historyRows: [HistoryRow] = []
@@ -614,10 +614,11 @@ final class CalcViewModel: ObservableObject {
                 // この時点で answer はBase単位である
                 // 次のルールで答えの単位を決める
                 // 1. [+][-][(]後の数値に1つでも単位なしがあれば、答えはBase単位にする
+                //    ただし、Base=Bare(無名数)は単位として扱わない
                 // 　　　　　　（[積][商]があれば以後、単位入力禁止である）
                 // 2. 1.で無ければ答えは、単位係数(unitConv)が最小となる単位にする
                 //
-                var ans_unitKeyTop: String?
+                var ans_unitFormula: String?
                 var ans_unit: String?
                 var minUnitConv: Double = Double.greatestFiniteMagnitude
                 var ansKeyDef: KeyDefinition?
@@ -626,18 +627,20 @@ final class CalcViewModel: ObservableObject {
                 for token in tokens {
                     if token.hasPrefix(TOKEN_UNIT_PREFIX) {
                         let code = String(token.dropFirst())
-                        if let def = keyboardViewModel.keyDef(code: code) {
+                        if let def = keyboardViewModel.keyDef(code: code),
+                           let base = def.unitBase,
+                           base != UNIT_CODE_BARE { // Bare(無名数)を除く
+
                             // tokensには、Baseが異なるunitは無い前提
                             // 2. 単位係数(unitConv)が最小となる単位にする
-                            if let base = def.unitBase,
-                                base == code,
+                            if base == code,
                                 1.0 < minUnitConv {
                                 // Base単位の場合 .unitConvが未定義
                                 // 現在の最小
                                 minUnitConv = 1.0 // Baseの係数
                                 ansKeyDef = def
                                 // Base単位
-                                ans_unitKeyTop = def.keyTop
+                                ans_unitFormula = def.formula
                                 ans_unit = def.code
                             }
                             else if let uc = def.unitConv,
@@ -669,9 +672,9 @@ final class CalcViewModel: ObservableObject {
                        let def = keyboardViewModel.keyDef(code: code) {
                         // Base単位にする
                         ans_unit = code
-                        ans_unitKeyTop = def.keyTop
+                        ans_unitFormula = def.formula
                         ansKeyDef = nil
-                        if let kt = ans_unitKeyTop {
+                        if let kt = ans_unitFormula {
                             Manager.shared.toast("基準単位[\(kt)]\nで計算しました", wait: 3.0)
                         }
                     }
@@ -684,7 +687,7 @@ final class CalcViewModel: ObservableObject {
                     // Answer[Base単位] ==> Answer[def] に変換する
                     if let ans = unitConv(num: answer, toUnit: ansKeyDef) {
                         answer = ans
-                        ans_unitKeyTop = ansKeyDef.keyTop
+                        ans_unitFormula = ansKeyDef.formula
                         ans_unit = ansKeyDef.code
                     }else{
                         // Base単位になる
@@ -694,7 +697,7 @@ final class CalcViewModel: ObservableObject {
                 let row = HistoryRow( tokens: tokens,
                                       formula: formulaAttr,
                                       answer: SBCD(answer).format(),
-                                      unitKeyTop: ans_unitKeyTop,
+                                      unitFormula: ans_unitFormula,
                                       memo: nil)
                 // History追加
                 historyRows.append(row)

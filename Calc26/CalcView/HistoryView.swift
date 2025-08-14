@@ -103,7 +103,7 @@ struct CustomCell: View {
                 // Formula
                 var attrStr = row.formula + equal + answer
                 // UNIT.keyTop ?? .code
-                if let kt = row.unitKeyTop {
+                if let kt = row.unitFormula {
                     var unitKt = AttributedString(kt)
                     unitKt.foregroundColor = COLOR_UNIT //.opacity(0.5)
                     attrStr += unitKt

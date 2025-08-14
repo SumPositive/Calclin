@@ -276,15 +276,37 @@
 		<key>code</key>
 		<string>Pi</string>
 		<key>keyTop</key>
-		<string>π</string>
+		<string>円周率</string>
 		<key>formula</key>
 		<string>π</string>
-		<key>symbol</key>
-		<string>pi</string>
 		<key>unitBase</key>
 		<string>Bare</string>
 		<key>unitConv</key>
 		<string>3.141592653589793238462643383279</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Golden</string>
+		<key>keyTop</key>
+		<string>黄金比</string>
+		<key>formula</key>
+		<string>φ</string>
+		<key>unitBase</key>
+		<string>Bare</string>
+		<key>unitConv</key>
+		<string>1.618033988749894</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Napier</string>
+		<key>keyTop</key>
+		<string>ネイピア</string>
+		<key>formula</key>
+		<string>e</string>
+		<key>unitBase</key>
+		<string>Bare</string>
+		<key>unitConv</key>
+		<string>2.71828182845904523536</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -342,7 +364,7 @@
 		<key>unitBase</key>
 		<string>m</string>
 		<key>unitConv</key>
-		<string>0.0303</string>
+		<string>0.03030303030303</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -354,7 +376,7 @@
 		<key>unitBase</key>
 		<string>m</string>
 		<key>unitConv</key>
-		<string>0.303</string>
+		<string>0.3030303030303</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -366,7 +388,7 @@
 		<key>unitBase</key>
 		<string>m</string>
 		<key>unitConv</key>
-		<string>3927.27</string>
+		<string>3927.2727272727</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -484,7 +506,7 @@
 		<key>unitBase</key>
 		<string>m2</string>
 		<key>unitConv</key>
-		<string>3.305785</string>
+		<string>3.3057851239669</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -496,7 +518,7 @@
 		<key>unitBase</key>
 		<string>m2</string>
 		<key>unitConv</key>
-		<string>99.17355</string>
+		<string>99.173553719008</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -508,7 +530,7 @@
 		<key>unitBase</key>
 		<string>m2</string>
 		<key>unitConv</key>
-		<string>991.7355</string>
+		<string>991.73553719008</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -578,7 +600,7 @@
 		<key>unitBase</key>
 		<string>m3</string>
 		<key>unitConv</key>
-		<string>0.00018039</string>
+		<string>0.00018039068369647</string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -590,19 +612,19 @@
 		<key>unitBase</key>
 		<string>m3</string>
 		<key>unitConv</key>
-		<string>0.0018039</string>
+		<string>0.0018039068369647</string>
 	</dict>
 	<dict>
 		<key>code</key>
-		<string>oz</string>
+		<string>gal</string>
 		<key>keyTop</key>
-		<string>oz</string>
+		<string>gal</string>
 		<key>formula</key>
-		<string>oz</string>
+		<string>gal</string>
 		<key>unitBase</key>
 		<string>m3</string>
 		<key>unitConv</key>
-		<string>0.028349523125</string>
+		<string>0.003785411784</string>
 	</dict>
 	<dict>
 		<key>code</key>
