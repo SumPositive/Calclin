@@ -618,7 +618,7 @@
 		<key>code</key>
 		<string>gal</string>
 		<key>keyTop</key>
-		<string>gal</string>
+		<string>米液ガロン</string>
 		<key>formula</key>
 		<string>gal</string>
 		<key>unitBase</key>
@@ -712,7 +712,7 @@
 		<key>code</key>
 		<string>pondus</string>
 		<key>keyTop</key>
-		<string>lb</string>
+		<string>ポンド</string>
 		<key>formula</key>
 		<string>lb</string>
 		<key>unitBase</key>

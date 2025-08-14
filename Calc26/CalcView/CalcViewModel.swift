@@ -268,7 +268,14 @@ final class CalcViewModel: ObservableObject {
                 let code = String(token.dropFirst())
                 if let def = keyboardViewModel.keyDef(code: code),
                    let conv = def.unitConv {
-                    formula += "*" + conv   // "*" + 変換倍率
+                    //fix// 単位や定数変換式を括弧で括る。100÷1π=100/1*3.14 NG、100/(1*3.14)にするため
+                    // formula最後の数値の前に左括弧"("を挿入する
+                    if let range = formula.range(of: "\\d+$", options: .regularExpression) {
+                        // 末尾の数字の直前に左括弧を挿入
+                        formula.insert("(", at: range.lowerBound)
+                    }
+                    // 単位変換式を右括弧")"で閉じる
+                    formula += "*" + conv + FM_PT_RIGHT   // "*" + 変換倍率 + ")"
                 }
             }
             else{
@@ -492,7 +499,11 @@ final class CalcViewModel: ObservableObject {
     /// UNIT 単位キー入力
     private func inputUnit(_ keyDef: KeyDefinition, unitBase: String) {
         if let last = tokens.last {
-            if Double(last) != nil, keyDef.unitBase == UNIT_CODE_BARE {
+            if keyDef.unitBase == UNIT_CODE_BARE {
+                if Double(last) == nil {
+                    // 数値で無ければ[1]を追加する
+                    tokens.append("1")
+                }
                 // UNIT_CODE_BARE 無名数（bare number）単位表示の無い1を表す [%]など
                 // 単位トークン・プリフィックスを付ける
                 let uc = TOKEN_UNIT_PREFIX + keyDef.code
