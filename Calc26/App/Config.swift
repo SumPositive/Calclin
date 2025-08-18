@@ -41,6 +41,7 @@ let COLOR_OPERATOR: Color = .cyan           // 演算子
 let COLOR_OPERATOR_WAIT: Color = .gray      // 待機演算子　右端の[.]や[)]
 let COLOR_UNIT: Color = .secondary          // 単位
 let COLOR_MEMO: Color = .purple             // メモ
+let COLOR_WARN: Color = .red                // 危険！警告色
 // 背景色
 let COLOR_BACK_FORMULA: Color = Color(.systemGray6)  // FormulaView
 let COLOR_BACK_SETTING: Color = Color(.systemGray4)  // SettingView

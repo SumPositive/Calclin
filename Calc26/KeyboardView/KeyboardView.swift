@@ -449,9 +449,9 @@ struct EditKeyDefView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            Text("キー定義編集（危険！上級向け）")
+            Text("キー定義編集（危険！Hacker向け）\n　　壊れたら再インストールしてね")
                 .font(.headline)
-                .foregroundColor(COLOR_TITLE)
+                .foregroundColor(COLOR_WARN)
 
             HStack {
                 Text("code")
