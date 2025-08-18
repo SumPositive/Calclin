@@ -381,9 +381,9 @@ struct KeyDefListView: View {
             } else {
                 Text(keyDef.keyTop)
                     .font(.system(size: 20, weight: .bold))
-                    .minimumScaleFactor(0.5)
+                    .minimumScaleFactor(0.2)
                     .lineLimit(1)
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, 4)
                     .simultaneousGesture(
                         LongPressGesture(minimumDuration: 0.6) // 長押し
                             .onEnded { _ in
