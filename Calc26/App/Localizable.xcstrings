@@ -135,13 +135,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Key Definition Editor (Warning! Hacker Zone)\\n   If it breaks, just reinstall."
+            "value" : "Key Definition Editor\n       (Warning! Hacker Zone)\n        If it breaks, just reinstall."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "キー定義編集（危険！Hacker向け）\\n　　壊れたら再インストールしてね"
+            "state" : "translated",
+            "value" : "キー定義編集\n　（危険！Hacker Zone）\n　　壊れたら再インストールしてね"
           }
         }
       }
@@ -193,6 +193,12 @@
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "https://docs.azukid.com/CalcRoll/"
+          }
+        },
+        "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "https://docs.azukid.com/CalcRoll/"
@@ -297,7 +303,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Round half up"
+            "value" : "half up"
           }
         },
         "ja" : {
@@ -314,7 +320,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Round half to even"
+            "value" : "half even"
           }
         },
         "ja" : {
@@ -331,7 +337,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Round half down"
+            "value" : "half down"
           }
         },
         "ja" : {
@@ -348,7 +354,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Round down"
+            "value" : "down"
           }
         },
         "ja" : {
@@ -365,7 +371,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Round toward negative infinity"
+            "value" : "negative"
           }
         },
         "ja" : {
@@ -382,7 +388,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Round toward positive infinity"
+            "value" : "positive"
           }
         },
         "ja" : {
@@ -399,7 +405,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Round Up"
+            "value" : "Round up"
           }
         },
         "ja" : {
@@ -426,9 +432,6 @@
           }
         }
       }
-    },
-    "settings.decimalPart.Digits" : {
-
     },
     "settings.decimalPart.digitsSymbol" : {
       "extractionState" : "manual",
@@ -543,8 +546,8 @@
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "初期のキー定義\\nと配置に戻す"
+            "state" : "translated",
+            "value" : "初期のキー定義\nと配置に戻す"
           }
         }
       }
@@ -560,8 +563,8 @@
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "保存した配置\\nに戻す"
+            "state" : "translated",
+            "value" : "保存した配置\nに戻す"
           }
         }
       }
@@ -578,7 +581,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "現在の配置\\nを保存する"
+            "value" : "現在の配置\nを保存する"
           }
         }
       }
@@ -632,7 +635,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "基準単位[%@]\\nで計算しました"
+            "value" : "基準単位[%@]\nで計算しました"
           }
         }
       }
@@ -648,8 +651,8 @@
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "初期の配置に\\n戻しました"
+            "state" : "translated",
+            "value" : "初期の配置に\n戻しました"
           }
         }
       }

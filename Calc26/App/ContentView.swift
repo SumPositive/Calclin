@@ -222,7 +222,7 @@ struct ContentView: View {
                         // Dismiss
                         keyboardViewModel.popupEditKeyDef = nil
                     })
-                    .frame(width: 300, height: 420)
+                    .frame(width: 300, height: 510)
                     .onAppear {
                         editingKeyDef = info
                     }

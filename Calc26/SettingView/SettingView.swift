@@ -27,7 +27,7 @@ struct SettingView: View {
                     Text("settings.IntPart.groupType") //.frame(width: 80, alignment: .trailing)
                     Picker("GroupType", selection: $viewModel.groupType) {
                         ForEach(SettingViewModel.GroupType.allCases) { type in
-                            Text(type.rawValue).tag(type)
+                            Text(type.localized).tag(type)
                         }
                     }
                     .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
@@ -76,7 +76,7 @@ struct SettingView: View {
                 
                 HStack() {
                     // 小数桁数スライダー
-                    Text("settings.decimalPart.Digits") //.frame(width: 80, alignment: .trailing)
+                    Text("settings.decimalPart.digits") //.frame(width: 80, alignment: .trailing)
                     Text(" \(Int(viewModel.decimalDigits)) ")
                     Slider(value: $viewModel.decimalDigits,
                            in: 0...(SETTING_decimalDigits_MAX), step: 1.0)
@@ -95,10 +95,12 @@ struct SettingView: View {
                     // 丸めタイプ
                     Picker("RoundType", selection: $viewModel.roundType) {
                         ForEach(SettingViewModel.RoundType.allCases) { type in
-                            Text(type.rawValue).tag(type)
+                            Text(type.localized).tag(type)
+                                .minimumScaleFactor(0.2)
                         }
                     }
                     .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
+                    .minimumScaleFactor(0.2)
                     .onChange(of: viewModel.roundType) { oldValue, newValue in
                         log(.info, ".onChange roundType")
                         // SBCD_Configにセットする
