@@ -9,6 +9,12 @@ import Foundation
 import SwiftUI
 
 
+extension FileManager {
+    static var documentsDir: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+    }
+}
+
 // KeyDefinition.plist 構造
 struct KeyDefinition: Codable, Hashable {
     let code: String        //必須!固定! calcViewModel.inputに与える文字　nilならばkeyTopを使う
@@ -99,10 +105,9 @@ final class KeyboardViewModel: ObservableObject {
             hasLaunched = true
             log(.info, "Cold Start： Init KeyDefinition")
             /// キー定義初期化（Cold start時に実行）
-            // KeyTag.plistを読み込んでkeyTagsを更新する
-            if let kts = loadKeyDefinitionPlist() {
-                keyDefs = kts
-            }
+            // UserKeyDefinition.json を優先に
+            // 無ければ KeyDefinition.json を読み込んでkeyTagsを更新する
+            keyDefs = loadKeyDefinitionJSON()
             // キー配置を復元
             loadKeyboard()
         }
@@ -117,15 +122,14 @@ final class KeyboardViewModel: ObservableObject {
         return keyDefs.first { $0.code == code }
     }
     
-    // KeyDefinition.plist を読み込む
-    private func loadKeyDefinitionPlist() -> [KeyDefinition]? {
-        guard let url = Bundle.main.url(forResource: "KeyDefinition", withExtension: "plist"),
-              let data = try? Data(contentsOf: url),
-              let result = try? PropertyListDecoder().decode([KeyDefinition].self, from: data) else {
-            log(.fatal, "KeyDefinition.plist 定義エラー")
-            return nil
+    func saveKeyDef(_ keyDef: KeyDefinition) {
+        if let index = keyDefs.firstIndex(where: {$0.code == keyDef.code}) {
+            keyDefs[index] = keyDef
+        } else {
+            keyDefs.append(keyDef)
         }
-        return result
+        // Documentsにユーザ編集したkeyDefsを保存する
+        saveKeyDefinitionJSON(keyDefs)
     }
     
     // 現在のKeyboard配置を不揮発保存する（UserDefaultsにPropertyList形式で保存）
@@ -220,8 +224,11 @@ final class KeyboardViewModel: ObservableObject {
         }
     }
     
-    // 初期の配置に戻す　　初期インストール直後の初期でも使用(isToast:false)
+    // 初期のキー定義と配置に戻す　　初期インストール直後の初期でも使用(isToast:false)
     func initKeyboardJson( isToast: Bool = true ) {
+        // 初期のキー定義に戻す
+        keyDefs = loadKeyDefinitionJSON(isInitial: true)
+        //
         guard let fileURL = Bundle.main.url(forResource: "initKeyboard", withExtension: "json") else {
             log(.fatal, "initKeyboard.json がバンドル内に存在しない")
             return
@@ -244,6 +251,72 @@ final class KeyboardViewModel: ObservableObject {
     
     
     // MARK: - Private Methods
+
+    
+    private enum KeyDefStore {
+        static let userJsonName = "UserKeyDefinition.json"
+        
+        static var documentsURL: URL { // Documents ユーザ編集JSON
+            FileManager.documentsDir.appendingPathComponent(userJsonName)
+        }
+        
+        static var bundleURL: URL? { // Bundle 初期出荷JSON
+            Bundle.main.url(forResource: "KeyDefinition", withExtension: "json")
+        }
+    }
+    
+    // MARK: - 読み込み（Documents優先、なければBundle）
+    func loadKeyDefinitionJSON( isInitial: Bool = false ) -> [KeyDefinition] {
+        if isInitial == false {
+            // 1) Documents 内があればそれを使う
+            if FileManager.default.fileExists(atPath: KeyDefStore.documentsURL.path) {
+                if let defs = decodeKeyDefs(from: KeyDefStore.documentsURL) {
+                    log(.info,"load Documents/UserKeyDefinition.json")
+                    return defs
+                }
+            }
+        }
+        
+        // 2) Bundle 内の初期JSON（読み取り専用）
+        if let bundleURL = KeyDefStore.bundleURL,
+           let defs = decodeKeyDefs(from: bundleURL) {
+            log(.info,"load Bundle/KeyDefinition.json")
+            return defs
+        }
+        
+        // 3) どちらも失敗した場合は空配列
+        log(.error,"load No KeyDefinition.json")
+        return []
+    }
+    
+    private func decodeKeyDefs(from url: URL) -> [KeyDefinition]? {
+        do {
+            let data = try Data(contentsOf: url)
+            let decoder = JSONDecoder()
+            // date などを含む場合は decoder.dateDecodingStrategy の設定を追加
+            return try decoder.decode([KeyDefinition].self, from: data)
+        } catch {
+            log(.error, "KeyDefinition JSON decode error: \(error)")
+            return nil
+        }
+    }
+    
+    // MARK: - 保存（Documentsへ）
+    @discardableResult
+    func saveKeyDefinitionJSON(_ defs: [KeyDefinition]) -> Bool {
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            // URLやパスを含む場合は encoder 追加設定も可
+            let data = try encoder.encode(defs)
+            log(.info, "JSON:\n\(String(data: data, encoding: .utf8) ?? "")")
+            try data.write(to: KeyDefStore.documentsURL, options: [.atomic])
+            return true
+        } catch {
+            log(.error, "KeyDefinition JSON write error: \(error)")
+            return false
+        }
+    }
 
 
 }

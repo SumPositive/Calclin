@@ -215,10 +215,9 @@ struct ContentView: View {
                     onDismiss: { keyboardViewModel.popupEditKeyDef = nil }
                 ) {
                     EditKeyDefView(editingKeyDef: $editingKeyDef, onSave: {
+                        log(.info, "onSave editingKeyDef: \(editingKeyDef)")
                         // onSave 保存
-                        log(.info, "SAVE editingKeyDef: \(editingKeyDef)")
-                        //    editingKeyDef
-                        
+                        keyboardViewModel.saveKeyDef(editingKeyDef)
                         // Dismiss
                         keyboardViewModel.popupEditKeyDef = nil
                     })
