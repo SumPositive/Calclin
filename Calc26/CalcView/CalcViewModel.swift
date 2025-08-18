@@ -676,8 +676,11 @@ final class CalcViewModel: ObservableObject {
                         ans_unit = code
                         ans_unitFormula = def.formula
                         ansKeyDef = nil
-                        if let kt = ans_unitFormula {
-                            Manager.shared.toast("基準単位[\(kt)]\nで計算しました", wait: 3.0)
+                        if let unitF = ans_unitFormula {
+                            let message = String(localized: "toast.calculatedWithUnit") // [%@]
+                            Manager.shared.toast(
+                                String(format: message, unitF),
+                                wait: 3.0)
                         }
                     }
                 }

@@ -37,6 +37,7 @@
 				App/Calc26App.swift,
 				App/Config.swift,
 				App/ContentView.swift,
+				App/Localizable.xcstrings,
 				App/Log.swift,
 				App/Manager.swift,
 				App/PopupView.swift,
@@ -75,6 +76,7 @@
 				App/Calc26App.swift,
 				App/Config.swift,
 				App/ContentView.swift,
+				App/Localizable.xcstrings,
 				App/Log.swift,
 				App/Manager.swift,
 				App/PopupView.swift,
@@ -262,6 +264,7 @@
 			knownRegions = (
 				en,
 				Base,
+				ja,
 			);
 			mainGroup = C30A789A2E10EE8500212729;
 			minimizedProjectReferenceProxies = 1;
@@ -399,6 +402,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -456,6 +460,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
