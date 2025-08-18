@@ -12,24 +12,25 @@ import SwiftUI
 // KeyDefinition.plist 構造
 struct KeyDefinition: Codable, Hashable {
     let code: String        //必須!固定! calcViewModel.inputに与える文字　nilならばkeyTopを使う
+    var formula: String     // 計算式に追加する文字　nilならば計算式に追加しない（計算対象外キーである）
+    var keyTop: String      // キートップ表示文字　nilならばcodeを使う
     //------------------------
     let hidden: Bool?       // true:非表示＆無効
-    let formula: String?    // 計算式に追加する文字　nilならば計算式に追加しない（計算対象外キーである）
-    let keyTop: String?     // キートップ表示文字　nilならばcodeを使う
-    let symbol: String?     // SF Symbol Name
-    let unitBase: String?   // 基準単位　 =nil:単位処理しない
-    let unitConv: String?   // 単位から基準単位への変換倍率   [mm]*"0.001" => [m]/"0.001" => [mm]
+    var symbol: String?     // SF Symbol Name
+    var unitBase: String?   // 基準単位　 =nil:単位処理しない
+    var unitConv: String?   // 単位から基準単位への変換倍率   [mm]*"0.001" => [m]/"0.001" => [mm]
     //------------------------
     //  memo: String?       // メモ コメント 覚書
     //------------------------
     init(code: String,
+         formula: String = "", keyTop: String = "",
          hidden: Bool? = false,
-         formula: String? = nil, keyTop: String? = nil, symbol: String? = nil,
+         symbol: String? = nil,
          unitBase: String? = nil, unitConv: String? = nil) {
         self.code = code
-        self.hidden = hidden
         self.formula = formula
         self.keyTop = keyTop
+        self.hidden = hidden
         self.symbol = symbol
         self.unitBase = unitBase
         self.unitConv = unitConv
@@ -78,7 +79,9 @@ final class KeyboardViewModel: ObservableObject {
                                      count: pageCount)
 
     // キー定義一覧をPopupで表示する
-    @Published var popupKeyDefInfo: (page: Int, index: Int, keyCode: String)? = nil
+    @Published var popupKeyDefList: (page: Int, index: Int, keyCode: String)? = nil
+    // キー定義編集をPopupで表示する
+    @Published var popupEditKeyDef: KeyDefinition? = nil
     // キー定義一覧で直前に選択したkeyCode（空キーを長押しした時、初期選択に使用する）
     var prevSelectKeyCode: String = ""
     
@@ -119,6 +122,7 @@ final class KeyboardViewModel: ObservableObject {
         guard let url = Bundle.main.url(forResource: "KeyDefinition", withExtension: "plist"),
               let data = try? Data(contentsOf: url),
               let result = try? PropertyListDecoder().decode([KeyDefinition].self, from: data) else {
+            log(.fatal, "KeyDefinition.plist 定義エラー")
             return nil
         }
         return result

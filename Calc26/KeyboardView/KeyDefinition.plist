@@ -9,6 +9,8 @@
 		<string>nop</string>
 		<key>keyTop</key>
 		<string></string>
+		<key>formula</key>
+		<string></string>
 	</dict>
 	<dict>
 		<key>code</key>
@@ -187,6 +189,8 @@
 		<string>Paren</string>
 		<key>keyTop</key>
 		<string>( )</string>
+		<key>formula</key>
+		<string></string>
 		<key>symbol</key>
 		<string>parentheses</string>
 		<key>comment</key>
@@ -197,6 +201,8 @@
 		<string>CA</string>
 		<key>keyTop</key>
 		<string>CA</string>
+		<key>formula</key>
+		<string></string>
 		<key>symbol</key>
 		<string>xmark.circle</string>
 	</dict>
@@ -205,6 +211,8 @@
 		<string>CS</string>
 		<key>keyTop</key>
 		<string>CS</string>
+		<key>formula</key>
+		<string></string>
 		<key>symbol</key>
 		<string>clear</string>
 	</dict>
@@ -213,6 +221,8 @@
 		<string>BS</string>
 		<key>keyTop</key>
 		<string>BS</string>
+		<key>formula</key>
+		<string></string>
 		<key>symbol</key>
 		<string>delete.left</string>
 	</dict>
@@ -221,6 +231,8 @@
 		<string>Sign</string>
 		<key>keyTop</key>
 		<string>+/-</string>
+		<key>formula</key>
+		<string></string>
 		<key>symbol</key>
 		<string>minus.forwardslash.plus</string>
 	</dict>
@@ -719,6 +731,86 @@
 		<string>kg</string>
 		<key>unitConv</key>
 		<string>0.45359237</string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Ex01</string>
+		<key>keyTop</key>
+		<string>Ex</string>
+		<key>formula</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Ex02</string>
+		<key>keyTop</key>
+		<string>Ex</string>
+		<key>formula</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Ex03</string>
+		<key>keyTop</key>
+		<string>Ex</string>
+		<key>formula</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Ex04</string>
+		<key>keyTop</key>
+		<string>Ex</string>
+		<key>formula</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Ex05</string>
+		<key>keyTop</key>
+		<string>Ex</string>
+		<key>formula</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Ex06</string>
+		<key>keyTop</key>
+		<string>Ex</string>
+		<key>formula</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Ex07</string>
+		<key>keyTop</key>
+		<string>Ex</string>
+		<key>formula</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Ex08</string>
+		<key>keyTop</key>
+		<string>Ex</string>
+		<key>formula</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Ex09</string>
+		<key>keyTop</key>
+		<string>Ex</string>
+		<key>formula</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>code</key>
+		<string>Ex10</string>
+		<key>keyTop</key>
+		<string>Ex</string>
+		<key>formula</key>
+		<string></string>
 	</dict>
 </array>
 </plist>

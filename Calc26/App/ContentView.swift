@@ -41,7 +41,8 @@ struct ContentView: View {
     @State private var anchorRect: CGRect = .zero
     @State private var showPopup = false
     @State private var editingMemo: String = ""
-
+    @State private var editingKeyDef: KeyDefinition = KeyDefinition(code: "new")
+    
     // 選択中のCalcViewModelを返す
     private var selectedViewModel: CalcViewModel {
         calcViewModels[selectedCalc]
@@ -178,20 +179,20 @@ struct ContentView: View {
             }
 
             //(ZStack 2) PopupでKeyDefListView表示
-            if let info = keyboardViewModel.popupKeyDefInfo {
+            if let info = keyboardViewModel.popupKeyDefList {
                 GeometryReader { geo in
                     let screenSize = geo.size
                     let popupWidth = (screenSize.width < APP_KB_WIDTH_MAX
                                       ? screenSize.width : APP_KB_WIDTH_MAX) - 40
                     let popupHeight = screenSize.height/1.8
                     PopupView(
-                        onDismiss: { keyboardViewModel.popupKeyDefInfo = nil }
+                        onDismiss: { keyboardViewModel.popupKeyDefList = nil }
                     ) {
                         KeyDefListView(viewModel: keyboardViewModel,
                                        popupWidth: popupWidth) { selectedKeyDef in
                             log(.info, "PopupListView selected: \(selectedKeyDef.code)")
                             // Dismiss
-                            keyboardViewModel.popupKeyDefInfo = nil
+                            keyboardViewModel.popupKeyDefList = nil
                             // 最終選択を記録
                             keyboardViewModel.prevSelectKeyCode = selectedKeyDef.code
                             // keyboardを更新する
@@ -203,6 +204,27 @@ struct ContentView: View {
                                 keyboardViewModel.saveKeyboard()
                             }
                         }.frame(width: popupWidth, height: popupHeight)
+                    }
+                }
+                .zIndex(2) // これが無いとSettingViewの下になる
+            }
+
+            //(ZStack 2) PopupでEditKeyDefView表示
+            if let info = keyboardViewModel.popupEditKeyDef {
+                PopupView(
+                    onDismiss: { keyboardViewModel.popupEditKeyDef = nil }
+                ) {
+                    EditKeyDefView(editingKeyDef: $editingKeyDef, onSave: {
+                        // onSave 保存
+                        log(.info, "SAVE editingKeyDef: \(editingKeyDef)")
+                        //    editingKeyDef
+                        
+                        // Dismiss
+                        keyboardViewModel.popupEditKeyDef = nil
+                    })
+                    .frame(width: 300, height: 420)
+                    .onAppear {
+                        editingKeyDef = info
                     }
                 }
                 .zIndex(2) // これが無いとSettingViewの下になる
