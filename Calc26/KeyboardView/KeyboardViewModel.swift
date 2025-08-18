@@ -9,50 +9,39 @@ import Foundation
 import SwiftUI
 
 
+extension FileManager {
+    static var documentsDir: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+    }
+}
+
 // KeyDefinition.plist 構造
 struct KeyDefinition: Codable, Hashable {
     let code: String        //必須!固定! calcViewModel.inputに与える文字　nilならばkeyTopを使う
+    var formula: String     // 計算式に追加する文字　nilならば計算式に追加しない（計算対象外キーである）
+    var keyTop: String      // キートップ表示文字　nilならばcodeを使う
     //------------------------
     let hidden: Bool?       // true:非表示＆無効
-    let formula: String?    // 計算式に追加する文字　nilならば計算式に追加しない（計算対象外キーである）
-    let keyTop: String?     // キートップ表示文字　nilならばcodeを使う
-    let symbol: String?     // SF Symbol Name
-    let unitBase: String?   // 基準単位　 =nil:単位処理しない
-    let unitConv: String?   // 単位から基準単位への変換倍率   [mm]*"0.001" => [m]/"0.001" => [mm]
+    var symbol: String?     // SF Symbol Name
+    var unitBase: String?   // 基準単位　 =nil:単位処理しない
+    var unitConv: String?   // 単位から基準単位への変換倍率   [mm]*"0.001" => [m]/"0.001" => [mm]
     //------------------------
     //  memo: String?       // メモ コメント 覚書
     //------------------------
     init(code: String,
+         formula: String = "", keyTop: String = "",
          hidden: Bool? = false,
-         formula: String? = nil, keyTop: String? = nil, symbol: String? = nil,
+         symbol: String? = nil,
          unitBase: String? = nil, unitConv: String? = nil) {
         self.code = code
-        self.hidden = hidden
         self.formula = formula
         self.keyTop = keyTop
+        self.hidden = hidden
         self.symbol = symbol
         self.unitBase = unitBase
         self.unitConv = unitConv
     }
 }
-
-//// KeyLayout.plist 構造
-//struct KeyLayout: Codable, Hashable {
-//    let page: Int       // ページ [0〜2]
-//    let row: Int        // 行 [0〜24]
-//    let col: Int        // 列 [0〜24]
-//    let code: String    // KeyDefinition.code
-//    //------------------------
-//    let memo: String?  //
-//    //------------------------
-//    init(page: Int, row: Int, col: Int, code: String, memo: String?) {
-//        self.page = page
-//        self.row = row
-//        self.col = col
-//        self.code = code
-//        self.memo = memo
-//    }
-//}
 
 struct KeyboardJSON: Codable {
     let appName: String
@@ -78,7 +67,9 @@ final class KeyboardViewModel: ObservableObject {
                                      count: pageCount)
 
     // キー定義一覧をPopupで表示する
-    @Published var popupKeyDefInfo: (page: Int, index: Int, keyCode: String)? = nil
+    @Published var popupKeyDefList: (page: Int, index: Int, keyCode: String)? = nil
+    // キー定義編集をPopupで表示する
+    @Published var popupEditKeyDef: KeyDefinition? = nil
     // キー定義一覧で直前に選択したkeyCode（空キーを長押しした時、初期選択に使用する）
     var prevSelectKeyCode: String = ""
     
@@ -96,10 +87,9 @@ final class KeyboardViewModel: ObservableObject {
             hasLaunched = true
             log(.info, "Cold Start： Init KeyDefinition")
             /// キー定義初期化（Cold start時に実行）
-            // KeyTag.plistを読み込んでkeyTagsを更新する
-            if let kts = loadKeyDefinitionPlist() {
-                keyDefs = kts
-            }
+            // UserKeyDefinition.json を優先に
+            // 無ければ KeyDefinition.json を読み込んでkeyTagsを更新する
+            keyDefs = loadKeyDefinitionJSON()
             // キー配置を復元
             loadKeyboard()
         }
@@ -109,23 +99,65 @@ final class KeyboardViewModel: ObservableObject {
     
     // MARK: - Public Methods
 
+    /// キー定義の読み込み（Documents優先、なければBundle）
+    /// - Parameter isInitial: true=Bundle優先して初期化する
+    /// - Returns: [KeyDefinition]
+    func loadKeyDefinitionJSON( isInitial: Bool = false ) -> [KeyDefinition] {
+        if isInitial == false {
+            // 1) Documents 内があればそれを使う
+            if FileManager.default.fileExists(atPath: KeyDefStore.documentsURL.path) {
+                if let defs = decodeKeyDefs(from: KeyDefStore.documentsURL) {
+                    log(.info,"load Documents/UserKeyDefinition.json")
+                    return defs
+                }
+            }
+        }
+        // 2) Bundle 内の初期JSON（読み取り専用）
+        if let bundleURL = KeyDefStore.bundleURL,
+           let defs = decodeKeyDefs(from: bundleURL) {
+            log(.info,"load Bundle/KeyDefinition.json")
+            return defs
+        }
+        // 3) どちらも失敗した場合は空配列
+        log(.error,"load No KeyDefinition.json")
+        return []
+    }
+    
+    /// ユーザのキー定義を保存する（Documentsへ）
+    @discardableResult
+    func saveKeyDefinitionJSON(_ keyDefs: [KeyDefinition]) -> Bool {
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            // URLやパスを含む場合は encoder 追加設定も可
+            let data = try encoder.encode(keyDefs)
+            log(.info, "JSON:\n\(String(data: data, encoding: .utf8) ?? "")")
+            try data.write(to: KeyDefStore.documentsURL, options: [.atomic])
+            return true
+        } catch {
+            log(.error, "KeyDefinition JSON write error: \(error)")
+            return false
+        }
+    }
+
     /// keyCodeからkeyDefを取得する
     func keyDef( code: String ) -> KeyDefinition? {
         return keyDefs.first { $0.code == code }
     }
     
-    // KeyDefinition.plist を読み込む
-    private func loadKeyDefinitionPlist() -> [KeyDefinition]? {
-        guard let url = Bundle.main.url(forResource: "KeyDefinition", withExtension: "plist"),
-              let data = try? Data(contentsOf: url),
-              let result = try? PropertyListDecoder().decode([KeyDefinition].self, from: data) else {
-            return nil
+    func saveKeyDef(_ keyDef: KeyDefinition) {
+        if let index = keyDefs.firstIndex(where: {$0.code == keyDef.code}) {
+            keyDefs[index] = keyDef
+        } else {
+            keyDefs.append(keyDef)
         }
-        return result
+        // Documentsにユーザ編集したkeyDefsを保存する
+        saveKeyDefinitionJSON(keyDefs)
     }
     
     // 現在のKeyboard配置を不揮発保存する（UserDefaultsにPropertyList形式で保存）
-    // キー配置変更の都度保存するため、JSONファイル保存とは別に軽量保存している（しかし、誤差だろうからJSONファイル保存で共通化しても良いかも）
+    // キー配置変更の都度保存するため、JSONファイル保存とは別に軽量保存している
+    //  （しかし、誤差だろうからJSONファイル保存で共通化しても良いかも）
     func saveKeyboard() {
         let encoder = PropertyListEncoder()
         if let data = try? encoder.encode(self.keyboard) {
@@ -216,8 +248,11 @@ final class KeyboardViewModel: ObservableObject {
         }
     }
     
-    // 初期の配置に戻す　　初期インストール直後の初期でも使用(isToast:false)
+    // 初期のキー定義と配置に戻す　　初期インストール直後の初期でも使用(isToast:false)
     func initKeyboardJson( isToast: Bool = true ) {
+        // 初期のキー定義に戻す
+        keyDefs = loadKeyDefinitionJSON(isInitial: true)
+        //
         guard let fileURL = Bundle.main.url(forResource: "initKeyboard", withExtension: "json") else {
             log(.fatal, "initKeyboard.json がバンドル内に存在しない")
             return
@@ -238,9 +273,32 @@ final class KeyboardViewModel: ObservableObject {
     }
     
     
-    
     // MARK: - Private Methods
 
+    
+    private enum KeyDefStore {
+        static let userJsonName = "UserKeyDefinition.json"
+        
+        static var documentsURL: URL { // Documents ユーザ編集JSON
+            FileManager.documentsDir.appendingPathComponent(userJsonName)
+        }
+        
+        static var bundleURL: URL? { // Bundle 初期出荷JSON
+            Bundle.main.url(forResource: "KeyDefinition", withExtension: "json")
+        }
+    }
+    
+    private func decodeKeyDefs(from url: URL) -> [KeyDefinition]? {
+        do {
+            let data = try Data(contentsOf: url)
+            let decoder = JSONDecoder()
+            // date などを含む場合は decoder.dateDecodingStrategy の設定を追加
+            return try decoder.decode([KeyDefinition].self, from: data)
+        } catch {
+            log(.error, "KeyDefinition JSON decode error: \(error)")
+            return nil
+        }
+    }
 
 }
 

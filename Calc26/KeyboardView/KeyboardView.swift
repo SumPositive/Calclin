@@ -209,7 +209,7 @@ struct KeyView: View {
            index < viewModel.keyboard[page].count {
             let keyCode = viewModel.keyboard[page][index]
             if let def = viewModel.keyDef(code: keyCode) {
-                keyTop = def.keyTop ?? def.code
+                keyTop = def.keyTop
                 symbol = def.symbol ?? ""
                 keyDef = def
             }
@@ -263,7 +263,7 @@ struct KeyView: View {
                 LongPressGesture(minimumDuration: 0.6) // 長押し
                     .onEnded { _ in
                         isLongTapped = true
-                        viewModel.popupKeyDefInfo = (
+                        viewModel.popupKeyDefList = (
                             page: self.page,
                             index: self.index,
                             keyCode: keyDef?.code ?? ""
@@ -322,7 +322,7 @@ struct KeyDefListView: View {
                 .scrollIndicators(.hidden)
                 .onAppear {
                     // 既選択キーをアクティブにする
-                    if let popupInfo = viewModel.popupKeyDefInfo {
+                    if let popupInfo = viewModel.popupKeyDefList {
                         selectedKeyCode = popupInfo.keyCode
                         if selectedKeyCode.isEmpty {
                             selectedKeyCode = viewModel.prevSelectKeyCode
@@ -357,7 +357,7 @@ struct KeyDefListView: View {
             Text("キー定義").padding(4)
             Spacer()
             
-            Button { viewModel.popupKeyDefInfo = nil } label: {
+            Button { viewModel.popupKeyDefList = nil } label: {
                 Image(systemName: "xmark")
             }
             .padding(6)
@@ -369,13 +369,28 @@ struct KeyDefListView: View {
     private func keyCell(_ keyDef: KeyDefinition) -> some View {
         ZStack {
             if let symbol = keyDef.symbol {
-                Image(systemName: symbol).imageScale(.large)
+                Image(systemName: symbol)
+                    .imageScale(.large)
+                    .simultaneousGesture(
+                        LongPressGesture(minimumDuration: 0.6) // 長押し
+                            .onEnded { _ in
+                                // キー定義編集をPopupで表示する
+                                viewModel.popupEditKeyDef = keyDef
+                            }
+                    )
             } else {
-                Text(keyDef.keyTop ?? keyDef.code)
+                Text(keyDef.keyTop)
                     .font(.system(size: 20, weight: .bold))
-                    .minimumScaleFactor(0.5)
+                    .minimumScaleFactor(0.2)
                     .lineLimit(1)
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, 4)
+                    .simultaneousGesture(
+                        LongPressGesture(minimumDuration: 0.6) // 長押し
+                            .onEnded { _ in
+                                // キー定義編集をPopupで表示する
+                                viewModel.popupEditKeyDef = keyDef
+                            }
+                    )
             }
         }
         .frame(height: keyHeight)
@@ -390,4 +405,167 @@ struct KeyDefListView: View {
     }
 }
 
+/// ポップアップ・キー定義編集
+struct EditKeyDefView: View {
+    @Binding var editingKeyDef: KeyDefinition
+    var onSave: () -> Void
+    // ダークモード対応
+    @Environment(\.colorScheme) var colorScheme
 
+    // EditKeyDefView内に補助Bindingを用意
+    private var symbolNonOptBinding: Binding<String> {
+        Binding(
+            get: { editingKeyDef.symbol ?? "" },
+            set: { newValue in
+                // 空文字を nil として扱いたいならこうする
+                editingKeyDef.symbol = newValue.isEmpty ? nil
+                    : newValue.trimmingCharacters(in: .whitespacesAndNewlines) // 空白との改行削除
+            }
+        )
+    }
+    private var unitBaseNonOptBinding: Binding<String> {
+        Binding(
+            get: { editingKeyDef.unitBase ?? "" },
+            set: { newValue in
+                // 空文字を nil として扱いたいならこうする
+                editingKeyDef.unitBase = newValue.isEmpty ? nil
+                : newValue.trimmingCharacters(in: .whitespacesAndNewlines) // 空白との改行削除
+            }
+        )
+    }
+    private var unitConvNonOptBinding: Binding<String> {
+        Binding(
+            get: { editingKeyDef.unitConv ?? "" },
+            set: { newValue in
+                // 空文字を nil として扱いたいならこうする
+                editingKeyDef.unitConv = newValue.isEmpty ? nil
+                    : newValue.trimmingCharacters(in: .whitespacesAndNewlines) // 空白との改行削除
+            }
+        )
+    }
+    
+    private let TITLE_WIDTH: CGFloat = 75.0
+    private let TITLE_HEIGHT: CGFloat = 35.0
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text("キー定義編集（危険！上級向け）")
+                .font(.headline)
+                .foregroundColor(COLOR_TITLE)
+
+            HStack {
+                Text("code")
+                    .font(.headline)
+                    .foregroundColor(COLOR_TITLE)
+                    .frame(width: TITLE_WIDTH, alignment: .center)
+                Text(editingKeyDef.code)
+                    .font(.headline)
+                Spacer()
+            }
+
+            HStack(alignment: .top) {
+                Text("keyTop")
+                    .font(.headline)
+                    .foregroundColor(COLOR_TITLE)
+                    .frame(width: TITLE_WIDTH)
+
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("キーボード上に表示される文字や記号")
+                        .font(.caption2)
+                        .foregroundColor(COLOR_TITLE)
+                        .padding(.bottom, 2)
+
+                    TextEditor(text: $editingKeyDef.keyTop)
+                        .font(.headline)
+                        .lineLimit(1)
+                        .frame(height: TITLE_HEIGHT)
+                }
+            }
+            //DEBUG//.background(Color.blue.opacity(0.4))
+
+            HStack(alignment: .top) {
+                Text("symbol")
+                    .font(.headline)
+                    .foregroundColor(COLOR_TITLE)
+                    .frame(width: TITLE_WIDTH)
+                
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Apple SF Symbols name")
+                        .font(.caption2)
+                        .foregroundColor(COLOR_TITLE)
+                        .padding(.bottom, 2)
+                    
+                    TextEditor(text: symbolNonOptBinding)
+                        .font(.headline)
+                        .lineLimit(1)
+                        .frame(height: TITLE_HEIGHT)
+                }
+            }
+
+            HStack(alignment: .top) {
+                Text("formula")
+                    .font(.headline)
+                    .foregroundColor(COLOR_TITLE)
+                    .frame(width: TITLE_WIDTH, alignment: .center)
+
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("計算式に使われる文字や記号")
+                        .font(.caption2)
+                        .foregroundColor(COLOR_TITLE)
+                        .padding(.bottom, 2)
+
+                    TextEditor(text: $editingKeyDef.formula)
+                        .font(.headline)
+                        .lineLimit(1)
+                        .frame(height: TITLE_HEIGHT)
+                }
+            }
+
+            HStack(alignment: .top) {
+                Text("unitBase")
+                    .font(.headline)
+                    .foregroundColor(COLOR_TITLE)
+                    .frame(width: TITLE_WIDTH, alignment: .center)
+
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("基準単位のcodeを記入。基準単位が同じ単位の範囲で加減算や変換が可能")
+                        .font(.caption2)
+                        .foregroundColor(COLOR_TITLE)
+                        .padding(.bottom, 2)
+
+                    TextEditor(text: unitBaseNonOptBinding)
+                        .font(.headline)
+                        .lineLimit(1)
+                        .frame(height: TITLE_HEIGHT)
+                }
+            }
+
+            HStack(alignment: .top) {
+                Text("unitConv")
+                    .font(.headline)
+                    .foregroundColor(COLOR_TITLE)
+                    .frame(width: TITLE_WIDTH, alignment: .center)
+
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("基準単位にするための倍率。自身が基準単位ならば空白")
+                        .font(.caption2)
+                        .foregroundColor(COLOR_TITLE)
+                        .padding(.bottom, 2)
+
+                    TextEditor(text: unitConvNonOptBinding)
+                        .font(.headline)
+                        .lineLimit(1)
+                        .frame(height: TITLE_HEIGHT)
+                }
+            }
+
+            //Spacer()
+            Button("保存") {
+                onSave()
+            }
+            .padding(.top, 4)
+            .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .padding(4)
+    }
+}

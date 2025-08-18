@@ -49,7 +49,7 @@
 				KeyboardView/initKeyboard.json,
 				KeyboardView/KeyboardView.swift,
 				KeyboardView/KeyboardViewModel.swift,
-				KeyboardView/KeyDefinition.plist,
+				KeyboardView/KeyDefinition.json,
 				PrivacyInfo.xcprivacy,
 				SBCD/SBCD_objC_Wrapper.mm,
 				SBCD/SBCD_Wrapper.swift,
@@ -64,7 +64,8 @@
 			membershipExceptions = (
 				App/Assets.xcassets,
 				Info.plist,
-				KeyboardView/KeyDefinition.plist,
+				KeyboardView/initKeyboard.json,
+				KeyboardView/KeyDefinition.json,
 			);
 			target = C30A78AF2E10EE8700212729 /* Calc26Tests */;
 		};
@@ -83,7 +84,6 @@
 				CalcView/CalcViewModel.swift,
 				CalcView/FormulaView.swift,
 				CalcView/HistoryView.swift,
-				KeyboardView/initKeyboard.json,
 				KeyboardView/KeyboardView.swift,
 				KeyboardView/KeyboardViewModel.swift,
 				SBCD/SBCD_objC_Wrapper.mm,

@@ -83,52 +83,50 @@ final class CalcViewModel: ObservableObject {
                     inputNumber(keyDef)
                     
                 case "#0", "#00", "#000":
-                    if let num = keyDef.formula {
-                        if var last = tokens.last {
-                            if Double(last) != nil || ( last == FM_SUB &&
-                                                        2 < tokens.count &&
-                                                        Double(tokens[tokens.count - 2]) == nil ) {
-                                // 数値 || マイナス符号
-                                if  isAnswerMode { // [Ans]直後
-                                    isAnswerMode = false
-                                    last = "0" + FM_DECIMAL
-                                }
-                                else if last.count < CALC_PRECISION_MAX {
-                                    last += num
-                                }
-                                //TODO: 先頭の0削除
-                                tokens[tokens.count - 1] = last
-                            }else{
-                                tokens.append("0" + FM_DECIMAL)
+                    let num = keyDef.formula
+                    if var last = tokens.last {
+                        if Double(last) != nil || ( last == FM_SUB &&
+                                                    2 < tokens.count &&
+                                                    Double(tokens[tokens.count - 2]) == nil ) {
+                            // 数値 || マイナス符号
+                            if  isAnswerMode { // [Ans]直後
+                                isAnswerMode = false
+                                last = "0" + FM_DECIMAL
                             }
+                            else if last.count < CALC_PRECISION_MAX {
+                                last += num
+                            }
+                            //TODO: 先頭の0削除
+                            tokens[tokens.count - 1] = last
                         }else{
                             tokens.append("0" + FM_DECIMAL)
                         }
-                        formulaUpdate()
+                    }else{
+                        tokens.append("0" + FM_DECIMAL)
                     }
-                    
+                    formulaUpdate()
+
                 case "Deci":  // [.]
-                    if let decimal = keyDef.formula {
-                        if var last = tokens.last {
-                            if !last.contains(FM_DECIMAL) {
-                                if Double(last) != nil { // 数値
-                                    if  isAnswerMode { // [Ans]直後
-                                        isAnswerMode = false
-                                        last = "0" + decimal
-                                    }else{
-                                        last += decimal
-                                    }
-                                    tokens[tokens.count - 1] = last
+                    let decimal = keyDef.formula
+                    if var last = tokens.last {
+                        if !last.contains(FM_DECIMAL) {
+                            if Double(last) != nil { // 数値
+                                if  isAnswerMode { // [Ans]直後
+                                    isAnswerMode = false
+                                    last = "0" + decimal
                                 }else{
-                                    tokens.append("0" + decimal)
+                                    last += decimal
                                 }
+                                tokens[tokens.count - 1] = last
+                            }else{
+                                tokens.append("0" + decimal)
                             }
-                        }else{
-                            tokens.append("0" + decimal)
                         }
-                        formulaUpdate()
+                    }else{
+                        tokens.append("0" + decimal)
                     }
-                    
+                    formulaUpdate()
+
                 case "Sign":  // [+/-] 逆符号
                     if var last = tokens.last {
                         if Double(last) != nil { // 数値
@@ -282,6 +280,7 @@ final class CalcViewModel: ObservableObject {
                 formula += token
             }
         }
+        log(.info, "formula=\(formula)")
         return formula
     }
 
@@ -307,10 +306,9 @@ final class CalcViewModel: ObservableObject {
                 // 単位
                 let code = String(token.dropFirst())
                 if let def = keyboardViewModel.keyDef(code: code),
-                   let _ = def.unitBase,
-                   let fm = def.formula {
+                   let _ = def.unitBase {
                     // UNIT.formula を計算式に表示する
-                    var attr = AttributedString(fm)
+                    var attr = AttributedString(def.formula)
                     attr.foregroundColor = COLOR_UNIT //.opacity(0.5)
                     self.formulaAttr += attr
                 }
@@ -360,44 +358,40 @@ final class CalcViewModel: ObservableObject {
     
     /// [0]-[9] 数字キー入力
     private func inputNumber(_ keyDef: KeyDefinition) {
-        if let num = keyDef.formula {
-            if var last = tokens.last {
-                if Double(last) != nil || ( last == FM_SUB &&
-                                            2 < tokens.count &&
-                                            FM_OPERATORS.contains(tokens[tokens.count - 2]) ) {
-                    // 数値 || マイナス符号(KD_OPERATORSに続くマイナスは符号）
-                    if  isAnswerMode { // [Ans]直後
-                        isAnswerMode = false
-                        last = num
-                    }
-                    else if last.count < CALC_PRECISION_MAX {
-                        last += num
-                    }
-                    tokens[tokens.count - 1] = last
-                }
-                else if last.hasPrefix(TOKEN_UNIT_PREFIX) {
-                    // [num],[@unit]のとき、初期化
-                    tokens = []
-                    tokens.append(num)
+        let num = keyDef.formula
+        if var last = tokens.last {
+            if Double(last) != nil || ( last == FM_SUB &&
+                                        2 < tokens.count &&
+                                        FM_OPERATORS.contains(tokens[tokens.count - 2]) ) {
+                // 数値 || マイナス符号(KD_OPERATORSに続くマイナスは符号）
+                if  isAnswerMode { // [Ans]直後
                     isAnswerMode = false
-                }else{
-                    tokens.append(num)
-                    isAnswerMode = false
+                    last = num
                 }
+                else if last.count < CALC_PRECISION_MAX {
+                    last += num
+                }
+                tokens[tokens.count - 1] = last
+            }
+            else if last.hasPrefix(TOKEN_UNIT_PREFIX) {
+                // [num],[@unit]のとき、初期化
+                tokens = []
+                tokens.append(num)
+                isAnswerMode = false
             }else{
                 tokens.append(num)
                 isAnswerMode = false
             }
-            formulaUpdate()
+        }else{
+            tokens.append(num)
+            isAnswerMode = false
         }
+        formulaUpdate()
     }
-    
+
     /// 演算子キー入力
     private func inputOperator(_ keyDef: KeyDefinition) {
-        guard let op = keyDef.formula else {
-            log(.fatal, ".formula 未定義")
-            return
-        }
+        let op = keyDef.formula
         if let last = tokens.last {
             if Double(last) != nil { // 数値
                 tokens.append(op)
@@ -452,10 +446,7 @@ final class CalcViewModel: ObservableObject {
 
     /// 関数(Root)キー入力
     private func inputFunctionRoot(_ keyDef: KeyDefinition) {
-        guard let op = keyDef.formula else {
-            log(.fatal, ".formula 未定義")
-            return
-        }
+        let op = keyDef.formula
         if op == FM_sqROOT || op == FM_cuROOT { // 平方根 or 立方根
             // 関数トークン・プリフィックスを付ける
             if let last = tokens.last {

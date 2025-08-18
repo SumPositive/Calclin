@@ -164,7 +164,7 @@ struct SettingView: View {
                     .foregroundStyle(.green)
                     .padding(2)
                     Spacer()
-                    Button("初期の配置\nに戻す") {
+                    Button("初期のキー定義\nと配置に戻す") {
                         keyboardViewModel.initKeyboardJson()
                     }
                     .foregroundStyle(.red)
