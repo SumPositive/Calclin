@@ -12,7 +12,6 @@ import SwiftUICore
 // MARK: - Global let value
 // 全モジュールで参照される固定値(let) （#define 同様の使い方）
 
-let APP_NAME = "カルメモ"
 
 //-------------------------------------- Layout関係
 // CalcRollView 幅
@@ -73,7 +72,7 @@ let FM_DECIMAL  = "."   // 小数点
 let FM_PT_LEFT  = "("   // 左括弧
 let FM_PT_RIGHT = ")"   // 右括弧
 let FM_ANS      = "="   // 答え
-// 演算子 Operator
+// 四則演算子
 let FM_OPERATORS = "+-*/×÷"  // 四則演算子
 let FM_ADD      = "+"   // 加算 ASCII+（U+002B） テンキー上のAsciiプラス
 let FM_SUB      = "-"   // 減算 ASCII-（U+002B） テンキー上のAsciiマイナス
@@ -81,6 +80,7 @@ let FM_MUL      = "×"   // 掛算（U+00D7）
 let FM_MUL_     = "*"   // 掛算 内部利用
 let FM_DIV      = "÷"   // 割算（U+00F7）
 let FM_DIV_     = "/"   // 割算 内部利用
+// 特殊演算子（個別にコード処理している）
 let FM_sqROOT   = "√"   // square 平方根
 let FM_cuROOT   = "∛"   // cubic 立方根　Unicode："\u{221B}"
 let FM_PERC     = "%"   // パーセント /100

@@ -18,16 +18,16 @@ struct SettingView: View {
         VStack(spacing: 4) {
             // 整数部
             VStack(spacing: 0) {
-                Text("整数部（桁区切り）")
+                Text("settings.IntPart.title")
                     .font(.system(size: 14, weight: .regular, design: .default))
                     .frame(maxHeight: 10)
                 
                 HStack() {
                     // 桁区切りタイプ
-                    Text("方式") //.frame(width: 80, alignment: .trailing)
+                    Text("settings.IntPart.groupType") //.frame(width: 80, alignment: .trailing)
                     Picker("GroupType", selection: $viewModel.groupType) {
                         ForEach(SettingViewModel.GroupType.allCases) { type in
-                            Text(type.rawValue).tag(type)
+                            Text(type.localized).tag(type)
                         }
                     }
                     .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
@@ -46,7 +46,7 @@ struct SettingView: View {
                 
                 // 桁区切り記号
                 HStack {
-                    Text("記号") //.frame(width: 110, alignment: .trailing)
+                    Text("settings.IntPart.groupSymbol") //.frame(width: 110, alignment: .trailing)
                     Picker("GroupSeparator", selection: $viewModel.groupSeparator) {
                         ForEach(SettingViewModel.GroupSeparator.allCases) { type in
                             Text(type.rawValue).tag(type)
@@ -70,13 +70,13 @@ struct SettingView: View {
             
             // 小数部
             VStack(spacing: 0) {
-                Text("小数部（有効桁数と丸め処理）")
+                Text("settings.decimalPart.title")
                     .font(.system(size: 14, weight: .regular, design: .default))
                     .frame(maxHeight: 10)
                 
                 HStack() {
                     // 小数桁数スライダー
-                    Text("桁数") //.frame(width: 80, alignment: .trailing)
+                    Text("settings.decimalPart.digits") //.frame(width: 80, alignment: .trailing)
                     Text(" \(Int(viewModel.decimalDigits)) ")
                     Slider(value: $viewModel.decimalDigits,
                            in: 0...(SETTING_decimalDigits_MAX), step: 1.0)
@@ -95,10 +95,12 @@ struct SettingView: View {
                     // 丸めタイプ
                     Picker("RoundType", selection: $viewModel.roundType) {
                         ForEach(SettingViewModel.RoundType.allCases) { type in
-                            Text(type.rawValue).tag(type)
+                            Text(type.localized).tag(type)
+                                .minimumScaleFactor(0.2)
                         }
                     }
                     .pickerStyle(MenuPickerStyle()) // メニュー型 or SegmentedPickerStyle()
+                    .minimumScaleFactor(0.2)
                     .onChange(of: viewModel.roundType) { oldValue, newValue in
                         log(.info, ".onChange roundType")
                         // SBCD_Configにセットする
@@ -109,7 +111,7 @@ struct SettingView: View {
                 }
                 // 小数点
                 HStack {
-                    Text("記号") //.frame(width: 110, alignment: .trailing)
+                    Text("settings.decimalPart.digitsSymbol") //.frame(width: 110, alignment: .trailing)
                     Picker("DecimalSeparator", selection: $viewModel.decimalSeparator) {
                         ForEach(SettingViewModel.DecimalSeparator.allCases) { type in
                             Text(type.rawValue).tag(type)
@@ -135,7 +137,7 @@ struct SettingView: View {
                 
                 HStack() {
                     // 数字表示倍率スライダー
-                    Text("表示倍率")
+                    Text("settings.font.zoom")
                     Text(String(format: " %.1f ", viewModel.numberFontScale))
                     Slider(value: $viewModel.numberFontScale, in: (0.5)...(3.0), step: 0.1)
                         .onChange(of: viewModel.numberFontScale, { oldValue, newValue in
@@ -151,20 +153,20 @@ struct SettingView: View {
             .background(Color(.systemGray6))
             
             VStack(spacing: 0) {
-                Text("キーボード配置")
+                Text("settings.keyboard.title")
                 HStack {
-                    Button("現在の配置\nを保存する") {
+                    Button("settings.keyboard.save") {
                         keyboardViewModel.saveKeyboardJson()
                     }
                     .foregroundStyle(.blue)
                     .padding(2)
-                    Button("保存した配置\nに戻す") {
+                    Button("settings.keyboard.load") {
                         keyboardViewModel.loadKeyboardJson()
                     }
                     .foregroundStyle(.green)
                     .padding(2)
                     Spacer()
-                    Button("初期のキー定義\nと配置に戻す") {
+                    Button("settings.keyboard.init") {
                         keyboardViewModel.initKeyboardJson()
                     }
                     .foregroundStyle(.red)

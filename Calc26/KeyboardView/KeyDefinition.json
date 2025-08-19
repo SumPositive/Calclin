@@ -174,23 +174,26 @@
     {
         "code" : "Pi",
         "formula" : "π",
-        "keyTop" : "円周率",
+        "keyTop" : "π",
         "unitBase" : "Bare",
-        "unitConv" : "3.141592653589793238462643383279"
+        "unitConv" : "3.141592653589793238462643383279",
+        "memo" : "円周率"
     },
     {
         "code" : "Golden",
         "formula" : "φ",
-        "keyTop" : "黄金比",
+        "keyTop" : "φ",
         "unitBase" : "Bare",
-        "unitConv" : "1.618033988749894"
+        "unitConv" : "1.618033988749894",
+        "memo" : "黄金比"
     },
     {
         "code" : "Napier",
-        "formula" : "e",
-        "keyTop" : "ネイピア",
+        "formula" : "𝑒",
+        "keyTop" : "𝑒",
         "unitBase" : "Bare",
-        "unitConv" : "2.71828182845904523536"
+        "unitConv" : "2.71828182845904523536",
+        "memo" : "ネイピア数"
     },
     {
         "code" : "mm",
@@ -374,9 +377,10 @@
     {
         "code" : "gal",
         "formula" : "gal",
-        "keyTop" : "米液ガロン",
+        "keyTop" : "gal",
         "unitBase" : "m3",
-        "unitConv" : "0.003785411784"
+        "unitConv" : "0.003785411784",
+        "memo" : "米液ガロン"
     },
     {
         "code" : "mg",
@@ -429,9 +433,10 @@
     {
         "code" : "pondus",
         "formula" : "lb",
-        "keyTop" : "ポンド",
+        "keyTop" : "lb",
         "unitBase" : "kg",
-        "unitConv" : "0.45359237"
+        "unitConv" : "0.45359237",
+        "memo" : "ポンド"
     },
     {
         "code" : "Ex01",

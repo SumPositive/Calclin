@@ -57,18 +57,18 @@ struct FormulaView: View {
             }
         }
         .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
-        .contextMenu {
-            Button {
-                paste()
-            } label: {
-                Label("貼り付け", systemImage: "doc.on.doc")
-            }
-            Button {
-                UIPasteboard.general.string = "コピーされるテキスト"
-            } label: {
-                Label("コピー", systemImage: "doc.on.doc")
-            }
-        }
+//        .contextMenu {
+//            Button {
+//                paste()
+//            } label: {
+//                Label("貼り付け", systemImage: "doc.on.doc")
+//            }
+//            Button {
+//                UIPasteboard.general.string = "コピーされるテキスト"
+//            } label: {
+//                Label("コピー", systemImage: "doc.on.doc")
+//            }
+//        }
     }
     
     

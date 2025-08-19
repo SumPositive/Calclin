@@ -67,12 +67,13 @@ struct ContentView: View {
                     .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
                     .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
                     .sheet(isPresented: $showSafari) {
-                        SafariView(url: URL(string: "https://docs.azukid.com/CalcRoll/")!)
+                        let urlString = String(localized: "info.url")
+                        SafariView(url: URL(string: urlString)!)
                     }
                     
                     Spacer()
                     
-                    Text(APP_NAME)
+                    Text("app.title") // LocalizedStringKey
                         .font(.headline)
                         .foregroundColor(COLOR_TITLE)
                     
@@ -221,7 +222,7 @@ struct ContentView: View {
                         // Dismiss
                         keyboardViewModel.popupEditKeyDef = nil
                     })
-                    .frame(width: 300, height: 420)
+                    .frame(width: 300, height: 510)
                     .onAppear {
                         editingKeyDef = info
                     }

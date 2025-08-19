@@ -53,13 +53,13 @@ final class SettingViewModel: ObservableObject {
     /// 丸めタイプ　　　PickerデータソースにするためCaseIterable, Identifiableに準拠
     enum RoundType: String, CaseIterable, Identifiable {
         // この順序（.rawValue）は、Picker等への表示順になる
-        case Rup    = "切り上げ"
-        case Rplus  = "正方向丸め"
-        case R54    = "四捨五入"
-        case R55    = "五捨五超入" // Default
-        case R65    = "五捨六入"
-        case Rminus = "負方向丸め"
-        case Rdown  = "切り捨て"
+        case Rup
+        case Rplus
+        case R54
+        case R55   // Default
+        case R65
+        case Rminus
+        case Rdown
         // Identifiable対応のため
         var id: String { rawValue }
         // SBCD_Config.RoundTypeを返す
@@ -72,6 +72,18 @@ final class SettingViewModel: ObservableObject {
                 case .R65:    return .R65
                 case .Rminus: return .Rminus
                 case .Rdown:  return .Rdown
+            }
+        }
+        // PickerやText表示用のlocalized文字列
+        var localized: String {
+            switch self {
+                case .Rup:    return String(localized: "setting.round.Rup")
+                case .Rplus:  return String(localized: "setting.round.Rplus")
+                case .R54:    return String(localized: "setting.round.R54")
+                case .R55:    return String(localized: "setting.round.R55")
+                case .R65:    return String(localized: "setting.round.R65")
+                case .Rminus: return String(localized: "setting.round.Rminus")
+                case .Rdown:  return String(localized: "setting.round.Rdown")
             }
         }
     }
@@ -100,10 +112,10 @@ final class SettingViewModel: ObservableObject {
     
     // 桁区切りタイプ    　　PickerデータソースにするためCaseIterable, Identifiableに準拠
     enum GroupType: String, CaseIterable, Identifiable {
-        case none   = "区切りなし   123456789.0"
-        case G3     = "３桁区切り 123,456,789.0"
-        case G23    = "インド式　12,34,56,789.0"
-        case G4     = "４桁区切り 1,2345,6789.0"
+        case none
+        case G3   // Default
+        case G23
+        case G4
         // Identifiable対応のため
         var id: String { rawValue }
         // SBCD_Config.GroupTypeを返す
@@ -113,6 +125,15 @@ final class SettingViewModel: ObservableObject {
                 case .G3:   return .G3
                 case .G4:   return .G4
                 case .G23:  return .G23
+            }
+        }
+        // PickerやText表示用のlocalized文字列
+        var localized: String {
+            switch self {
+                case .none: return String(localized: "setting.group.none")
+                case .G3:   return String(localized: "setting.group.G3")
+                case .G23:  return String(localized: "setting.group.G23")
+                case .G4:   return String(localized: "setting.group.G4")
             }
         }
     }
