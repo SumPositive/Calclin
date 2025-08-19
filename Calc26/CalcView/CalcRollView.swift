@@ -83,12 +83,28 @@ struct CalcRollView: View {
                             //.onTapGesture(count: 2) { location in
                             // 上ではListが埋まったとき無視されるため下のように対策
                             .highPriorityGesture( // 親ビューで優先的に処理する。Listへ伝えない
-                                TapGesture(count: 2).onEnded {
-                                    // ダブルタップで拡大（1ページにする）、縮小（ページ増加）
+                                // ダブルタップとタップ位置を検知
+                                SpatialTapGesture(count: 2).onEnded { value in
+                                    let x = value.location.x
+                                    let half = geometry.size.width / 2
+                                    let isLeft: Bool = (x < half) //true=左半分でダブルタップ
+                                    // ダブルタップで拡大（1ページにする）、縮小（2ページにする）
                                     withAnimation {
                                         if showCount == 1 {
-                                            showStart = 0
-                                            showCount = calcViewModels.count
+                                            // selectedPageを変えずに2ページにする
+                                            if isLeft {
+                                                // 左半分でダブルタップ＞左方向へ
+                                                if 0 < showStart {
+                                                    showStart -= 1
+                                                }
+                                            }else{
+                                                // 右半分でダブルタップ＞右方向へ
+                                                if showStart == calcViewModels.count - 1 {
+                                                    // 終端戻し
+                                                    showStart -= 1
+                                                }
+                                            }
+                                            showCount = 2 // 2ページにする
                                             singleMode = false
                                         } else {
                                             if index != selectedPage {
@@ -96,7 +112,7 @@ struct CalcRollView: View {
                                                 onCalcChange(index)
                                             }
                                             showStart = selectedPage
-                                            showCount = 1
+                                            showCount = 1 // 1ページにする
                                             singleMode = true
                                         }
                                     }
