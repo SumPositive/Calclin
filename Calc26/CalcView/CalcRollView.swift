@@ -35,20 +35,18 @@ struct CalcRollView: View {
                     showStart: showStart,
                     showCount: showCount,
                     onPageChange: { newPage in
-                        withAnimation {
-                            selectedPage = newPage
-                            //
-                            if selectedPage < showStart {
-                                showStart = selectedPage
-                            }
-                            else if showStart + showCount <= selectedPage {
-                                showStart = selectedPage - showCount + 1
-                            }
+                        selectedPage = newPage
+                        //
+                        if selectedPage < showStart {
+                            showStart = selectedPage
+                        }
+                        else if showStart + showCount <= selectedPage {
+                            showStart = selectedPage - showCount + 1
                         }
                         onCalcChange(newPage)
                     },
                     onShowChange: { newStart, newCount in
-                        withAnimation {
+                        withAnimation(.easeOut(duration: 0.5)) {
                             showStart = newStart
                             showCount = newCount
                         }
@@ -74,9 +72,7 @@ struct CalcRollView: View {
                             .onTapGesture {
                                 // タップでページを切り替える
                                 if index != selectedPage {
-                                    withAnimation {
-                                        selectedPage = index
-                                    }
+                                    selectedPage = index
                                     onCalcChange(index)
                                 }
                             }
@@ -89,7 +85,7 @@ struct CalcRollView: View {
                                     let half = geometry.size.width / 2
                                     let isLeft: Bool = (x < half) //true=左半分でダブルタップ
                                     // ダブルタップで拡大（1ページにする）、縮小（2ページにする）
-                                    withAnimation {
+                                    withAnimation(.easeOut(duration: 0.3)) {
                                         if showCount == 1 {
                                             // selectedPageを変えずに2ページにする
                                             if isLeft {
@@ -121,7 +117,6 @@ struct CalcRollView: View {
                     }
                 }
                 .offset(x: -CGFloat(showStart) * geometry.size.width / CGFloat(showCount))
-                .animation(.easeInOut, value: selectedPage)
             }
             .padding(0)
         }
@@ -177,7 +172,6 @@ struct CalcRollHeaderView: View {
                                   Color.accentColor : Color.secondary.opacity(0.4))
                             .frame(width:  selectedPage == index ? IND_CIRCLE_SIZE*1.5 : IND_CIRCLE_SIZE,
                                    height: selectedPage == index ? IND_CIRCLE_SIZE*1.5 : IND_CIRCLE_SIZE)
-                            .animation(.easeInOut(duration: 0.2), value: selectedPage)
                     }
 
                     Image(systemName: "arrowtriangle.right")

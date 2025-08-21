@@ -100,9 +100,7 @@ struct ContentView: View {
                     //historyViewModel: historyViewModel,
                     calcViewModels: calcViewModels,
                     onCalcChange: { newCalc in
-                        withAnimation {
-                            selectedCalc = newCalc
-                        }
+                        selectedCalc = newCalc
                     }
                 )
                 .environmentObject(setting)

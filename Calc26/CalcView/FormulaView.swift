@@ -39,19 +39,15 @@ struct FormulaView: View {
                 .onChange(of: viewModel.formulaAttr) {
                     // 次のフレームでスクロール実行
                     DispatchQueue.main.async {
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            // scrollIdのViewの右端が表示されるようにスクロールする
-                            proxy.scrollTo(scrollId, anchor: .trailing)
-                        }
+                        // scrollIdのViewの右端が表示されるようにスクロールする
+                        proxy.scrollTo(scrollId, anchor: .trailing)
                     }
                 }
                 .onChange(of: geo.size.width) {
                     // 幅の変化でもスクロール実行
                     let delay = 0.35 // 直前のアニメーション時間より少し長めにして競合を回避
                     DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            proxy.scrollTo(scrollId, anchor: .trailing)
-                        }
+                        proxy.scrollTo(scrollId, anchor: .trailing)
                     }
                 }
             }

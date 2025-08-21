@@ -44,11 +44,11 @@ struct KeyboardView: View {
                     }
                 }
                 .offset(x: -CGFloat(selectedPage) * (geometry.size.width + pageGap))
-                .animation(.easeInOut, value: selectedPage)
+                .animation(.easeOut(duration: 0.3), value: selectedPage)
             }
             .clipped() // 選択中の1ページだけ見せるため
             .padding(0)
-            .gesture(
+            .highPriorityGesture(
                 DragGesture()
                     .onEnded { value in
                         if SWIPE_RANGE < value.translation.width {
@@ -88,7 +88,7 @@ struct KeyboardFooterView: View {
                 Circle()
                     .fill(index == selectedPage ? Color.primary : Color.secondary.opacity(0.4))
                     .frame(width: IND_CIRCLE_SIZE, height: IND_CIRCLE_SIZE)
-                    .animation(.easeInOut(duration: 0.2), value: selectedPage)
+                    .animation(.easeOut(duration: 0.2), value: selectedPage)
                     .padding(.horizontal, 0)
             }
             Spacer()
