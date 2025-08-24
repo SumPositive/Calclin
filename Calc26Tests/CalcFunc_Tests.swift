@@ -71,6 +71,20 @@ final class CalcFunc_splitFormula_Tests: XCTestCase {
         let result = CalcFunc.splitFormula(input)
         XCTAssertEqual(result, expected)
     }
+
+    func testTokenizeFormula_plusNegativeNumber() {
+        let input = "5+-6"
+        let expected = ["5", "+", "-6"]
+        let result = CalcFunc.splitFormula(input)
+        XCTAssertEqual(result, expected)
+    }
+
+    func testTokenizeFormula_divideNegativeNumber() {
+        let input = "10/-5"
+        let expected = ["10", "/", "-5"]
+        let result = CalcFunc.splitFormula(input)
+        XCTAssertEqual(result, expected)
+    }
     
 }
 

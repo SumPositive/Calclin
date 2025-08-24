@@ -90,7 +90,7 @@ final class CalcFunc {
                     // 先頭ならば符号
                     // "*-" "/-" "+-" "--" "(-" の "-" は符号、以外は演算子だと解釈
                     if index == 0 ||
-                        (prevToken != "" && minusNumbers.contains(prevToken)) {
+                        (prevToken != "" && minusNumbers.contains(prevToken.last!)) {
                         // これはマイナス符号である
                         current.append(char)
                         continue
