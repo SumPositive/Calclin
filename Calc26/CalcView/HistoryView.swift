@@ -38,24 +38,6 @@ struct HistoryView: View {
                     }
                     .swipeActions(edge: .leading) { // 右スワイプ：追加
                         Button() {
-                            // 式コピペ　row.tokenからformulaTextを再現する
-                            viewModel.formulaFromHistoryToken(row)
-                        } label: {
-                            Text("＜＝").font(.system(size: 54.0, weight: .bold))
-//                            Image(systemName: "camera.metering.none").imageScale(.large)
-                        }
-                        .tint(COLOR_OPERATOR) // スワイプ背景色
-
-                        Button() {
-                            // 答えコピペ  row.answerからformulaTextを再現する
-                            viewModel.formulaFromHistoryAnswer(row)
-                        } label: {
-  //                          Image(systemName: "equal").imageScale(.large)
-                            Text("＝＞").font(.system(size: 54.0, weight: .bold))
-                        }
-                        .tint(COLOR_ANSWER) // スワイプ背景色
-
-                        Button() {
                             // メモする
                             setting.popupHistoryMemoInfo = (maxLength: 0,
                                                             index: index)
@@ -63,6 +45,23 @@ struct HistoryView: View {
                             Image("edit_rev").imageScale(.large)
                         }
                         .tint(COLOR_MEMO) // スワイプ背景色
+
+                        Button() {
+                            // 式コピペ　row.tokenからformulaTextを再現する
+                            viewModel.formulaFromHistoryToken(row)
+                        } label: {
+                            Text("＜＝")
+                            //.font(.system(size: 24.0, weight: .bold))
+                        }
+                        .tint(COLOR_OPERATOR) // スワイプ背景色
+
+                        Button() {
+                            // 答えコピペ  row.answerからformulaTextを再現する
+                            viewModel.formulaFromHistoryAnswer(row)
+                        } label: {
+                            Text("＝＞")
+                        }
+                        .tint(COLOR_ANSWER) // スワイプ背景色
                     }
                     .onTapGesture(count: 2) { // ダブルタップ時の処理
                         // 式コピペ　row.tokenからformulaTextを再現する
