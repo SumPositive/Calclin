@@ -229,3 +229,21 @@ final class CalcFunc_total_Tests: XCTestCase {
     }
 
 }
+
+final class CalcFunc_answer_Tests: XCTestCase {
+
+    func test_answer_tooLong() {
+        let longFormula = String(repeating: "1", count: FORMULA_LENGTH_MAX + 1)
+        XCTAssertEqual(CalcFunc.answer(longFormula), "Too long")
+    }
+
+    func test_answer_filtersInvalidCharacters() {
+        let formula = "1a+2$"
+        let filtered = formula.filter { char in
+            char.unicodeScalars.allSatisfy { CalcFunc.formulaCharacters.contains($0) }
+        }
+        XCTAssertEqual(filtered, "1+2")
+        XCTAssertEqual(CalcFunc.answer(formula), CalcFunc.answer(filtered))
+    }
+}
+
