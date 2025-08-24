@@ -244,6 +244,7 @@ final class CalcFunc_total_Tests: XCTestCase {
 
 }
 
+@MainActor
 final class CalcFunc_answer_Tests: XCTestCase {
 
     func test_answer_tooLong() {

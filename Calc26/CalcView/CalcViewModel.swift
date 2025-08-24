@@ -267,9 +267,9 @@ final class CalcViewModel: ObservableObject {
                 if let def = keyboardViewModel.keyDef(code: code),
                    let conv = def.unitConv {
                     //fix// 単位や定数変換式を括弧で括る。100÷1π=100/1*3.14 NG、100/(1*3.14)にするため
-                    // formula最後の数値の前に左括弧"("を挿入する
-                    if let range = formula.range(of: "\\d+$", options: .regularExpression) {
-                        // 末尾の数字の直前に左括弧を挿入
+                    // formula最後の数値（符号や小数点を含む）の前に左括弧"("を挿入する
+                    if let range = formula.range(of: "(-?\\d+(?:\\.\\d+)?)$", options: .regularExpression) {
+                        // 末尾の数値全体の直前に左括弧を挿入
                         formula.insert("(", at: range.lowerBound)
                     }
                     // 単位変換式を右括弧")"で閉じる

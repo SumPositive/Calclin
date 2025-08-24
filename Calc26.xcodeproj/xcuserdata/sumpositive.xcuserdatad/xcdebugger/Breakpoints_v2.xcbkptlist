@@ -178,6 +178,36 @@
             endingLineNumber = "152"
             landmarkName = "saveKeyDef(_:)"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "AD2920F3-4636-431F-B608-ECA1BA691DAB - 9ce1e0330ccd65f7"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Calc26.KeyboardViewModel.saveKeyDef(Calc26.KeyDefinition) -&gt; ()"
+                  moduleName = "Calc26.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/sumpositive/GitLocal/Calc26/Calc26/KeyboardView/KeyboardViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "152"
+                  endingLineNumber = "152">
+               </Location>
+               <Location
+                  uuid = "AD2920F3-4636-431F-B608-ECA1BA691DAB - 937f9878cfd83d1a"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Calc26Tests.KeyboardViewModel.saveKeyDef(Calc26Tests.KeyDefinition) -&gt; ()"
+                  moduleName = "Calc26Tests"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/sumpositive/GitLocal/Calc26/Calc26/KeyboardView/KeyboardViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "152"
+                  endingLineNumber = "152">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

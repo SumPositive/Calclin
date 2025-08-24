@@ -186,3 +186,19 @@ final class CalcViewModel_Test: XCTestCase {
 
 }
 
+@MainActor
+final class CalcViewModel_makeFormula_Tests: XCTestCase {
+    
+    func test_decimal_unit_parenthesis() {
+        let viewModel = CalcViewModel(keyboardViewModel: KeyboardViewModel(setting: SettingViewModel()))
+        // Ensure the unit definition for "坪" exists for conversion
+        viewModel.keyboardViewModel.keyDefs.append(
+            KeyDefinition(code: "坪", formula: "坪", keyTop: "坪", unitBase: "m2", unitConv: "3.3057851239669")
+        )
+        viewModel.tokens = ["1.2", "U坪", "×", "3"]
+        let formula = viewModel.makeFormula()
+        XCTAssertEqual(formula, "(1.2*3.3057851239669)×3")
+    }
+}
+
+
