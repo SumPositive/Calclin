@@ -156,6 +156,20 @@ final class CalcFunc_total_Tests: XCTestCase {
         let answer = "-1"
         XCTAssertEqual(CalcFunc.evaluateRPN(rpn).value, answer)
     }
+
+    func test_total_unary_minus_parentheses() {
+        // 計算式
+        let formula = "-(20-5)"
+        // トークン分割
+        let tokens = ["-", "(", "20", "-", "5", ")"]
+        XCTAssertEqual(CalcFunc.splitFormula(formula), tokens)
+        // 逆ポーランド
+        let rpn = ["0", "20", "5", "-", "-"]
+        XCTAssertEqual(CalcFunc.convertToRPN(tokens), rpn)
+        // 答えを計算
+        let answer = "-15"
+        XCTAssertEqual(CalcFunc.evaluateRPN(rpn).value, answer)
+    }
     
     // "100 + 5%" ⇒ "100 * (100 + 5) / 100"    ＜＜100の5%増：税込み＞＞　シャープ式
     func test_perc_add() {

@@ -205,6 +205,7 @@ final class CalcFunc {
     static func convertToRPN(_ tokens: [String]) -> [String] {
         var rpn: [String] = []
         var ope: [String] = []
+        var prevToken: String? = nil
         
         // 優先順位と結合性の定義
         let opPriority: [String: Int] = [
@@ -215,6 +216,10 @@ final class CalcFunc {
 
         // 逆ポーランドスタック
         for token in tokens {
+            // 単項マイナス（例: "-(1+2)") を 0 - (...) として処理する
+            if token == FM_SUB && (prevToken == nil || opPriority[prevToken!] != nil || prevToken == FM_PT_LEFT) {
+                rpn.append("0")
+            }
             if Double(token) != nil { // 数値
                 // 数値なら出力キューに追加
                 rpn.append(token)
@@ -245,6 +250,7 @@ final class CalcFunc {
                 // それ以外（関数名や未定義のトークン）→必要に応じて拡張
                 rpn.append(token)
             }
+            prevToken = token
         }
         
         while let op = ope.popLast() {
