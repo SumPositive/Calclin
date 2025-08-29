@@ -6,6 +6,8 @@
 //
 
 import XCTest
+@testable import Calc26
+
 
 final class Calc26UITests: XCTestCase {
 
@@ -39,3 +41,4 @@ final class Calc26UITests: XCTestCase {
         }
     }
 }
+

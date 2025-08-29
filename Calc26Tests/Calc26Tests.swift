@@ -2,7 +2,7 @@
 //  Calc26Tests.swift
 //  Calc26Tests
 //
-//  Created by Sum Positive on 2025/06/29.
+//  Created by sumpo/azukid on 2025/06/29.
 //
 
 import Testing
@@ -15,3 +15,4 @@ struct Calc26Tests {
     }
 
 }
+

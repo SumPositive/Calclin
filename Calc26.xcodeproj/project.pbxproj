@@ -29,12 +29,76 @@
 		C30A78BA2E10EE8700212729 /* Calc26UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Calc26UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		C30A78A52E10EE8500212729 /* Calc26 */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Calc26;
-			sourceTree = "<group>";
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C3308B272E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calc26" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				App/Assets.xcassets,
+				App/Calc26App.swift,
+				App/Config.swift,
+				App/ContentView.swift,
+				App/Localizable.xcstrings,
+				App/Log.swift,
+				App/Manager.swift,
+				App/PopupView.swift,
+				CalcView/CalcFunc.swift,
+				CalcView/CalcRollView.swift,
+				CalcView/CalcView.swift,
+				CalcView/CalcViewModel.swift,
+				CalcView/FormulaView.swift,
+				CalcView/HistoryView.swift,
+				KeyboardView/initKeyboard.json,
+				KeyboardView/KeyboardView.swift,
+				KeyboardView/KeyboardViewModel.swift,
+				KeyboardView/KeyDefinition.json,
+				PrivacyInfo.xcprivacy,
+				SBCD/SBCD_objC_Wrapper.mm,
+				SBCD/SBCD_Wrapper.swift,
+				SBCD/SBCD.cpp,
+				SettingView/SettingView.swift,
+				SettingView/SettingViewModel.swift,
+			);
+			target = C30A78A22E10EE8500212729 /* Calc26 */;
 		};
+		C3308B282E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calc26Tests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				App/Assets.xcassets,
+				Info.plist,
+				KeyboardView/initKeyboard.json,
+				KeyboardView/KeyDefinition.json,
+			);
+			target = C30A78AF2E10EE8700212729 /* Calc26Tests */;
+		};
+		C3308B292E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calc26UITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				App/Calc26App.swift,
+				App/Config.swift,
+				App/ContentView.swift,
+				App/Localizable.xcstrings,
+				App/Log.swift,
+				App/Manager.swift,
+				App/PopupView.swift,
+				CalcView/CalcFunc.swift,
+				CalcView/CalcRollView.swift,
+				CalcView/CalcView.swift,
+				CalcView/CalcViewModel.swift,
+				CalcView/FormulaView.swift,
+				CalcView/HistoryView.swift,
+				KeyboardView/KeyboardView.swift,
+				KeyboardView/KeyboardViewModel.swift,
+				SBCD/SBCD_objC_Wrapper.mm,
+				SBCD/SBCD_Wrapper.swift,
+				SBCD/SBCD.cpp,
+				SettingView/SettingView.swift,
+				SettingView/SettingViewModel.swift,
+			);
+			target = C30A78B92E10EE8700212729 /* Calc26UITests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
 		C30A78B32E10EE8700212729 /* Calc26Tests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Calc26Tests;
@@ -43,6 +107,16 @@
 		C30A78BD2E10EE8700212729 /* Calc26UITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Calc26UITests;
+			sourceTree = "<group>";
+		};
+		C3308AFD2E2F3F34009ED6D6 /* Calc26 */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C3308B272E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calc26" target */,
+				C3308B282E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calc26Tests" target */,
+				C3308B292E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calc26UITests" target */,
+			);
+			path = Calc26;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -75,7 +149,7 @@
 		C30A789A2E10EE8500212729 = {
 			isa = PBXGroup;
 			children = (
-				C30A78A52E10EE8500212729 /* Calc26 */,
+				C3308AFD2E2F3F34009ED6D6 /* Calc26 */,
 				C30A78B32E10EE8700212729 /* Calc26Tests */,
 				C30A78BD2E10EE8700212729 /* Calc26UITests */,
 				C30A78A42E10EE8500212729 /* Products */,
@@ -107,9 +181,6 @@
 			);
 			dependencies = (
 			);
-			fileSystemSynchronizedGroups = (
-				C30A78A52E10EE8500212729 /* Calc26 */,
-			);
 			name = Calc26;
 			packageProductDependencies = (
 			);
@@ -132,6 +203,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				C30A78B32E10EE8700212729 /* Calc26Tests */,
+				C3308AFD2E2F3F34009ED6D6 /* Calc26 */,
 			);
 			name = Calc26Tests;
 			packageProductDependencies = (
@@ -192,6 +264,7 @@
 			knownRegions = (
 				en,
 				Base,
+				ja,
 			);
 			mainGroup = C30A789A2E10EE8500212729;
 			minimizedProjectReferenceProxies = 1;
@@ -329,6 +402,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -386,6 +460,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -395,25 +470,37 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5C2UYK6F45;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 7;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 5C2UYK6F45;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Calc26/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "カルメモ";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26;
+				MARKETING_VERSION = 2.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.azukid.AzukiSoft.AzCalc;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "CalcRoll memo";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -423,25 +510,37 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5C2UYK6F45;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 7;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 5C2UYK6F45;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Calc26/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "カルメモ";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26;
+				MARKETING_VERSION = 2.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.azukid.AzukiSoft.AzCalc;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "CalcRoll memo";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -459,6 +558,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Calc26.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Calc26";
@@ -478,6 +578,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Calc26.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Calc26";
@@ -495,6 +596,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26UITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Calc26;
@@ -512,6 +614,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26UITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Calc26;

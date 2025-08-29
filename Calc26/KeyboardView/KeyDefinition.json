@@ -1,0 +1,491 @@
+[
+    {
+        "code" : "nop",
+        "formula" : "",
+        "hidden" : true,
+        "keyTop" : ""
+    },
+    {
+        "code" : "#1",
+        "formula" : "1",
+        "keyTop" : "1"
+    },
+    {
+        "code" : "#2",
+        "formula" : "2",
+        "keyTop" : "2"
+    },
+    {
+        "code" : "#3",
+        "formula" : "3",
+        "keyTop" : "3"
+    },
+    {
+        "code" : "#4",
+        "formula" : "4",
+        "keyTop" : "4"
+    },
+    {
+        "code" : "#5",
+        "formula" : "5",
+        "keyTop" : "5"
+    },
+    {
+        "code" : "#6",
+        "formula" : "6",
+        "keyTop" : "6"
+    },
+    {
+        "code" : "#7",
+        "formula" : "7",
+        "keyTop" : "7"
+    },
+    {
+        "code" : "#8",
+        "formula" : "8",
+        "keyTop" : "8"
+    },
+    {
+        "code" : "#9",
+        "formula" : "9",
+        "keyTop" : "9"
+    },
+    {
+        "code" : "#0",
+        "formula" : "0",
+        "keyTop" : "0"
+    },
+    {
+        "code" : "Deci",
+        "formula" : ".",
+        "keyTop" : "."
+    },
+    {
+        "code" : "#00",
+        "formula" : "00",
+        "keyTop" : "00"
+    },
+    {
+        "code" : "#000",
+        "formula" : "000",
+        "keyTop" : "000"
+    },
+    {
+        "code" : "Add",
+        "formula" : "+",
+        "keyTop" : "+",
+        "symbol" : "plus"
+    },
+    {
+        "code" : "Sub",
+        "formula" : "-",
+        "keyTop" : "-",
+        "symbol" : "minus"
+    },
+    {
+        "code" : "Mul",
+        "formula" : "×",
+        "keyTop" : "×",
+        "symbol" : "multiply"
+    },
+    {
+        "code" : "Div",
+        "formula" : "÷",
+        "keyTop" : "÷",
+        "symbol" : "divide"
+    },
+    {
+        "code" : "sqRoot",
+        "formula" : "√",
+        "keyTop" : "√",
+        "symbol" : "squareroot"
+    },
+    {
+        "code" : "cuRoot",
+        "formula" : "∛",
+        "keyTop" : "∛"
+    },
+    {
+        "code" : "Ans",
+        "formula" : "=",
+        "keyTop" : "=",
+        "symbol" : "equal"
+    },
+    {
+        "code" : "Paren",
+        "formula" : "",
+        "keyTop" : "( )",
+        "symbol" : "parentheses",
+        "memo" : "前後の丸括弧を判断して入力する"
+    },
+    {
+        "code" : "CA",
+        "formula" : "",
+        "keyTop" : "CA",
+        "symbol" : "xmark.circle"
+    },
+    {
+        "code" : "CS",
+        "formula" : "",
+        "keyTop" : "CS",
+        "symbol" : "clear"
+    },
+    {
+        "code" : "BS",
+        "formula" : "",
+        "keyTop" : "BS",
+        "symbol" : "delete.left"
+    },
+    {
+        "code" : "Sign",
+        "formula" : "",
+        "keyTop" : "+\/-",
+        "symbol" : "minus.forwardslash.plus"
+    },
+    {
+        "code" : "Perc",
+        "formula" : "%",
+        "keyTop" : "%",
+        "symbol" : "percent"
+    },
+    {
+        "code" : "J割",
+        "formula" : "割",
+        "keyTop" : "割"
+    },
+    {
+        "code" : "J分",
+        "formula" : "分",
+        "keyTop" : "分"
+    },
+    {
+        "code" : "J厘",
+        "formula" : "厘",
+        "keyTop" : "厘"
+    },
+    {
+        "code" : "Bare",
+        "formula" : "",
+        "hidden" : true,
+        "keyTop" : "",
+        "unitBase" : "Bare",
+        "memo" : "無名数（bare number）の基準単位　hidden=YESにして非表示"
+    },
+    {
+        "code" : "Pi",
+        "formula" : "π",
+        "keyTop" : "π",
+        "unitBase" : "Bare",
+        "unitConv" : "3.141592653589793238462643383279",
+        "memo" : "円周率"
+    },
+    {
+        "code" : "Golden",
+        "formula" : "φ",
+        "keyTop" : "φ",
+        "unitBase" : "Bare",
+        "unitConv" : "1.618033988749894",
+        "memo" : "黄金比"
+    },
+    {
+        "code" : "Napier",
+        "formula" : "𝑒",
+        "keyTop" : "𝑒",
+        "unitBase" : "Bare",
+        "unitConv" : "2.71828182845904523536",
+        "memo" : "ネイピア数"
+    },
+    {
+        "code" : "mm",
+        "formula" : "mm",
+        "keyTop" : "mm",
+        "unitBase" : "m",
+        "unitConv" : "0.001"
+    },
+    {
+        "code" : "cm",
+        "formula" : "cm",
+        "keyTop" : "cm",
+        "unitBase" : "m",
+        "unitConv" : "0.01"
+    },
+    {
+        "code" : "m",
+        "formula" : "m",
+        "keyTop" : "m",
+        "unitBase" : "m"
+    },
+    {
+        "code" : "km",
+        "formula" : "km",
+        "keyTop" : "km",
+        "unitBase" : "m",
+        "unitConv" : "1000"
+    },
+    {
+        "code" : "J寸",
+        "formula" : "寸",
+        "keyTop" : "寸",
+        "unitBase" : "m",
+        "unitConv" : "0.03030303030303"
+    },
+    {
+        "code" : "J尺",
+        "formula" : "尺",
+        "keyTop" : "尺",
+        "unitBase" : "m",
+        "unitConv" : "0.3030303030303"
+    },
+    {
+        "code" : "J里",
+        "formula" : "里",
+        "keyTop" : "里",
+        "unitBase" : "m",
+        "unitConv" : "3927.2727272727"
+    },
+    {
+        "code" : "inch",
+        "formula" : "in",
+        "keyTop" : "in",
+        "unitBase" : "m",
+        "unitConv" : "0.0254"
+    },
+    {
+        "code" : "foot",
+        "formula" : "ft",
+        "keyTop" : "ft",
+        "unitBase" : "m",
+        "unitConv" : "0.3048"
+    },
+    {
+        "code" : "yard",
+        "formula" : "yd",
+        "keyTop" : "yd",
+        "unitBase" : "m",
+        "unitConv" : "0.9144"
+    },
+    {
+        "code" : "m㎡",
+        "formula" : "m㎡",
+        "keyTop" : "m㎡",
+        "unitBase" : "m2",
+        "unitConv" : "0.000001"
+    },
+    {
+        "code" : "c㎡",
+        "formula" : "c㎡",
+        "keyTop" : "c㎡",
+        "unitBase" : "m2",
+        "unitConv" : "0.0001"
+    },
+    {
+        "code" : "m2",
+        "formula" : "㎡",
+        "keyTop" : "㎡",
+        "unitBase" : "m2"
+    },
+    {
+        "code" : "are",
+        "formula" : "ａ",
+        "keyTop" : "ａ",
+        "unitBase" : "m2",
+        "unitConv" : "100"
+    },
+    {
+        "code" : "hectare",
+        "formula" : "ha",
+        "keyTop" : "ha",
+        "unitBase" : "m2",
+        "unitConv" : "10000"
+    },
+    {
+        "code" : "k㎡",
+        "formula" : "k㎡",
+        "keyTop" : "k㎡",
+        "unitBase" : "m2",
+        "unitConv" : "1000000"
+    },
+    {
+        "code" : "J坪",
+        "formula" : "坪",
+        "keyTop" : "坪",
+        "unitBase" : "m2",
+        "unitConv" : "3.3057851239669"
+    },
+    {
+        "code" : "J畝",
+        "formula" : "畝",
+        "keyTop" : "畝",
+        "unitBase" : "m2",
+        "unitConv" : "99.173553719008"
+    },
+    {
+        "code" : "J反",
+        "formula" : "反",
+        "keyTop" : "反",
+        "unitBase" : "m2",
+        "unitConv" : "991.73553719008"
+    },
+    {
+        "code" : "acre",
+        "formula" : "ac",
+        "keyTop" : "ac",
+        "unitBase" : "m2",
+        "unitConv" : "4046.8564224"
+    },
+    {
+        "code" : "mLitre",
+        "formula" : "ml",
+        "keyTop" : "ml",
+        "unitBase" : "m3",
+        "unitConv" : "0.000001"
+    },
+    {
+        "code" : "dLitre",
+        "formula" : "dl",
+        "keyTop" : "dl",
+        "unitBase" : "m3",
+        "unitConv" : "0.0001"
+    },
+    {
+        "code" : "Litre",
+        "formula" : "L",
+        "keyTop" : "L",
+        "unitBase" : "m3",
+        "unitConv" : "0.001"
+    },
+    {
+        "code" : "m3",
+        "formula" : "㎥",
+        "keyTop" : "㎥",
+        "unitBase" : "m3"
+    },
+    {
+        "code" : "J合",
+        "formula" : "合",
+        "keyTop" : "合",
+        "unitBase" : "m3",
+        "unitConv" : "0.00018039068369647"
+    },
+    {
+        "code" : "J升",
+        "formula" : "升",
+        "keyTop" : "升",
+        "unitBase" : "m3",
+        "unitConv" : "0.0018039068369647"
+    },
+    {
+        "code" : "gal",
+        "formula" : "gal",
+        "keyTop" : "gal",
+        "unitBase" : "m3",
+        "unitConv" : "0.003785411784",
+        "memo" : "米液ガロン"
+    },
+    {
+        "code" : "mg",
+        "formula" : "mg",
+        "keyTop" : "mg",
+        "unitBase" : "kg",
+        "unitConv" : "0.000001"
+    },
+    {
+        "code" : "g",
+        "formula" : "g",
+        "keyTop" : "g",
+        "unitBase" : "kg",
+        "unitConv" : "0.001"
+    },
+    {
+        "code" : "kg",
+        "formula" : "kg",
+        "keyTop" : "kg",
+        "unitBase" : "kg"
+    },
+    {
+        "code" : "t",
+        "formula" : "t",
+        "keyTop" : "t",
+        "unitBase" : "kg",
+        "unitConv" : "1000"
+    },
+    {
+        "code" : "kt",
+        "formula" : "kt",
+        "keyTop" : "kt",
+        "unitBase" : "kg",
+        "unitConv" : "1000000"
+    },
+    {
+        "code" : "J匁",
+        "formula" : "匁",
+        "keyTop" : "匁",
+        "unitBase" : "kg",
+        "unitConv" : "0.00375"
+    },
+    {
+        "code" : "J貫",
+        "formula" : "貫",
+        "keyTop" : "貫",
+        "unitBase" : "kg",
+        "unitConv" : "3.75"
+    },
+    {
+        "code" : "pondus",
+        "formula" : "lb",
+        "keyTop" : "lb",
+        "unitBase" : "kg",
+        "unitConv" : "0.45359237",
+        "memo" : "ポンド"
+    },
+    {
+        "code" : "Ex01",
+        "formula" : "",
+        "keyTop" : "Ex"
+    },
+    {
+        "code" : "Ex02",
+        "formula" : "",
+        "keyTop" : "Ex"
+    },
+    {
+        "code" : "Ex03",
+        "formula" : "",
+        "keyTop" : "Ex"
+    },
+    {
+        "code" : "Ex04",
+        "formula" : "",
+        "keyTop" : "Ex"
+    },
+    {
+        "code" : "Ex05",
+        "formula" : "",
+        "keyTop" : "Ex"
+    },
+    {
+        "code" : "Ex06",
+        "formula" : "",
+        "keyTop" : "Ex"
+    },
+    {
+        "code" : "Ex07",
+        "formula" : "",
+        "keyTop" : "Ex"
+    },
+    {
+        "code" : "Ex08",
+        "formula" : "",
+        "keyTop" : "Ex"
+    },
+    {
+        "code" : "Ex09",
+        "formula" : "",
+        "keyTop" : "Ex"
+    },
+    {
+        "code" : "Ex10",
+        "formula" : "",
+        "keyTop" : "Ex"
+    }
+]
