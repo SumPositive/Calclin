@@ -45,7 +45,6 @@ struct KeyDefinition: Codable, Hashable {
 
 struct KeyboardJSON: Codable {
     let appName: String
-    let appVersion: String
     let keyboard_1: [[String]]?
 }
 
@@ -61,7 +60,7 @@ final class KeyboardViewModel: ObservableObject {
     static let colCount: Int = 5 //列
     static let rowCount: Int = 6 //行
     // キーボードページ数
-    static let pageCount: Int = 3
+    static let pageCount: Int = 5
     // .keyboard[page][key]
     var keyboard: [[String]] = Array(repeating: Array(repeating: "", count: colCount * rowCount),
                                      count: pageCount)
@@ -199,8 +198,9 @@ final class KeyboardViewModel: ObservableObject {
     // keyboard JSON
     //    {
     //        "appName": "CalcRoll",
-    //        "appVersion": "2.0.0",
     //        "keyboard_1": [["CA","1","2","3"・・・"="],
+    //                       ["CA","1","2","3"・・・"="],
+    //                       ["CA","1","2","3"・・・"="],  <<< Center
     //                       ["CA","1","2","3"・・・"="],
     //                       ["CA","1","2","3"・・・"="]]
     //    }
@@ -208,7 +208,6 @@ final class KeyboardViewModel: ObservableObject {
     // 現在の配置をJSONファイルに保存する
     func saveKeyboardJson() {
         let keyboardData = KeyboardJSON(appName: "CalcRoll",
-                                        appVersion: "2.0.0",
                                         keyboard_1: keyboard)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys] // .prettyPrinted
@@ -236,11 +235,28 @@ final class KeyboardViewModel: ObservableObject {
         do {
             let data = try Data(contentsOf: fileURL)
             let decoded = try JSONDecoder().decode(KeyboardJSON.self, from: data)
-            if decoded.appName == "CalcRoll",
-               decoded.appVersion == "2.0.0",
-               let kb = decoded.keyboard_1 {
-                keyboard = kb
-                Manager.shared.toast(String(localized: "toast.loadKeyboard"), wait: 3.0)
+            if decoded.appName == "CalcRoll" {
+                if let kb = decoded.keyboard_1 {
+                    if kb.count == 5 {
+                        // V2.1：5ページ
+                        keyboard = kb
+                        Manager.shared.toast(String(localized: "toast.loadKeyboard"), wait: 3.0)
+                    }
+                    else if kb.count == 3 {
+                        // V2.0：3ページだったので5ページに変換する
+                        keyboard = kb
+                        // 空の1ページ分を作成して挿入/追加して5ページにする
+                        let emptyPage = Array(repeating: "", count: KeyboardViewModel.colCount * KeyboardViewModel.rowCount)
+                        keyboard.insert(emptyPage, at: 0) // 先頭
+                        keyboard.append(emptyPage) // 末尾
+                        
+                        Manager.shared.toast(String(localized: "toast.loadKeyboard"), wait: 3.0)
+                    }
+                }
+                else if let kb = decoded.keyboard_1 { // Old migration
+                    keyboard = kb
+                    Manager.shared.toast(String(localized: "toast.loadKeyboard"), wait: 3.0)
+                }
             }
         } catch {
             log(.error, "読み込み失敗: \(error)")
@@ -261,7 +277,6 @@ final class KeyboardViewModel: ObservableObject {
             let data = try Data(contentsOf: fileURL)
             let decoded = try JSONDecoder().decode(KeyboardJSON.self, from: data)
             if decoded.appName == "CalcRoll",
-               decoded.appVersion == "2.0.0",
                let kb = decoded.keyboard_1 {
                 keyboard = kb
                 if isToast {Manager.shared.toast(String(localized: "toast.initKeyboard"), wait: 3.0)}

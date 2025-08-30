@@ -22,10 +22,8 @@ struct KeyboardView: View {
 
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
-    // iPad など横幅に余裕がある場合の判定
-    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     // @State 変化あればViewが更新される
-    @State private var selectedPage: Int = 1 // 初期で2ページ目（インデックス1）を表示
+    @State private var selectedPage: Int = 2 // 初期で3ページ目（インデックス2）を表示
 
     
     var body: some View {
@@ -46,7 +44,6 @@ struct KeyboardView: View {
                             .modifier(
                                 // 左右ページに遠近感を与える
                                 PagePerspectiveModifier(
-                                    isRegular: horizontalSizeClass == .regular,
                                     distance: Double(index - selectedPage)
                                 )
                             )
@@ -82,29 +79,26 @@ struct KeyboardView: View {
 
 // ページ間の距離に応じて奥行き感を付与するモディファイア
 struct PagePerspectiveModifier: ViewModifier {
-    /// 横幅に余裕がある端末のみで適用する
-    let isRegular: Bool
     /// 選択ページからの距離（マイナスは左側、プラスは右側）
     let distance: Double
 
     @ViewBuilder
     func body(content: Content) -> some View {
-        if isRegular {
-            if abs(distance) <= 1 {
-                let absDistance = abs(distance)
-                let scale = max(0.75, 1 - absDistance * 0.25)
-                let angle = Angle(degrees: distance * 45) // 傾斜角　45°=八角形
-                content
-                    .scaleEffect(scale)
-                    .rotation3DEffect(angle, axis: (x: 0, y: 1, z: 0))
-                    .opacity(max(0.3, 1 - absDistance * 0.3))
-                    .offset(x: distance * -50, y: 0) // ページ間を詰める
-            }else{
-                content
-                    .opacity(0.1)
-            }
-        } else {
+        let absDistance = abs(distance)
+        let scale = max(0.67, 1 - absDistance * 0.33)
+        let angle = Angle(degrees: distance * 60) // 傾斜角　45°=八角形
+        if abs(distance) <= 1 {
             content
+                .scaleEffect(scale)
+                .rotation3DEffect(angle, axis: (x: 0, y: 1, z: 0))
+                .opacity(max(0.3, 1 - absDistance * 0.3))
+                .offset(x: distance * -100, y: 0) // ページ間を詰める
+        }else{
+            content
+                .scaleEffect(scale)
+                .rotation3DEffect(angle, axis: (x: 0, y: 1, z: 0))
+                .opacity(0.2)
+                //.offset(x: distance * -50, y: 0) // ページ間を詰める
         }
     }
 }
