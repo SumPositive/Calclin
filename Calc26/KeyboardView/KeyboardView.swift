@@ -24,6 +24,7 @@ struct KeyboardView: View {
     @Environment(\.colorScheme) var colorScheme
     // @State 変化あればViewが更新される
     @State private var selectedPage: Int = 2 // 初期で3ページ目（インデックス2）を表示
+    @GestureState private var dragOffset: CGFloat = 0
 
     
     var body: some View {
@@ -53,21 +54,27 @@ struct KeyboardView: View {
                             )
                     }
                 }
-                .offset(x: -CGFloat(selectedPage) * (geometry.size.width + pageGap))
+                .offset(x: -CGFloat(selectedPage) * (geometry.size.width + pageGap) + dragOffset)
                 .animation(.easeOut(duration: 0.5), value: selectedPage)
             }
             .padding(0)
             //.clipped() // 選択中の1ページだけ見せるため
             .highPriorityGesture(
                 DragGesture()
+                    .updating($dragOffset) { value, state, _ in
+                        state = value.translation.width
+                    }
                     .onEnded { value in
-                        if SWIPE_RANGE < value.translation.width {
-                            // 右へスワイプ：前KeyPageViewへ
-                            selectedPage = max(selectedPage - 1, 0)
-                        }
-                        else if value.translation.width < -1 * SWIPE_RANGE {
-                            // 左へスワイプ：次KeyPageViewへ
-                            selectedPage = min(selectedPage + 1, KeyboardViewModel.pageCount - 1)
+                        withAnimation {
+                            if SWIPE_RANGE < value.translation.width {
+                                // 右へスワイプ：前KeyPageViewへ
+                                selectedPage = max(selectedPage - 1, 0)
+                            }
+                            else if value.translation.width < -1 * SWIPE_RANGE {
+                                // 左へスワイプ：次KeyPageViewへ
+                                selectedPage = min(selectedPage + 1, KeyboardViewModel.pageCount - 1)
+                            }
+                            dragOffset = 0
                         }
                     }
             )
