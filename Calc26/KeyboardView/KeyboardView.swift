@@ -28,7 +28,7 @@ struct KeyboardView: View {
     
     var body: some View {
         
-        let pageGap = 10.0 // ページ間隔 padding以上無ければ隣ページが見えてしまう
+        let pageGap = 20.0 // ページ間隔 padding以上無ければ隣ページが見えてしまう
         let SWIPE_RANGE = 80.0
         
         VStack(spacing: 0) {
@@ -37,6 +37,8 @@ struct KeyboardView: View {
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
             //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
             GeometryReader { geometry in
+                let frame = geometry.frame(in: .global)
+
                 HStack(spacing: pageGap) {
                     ForEach(0..<KeyboardViewModel.pageCount, id: \.self) { index in
                         KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
@@ -44,13 +46,15 @@ struct KeyboardView: View {
                             .modifier(
                                 // 左右ページに遠近感を与える
                                 PagePerspectiveModifier(
-                                    distance: Double(index - selectedPage)
+                                    distance: Double(index - selectedPage),
+                                    pageWidth: geometry.size.width,
+                                    margin: frame.minX
                                 )
                             )
                     }
                 }
                 .offset(x: -CGFloat(selectedPage) * (geometry.size.width + pageGap))
-                .animation(.easeOut(duration: 0.35), value: selectedPage)
+                .animation(.easeOut(duration: 0.5), value: selectedPage)
             }
             .padding(0)
             //.clipped() // 選択中の1ページだけ見せるため
@@ -81,24 +85,27 @@ struct KeyboardView: View {
 struct PagePerspectiveModifier: ViewModifier {
     /// 選択ページからの距離（マイナスは左側、プラスは右側）
     let distance: Double
+    /// ページの幅
+    let pageWidth: Double
+    /// 余白の幅
+    let margin: Double
 
     @ViewBuilder
     func body(content: Content) -> some View {
-        let absDistance = abs(distance)
-        let scale = max(0.67, 1 - absDistance * 0.33)
-        let angle = Angle(degrees: distance * 60) // 傾斜角　45°=八角形
-        if abs(distance) <= 1 {
+
+        if abs(distance) == 1, margin < pageWidth {
+            // 左右の傾斜表示
+            let baseAngle = acos(margin / pageWidth) * 180 / .pi
             content
-                .scaleEffect(scale)
-                .rotation3DEffect(angle, axis: (x: 0, y: 1, z: 0))
-                .opacity(max(0.3, 1 - absDistance * 0.3))
-                .offset(x: distance * -100, y: 0) // ページ間を詰める
+                .rotation3DEffect(.degrees(baseAngle * distance),
+                                  axis: (x: 0, y: 1, z: 0),
+                                  anchor: 0 < distance ? .leading : .trailing, // 回転軸
+                                  anchorZ: 0,
+                                  perspective: 1.0)     // 0.0〜1.0で奥行き
+                .opacity(0.5)
         }else{
+            // 中央
             content
-                .scaleEffect(scale)
-                .rotation3DEffect(angle, axis: (x: 0, y: 1, z: 0))
-                .opacity(0.2)
-                //.offset(x: distance * -50, y: 0) // ページ間を詰める
         }
     }
 }
