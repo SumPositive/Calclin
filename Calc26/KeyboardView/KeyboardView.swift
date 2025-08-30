@@ -22,6 +22,8 @@ struct KeyboardView: View {
 
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
+    // iPad など横幅に余裕がある場合の判定
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     // @State 変化あればViewが更新される
     @State private var selectedPage: Int = 1 // 初期で2ページ目（インデックス1）を表示
 
@@ -41,12 +43,17 @@ struct KeyboardView: View {
                     ForEach(0..<KeyboardViewModel.pageCount, id: \.self) { index in
                         KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
                             .frame(width: geometry.size.width)
+                            .modifier(
+                                PagePerspectiveModifier(
+                                    distance: Double(index - selectedPage),
+                                    isRegular: horizontalSizeClass == .regular
+                                )
+                            )
                     }
                 }
                 .offset(x: -CGFloat(selectedPage) * (geometry.size.width + pageGap))
                 .animation(.easeOut(duration: 0.3), value: selectedPage)
             }
-            .clipped() // 選択中の1ページだけ見せるため
             .padding(0)
             .highPriorityGesture(
                 DragGesture()
@@ -67,6 +74,29 @@ struct KeyboardView: View {
                 pageCount: KeyboardViewModel.pageCount
             )
             .opacity(colorScheme == .dark ? 0.60 : 1.0)
+        }
+    }
+}
+
+// ページ間の距離に応じて奥行き感を付与するモディファイア
+struct PagePerspectiveModifier: ViewModifier {
+    /// 選択ページからの距離（マイナスは左側、プラスは右側）
+    let distance: Double
+    /// 横幅に余裕がある端末のみで適用する
+    let isRegular: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if isRegular {
+            let absDistance = abs(distance)
+            let scale = max(0.8, 1 - absDistance * 0.1)
+            let angle = Angle(degrees: distance * 20)
+            content
+                .scaleEffect(scale)
+                .rotation3DEffect(angle, axis: (x: 0, y: 1, z: 0))
+                .opacity(max(0.3, 1 - absDistance * 0.3))
+        } else {
+            content
         }
     }
 }
