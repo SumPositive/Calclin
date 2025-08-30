@@ -37,6 +37,13 @@ struct KeyboardView: View {
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
             //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
             GeometryReader { geometry in
+                let frame = geometry.frame(in: .global)
+                let screenWidth = UIScreen.main.bounds.width
+                let leftMargin = frame.minX
+                let rightMargin = screenWidth - frame.maxX
+                let maxMargin = max(leftMargin, rightMargin)
+                let baseAngle = atan(Double(maxMargin / (geometry.size.width / 2))) * 180 / .pi
+
                 HStack(spacing: pageGap) {
                     ForEach(0..<KeyboardViewModel.pageCount, id: \.self) { index in
                         KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
@@ -44,7 +51,9 @@ struct KeyboardView: View {
                             .modifier(
                                 // 左右ページに遠近感を与える
                                 PagePerspectiveModifier(
-                                    distance: Double(index - selectedPage)
+                                    distance: Double(index - selectedPage),
+                                    baseAngle: baseAngle,
+                                    maxMargin: Double(maxMargin)
                                 )
                             )
                     }
@@ -81,24 +90,27 @@ struct KeyboardView: View {
 struct PagePerspectiveModifier: ViewModifier {
     /// 選択ページからの距離（マイナスは左側、プラスは右側）
     let distance: Double
+    /// ベースとなる傾斜角（度数）
+    let baseAngle: Double
+    /// 画面とページの最大余白
+    let maxMargin: Double
 
     @ViewBuilder
     func body(content: Content) -> some View {
         let absDistance = abs(distance)
         let scale = max(0.67, 1 - absDistance * 0.33)
-        let angle = Angle(degrees: distance * 60) // 傾斜角　45°=八角形
+        let angle = Angle(degrees: distance * baseAngle)
         if abs(distance) <= 1 {
             content
                 .scaleEffect(scale)
                 .rotation3DEffect(angle, axis: (x: 0, y: 1, z: 0))
                 .opacity(max(0.3, 1 - absDistance * 0.3))
-                .offset(x: distance * -100, y: 0) // ページ間を詰める
+                .offset(x: CGFloat(distance * -maxMargin), y: 0)
         }else{
             content
                 .scaleEffect(scale)
                 .rotation3DEffect(angle, axis: (x: 0, y: 1, z: 0))
                 .opacity(0.2)
-                //.offset(x: distance * -50, y: 0) // ページ間を詰める
         }
     }
 }
