@@ -46,14 +46,14 @@ struct KeyboardView: View {
                             .modifier(
                                 // 左右ページに遠近感を与える
                                 PagePerspectiveModifier(
-                                    distance: Double(index - selectedPage),
-                                    isRegular: horizontalSizeClass == .regular
+                                    isRegular: horizontalSizeClass == .regular,
+                                    distance: Double(index - selectedPage)
                                 )
                             )
                     }
                 }
                 .offset(x: -CGFloat(selectedPage) * (geometry.size.width + pageGap))
-                .animation(.easeOut(duration: 0.3), value: selectedPage)
+                .animation(.easeOut(duration: 0.35), value: selectedPage)
             }
             .padding(0)
             //.clipped() // 選択中の1ページだけ見せるため
@@ -82,21 +82,27 @@ struct KeyboardView: View {
 
 // ページ間の距離に応じて奥行き感を付与するモディファイア
 struct PagePerspectiveModifier: ViewModifier {
-    /// 選択ページからの距離（マイナスは左側、プラスは右側）
-    let distance: Double
     /// 横幅に余裕がある端末のみで適用する
     let isRegular: Bool
+    /// 選択ページからの距離（マイナスは左側、プラスは右側）
+    let distance: Double
 
     @ViewBuilder
     func body(content: Content) -> some View {
         if isRegular {
-            let absDistance = abs(distance)
-            let scale = max(0.75, 1 - absDistance * 0.25)
-            let angle = Angle(degrees: distance * 45) // 傾斜角　45°=八角形
-            content
-                .scaleEffect(scale)
-                .rotation3DEffect(angle, axis: (x: 0, y: 1, z: 0))
-                .opacity(max(0.3, 1 - absDistance * 0.3))
+            if abs(distance) <= 1 {
+                let absDistance = abs(distance)
+                let scale = max(0.75, 1 - absDistance * 0.25)
+                let angle = Angle(degrees: distance * 45) // 傾斜角　45°=八角形
+                content
+                    .scaleEffect(scale)
+                    .rotation3DEffect(angle, axis: (x: 0, y: 1, z: 0))
+                    .opacity(max(0.3, 1 - absDistance * 0.3))
+                    .offset(x: distance * -50, y: 0) // ページ間を詰める
+            }else{
+                content
+                    .opacity(0.1)
+            }
         } else {
             content
         }
