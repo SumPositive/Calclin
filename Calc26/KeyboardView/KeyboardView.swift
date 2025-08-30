@@ -44,6 +44,7 @@ struct KeyboardView: View {
                         KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
                             .frame(width: geometry.size.width)
                             .modifier(
+                                // 左右ページに遠近感を与える
                                 PagePerspectiveModifier(
                                     distance: Double(index - selectedPage),
                                     isRegular: horizontalSizeClass == .regular
@@ -55,6 +56,7 @@ struct KeyboardView: View {
                 .animation(.easeOut(duration: 0.3), value: selectedPage)
             }
             .padding(0)
+            //.clipped() // 選択中の1ページだけ見せるため
             .highPriorityGesture(
                 DragGesture()
                     .onEnded { value in
@@ -89,8 +91,8 @@ struct PagePerspectiveModifier: ViewModifier {
     func body(content: Content) -> some View {
         if isRegular {
             let absDistance = abs(distance)
-            let scale = max(0.8, 1 - absDistance * 0.1)
-            let angle = Angle(degrees: distance * 20)
+            let scale = max(0.75, 1 - absDistance * 0.25)
+            let angle = Angle(degrees: distance * 45) // 傾斜角　45°=八角形
             content
                 .scaleEffect(scale)
                 .rotation3DEffect(angle, axis: (x: 0, y: 1, z: 0))
