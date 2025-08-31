@@ -30,7 +30,7 @@ struct KeyboardView: View {
     var body: some View {
         
         let SWIPE_RANGE = 30.0     // スワイプ無効範囲、キータップ時のズレを感知しないようにするため
-        let SWIPE_THRESHOLD = 180.0 // スワイプ感知して動作開始する
+        let SWIPE_THRESHOLD = 120.0 // スワイプ感知して動作開始する
 
         
         VStack(spacing: 0) {

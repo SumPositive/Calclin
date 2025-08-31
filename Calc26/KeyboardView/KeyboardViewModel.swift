@@ -90,7 +90,7 @@ final class KeyboardViewModel: ObservableObject {
             // 無ければ KeyDefinition.json を読み込んでkeyTagsを更新する
             keyDefs = loadKeyDefinitionJSON()
             // キー配置を復元
-            loadKeyboard()
+            loadKeyboardJson()
         }
     }
 
@@ -154,47 +154,8 @@ final class KeyboardViewModel: ObservableObject {
         saveKeyDefinitionJSON(keyDefs)
     }
     
-    // 現在のKeyboard配置を不揮発保存する（UserDefaultsにPropertyList形式で保存）
-    // キー配置変更の都度保存するため、JSONファイル保存とは別に軽量保存している
-    //  （しかし、誤差だろうからJSONファイル保存で共通化しても良いかも）
-    func saveKeyboard() {
-        let encoder = PropertyListEncoder()
-        if let data = try? encoder.encode(self.keyboard) {
-            UserDefaults.standard.set(data, forKey: "keyboard_data")
-        }
-    }
-    // 不揮発保存したKeyboard配置を復元する
-    func loadKeyboard() {
-        guard let data = UserDefaults.standard.data(forKey: "keyboard_data") else {
-            // 初期の配置に戻す
-            initKeyboardJson(isToast: false)
-            return
-        }
-        let decoder = PropertyListDecoder()
-        do {
-            let kb = try decoder.decode([[String]].self, from: data)
-            //
-            if kb.count != KeyboardViewModel.pageCount {
-                // ページ数が変わった
-                log(.warning, "load OLD pages: \(kb.count)")
-                return
-            }
-            if let pg = kb.first,
-               // ページ内のキー数が変わった
-                pg.count != KeyboardViewModel.rowCount * KeyboardViewModel.colCount {
-                log(.warning, "load OLD keys: \(pg.count)")
-                return
-            }
-            self.keyboard = kb
-            return
-        }
-        catch (let error) {
-            log(.error, "catch: \(error)")
-            return
-        }
-    }
-    
-    
+    // 現在のKeyboard配置を不揮発保存する（DocumentsにJSON形式で保存）
+    //
     // keyboard JSON
     //    {
     //        "appName": "CalcRoll",
@@ -222,45 +183,45 @@ final class KeyboardViewModel: ObservableObject {
             let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
                 .appendingPathComponent("keyboard.json")
             try data.write(to: url)
-            Manager.shared.toast(String(localized: "toast.saveKeyboard"), wait: 2.0)
-        } catch {
+        }
+        catch {
             log(.error, "書き込み失敗: \(error)")
-            Manager.shared.toast(String(localized: "toast.saveKeyboard.error"), wait: 2.0)
+            //Manager.shared.toast(String(localized: "toast.saveKeyboard.error"), wait: 2.0)
         }
     }
     // JSONファイルに保存した配置に戻す
     func loadKeyboardJson() {
-        let docsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fm = FileManager.default
+        let docsURL = fm.urls(for: .documentDirectory, in: .userDomainMask).first!
         let fileURL = docsURL.appendingPathComponent("keyboard.json")
+        // 存在チェック
+        if !fm.fileExists(atPath: fileURL.path) {
+            // 保存ファイルが無ければ初期化
+            initKeyboardJson(isToast: false)
+            return
+        }
+        
         do {
             let data = try Data(contentsOf: fileURL)
             let decoded = try JSONDecoder().decode(KeyboardJSON.self, from: data)
-            if decoded.appName == "CalcRoll" {
-                if let kb = decoded.keyboard_1 {
-                    if kb.count == 5 {
-                        // V2.1：5ページ
-                        keyboard = kb
-                        Manager.shared.toast(String(localized: "toast.loadKeyboard"), wait: 3.0)
-                    }
-                    else if kb.count == 3 {
-                        // V2.0：3ページだったので5ページに変換する
-                        keyboard = kb
-                        // 空の1ページ分を作成して挿入/追加して5ページにする
-                        let emptyPage = Array(repeating: "", count: KeyboardViewModel.colCount * KeyboardViewModel.rowCount)
-                        keyboard.insert(emptyPage, at: 0) // 先頭
-                        keyboard.append(emptyPage) // 末尾
-                        
-                        Manager.shared.toast(String(localized: "toast.loadKeyboard"), wait: 3.0)
-                    }
-                }
-                else if let kb = decoded.keyboard_1 { // Old migration
+
+            if decoded.appName == "CalcRoll",
+               let kb = decoded.keyboard_1 {
+                
+                if kb.count == 5, kb.first!.count == (5 * 6) { // V2.0.0:keyboard_1
                     keyboard = kb
-                    Manager.shared.toast(String(localized: "toast.loadKeyboard"), wait: 3.0)
+                }else{
+                    log(.warning, "kb.count != 5: \(kb.count)")
+                    //Manager.shared.toast(String(localized: "toast.loadKeyboard.error"), wait: 2.0)
+                    // 初期化
+                    initKeyboardJson(isToast: false)
                 }
             }
         } catch {
             log(.error, "読み込み失敗: \(error)")
-            Manager.shared.toast(String(localized: "toast.loadKeyboard.error"), wait: 2.0)
+            //Manager.shared.toast(String(localized: "toast.loadKeyboard.error"), wait: 2.0)
+            // 初期化
+            initKeyboardJson(isToast: false)
         }
     }
     

@@ -157,11 +157,13 @@ struct SettingView: View {
                 HStack {
                     Button("settings.keyboard.save") {
                         keyboardViewModel.saveKeyboardJson()
+                        Manager.shared.toast(String(localized: "toast.saveKeyboard"), wait: 2.0)
                     }
                     .foregroundStyle(.blue)
                     .padding(2)
                     Button("settings.keyboard.load") {
                         keyboardViewModel.loadKeyboardJson()
+                        Manager.shared.toast(String(localized: "toast.loadKeyboard"), wait: 3.0)
                     }
                     .foregroundStyle(.green)
                     .padding(2)
