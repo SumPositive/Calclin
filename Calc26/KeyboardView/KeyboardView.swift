@@ -15,6 +15,7 @@ extension CGRect {
     }
 }
 
+let KEYBOARD_PAGE_GAP = 20.0 // ページ間隔 padding以上無ければ隣ページが見えてしまう
 
 struct KeyboardView: View {
     @ObservedObject var viewModel: KeyboardViewModel
@@ -24,13 +25,13 @@ struct KeyboardView: View {
     @Environment(\.colorScheme) var colorScheme
     // @State 変化あればViewが更新される
     @State private var selectedPage: Int = 2 // 初期で3ページ目（インデックス2）を表示
-    @GestureState private var dragOffset: CGFloat = 0
+    @State private var dragOffset: CGFloat = 0
 
-    
     var body: some View {
         
-        let pageGap = 20.0 // ページ間隔 padding以上無ければ隣ページが見えてしまう
-        let SWIPE_RANGE = 80.0
+        let SWIPE_RANGE = 30.0     // スワイプ無効範囲、キータップ時のズレを感知しないようにするため
+        let SWIPE_THRESHOLD = 120.0 // スワイプ感知して動作開始する
+
         
         VStack(spacing: 0) {
             // キーボード
@@ -40,7 +41,7 @@ struct KeyboardView: View {
             GeometryReader { geometry in
                 let frame = geometry.frame(in: .global)
 
-                HStack(spacing: pageGap) {
+                HStack(spacing: KEYBOARD_PAGE_GAP) {
                     ForEach(0..<KeyboardViewModel.pageCount, id: \.self) { index in
                         KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
                             .frame(width: geometry.size.width)
@@ -54,23 +55,31 @@ struct KeyboardView: View {
                             )
                     }
                 }
-                .offset(x: -CGFloat(selectedPage) * (geometry.size.width + pageGap) + dragOffset)
-                .animation(.easeOut(duration: 0.5), value: selectedPage)
+                .offset(x: -CGFloat(selectedPage) * (geometry.size.width + KEYBOARD_PAGE_GAP) + dragOffset)
+                .animation(.easeOut(duration: 0.35), value: selectedPage)
             }
             .padding(0)
             //.clipped() // 選択中の1ページだけ見せるため
             .highPriorityGesture(
                 DragGesture()
-                    .updating($dragOffset) { value, state, _ in
-                        state = value.translation.width
+                    .onChanged { value in
+                        let w = value.translation.width
+                        if SWIPE_RANGE < abs(w) {
+                            dragOffset = value.translation.width
+                        }
                     }
                     .onEnded { value in
-                        withAnimation {
-                            if SWIPE_RANGE < value.translation.width {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            let w = value.translation.width
+                            if abs(w) < SWIPE_THRESHOLD {
+                                withAnimation {
+                                    // 元に戻す
+                                }
+                            } else if w > SWIPE_THRESHOLD {
                                 // 右へスワイプ：前KeyPageViewへ
                                 selectedPage = max(selectedPage - 1, 0)
                             }
-                            else if value.translation.width < -1 * SWIPE_RANGE {
+                            else if w < -SWIPE_THRESHOLD {
                                 // 左へスワイプ：次KeyPageViewへ
                                 selectedPage = min(selectedPage + 1, KeyboardViewModel.pageCount - 1)
                             }
@@ -90,7 +99,7 @@ struct KeyboardView: View {
 
 // ページ間の距離に応じて奥行き感を付与するモディファイア
 struct PagePerspectiveModifier: ViewModifier {
-    /// 選択ページからの距離（マイナスは左側、プラスは右側）
+    /// 選択ページからのページ数（マイナスは左ページ、プラスは右ページ）
     let distance: Double
     /// ページの幅
     let pageWidth: Double
@@ -99,21 +108,18 @@ struct PagePerspectiveModifier: ViewModifier {
 
     @ViewBuilder
     func body(content: Content) -> some View {
-
-        if abs(distance) == 1, margin < pageWidth {
-            // 左右の傾斜表示
-            let baseAngle = acos(margin / pageWidth) * 180 / .pi
-            content
-                .rotation3DEffect(.degrees(baseAngle * distance),
-                                  axis: (x: 0, y: 1, z: 0),
-                                  anchor: 0 < distance ? .leading : .trailing, // 回転軸
-                                  anchorZ: 0,
-                                  perspective: 1.0)     // 0.0〜1.0で奥行き
-                .opacity(0.5)
-        }else{
-            // 中央
-            content
-        }
+        // 左右の傾斜表示
+        let baseAngle: Double = acos(margin / pageWidth) * 180 / .pi
+        content
+            .scaleEffect(1 < abs(distance) ? 0.7 : 1.0) // 2ページ前を縮小
+            .offset(x: 1 < abs(distance) ? distance * -60.0 : 0.0,
+                    y: 0) // 2ページ前のページ間を詰める
+            .rotation3DEffect(.degrees(abs(distance) == 1 ? baseAngle * distance : 0.0),
+                              axis: (x: 0, y: 1, z: 0),
+                              anchor: distance == 0 ? .center : 0 < distance ? .leading : .trailing, // 回転軸
+                              anchorZ: 0,
+                              perspective: 1.0) // 奥行き 0.0〜1.0
+            .opacity(distance == 0 ? 1 : 0.5)
     }
 }
 
