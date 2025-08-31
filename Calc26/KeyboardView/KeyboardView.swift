@@ -15,6 +15,7 @@ extension CGRect {
     }
 }
 
+let KEYBOARD_PAGE_GAP = 20.0 // ページ間隔 padding以上無ければ隣ページが見えてしまう
 
 struct KeyboardView: View {
     @ObservedObject var viewModel: KeyboardViewModel
@@ -23,13 +24,14 @@ struct KeyboardView: View {
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
     // @State 変化あればViewが更新される
-    @State private var selectedPage: Int = 1 // 初期で2ページ目（インデックス1）を表示
+    @State private var selectedPage: Int = 2 // 初期で3ページ目（インデックス2）を表示
+    @State private var dragOffset: CGFloat = 0
 
-    
     var body: some View {
         
-        let pageGap = 10.0 // ページ間隔 padding以上無ければ隣ページが見えてしまう
-        let SWIPE_RANGE = 80.0
+        let SWIPE_RANGE = 30.0     // スワイプ無効範囲、キータップ時のズレを感知しないようにするため
+        let SWIPE_THRESHOLD = 120.0 // スワイプ感知して動作開始する
+
         
         VStack(spacing: 0) {
             // キーボード
@@ -37,27 +39,51 @@ struct KeyboardView: View {
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
             //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
             GeometryReader { geometry in
-                HStack(spacing: pageGap) {
+                let frame = geometry.frame(in: .global)
+
+                HStack(spacing: KEYBOARD_PAGE_GAP) {
                     ForEach(0..<KeyboardViewModel.pageCount, id: \.self) { index in
                         KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
                             .frame(width: geometry.size.width)
+                            .modifier(
+                                // 左右ページに遠近感を与える
+                                PagePerspectiveModifier(
+                                    distance: Double(index - selectedPage),
+                                    pageWidth: geometry.size.width,
+                                    margin: frame.minX
+                                )
+                            )
                     }
                 }
-                .offset(x: -CGFloat(selectedPage) * (geometry.size.width + pageGap))
-                .animation(.easeOut(duration: 0.3), value: selectedPage)
+                .offset(x: -CGFloat(selectedPage) * (geometry.size.width + KEYBOARD_PAGE_GAP) + dragOffset)
+                .animation(.easeOut(duration: 0.35), value: selectedPage)
             }
-            .clipped() // 選択中の1ページだけ見せるため
             .padding(0)
+            //.clipped() // 選択中の1ページだけ見せるため
             .highPriorityGesture(
                 DragGesture()
-                    .onEnded { value in
-                        if SWIPE_RANGE < value.translation.width {
-                            // 右へスワイプ：前KeyPageViewへ
-                            selectedPage = max(selectedPage - 1, 0)
+                    .onChanged { value in
+                        let w = value.translation.width
+                        if SWIPE_RANGE < abs(w) {
+                            dragOffset = value.translation.width
                         }
-                        else if value.translation.width < -1 * SWIPE_RANGE {
-                            // 左へスワイプ：次KeyPageViewへ
-                            selectedPage = min(selectedPage + 1, KeyboardViewModel.pageCount - 1)
+                    }
+                    .onEnded { value in
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            let w = value.translation.width
+                            if abs(w) < SWIPE_THRESHOLD {
+                                withAnimation {
+                                    // 元に戻す
+                                }
+                            } else if w > SWIPE_THRESHOLD {
+                                // 右へスワイプ：前KeyPageViewへ
+                                selectedPage = max(selectedPage - 1, 0)
+                            }
+                            else if w < -SWIPE_THRESHOLD {
+                                // 左へスワイプ：次KeyPageViewへ
+                                selectedPage = min(selectedPage + 1, KeyboardViewModel.pageCount - 1)
+                            }
+                            dragOffset = 0
                         }
                     }
             )
@@ -68,6 +94,32 @@ struct KeyboardView: View {
             )
             .opacity(colorScheme == .dark ? 0.60 : 1.0)
         }
+    }
+}
+
+// ページ間の距離に応じて奥行き感を付与するモディファイア
+struct PagePerspectiveModifier: ViewModifier {
+    /// 選択ページからのページ数（マイナスは左ページ、プラスは右ページ）
+    let distance: Double
+    /// ページの幅
+    let pageWidth: Double
+    /// 余白の幅
+    let margin: Double
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        // 左右の傾斜表示
+        let baseAngle: Double = acos(margin / pageWidth) * 180 / .pi
+        content
+            .scaleEffect(1 < abs(distance) ? 0.7 : 1.0) // 2ページ前を縮小
+            .offset(x: 1 < abs(distance) ? distance * -60.0 : 0.0,
+                    y: 0) // 2ページ前のページ間を詰める
+            .rotation3DEffect(.degrees(abs(distance) == 1 ? baseAngle * distance : 0.0),
+                              axis: (x: 0, y: 1, z: 0),
+                              anchor: distance == 0 ? .center : 0 < distance ? .leading : .trailing, // 回転軸
+                              anchorZ: 0,
+                              perspective: 1.0) // 奥行き 0.0〜1.0
+            .opacity(distance == 0 ? 1 : 0.5)
     }
 }
 
