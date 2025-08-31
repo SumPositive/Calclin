@@ -121,10 +121,6 @@ struct ContentView: View {
                        minHeight: APP_KB_HEIGHT_MIN, maxHeight: APP_KB_HEIGHT_MAX)
             }
             .background(Color.primary.opacity(0.05)) // 控えめな背景
-            .onAppear {
-                // 不揮発記録よりkeyboardを読み込み再現する
-                keyboardViewModel.loadKeyboard()
-            }
             .zIndex(0)
             
             
@@ -208,7 +204,7 @@ struct ContentView: View {
                                 // keyboardを更新する
                                 keyboardViewModel.keyboard[info.page][info.index] = selectedKeyDef.code
                                 // 都度、不揮発記録にkeyboardを保存する
-                                keyboardViewModel.saveKeyboard()
+                                keyboardViewModel.saveKeyboardJson()
                             }
                         }.frame(width: popupWidth, height: popupHeight)
                     }
