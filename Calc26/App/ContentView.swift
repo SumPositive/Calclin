@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SafariServices
 
 
 struct ContentView: View {
@@ -33,7 +32,6 @@ struct ContentView: View {
     @Environment(\.colorScheme) var colorScheme
     // 設定シートの表示状態
     @State private var isSettingSheetPresented = false
-    @State private var showSafari = false
     // @State 変化あればViewが更新される
     @State private var selectedCalc: Int = 0
 
@@ -70,25 +68,6 @@ struct ContentView: View {
                         .font(.headline)
                         .foregroundColor(COLOR_TITLE)
 
-                    Spacer()
-
-                    // 情報（ボタン）
-                    Button(action: {
-                        withAnimation {
-                            // SafariでURLを表示する
-                            showSafari = true
-                        }
-                    }) {
-                        Image(systemName: "info.circle")
-                        //.imageScale(.large)
-                            .accentColor(.accentColor)
-                    }
-                    .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
-                    .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
-                    .sheet(isPresented: $showSafari) {
-                        let urlString = String(localized: "info.url")
-                        SafariView(url: URL(string: urlString)!)
-                    }
                 }
                 .opacity(colorScheme == .dark ? 0.50 : 1.0)
                 .frame(height: 30)
@@ -221,15 +200,6 @@ struct ContentView: View {
                 .environmentObject(keyboardViewModel)
                 .presentationDetents([.medium, .large])
         }
-    }
-    
-    /// カスタムSafariシート
-    struct SafariView: UIViewControllerRepresentable {
-        let url: URL
-        func makeUIViewController(context: Context) -> SFSafariViewController {
-            return SFSafariViewController(url: url)
-        }
-        func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
     }
     
     
