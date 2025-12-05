@@ -296,7 +296,8 @@ struct SettingView: View {
     }
 
     /// SafariをSheetで開く共通関数
-    private func openSafari(for key: String) {
+    private func openSafari(for key: LocalizedStringResource) {
+        // Localizable.xcstrings のURL文字列をローカライズしてSafari表示用に取り出す
         let urlString = String(localized: key)
         guard let url = URL(string: urlString) else {
             log(.error, "URL invalid: \(urlString)")
