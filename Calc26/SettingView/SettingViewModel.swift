@@ -48,7 +48,23 @@ final class SettingViewModel: ObservableObject {
         /// 桁区切りの方式（3桁区切り、4桁区切り、インド式など）
         SBCD_Config.groupType = .G3
     }
-    
+
+
+    /// 操作モード（初心者／達人）　UI表示用にCaseIterable, Identifiable
+    enum PlayMode: String, CaseIterable, Identifiable {
+        case beginner
+        case master
+        var id: String { rawValue }
+        /// ローカライズ済みラベル
+        var localized: String {
+            switch self {
+                case .beginner: return String(localized: "settings.mode.beginner")
+                case .master:   return String(localized: "settings.mode.master")
+            }
+        }
+    }
+    @Published var playMode: PlayMode = .beginner
+
 
     /// 丸めタイプ　　　PickerデータソースにするためCaseIterable, Identifiableに準拠
     enum RoundType: String, CaseIterable, Identifiable {

@@ -31,15 +31,13 @@ struct ContentView: View {
     // @State 変化あればViewが更新される
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
-    // 設定　表示状態
-    @State private var isShowingSetting = false
+    // 設定シートの表示状態
+    @State private var isSettingSheetPresented = false
     @State private var showSafari = false
     // @State 変化あればViewが更新される
     @State private var selectedCalc: Int = 0
-    
-    
-    @State private var anchorRect: CGRect = .zero
-    @State private var showPopup = false
+
+    // Popup関連の一時編集データ
     @State private var editingMemo: String = ""
     @State private var editingKeyDef: KeyDefinition = KeyDefinition(code: "new")
     
@@ -53,6 +51,27 @@ struct ContentView: View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
             VStack(spacing: 0) {
                 HStack {
+                    // 設定（シート起動ボタン）
+                    Button(action: {
+                        // 左上固定のギアから設定シートを開く
+                        withAnimation {
+                            isSettingSheetPresented = true
+                        }
+                    }) {
+                        Image(systemName: "gearshape")
+                            .accentColor(.accentColor)
+                    }
+                    .padding()
+                    .contentShape(Rectangle())
+
+                    Spacer()
+
+                    Text("app.title") // LocalizedStringKey
+                        .font(.headline)
+                        .foregroundColor(COLOR_TITLE)
+
+                    Spacer()
+
                     // 情報（ボタン）
                     Button(action: {
                         withAnimation {
@@ -70,26 +89,6 @@ struct ContentView: View {
                         let urlString = String(localized: "info.url")
                         SafariView(url: URL(string: urlString)!)
                     }
-                    
-                    Spacer()
-                    
-                    Text("app.title") // LocalizedStringKey
-                        .font(.headline)
-                        .foregroundColor(COLOR_TITLE)
-                    
-                    Spacer()
-                    // 設定（トグルボタン）
-                    Button(action: {
-                        withAnimation {
-                            isShowingSetting.toggle()
-                        }
-                    }) {
-                        Image(systemName: isShowingSetting ? "gearshape.fill" : "gearshape")
-                        //.imageScale(.large)
-                            .accentColor(.accentColor)
-                    }
-                    .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
-                    .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
                 }
                 .opacity(colorScheme == .dark ? 0.50 : 1.0)
                 .frame(height: 30)
@@ -122,36 +121,7 @@ struct ContentView: View {
             }
             .background(Color.primary.opacity(0.05)) // 控えめな背景
             .zIndex(0)
-            
-            
-            // ZStack ------------------------------------
-            
-            //(ZStack 1) SettingView表示
-            if isShowingSetting {
-                VStack(spacing: 0) {
-                    HStack {
-                        Spacer()
-                        // 吹き出しの三角形部分（上向き）
-                        Triangle()
-                            .fill(COLOR_BACK_SETTING)
-                            .frame(width: 30, height: 15)
-                            .padding(.top, 25)
-                            .padding(.trailing, 27)
-                    }
-                    HStack {
-                        Spacer()
-                        // 設定画面（表示・非表示）
-                        SettingView()
-                            .environmentObject(setting) // settingに変化あればSettingViewが再生成される
-                            .environmentObject(keyboardViewModel)
-                            .transition(.opacity) // フェード
-                            .padding(.top, 0)
-                            .padding(.trailing, 10)
-                    }
-                    Spacer()
-                }
-                .zIndex(1)
-            }
+
 
             //(ZStack 2) PopupでHistoryMemoView表示
             if let info = setting.popupHistoryMemoInfo {
@@ -243,6 +213,13 @@ struct ContentView: View {
                 .zIndex(3)
             }
             
+        }
+        .sheet(isPresented: $isSettingSheetPresented) {
+            // PackList同様にシート表示で設定を開く
+            SettingView()
+                .environmentObject(setting)
+                .environmentObject(keyboardViewModel)
+                .presentationDetents([.medium, .large])
         }
     }
     

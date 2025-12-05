@@ -16,6 +16,26 @@ struct SettingView: View {
     var body: some View {
         
         VStack(spacing: 4) {
+            // モード切替（初心者／達人）
+            VStack(spacing: 0) {
+                Text("settings.mode.title")
+                    .font(.system(size: 14, weight: .regular, design: .default))
+                    .frame(maxHeight: 10)
+
+                Picker("PlayMode", selection: $viewModel.playMode) {
+                    ForEach(SettingViewModel.PlayMode.allCases) { mode in
+                        Text(mode.localized).tag(mode)
+                    }
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .onChange(of: viewModel.playMode) { oldValue, newValue in
+                    // モード切替のログを残すだけでも利用者に優しい
+                    log(.info, "PlayMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
+                }
+            }
+            .padding(4)
+            .background(Color(.systemGray6))
+
             // 整数部
             VStack(spacing: 0) {
                 Text("settings.IntPart.title")
