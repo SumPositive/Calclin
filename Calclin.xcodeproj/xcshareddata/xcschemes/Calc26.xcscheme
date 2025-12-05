@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C30A78A22E10EE8500212729"
-               BuildableName = "Calc26.app"
-               BlueprintName = "Calc26"
-               ReferencedContainer = "container:Calc26.xcodeproj">
+               BuildableName = "Calclin.app"
+               BlueprintName = "Calclin"
+               ReferencedContainer = "container:Calclin.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -36,9 +36,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C30A78AF2E10EE8700212729"
-               BuildableName = "Calc26Tests.xctest"
-               BlueprintName = "Calc26Tests"
-               ReferencedContainer = "container:Calc26.xcodeproj">
+               BuildableName = "CalclinTests.xctest"
+               BlueprintName = "CalclinTests"
+               ReferencedContainer = "container:Calclin.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -47,9 +47,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C30A78B92E10EE8700212729"
-               BuildableName = "Calc26UITests.xctest"
-               BlueprintName = "Calc26UITests"
-               ReferencedContainer = "container:Calc26.xcodeproj">
+               BuildableName = "CalclinUITests.xctest"
+               BlueprintName = "CalclinUITests"
+               ReferencedContainer = "container:Calclin.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -69,9 +69,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C30A78A22E10EE8500212729"
-            BuildableName = "Calc26.app"
-            BlueprintName = "Calc26"
-            ReferencedContainer = "container:Calc26.xcodeproj">
+            BuildableName = "Calclin.app"
+            BlueprintName = "Calclin"
+            ReferencedContainer = "container:Calclin.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -86,9 +86,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C30A78A22E10EE8500212729"
-            BuildableName = "Calc26.app"
-            BlueprintName = "Calc26"
-            ReferencedContainer = "container:Calc26.xcodeproj">
+            BuildableName = "Calclin.app"
+            BlueprintName = "Calclin"
+            ReferencedContainer = "container:Calclin.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
@@ -108,9 +108,9 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "C30A78A22E10EE8500212729"
-                     BuildableName = "Calc26.app"
-                     BlueprintName = "Calc26"
-                     ReferencedContainer = "container:Calc26.xcodeproj">
+                     BuildableName = "Calclin.app"
+                     BlueprintName = "Calclin"
+                     ReferencedContainer = "container:Calclin.xcodeproj">
                   </BuildableReference>
                </EnvironmentBuildable>
             </ActionContent>

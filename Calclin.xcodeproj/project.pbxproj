@@ -24,13 +24,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		C30A78A32E10EE8500212729 /* Calc26.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Calc26.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C30A78B02E10EE8700212729 /* Calc26Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Calc26Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		C30A78BA2E10EE8700212729 /* Calc26UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Calc26UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C30A78A32E10EE8500212729 /* Calclin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Calclin.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C30A78B02E10EE8700212729 /* CalclinTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CalclinTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C30A78BA2E10EE8700212729 /* CalclinUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CalclinUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		C3308B272E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calc26" target */ = {
+		C3308B272E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calclin" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Assets.xcassets,
@@ -58,9 +58,9 @@
 				SettingView/SettingView.swift,
 				SettingView/SettingViewModel.swift,
 			);
-			target = C30A78A22E10EE8500212729 /* Calc26 */;
+			target = C30A78A22E10EE8500212729 /* Calclin */;
 		};
-		C3308B282E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calc26Tests" target */ = {
+		C3308B282E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "CalclinTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Assets.xcassets,
@@ -68,9 +68,9 @@
 				KeyboardView/initKeyboard.json,
 				KeyboardView/KeyDefinition.json,
 			);
-			target = C30A78AF2E10EE8700212729 /* Calc26Tests */;
+			target = C30A78AF2E10EE8700212729 /* CalclinTests */;
 		};
-		C3308B292E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calc26UITests" target */ = {
+		C3308B292E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "CalclinUITests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Calc26App.swift,
@@ -94,7 +94,7 @@
 				SettingView/SettingView.swift,
 				SettingView/SettingViewModel.swift,
 			);
-			target = C30A78B92E10EE8700212729 /* Calc26UITests */;
+			target = C30A78B92E10EE8700212729 /* CalclinUITests */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -112,9 +112,9 @@
 		C3308AFD2E2F3F34009ED6D6 /* Calc26 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				C3308B272E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calc26" target */,
-				C3308B282E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calc26Tests" target */,
-				C3308B292E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calc26UITests" target */,
+				C3308B272E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calclin" target */,
+				C3308B282E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "CalclinTests" target */,
+				C3308B292E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "CalclinUITests" target */,
 			);
 			path = Calc26;
 			sourceTree = "<group>";
@@ -159,9 +159,9 @@
 		C30A78A42E10EE8500212729 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C30A78A32E10EE8500212729 /* Calc26.app */,
-				C30A78B02E10EE8700212729 /* Calc26Tests.xctest */,
-				C30A78BA2E10EE8700212729 /* Calc26UITests.xctest */,
+				C30A78A32E10EE8500212729 /* Calclin.app */,
+				C30A78B02E10EE8700212729 /* CalclinTests.xctest */,
+				C30A78BA2E10EE8700212729 /* CalclinUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -169,9 +169,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C30A78A22E10EE8500212729 /* Calc26 */ = {
+		C30A78A22E10EE8500212729 /* Calclin */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C30A78C42E10EE8700212729 /* Build configuration list for PBXNativeTarget "Calc26" */;
+			buildConfigurationList = C30A78C42E10EE8700212729 /* Build configuration list for PBXNativeTarget "Calclin" */;
 			buildPhases = (
 				C30A78A12E10EE8500212729 /* Resources */,
 				C30A789F2E10EE8500212729 /* Sources */,
@@ -181,16 +181,16 @@
 			);
 			dependencies = (
 			);
-			name = Calc26;
+			name = Calclin;
 			packageProductDependencies = (
 			);
 			productName = Calc26;
-			productReference = C30A78A32E10EE8500212729 /* Calc26.app */;
+			productReference = C30A78A32E10EE8500212729 /* Calclin.app */;
 			productType = "com.apple.product-type.application";
 		};
-		C30A78AF2E10EE8700212729 /* Calc26Tests */ = {
+		C30A78AF2E10EE8700212729 /* CalclinTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C30A78C72E10EE8700212729 /* Build configuration list for PBXNativeTarget "Calc26Tests" */;
+			buildConfigurationList = C30A78C72E10EE8700212729 /* Build configuration list for PBXNativeTarget "CalclinTests" */;
 			buildPhases = (
 				C30A78AC2E10EE8700212729 /* Sources */,
 				C30A78AD2E10EE8700212729 /* Frameworks */,
@@ -205,16 +205,16 @@
 				C30A78B32E10EE8700212729 /* Calc26Tests */,
 				C3308AFD2E2F3F34009ED6D6 /* Calc26 */,
 			);
-			name = Calc26Tests;
+			name = CalclinTests;
 			packageProductDependencies = (
 			);
 			productName = Calc26Tests;
-			productReference = C30A78B02E10EE8700212729 /* Calc26Tests.xctest */;
+			productReference = C30A78B02E10EE8700212729 /* CalclinTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		C30A78B92E10EE8700212729 /* Calc26UITests */ = {
+		C30A78B92E10EE8700212729 /* CalclinUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C30A78CA2E10EE8700212729 /* Build configuration list for PBXNativeTarget "Calc26UITests" */;
+			buildConfigurationList = C30A78CA2E10EE8700212729 /* Build configuration list for PBXNativeTarget "CalclinUITests" */;
 			buildPhases = (
 				C30A78B62E10EE8700212729 /* Sources */,
 				C30A78B72E10EE8700212729 /* Frameworks */,
@@ -228,11 +228,11 @@
 			fileSystemSynchronizedGroups = (
 				C30A78BD2E10EE8700212729 /* Calc26UITests */,
 			);
-			name = Calc26UITests;
+			name = CalclinUITests;
 			packageProductDependencies = (
 			);
 			productName = Calc26UITests;
-			productReference = C30A78BA2E10EE8700212729 /* Calc26UITests.xctest */;
+			productReference = C30A78BA2E10EE8700212729 /* CalclinUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -258,7 +258,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C30A789E2E10EE8500212729 /* Build configuration list for PBXProject "Calc26" */;
+			buildConfigurationList = C30A789E2E10EE8500212729 /* Build configuration list for PBXProject "Calclin" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -273,9 +273,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C30A78A22E10EE8500212729 /* Calc26 */,
-				C30A78AF2E10EE8700212729 /* Calc26Tests */,
-				C30A78B92E10EE8700212729 /* Calc26UITests */,
+				C30A78A22E10EE8500212729 /* Calclin */,
+				C30A78AF2E10EE8700212729 /* CalclinTests */,
+				C30A78B92E10EE8700212729 /* CalclinUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -331,12 +331,12 @@
 /* Begin PBXTargetDependency section */
 		C30A78B22E10EE8700212729 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C30A78A22E10EE8500212729 /* Calc26 */;
+			target = C30A78A22E10EE8500212729 /* Calclin */;
 			targetProxy = C30A78B12E10EE8700212729 /* PBXContainerItemProxy */;
 		};
 		C30A78BC2E10EE8700212729 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C30A78A22E10EE8500212729 /* Calc26 */;
+			target = C30A78A22E10EE8500212729 /* Calclin */;
 			targetProxy = C30A78BB2E10EE8700212729 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -473,7 +473,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 5C2UYK6F45;
 				ENABLE_PREVIEWS = YES;
@@ -513,7 +513,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 5C2UYK6F45;
 				ENABLE_PREVIEWS = YES;
@@ -561,7 +561,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Calc26.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Calc26";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Calclin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Calclin";
 			};
 			name = Debug;
 		};
@@ -581,7 +581,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Calc26.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Calc26";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Calclin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Calclin";
 			};
 			name = Release;
 		};
@@ -624,7 +624,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C30A789E2E10EE8500212729 /* Build configuration list for PBXProject "Calc26" */ = {
+		C30A789E2E10EE8500212729 /* Build configuration list for PBXProject "Calclin" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C30A78C22E10EE8700212729 /* Debug */,
@@ -633,7 +633,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C30A78C42E10EE8700212729 /* Build configuration list for PBXNativeTarget "Calc26" */ = {
+		C30A78C42E10EE8700212729 /* Build configuration list for PBXNativeTarget "Calclin" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C30A78C52E10EE8700212729 /* Debug */,
@@ -642,7 +642,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C30A78C72E10EE8700212729 /* Build configuration list for PBXNativeTarget "Calc26Tests" */ = {
+		C30A78C72E10EE8700212729 /* Build configuration list for PBXNativeTarget "CalclinTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C30A78C82E10EE8700212729 /* Debug */,
@@ -651,7 +651,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C30A78CA2E10EE8700212729 /* Build configuration list for PBXNativeTarget "Calc26UITests" */ = {
+		C30A78CA2E10EE8700212729 /* Build configuration list for PBXNativeTarget "CalclinUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C30A78CB2E10EE8700212729 /* Debug */,
