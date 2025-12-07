@@ -1,1019 +1,1146 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    " %lld " : {
-
-    },
-    "＜＝" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "<="
+  "sourceLanguage": "en",
+  "strings": {
+    " %lld ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " %lld "
           }
         }
       }
     },
-    "＝＞" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "=>"
+    "＜＝": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "<="
           }
         }
       }
     },
-    "３桁区切り 123,456,789.0" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "3-digit grouping 123,456,789.0"
+    "＝＞": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "=>"
           }
         }
       }
     },
-    "４桁区切り 1,2345,6789.0" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "4-digit grouping 1,2345,6789.0"
+    "３桁区切り 123,456,789.0": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3-digit grouping 123,456,789.0"
           }
         }
       }
     },
-    "app.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Calclin"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "カルメモ"
+    "４桁区切り 1,2345,6789.0": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4-digit grouping 1,2345,6789.0"
           }
         }
       }
     },
-    "code" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Code"
+    "app.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calclin"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "コード"
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "カルメモ"
           }
         }
       }
     },
-    "DecimalSeparator" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Decimal separator"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "小数点"
-          }
-        }
-      }
-    },
-    "editkeydef.info.formula" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Characters and symbols used in mathematical expressions."
+    "code": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "計算式に使われる文字や記号"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コード"
           }
         }
       }
     },
-    "editkeydef.info.keyTop" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Characters and symbols displayed on the keyboard."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "キーボード上に表示される文字や記号"
-          }
-        }
-      }
-    },
-    "editkeydef.info.symbol" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apple SF Symbols name."
-          }
-        }
-      }
-    },
-    "editkeydef.info.unitBase" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enter the base unit code. You can add, subtract, and convert within units that share the same base."
+    "DecimalSeparator": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decimal separator"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "基準単位のcodeを記入。基準単位が同じ単位の範囲で加減算や変換が可能"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小数点"
           }
         }
       }
     },
-    "editkeydef.info.unitConv" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Multiplier for the base unit. Leave blank if it is already the base unit."
+    "editkeydef.info.formula": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Characters and symbols used in mathematical expressions."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "基準単位にするための倍率。自身が基準単位ならば空白"
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "計算式に使われる文字や記号"
           }
         }
       }
     },
-    "editkeydef.save" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save"
+    "editkeydef.info.keyTop": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Characters and symbols displayed on the keyboard."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "保存"
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "キーボード上に表示される文字や記号"
           }
         }
       }
     },
-    "editkeydef.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Key Definition Editor\n       (Warning! Hacker Zone)\n        If it breaks, just reinstall."
+    "editkeydef.info.symbol": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple SF Symbols name."
+          }
+        }
+      }
+    },
+    "editkeydef.info.unitBase": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the base unit code. You can add, subtract, and convert within units that share the same base."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "キー定義編集\n　（危険！Hacker Zone）\n　　壊れたら再インストールしてね"
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "基準単位のcodeを記入。基準単位が同じ単位の範囲で加減算や変換が可能"
           }
         }
       }
     },
-    "formula" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Formula"
+    "editkeydef.info.unitConv": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Multiplier for the base unit. Leave blank if it is already the base unit."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "数式"
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "基準単位にするための倍率。自身が基準単位ならば空白"
           }
         }
       }
     },
-    "GroupSeparator" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Group separator"
+    "editkeydef.save": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "桁区切り記号"
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "保存"
           }
         }
       }
     },
-    "GroupType" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Grouping style"
+    "editkeydef.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key Definition Editor\n       (Warning! Hacker Zone)\n        If it breaks, just reinstall."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "桁区切り方式"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キー定義編集\n　（危険！Hacker Zone）\n　　壊れたら再インストールしてね"
           }
         }
       }
     },
-    "hint.keyboard.swipe" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Swipe left or right to change keyboards. Long-press keys to edit."
+    "formula": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formula"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "左右にスワイプすればキーボードが切り替わります。キーを長押しすればキー定義を変更できます"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "数式"
           }
         }
       }
     },
-    "history.memo.save" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save"
+    "GroupSeparator": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Group separator"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保存"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桁区切り記号"
           }
         }
       }
     },
-    "history.memo.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Memo"
+    "GroupType": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grouping style"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "メモ"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桁区切り方式"
           }
         }
       }
     },
-    "info.url" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "https://docs.azukid.com/en/sumpo/Calclin/calclin"
+    "hint.keyboard.swipe": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swipe left or right to change keyboards. Long-press keys to edit."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "https://docs.azukid.com/jp/sumpo/Calclin/calclin"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "左右にスワイプすればキーボードが切り替わります。キーを長押しすればキー定義を変更できます"
           }
         }
       }
     },
-    "keydefs.list.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Key Definitions"
+    "history.memo.save": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "キー定義"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存"
           }
         }
       }
     },
-    "keyTop" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Key top"
+    "history.memo.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Memo"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "キートップ"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メモ"
           }
         }
       }
     },
-    "PlayMode" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mode"
+    "info.url": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://docs.azukid.com/en/sumpo/Calclin/calclin"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "表示モード"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://docs.azukid.com/jp/sumpo/Calclin/calclin"
           }
         }
       }
     },
-    "RoundType" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rounding method"
+    "keydefs.list.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key Definitions"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "丸め処理"
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "キー定義"
           }
         }
       }
     },
-    "settings.sheet.title" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Settings"
+    "keyTop": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key top"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "設定"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キートップ"
           }
         }
       }
     },
-    "symbol" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Symbol"
+    "PlayMode": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "記号"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示モード"
           }
         }
       }
     },
-    "toast.calculatedWithUnit" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Calculated with base unit [%@]"
+    "RoundType": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rounding method"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "基準単位[%@]\nで計算しました"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "丸め処理"
           }
         }
       }
     },
-    "toast.initKeyboard" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restored to default layout"
+    "settings.sheet.title": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "初期の配置に\n戻しました"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
           }
         }
       }
     },
-    "toast.initKeyboard.error" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oops, can’t do that"
+    "symbol": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Symbol"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "できません"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記号"
           }
         }
       }
     },
-    "toast.loadKeyboard" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restored saved layout"
+    "toast.calculatedWithUnit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calculated with base unit [%@]"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "保存した配置に戻しました"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基準単位[%@]\nで計算しました"
           }
         }
       }
     },
-    "toast.loadKeyboard.error" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oops, can’t do that"
+    "toast.initKeyboard": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restored to default layout"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "できません"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "初期の配置に\n戻しました"
           }
         }
       }
     },
-    "toast.saveKeyboard" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Saved!"
+    "toast.initKeyboard.error": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oops, can’t do that"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "保存しました"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "できません"
           }
         }
       }
     },
-    "toast.saveKeyboard.error" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oops, can’t do that"
+    "toast.loadKeyboard": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restored saved layout"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "できません"
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "保存した配置に戻しました"
           }
         }
       }
     },
-    "unitBase" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Base unit"
+    "toast.loadKeyboard.error": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oops, can’t do that"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "基準単位"
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "できません"
           }
         }
       }
     },
-    "unitConv" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Conversion factor"
+    "toast.saveKeyboard": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved!"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "変換倍率"
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "保存しました"
           }
         }
       }
     },
-    "アプリの紹介・取扱説明" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App introduction & user guide"
+    "toast.saveKeyboard.error": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oops, can’t do that"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "できません"
           }
         }
       }
     },
-    "インド式　12,34,56,789.0" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Indian style 12,34,56,789.0"
+    "unitBase": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base unit"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基準単位"
           }
         }
       }
     },
-    "キートップ" : {
-
-    },
-    "キーボード上に表示される文字や記号" : {
-
-    },
-    "キーボード配置" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keyboard layout"
+    "unitConv": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conversion factor"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "変換倍率"
           }
         }
       }
     },
-    "キー定義編集\n　（危険！Hacker Zone）\n　壊れたら再インストールしてね" : {
-
-    },
-    "コード" : {
-
-    },
-    "できません" : {
-
-    },
-    "メモ" : {
-
-    },
-    "丸め処理" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rounding"
+    "アプリの紹介・取扱説明": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App introduction & user guide"
           }
         }
       }
     },
-    "五捨五超入 偶数丸め" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round half to even"
+    "インド式　12,34,56,789.0": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indian style 12,34,56,789.0"
           }
         }
       }
     },
-    "五捨六入" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round half down"
+    "キートップ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key top"
           }
         }
       }
     },
-    "保存" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save"
+    "キーボード上に表示される文字や記号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Characters and symbols displayed on the keyboard."
           }
         }
       }
     },
-    "保存した配置に戻しました" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restored the saved layout"
+    "キーボード配置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keyboard layout"
           }
         }
       }
     },
-    "保存した配置に戻す" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restore saved layout"
+    "キー定義編集\n　（危険！Hacker Zone）\n　壊れたら再インストールしてね": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key Definition Editor\n       (Warning! Hacker Zone)\n        If it breaks, just reinstall."
           }
         }
       }
     },
-    "保存しました" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Saved"
+    "コード": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code"
           }
         }
       }
     },
-    "切り上げ" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round up"
+    "できません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oops, can’t do that"
           }
         }
       }
     },
-    "切り捨て" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round down"
+    "メモ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Memo"
           }
         }
       }
     },
-    "初心者" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Beginner"
+    "丸め処理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rounding"
           }
         }
       }
     },
-    "初期のキー定義と配置に戻す" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset to default key definitions and layout"
+    "五捨五超入 偶数丸め": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round half to even"
           }
         }
       }
     },
-    "初期の配置に\n戻しましたd" : {
-
-    },
-    "初期化" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset"
+    "五捨六入": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round half down"
           }
         }
       }
     },
-    "区切りなし   123456789.0" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No grouping 123456789.0"
+    "保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
           }
         }
       }
     },
-    "四捨五入" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round half up"
+    "保存した配置に戻しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restored the saved layout"
           }
         }
       }
     },
-    "基準単位" : {
-
-    },
-    "基準単位[%@]\nで計算しました" : {
-
-    },
-    "基準単位にするための倍率。自身が基準単位ならば空白" : {
-
-    },
-    "基準単位のcodeを記入。基準単位が同じ単位の範囲で加減算や変換が可能" : {
-
-    },
-    "変換倍率" : {
-      "comment" : "A label displayed above the text editor for the conversion rate of a unit.",
-      "isCommentAutoGenerated" : true
-    },
-    "小数点" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Decimal point"
+    "保存した配置に戻す": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore saved layout"
           }
         }
       }
     },
-    "小数部" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Decimal part"
+    "保存しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved"
           }
         }
       }
     },
-    "左右にスワイプすればキーボードが切り替わります。キーを長押しすればキー定義を変更できます" : {
-
-    },
-    "左右にスワイプまたはタップして切り替えできます" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Swipe left or right or tap to switch"
+    "切り上げ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round up"
           }
         }
       }
     },
-    "広告を見て寄付する" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Watch an ad to donate"
+    "切り捨て": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round down"
           }
         }
       }
     },
-    "復元" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restore"
+    "初心者": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beginner"
           }
         }
       }
     },
-    "数式" : {
-
-    },
-    "整数部" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Integer part"
+    "初期のキー定義と配置に戻す": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset to default key definitions and layout"
           }
         }
       }
     },
-    "有効桁数" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Decimal digits"
+    "初期の配置に\n戻しましたd": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restored to default layout d"
           }
         }
       }
     },
-    "桁区切り方式" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Digit grouping style"
+    "初期化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset"
           }
         }
       }
     },
-    "桁区切り記号" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Digit grouping symbol"
+    "区切りなし   123456789.0": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No grouping 123456789.0"
           }
         }
       }
     },
-    "正方向丸め" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round toward positive"
+    "四捨五入": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round half up"
           }
         }
       }
     },
-    "現在の配置を保存する" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save current layout"
+    "基準単位": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base unit"
           }
         }
       }
     },
-    "表示" : {
-
-    },
-    "表示する計算機を減らす" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show fewer calculators"
+    "基準単位[%@]\nで計算しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calculated with base unit [%@]"
           }
         }
       }
     },
-    "表示モード" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Display mode"
+    "基準単位にするための倍率。自身が基準単位ならば空白": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Multiplier for the base unit. Leave blank if it is already the base unit."
           }
         }
       }
     },
-    "表示倍率" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zoom level"
+    "基準単位のcodeを記入。基準単位が同じ単位の範囲で加減算や変換が可能": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the base unit code. You can add, subtract, and convert within units that share the same base."
           }
         }
       }
     },
-    "計算式に使われる文字や記号" : {
-
-    },
-    "計算機を増やす。ダブルクリックでも増える" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add a calculator; double-click to add more"
+    "変換倍率": {
+      "comment": "A label displayed above the text editor for the conversion rate of a unit.",
+      "isCommentAutoGenerated": true,
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conversion rate"
           }
         }
       }
     },
-    "記号" : {
-
-    },
-    "設定" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Settings"
+    "小数点": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decimal point"
           }
         }
       }
     },
-    "設定を開く" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open settings"
+    "小数部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decimal part"
           }
         }
       }
     },
-    "負方向丸め" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round toward negative"
+    "左右にスワイプすればキーボードが切り替わります。キーを長押しすればキー定義を変更できます": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swipe left or right to change keyboards. Long-press keys to edit."
           }
         }
       }
     },
-    "達人" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Expert"
+    "左右にスワイプまたはタップして切り替えできます": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swipe left or right or tap to switch"
           }
         }
       }
     },
-    "開く" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open"
+    "広告を見て寄付する": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Watch an ad to donate"
           }
         }
       }
     },
-    "開発者を応援する" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Support the developer"
+    "復元": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore"
+          }
+        }
+      }
+    },
+    "数式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formula"
+          }
+        }
+      }
+    },
+    "整数部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integer part"
+          }
+        }
+      }
+    },
+    "有効桁数": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decimal digits"
+          }
+        }
+      }
+    },
+    "桁区切り方式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digit grouping style"
+          }
+        }
+      }
+    },
+    "桁区切り記号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digit grouping symbol"
+          }
+        }
+      }
+    },
+    "正方向丸め": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round toward positive"
+          }
+        }
+      }
+    },
+    "現在の配置を保存する": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save current layout"
+          }
+        }
+      }
+    },
+    "表示": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Display"
+          }
+        }
+      }
+    },
+    "表示する計算機を減らす": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show fewer calculators"
+          }
+        }
+      }
+    },
+    "表示モード": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Display mode"
+          }
+        }
+      }
+    },
+    "表示倍率": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
+          }
+        }
+      }
+    },
+    "計算式に使われる文字や記号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Characters and symbols used in mathematical expressions."
+          }
+        }
+      }
+    },
+    "計算機を増やす。ダブルクリックでも増える": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a calculator; double-click to add more"
+          }
+        }
+      }
+    },
+    "記号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Symbol"
+          }
+        }
+      }
+    },
+    "設定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        }
+      }
+    },
+    "設定を開く": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open settings"
+          }
+        }
+      }
+    },
+    "負方向丸め": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round toward negative"
+          }
+        }
+      }
+    },
+    "達人": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expert"
+          }
+        }
+      }
+    },
+    "開く": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open"
+          }
+        }
+      }
+    },
+    "開発者を応援する": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Support the developer"
           }
         }
       }
     }
   },
-  "version" : "1.1"
+  "version": "1.1"
 }
