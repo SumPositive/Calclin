@@ -1,6 +1,6 @@
 //
 //  SettingView.swift
-//  Calc26
+//  Calclin
 //
 //  Created by sumpo/azukid on 2025/06/29.
 //
@@ -8,6 +8,9 @@
 import SwiftUI
 import UIKit
 import SafariServices
+
+
+let SettingView_HEIGHT: CGFloat = 620.0 // シート表示時の高さ指定
 
 struct SettingView: View {
     @EnvironmentObject var viewModel: SettingViewModel
@@ -18,7 +21,7 @@ struct SettingView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            // PackListの柔らかい雰囲気に寄せたグラデーション背景
+            // グラデーション背景
             LinearGradient(
                 colors: [Color(.systemGroupedBackground), Color(.systemBackground)],
                 startPoint: .topLeading,
@@ -26,12 +29,12 @@ struct SettingView: View {
             )
             .ignoresSafeArea()
 
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 headerArea
 
                 // スクロール領域に設定項目をまとめる
                 ScrollView {
-                    VStack(spacing: 14) {
+                    VStack(spacing: 4) {
                         modeSection
                         integerSection
                         decimalSection
@@ -55,17 +58,17 @@ struct SettingView: View {
 
     // MARK: - ヘッダ
 
-    /// PackList風のやわらかいヘッダエリア
+    /// ヘッダエリア
     private var headerArea: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Button(action: {
-                    // PackList風に明示的な閉じるボタンを用意
+                    // 明示的な閉じるボタン
                     dismiss()
                 }) {
-                    Image(systemName: "xmark")
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(.primary)
+                    Image(systemName: "chevron.down")
+                        .imageScale(.large)
+                        .tint(.accentColor)
                         .padding(10)
                         .background(.thinMaterial)
                         .clipShape(Circle())
@@ -75,45 +78,11 @@ struct SettingView: View {
                 Spacer()
             }
             .overlay(
-                VStack(spacing: 6) {
-                    Text("settings.sheet.title")
+                VStack(spacing: 0) {
+                    Text("設定")
                         .font(.headline)
-                    Text("settings.sheet.subtitle")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
                 }
             )
-
-            HStack(spacing: 8) {
-                // PackListらしいタグ風のアクセント
-                Capsule(style: .continuous)
-                    .fill(Color.accentColor.opacity(0.15))
-                    .frame(width: 82, height: 26)
-                    .overlay(
-                        HStack(spacing: 6) {
-                            Image(systemName: "wand.and.stars")
-                                .font(.caption2.weight(.semibold))
-                                .foregroundStyle(Color.accentColor)
-                            Text("settings.mode.title")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(Color.accentColor)
-                        }
-                    )
-
-                Capsule(style: .continuous)
-                    .fill(Color(.systemGray5))
-                    .frame(width: 120, height: 26)
-                    .overlay(
-                        HStack(spacing: 6) {
-                            Image(systemName: "sparkles")
-                                .font(.caption2.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                            Text("settings.info.title")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                        }
-                    )
-            }
         }
         .padding(.horizontal)
         .padding(.top, 8)
