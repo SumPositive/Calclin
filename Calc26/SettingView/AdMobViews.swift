@@ -225,7 +225,6 @@ private struct BannerAdView: UIViewRepresentable {
 }
 
 // MARK: - Rewarded
-@MainActor
 private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDelegate {
     @Published var rewardStatusText: String?
     @Published var isRewardLoading = false
@@ -240,45 +239,54 @@ private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenC
     }
 
     func reloadRewardAd() {
-        isRewardLoading = true
-        rewardStatusText = nil
+        // UI更新はメインアクターで行う。PackListと同様の流れに合わせる
+        Task { @MainActor in
+            isRewardLoading = true
+            rewardStatusText = nil
+        }
+
         GADRewardedAd.load(withAdUnitID: ADMOB_REWARD_1_UnitID, request: GADRequest()) { [weak self] ad, error in
+            guard let self else { return }
             Task { @MainActor in
-                guard let self else { return }
                 // ロード完了時はメインアクターでUI状態を更新する
-                self.isRewardLoading = false
+                isRewardLoading = false
                 if let error {
-                    self.rewardedAd = nil
-                    self.rewardStatusText = error.localizedDescription
+                    rewardedAd = nil
+                    rewardStatusText = error.localizedDescription
                     log(.warning, "Reward load failed: \(error.localizedDescription)")
                     return
                 }
-                self.rewardedAd = ad
-                self.rewardedAd?.fullScreenContentDelegate = self
-                self.rewardStatusText = String(localized: "視聴後は閉じるボタンでシートを終了できます")
+                rewardedAd = ad
+                rewardedAd?.fullScreenContentDelegate = self
+                rewardStatusText = String(localized: "視聴後は閉じるボタンでシートを終了できます")
             }
         }
     }
 
     func showRewardAd() {
-        guard let ad = rewardedAd else {
-            rewardStatusText = adUnavailableMessage
-            return
-        }
-        guard let root = Self.topViewController() else {
-            rewardStatusText = String(localized: "広告を表示する画面を特定できませんでした")
-            return
-        }
-        ad.present(fromRootViewController: root) { [weak self] in
-            // 報酬獲得時にトーストなどへつなげる余地を残す
-            Task { @MainActor in
-                guard let self else { return }
-                self.rewardStatusText = String(localized: "ご視聴ありがとうございました")
+        // UI操作を含むためメインアクター経由で実行する
+        Task { @MainActor in
+            guard let ad = rewardedAd else {
+                rewardStatusText = adUnavailableMessage
+                return
+            }
+            guard let root = Self.topViewController() else {
+                rewardStatusText = String(localized: "広告を表示する画面を特定できませんでした")
+                return
+            }
+            ad.present(fromRootViewController: root) { [weak self] in
+                // 報酬獲得時にトーストなどへつなげる余地を残す
+                Task { @MainActor in
+                    guard let self else { return }
+                    self.rewardStatusText = String(localized: "ご視聴ありがとうございました")
+                }
             }
         }
     }
 
+    @MainActor
     private static func topViewController() -> UIViewController? {
+        // 表示中の最前面ビューを取得してpresent元に使う（PackListと同じ方式）
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return nil }
         guard let window = scene.windows.first(where: { $0.isKeyWindow }) else { return nil }
         var controller = window.rootViewController
