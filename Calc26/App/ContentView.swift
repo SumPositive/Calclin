@@ -198,7 +198,8 @@ struct ContentView: View {
             SettingView()
                 .environmentObject(setting)
                 .environmentObject(keyboardViewModel)
-                .presentationDetents([.medium, .large])
+                .presentationDetents([.height(SettingView_HEIGHT), .large])
+
         }
     }
     

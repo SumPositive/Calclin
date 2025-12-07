@@ -58,8 +58,8 @@ final class SettingViewModel: ObservableObject {
         /// ローカライズ済みラベル
         var localized: String {
             switch self {
-                case .beginner: return String(localized: "settings.mode.beginner")
-                case .master:   return String(localized: "settings.mode.master")
+                case .beginner: return String(localized: "初心者")
+                case .master:   return String(localized: "達人")
             }
         }
     }
@@ -93,13 +93,13 @@ final class SettingViewModel: ObservableObject {
         // PickerやText表示用のlocalized文字列
         var localized: String {
             switch self {
-                case .Rup:    return String(localized: "setting.round.Rup")
-                case .Rplus:  return String(localized: "setting.round.Rplus")
-                case .R54:    return String(localized: "setting.round.R54")
-                case .R55:    return String(localized: "setting.round.R55")
-                case .R65:    return String(localized: "setting.round.R65")
-                case .Rminus: return String(localized: "setting.round.Rminus")
-                case .Rdown:  return String(localized: "setting.round.Rdown")
+                case .Rup:    return String(localized: "切り上げ")
+                case .Rplus:  return String(localized: "正方向丸め")
+                case .R54:    return String(localized: "四捨五入")
+                case .R55:    return String(localized: "五捨五超入 偶数丸め")
+                case .R65:    return String(localized: "五捨六入")
+                case .Rminus: return String(localized: "負方向丸め")
+                case .Rdown:  return String(localized: "切り捨て")
             }
         }
     }
@@ -146,10 +146,10 @@ final class SettingViewModel: ObservableObject {
         // PickerやText表示用のlocalized文字列
         var localized: String {
             switch self {
-                case .none: return String(localized: "setting.group.none")
-                case .G3:   return String(localized: "setting.group.G3")
-                case .G23:  return String(localized: "setting.group.G23")
-                case .G4:   return String(localized: "setting.group.G4")
+                case .none: return String(localized: "区切りなし   123456789.0")
+                case .G3:   return String(localized: "３桁区切り 123,456,789.0")
+                case .G23:  return String(localized: "インド式　12,34,56,789.0")
+                case .G4:   return String(localized: "４桁区切り 1,2345,6789.0")
             }
         }
     }

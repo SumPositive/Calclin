@@ -10,7 +10,7 @@ import UIKit
 import SafariServices
 
 
-let SettingView_HEIGHT: CGFloat = 620.0 // シート表示時の高さ指定
+let SettingView_HEIGHT: CGFloat = 580.0 // シート表示時の高さ指定
 
 struct SettingView: View {
     @EnvironmentObject var viewModel: SettingViewModel
@@ -21,29 +21,20 @@ struct SettingView: View {
 
     var body: some View {
         NavigationStack {
-            // シンプルな背景で視認性を優先
-            ZStack(alignment: .top) {
-                Color(.systemGroupedBackground)
-                    .ignoresSafeArea()
-
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        sheetIntroduction
-
-                        modeSection
-                        integerSection
-                        decimalSection
-                        fontSection
-                        keyboardSection
-                        infoSection
-                        supportSection
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 12)
-                    .padding(.bottom)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 8) {
+                    modeSection
+                    integerSection
+                    decimalSection
+                    keyboardSection
+                    infoSection
+                    supportSection
                 }
+                .padding(.horizontal)
+                .padding(.top, 8)
+                .padding(.bottom)
             }
-            .navigationTitle(Text("settings.sheet.title"))
+            .navigationTitle(Text("設定"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -70,58 +61,69 @@ struct SettingView: View {
         }
     }
 
-    // MARK: - ヘッダ代わりのイントロ文
-
-    /// NavigationStackヘッダ下に表示する簡易イントロ
-    private var sheetIntroduction: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("settings.sheet.title")
-                .font(.headline)
-            Text("settings.sheet.subtitle")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(12)
-        .background(.thinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-    }
 
     // MARK: - 各セクション
 
     /// モード切替（初心者／達人）
     private var modeSection: some View {
         SettingSectionCard(
-            title: "settings.mode.title",
+            title: "オプション",
             iconName: "switch.2",
-            tint: .accentColor,
-            description: "settings.mode.subtitle"
+            tint: .accentColor
         ) {
-            Picker("PlayMode", selection: $viewModel.playMode) {
-                ForEach(SettingViewModel.PlayMode.allCases) { mode in
-                    Text(mode.localized).tag(mode)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 4) {
+                    Label("表示モード", systemImage: viewModel.playMode == .beginner
+                                                    ? "tortoise" : "hare")
+                        .labelStyle(.titleAndIcon)
+                        .font(.subheadline)
+                    Picker("PlayMode", selection: $viewModel.playMode) {
+                        ForEach(SettingViewModel.PlayMode.allCases) { mode in
+                            Text(mode.localized).tag(mode)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .onChange(of: viewModel.playMode) { oldValue, newValue in
+                        // モード切替のログを残すだけでも利用者に優しい
+                        log(.info, "PlayMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
+                    }
+                }
+                HStack(spacing: 4) {
+                    Label("表示倍率", systemImage: "plus.magnifyingglass")
+                        .labelStyle(.titleAndIcon)
+                        .font(.subheadline)
+                    Text(String(format: " %.1f ", viewModel.numberFontScale))
+                        .monospacedDigit()
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                        .background(Color(.systemGray5))
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    Slider(value: $viewModel.numberFontScale, in: (0.5)...(3.0), step: 0.1)
+                        .onChange(of: viewModel.numberFontScale, { oldValue, newValue in
+                            log(.info, ".onChange numberFontScale")
+                            // SettingViewModel
+                            viewModel.numberFontScale = newValue // Double型
+                            // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
+                            NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                        })
                 }
             }
-            .pickerStyle(SegmentedPickerStyle())
-            .onChange(of: viewModel.playMode) { oldValue, newValue in
-                // モード切替のログを残すだけでも利用者に優しい
-                log(.info, "PlayMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
-            }
+            .padding(.top, -12)
+            .padding(.leading, 12)
         }
     }
 
     /// 整数部の見え方をまとめるカード
     private var integerSection: some View {
         SettingSectionCard(
-            title: "settings.IntPart.title",
+            title: "整数部",
             iconName: "number",
             tint: Color(.systemTeal)
         ) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 4) {
                     // 桁区切りタイプ
-                    Label("settings.IntPart.groupType", systemImage: "rectangle.split.3x1")
-                        .labelStyle(.titleAndIcon)
+                    Text("桁区切り方式")
                         .font(.subheadline)
                     Picker("GroupType", selection: $viewModel.groupType) {
                         ForEach(SettingViewModel.GroupType.allCases) { type in
@@ -129,6 +131,8 @@ struct SettingView: View {
                         }
                     }
                     .pickerStyle(MenuPickerStyle())
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    //.tint(.accentColor)
                     .onChange(of: viewModel.groupType) { oldValue, newValue in
                         log(.info, ".onChange groupType")
                         // 選択されたときに呼ばれる処理
@@ -138,17 +142,16 @@ struct SettingView: View {
                         // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                     }
-                    Spacer()
                 }
 
                 // 桁区切り記号
-                HStack(spacing: 10) {
-                    Label("settings.IntPart.groupSymbol", systemImage: "line.3.horizontal.decrease")
-                        .labelStyle(.titleAndIcon)
+                HStack(spacing: 4) {
+                    Text("桁区切り記号")
                         .font(.subheadline)
                     Picker("GroupSeparator", selection: $viewModel.groupSeparator) {
                         ForEach(SettingViewModel.GroupSeparator.allCases) { type in
                             Text(type.rawValue).tag(type)
+                                //.font(.title) 指定できない
                         }
                     }
                     .pickerStyle(SegmentedPickerStyle())
@@ -163,21 +166,21 @@ struct SettingView: View {
                     }
                 }
             }
+            .padding(.top, -12)
+            .padding(.leading, 12)
         }
     }
 
     /// 小数部の見え方をまとめるカード
     private var decimalSection: some View {
         SettingSectionCard(
-            title: "settings.decimalPart.title",
+            title: "小数部",
             iconName: "circle.grid.2x2.fill",
             tint: Color(.systemIndigo)
         ) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 10) {
-                    // 小数桁数スライダー
-                    Label("settings.decimalPart.digits", systemImage: "slider.horizontal.3")
-                        .labelStyle(.titleAndIcon)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 4) {
+                    Text("有効桁数")
                         .font(.subheadline)
                     Text(" \(Int(viewModel.decimalDigits)) ")
                         .monospacedDigit()
@@ -201,16 +204,18 @@ struct SettingView: View {
                         // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                     })
-
-                    // 丸めタイプ
+                }
+                
+                HStack(spacing: 4) {
+                    Text("丸め処理")
+                        .font(.subheadline)
                     Picker("RoundType", selection: $viewModel.roundType) {
                         ForEach(SettingViewModel.RoundType.allCases) { type in
                             Text(type.localized).tag(type)
-                                .minimumScaleFactor(0.2)
                         }
                     }
                     .pickerStyle(MenuPickerStyle())
-                    .minimumScaleFactor(0.2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .onChange(of: viewModel.roundType) { oldValue, newValue in
                         log(.info, ".onChange roundType")
                         // SBCD_Configにセットする
@@ -221,9 +226,8 @@ struct SettingView: View {
                 }
 
                 // 小数点
-                HStack(spacing: 10) {
-                    Label("settings.decimalPart.digitsSymbol", systemImage: "circle.lefthalf.fill")
-                        .labelStyle(.titleAndIcon)
+                HStack(spacing: 4) {
+                    Text("小数点")
                         .font(.subheadline)
                     Picker("DecimalSeparator", selection: $viewModel.decimalSeparator) {
                         ForEach(SettingViewModel.DecimalSeparator.allCases) { type in
@@ -242,106 +246,128 @@ struct SettingView: View {
                     }
                 }
             }
-        }
-    }
-
-    /// 数字表示倍率の調整カード
-    private var fontSection: some View {
-        SettingSectionCard(
-            title: "settings.font.zoom",
-            iconName: "textformat.size",
-            tint: Color(.systemOrange)
-        ) {
-            HStack(spacing: 10) {
-                // 数字表示倍率スライダー
-                Label("settings.font.zoom", systemImage: "a.magnify")
-                    .labelStyle(.titleAndIcon)
-                    .font(.subheadline)
-                Text(String(format: " %.1f ", viewModel.numberFontScale))
-                    .monospacedDigit()
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2)
-                    .background(Color(.systemGray5))
-                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                Slider(value: $viewModel.numberFontScale, in: (0.5)...(3.0), step: 0.1)
-                    .onChange(of: viewModel.numberFontScale, { oldValue, newValue in
-                        log(.info, ".onChange numberFontScale")
-                        // SettingViewModel
-                        viewModel.numberFontScale = newValue // Double型
-                        // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
-                        NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
-                    })
-            }
+            .padding(.top, -12)
+            .padding(.leading, 12)
         }
     }
 
     /// キーボード設定の保存・読込カード
     private var keyboardSection: some View {
         SettingSectionCard(
-            title: "settings.keyboard.title",
+            title: "キーボード配置",
             iconName: "keyboard",
             tint: Color(.systemBlue)
         ) {
-            HStack(spacing: 12) {
-                Button("settings.keyboard.save") {
+            HStack(spacing: 8) {
+                Button {
                     keyboardViewModel.saveKeyboardJson()
-                    Manager.shared.toast(String(localized: "toast.saveKeyboard"), wait: 2.0)
+                    Manager.shared.toast(String(localized: "保存しました"), wait: 2.0)
+                } label: {
+                    VStack(spacing: 4) {
+                        Label("保存", systemImage: "square.and.arrow.down")
+                            .frame(width: 90, height: 34)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(.blue, lineWidth: 1)
+                            )
+                        Text("現在の配置を保存する")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                .buttonStyle(SettingCapsuleStyle(tint: Color(.systemBlue)))
+                .accessibilityLabel(Text("保存"))
 
-                Button("settings.keyboard.load") {
+                Button {
                     keyboardViewModel.loadKeyboardJson()
-                    Manager.shared.toast(String(localized: "toast.loadKeyboard"), wait: 3.0)
+                    Manager.shared.toast(String(localized: "保存した配置に戻しました"), wait: 3.0)
+                } label: {
+                    VStack(spacing: 4) {
+                        Label("復元", systemImage: "square.and.arrow.up")
+                            .frame(width: 90, height: 34)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(.green, lineWidth: 1)
+                            )
+                        Text("保存した配置に戻す")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                .buttonStyle(SettingCapsuleStyle(tint: Color(.systemGreen)))
+                .accessibilityLabel(Text("復元"))
 
+                
                 Spacer()
 
-                Button("settings.keyboard.init") {
+                Button {
                     keyboardViewModel.initKeyboardJson()
+                } label: {
+                    VStack(spacing: 4) {
+                        Label("初期化", systemImage: "keyboard")
+                            .frame(width: 98, height: 24)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(.red, lineWidth: 1)
+                            )
+                        Text("初期のキー定義と配置に戻す")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                .buttonStyle(SettingCapsuleStyle(tint: Color(.systemRed)))
+                .accessibilityLabel(Text("初期化"))
             }
+            .padding(.top, -8)
+            .padding(.leading, 12)
         }
     }
 
     /// アプリの情報リンクをまとめるカード
     private var infoSection: some View {
         SettingSectionCard(
-            title: "settings.info.title",
-            iconName: "book.closed.fill",
-            tint: Color(.systemPurple),
-            description: "settings.info.description"
+            title: "アプリの紹介・取扱説明",
+            iconName: "book.closed",
+            tint: Color(.systemPurple)
         ) {
-            SettingLinkButton(
-                title: "settings.info.button",
-                systemImage: "book",
-                tint: Color(.systemPurple),
-                description: "settings.info.description"
-            ) {
+            Button {
                 // 使い方ページをSafariシートで表示する
                 openSafari(for: "info.url")
+            } label: {
+                Label("開く", systemImage: "book")
+                    .frame(width: 90, height: 34)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(.blue, lineWidth: 1)
+                    )
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.top, -40)
+            .padding(.trailing, 10)
         }
     }
 
     /// 下部に開発者応援リンクを配置
     private var supportSection: some View {
         SettingSectionCard(
-            title: "settings.support.title",
+            title: "開発者を応援する",
             iconName: "heart.fill",
-            tint: Color(.systemPink),
-            description: "settings.support.description"
+            tint: Color(.systemPink)
         ) {
-            SettingLinkButton(
-                title: "settings.support.button",
-                systemImage: "heart.circle.fill",
-                tint: Color(.systemPink),
-                description: "settings.support.description"
-            ) {
-                // 開発者支援ページへ遷移する
-                openSafari(for: "settings.support.url")
+            Button {
+                // 広告シートを表示する
+            } label: {
+                Label("広告を見て寄付する", systemImage: "seal")
+                    .frame(width: 190, height: 34)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(.blue, lineWidth: 1)
+                    )
             }
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.top, -8)
         }
     }
 
@@ -360,7 +386,7 @@ struct SettingView: View {
 
 // MARK: - 共通UIコンポーネント
 
-/// PackListのカード感をSwiftUIで再現する共通コンポーネント
+/// カード感をSwiftUIで再現する共通コンポーネント
 private struct SettingSectionCard<Content: View>: View {
     let title: LocalizedStringResource
     let iconName: String
@@ -421,7 +447,7 @@ private struct SettingSectionCard<Content: View>: View {
     }
 }
 
-/// PackListライクな丸みのあるボタンスタイル
+/// 丸みのあるボタンスタイル
 private struct SettingCapsuleStyle: ButtonStyle {
     let tint: Color
 
