@@ -20,21 +20,20 @@ struct SettingView: View {
     @State private var safariURL: URL?  // 開く予定のURLを保持
 
     var body: some View {
-        ZStack(alignment: .top) {
-            // グラデーション背景
-            LinearGradient(
-                colors: [Color(.systemGroupedBackground), Color(.systemBackground)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+        NavigationStack {
+            ZStack(alignment: .top) {
+                // グラデーション背景
+                LinearGradient(
+                    colors: [Color(.systemGroupedBackground), Color(.systemBackground)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
 
-            VStack(spacing: 8) {
-                headerArea
-
-                // スクロール領域に設定項目をまとめる
                 ScrollView {
-                    VStack(spacing: 4) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        sheetIntroduction
+
                         modeSection
                         integerSection
                         decimalSection
@@ -44,7 +43,26 @@ struct SettingView: View {
                         supportSection
                     }
                     .padding(.horizontal)
+                    .padding(.top, 12)
                     .padding(.bottom)
+                }
+            }
+            .navigationTitle(Text("settings.sheet.title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        // シートを閉じてメイン画面へ戻す
+                        dismiss()
+                    } label: {
+                        Label("settings.sheet.title", systemImage: "chevron.down")
+                            .labelStyle(.iconOnly)
+                            .imageScale(.large)
+                            .padding(10)
+                            .background(.thinMaterial)
+                            .clipShape(Circle())
+                    }
+                    .tint(.accentColor)
                 }
             }
         }
@@ -56,36 +74,21 @@ struct SettingView: View {
         }
     }
 
-    // MARK: - ヘッダ
+    // MARK: - ヘッダ代わりのイントロ文
 
-    /// ヘッダエリア
-    private var headerArea: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Button(action: {
-                    // 明示的な閉じるボタン
-                    dismiss()
-                }) {
-                    Image(systemName: "chevron.down")
-                        .imageScale(.large)
-                        .tint(.accentColor)
-                        .padding(10)
-                        .background(.thinMaterial)
-                        .clipShape(Circle())
-                        .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
-                }
-
-                Spacer()
-            }
-            .overlay(
-                VStack(spacing: 0) {
-                    Text("設定")
-                        .font(.headline)
-                }
-            )
+    /// NavigationStackヘッダ下に表示する簡易イントロ
+    private var sheetIntroduction: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("settings.sheet.title")
+                .font(.headline)
+            Text("settings.sheet.subtitle")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal)
-        .padding(.top, 8)
+        .padding(12)
+        .background(.thinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     // MARK: - 各セクション
