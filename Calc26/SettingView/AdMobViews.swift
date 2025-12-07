@@ -9,6 +9,7 @@ import SwiftUI
 import UIKit
 
 import GoogleMobileAds
+import FirebaseCrashlytics
 
 // アプリID は、Info.plistにセット：key:GADApplicationIdentifier
 

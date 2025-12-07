@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import FirebaseCore
+import FirebaseCrashlytics
 import GoogleMobileAds
 
 
@@ -16,6 +18,9 @@ struct Calc26App: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        // Firebaseの初期化を最優先で行い、Crashlyticsの収集を起動しておく
+        FirebaseApp.configure()
+        Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
         // アプリ起動時に一度だけAdMob SDKを初期化する。初期化コストを早めに払うことで、実際の広告表示タイミングでの遅延を抑えることを狙う
         GADMobileAds.sharedInstance().start(completionHandler: nil)
     }

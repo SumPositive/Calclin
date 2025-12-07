@@ -125,6 +125,7 @@
 
 /* Begin PBXBuildFile section */
                 B9A4F2012F5C11AA00A1B001 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2022F5C11AA00A1B001 /* GoogleMobileAds */; };
+                B9A4F2072F5C1AAB00A1B001 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -133,6 +134,7 @@
                         buildActionMask = 2147483647;
                         files = (
                                 B9A4F2012F5C11AA00A1B001 /* GoogleMobileAds in Frameworks */,
+                                B9A4F2072F5C1AAB00A1B001 /* FirebaseCrashlytics in Frameworks */,
                         );
                         runOnlyForDeploymentPostprocessing = 0;
                 };
@@ -191,11 +193,12 @@
                         name = Calclin;
                         packageProductDependencies = (
                                 B9A4F2022F5C11AA00A1B001 /* GoogleMobileAds */,
+                                B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */,
                         );
                         productName = Calc26;
-			productReference = C30A78A32E10EE8500212729 /* Calclin.app */;
-			productType = "com.apple.product-type.application";
-		};
+                        productReference = C30A78A32E10EE8500212729 /* Calclin.app */;
+                        productType = "com.apple.product-type.application";
+                };
 		C30A78AF2E10EE8700212729 /* CalclinTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C30A78C72E10EE8700212729 /* Build configuration list for PBXNativeTarget "CalclinTests" */;
@@ -282,6 +285,7 @@
                         projectRoot = "";
                         packageReferences = (
                                 B9A4F2032F5C11AA00A1B001 /* GoogleMobileAds */,
+                                B9A4F2062F5C1AAB00A1B001 /* FirebaseCrashlytics */,
                         );
                         targets = (
                                 C30A78A22E10EE8500212729 /* Calclin */,
@@ -675,10 +679,12 @@
 
 /* Begin XCSwiftPackageProductDependency section */
                 B9A4F2022F5C11AA00A1B001 /* GoogleMobileAds */ = {isa = XCSwiftPackageProductDependency; package = B9A4F2032F5C11AA00A1B001 /* GoogleMobileAds */; productName = GoogleMobileAds; };
+                B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */ = {isa = XCSwiftPackageProductDependency; package = B9A4F2062F5C1AAB00A1B001 /* FirebaseCrashlytics */; productName = FirebaseCrashlytics; };
 /* End XCSwiftPackageProductDependency section */
 
 /* Begin XCRemoteSwiftPackageReference section */
                 B9A4F2032F5C11AA00A1B001 /* GoogleMobileAds */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads"; requirement = {kind = upToNextMajorVersion; minimumVersion = 11.13.0; }; };
+                B9A4F2062F5C1AAB00A1B001 /* FirebaseCrashlytics */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git"; requirement = {kind = upToNextMajorVersion; minimumVersion = 10.24.0; }; };
 /* End XCRemoteSwiftPackageReference section */
         };
         rootObject = C30A789B2E10EE8500212729 /* Project object */;
