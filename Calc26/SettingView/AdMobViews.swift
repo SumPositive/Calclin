@@ -189,6 +189,7 @@ private struct BannerAdView: UIViewRepresentable {
         uiView.rootViewController = context.coordinator.rootViewController
     }
 
+    @MainActor
     final class Coordinator: NSObject, GADBannerViewDelegate {
         @Binding var height: CGFloat
         @Binding var isLoading: Bool
@@ -223,6 +224,7 @@ private struct BannerAdView: UIViewRepresentable {
 }
 
 // MARK: - Rewarded
+@MainActor
 private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDelegate {
     @Published var rewardStatusText: String?
     @Published var isRewardLoading = false
@@ -240,8 +242,9 @@ private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenC
         isRewardLoading = true
         rewardStatusText = nil
         GADRewardedAd.load(withAdUnitID: ADMOB_REWARD_1_UnitID, request: GADRequest()) { [weak self] ad, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 guard let self else { return }
+                // ロード完了時はメインアクターでUI状態を更新する
                 self.isRewardLoading = false
                 if let error {
                     self.rewardedAd = nil
@@ -267,7 +270,7 @@ private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenC
         }
         ad.present(fromRootViewController: root) { [weak self] in
             // 報酬獲得時にトーストなどへつなげる余地を残す
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 guard let self else { return }
                 self.rewardStatusText = String(localized: "ご視聴ありがとうございました")
             }
