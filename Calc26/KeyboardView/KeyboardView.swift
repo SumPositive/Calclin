@@ -99,7 +99,7 @@ struct KeyboardView: View {
 
                 if setting.playMode == .beginner {
                     // 初心者モードでは操作ヒントを補足
-                    Text(String(localized: "hint.keyboard.swipe"))
+                    Text("左右にスワイプすればキーボードが切り替わります。キーを長押しすればキー定義を変更できます")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -419,7 +419,7 @@ struct KeyDefListView: View {
             .contentShape(Rectangle())
             
             Spacer()
-            Text("keydefs.list.title").padding(4)
+            Text("メモ").padding(4)
             Spacer()
             
             Button { viewModel.popupKeyDefList = nil } label: {
@@ -514,12 +514,12 @@ struct EditKeyDefView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            Text("editkeydef.title")
+            Text("キー定義編集\n　（危険！Hacker Zone）\n　壊れたら再インストールしてね")
                 .font(.headline)
                 .foregroundColor(COLOR_WARN)
 
             HStack {
-                Text("code")
+                Text("コード")
                     .font(.headline)
                     .foregroundColor(COLOR_TITLE)
                     .frame(width: TITLE_WIDTH, alignment: .center)
@@ -529,13 +529,13 @@ struct EditKeyDefView: View {
             }
 
             HStack(alignment: .top) {
-                Text("keyTop")
+                Text("キートップ")
                     .font(.headline)
                     .foregroundColor(COLOR_TITLE)
                     .frame(width: TITLE_WIDTH)
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("editkeydef.info.keyTop")
+                    Text("キーボード上に表示される文字や記号")
                         .font(.caption2)
                         .foregroundColor(COLOR_TITLE)
                         .padding(.bottom, 2)
@@ -549,7 +549,7 @@ struct EditKeyDefView: View {
             //DEBUG//.background(Color.blue.opacity(0.4))
 
             HStack(alignment: .top) {
-                Text("symbol")
+                Text("記号")
                     .font(.headline)
                     .foregroundColor(COLOR_TITLE)
                     .frame(width: TITLE_WIDTH)
@@ -568,13 +568,13 @@ struct EditKeyDefView: View {
             }
 
             HStack(alignment: .top) {
-                Text("formula")
+                Text("数式")
                     .font(.headline)
                     .foregroundColor(COLOR_TITLE)
                     .frame(width: TITLE_WIDTH, alignment: .center)
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("editkeydef.info.formula")
+                    Text("計算式に使われる文字や記号")
                         .font(.caption2)
                         .foregroundColor(COLOR_TITLE)
                         .padding(.bottom, 2)
@@ -587,13 +587,13 @@ struct EditKeyDefView: View {
             }
 
             HStack(alignment: .top) {
-                Text("unitBase")
+                Text("基準単位")
                     .font(.headline)
                     .foregroundColor(COLOR_TITLE)
                     .frame(width: TITLE_WIDTH, alignment: .center)
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("editkeydef.info.unitBase")
+                    Text("基準単位のcodeを記入。基準単位が同じ単位の範囲で加減算や変換が可能")
                         .font(.caption2)
                         .foregroundColor(COLOR_TITLE)
                         .padding(.bottom, 2)
@@ -606,13 +606,13 @@ struct EditKeyDefView: View {
             }
 
             HStack(alignment: .top) {
-                Text("unitConv")
+                Text("変換倍率")
                     .font(.headline)
                     .foregroundColor(COLOR_TITLE)
                     .frame(width: TITLE_WIDTH, alignment: .center)
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("editkeydef.info.unitConv")
+                    Text("基準単位にするための倍率。自身が基準単位ならば空白")
                         .font(.caption2)
                         .foregroundColor(COLOR_TITLE)
                         .padding(.bottom, 2)
@@ -625,7 +625,7 @@ struct EditKeyDefView: View {
             }
 
             //Spacer()
-            Button("editkeydef.save") {
+            Button("保存") {
                 onSave()
             }
             .padding(.top, 4)

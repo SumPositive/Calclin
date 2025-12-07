@@ -42,7 +42,7 @@ struct SettingView: View {
                         // シートを閉じてメイン画面へ戻す
                         dismiss()
                     } label: {
-                        Label("settings.sheet.title", systemImage: "chevron.down")
+                        Label("設定", systemImage: "chevron.down")
                             .labelStyle(.iconOnly)
                             .imageScale(.large)
                             .padding(10)
@@ -77,7 +77,7 @@ struct SettingView: View {
                                                     ? "tortoise" : "hare")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
-                    Picker("PlayMode", selection: $viewModel.playMode) {
+                    Picker("表示モード", selection: $viewModel.playMode) {
                         ForEach(SettingViewModel.PlayMode.allCases) { mode in
                             Text(mode.localized).tag(mode)
                         }
@@ -125,7 +125,7 @@ struct SettingView: View {
                     // 桁区切りタイプ
                     Text("桁区切り方式")
                         .font(.subheadline)
-                    Picker("GroupType", selection: $viewModel.groupType) {
+                    Picker("桁区切り方式", selection: $viewModel.groupType) {
                         ForEach(SettingViewModel.GroupType.allCases) { type in
                             Text(type.localized).tag(type)
                         }
@@ -148,7 +148,7 @@ struct SettingView: View {
                 HStack(spacing: 4) {
                     Text("桁区切り記号")
                         .font(.subheadline)
-                    Picker("GroupSeparator", selection: $viewModel.groupSeparator) {
+                    Picker("桁区切り記号", selection: $viewModel.groupSeparator) {
                         ForEach(SettingViewModel.GroupSeparator.allCases) { type in
                             Text(type.rawValue).tag(type)
                                 //.font(.title) 指定できない
@@ -209,7 +209,7 @@ struct SettingView: View {
                 HStack(spacing: 4) {
                     Text("丸め処理")
                         .font(.subheadline)
-                    Picker("RoundType", selection: $viewModel.roundType) {
+                    Picker("丸め処理", selection: $viewModel.roundType) {
                         ForEach(SettingViewModel.RoundType.allCases) { type in
                             Text(type.localized).tag(type)
                         }
@@ -229,7 +229,7 @@ struct SettingView: View {
                 HStack(spacing: 4) {
                     Text("小数点")
                         .font(.subheadline)
-                    Picker("DecimalSeparator", selection: $viewModel.decimalSeparator) {
+                    Picker("小数点", selection: $viewModel.decimalSeparator) {
                         ForEach(SettingViewModel.DecimalSeparator.allCases) { type in
                             Text(type.rawValue).tag(type)
                         }

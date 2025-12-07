@@ -146,7 +146,7 @@ struct HistoryMemoView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("history.memo.title")
+            Text("メモ")
                 .font(.headline)
                 .foregroundColor(COLOR_TITLE)
 
@@ -160,7 +160,7 @@ struct HistoryMemoView: View {
                     }
                 }
             
-            Button("history.memo.save") {
+            Button("保存") {
                 onSave()
             }
             .padding(.top, 4)

@@ -240,11 +240,11 @@ final class KeyboardViewModel: ObservableObject {
             if decoded.appName == "CalcRoll",
                let kb = decoded.keyboard_1 {
                 keyboard = kb
-                if isToast {Manager.shared.toast(String(localized: "toast.initKeyboard"), wait: 3.0)}
+                if isToast {Manager.shared.toast(String(localized: "初期の配置に\n戻しましたd"), wait: 3.0)}
             }
         } catch {
             log(.error, "読み込み失敗: \(error)")
-            if isToast {Manager.shared.toast(String(localized: "toast.initKeyboard.error"), wait: 2.0)}
+            if isToast {Manager.shared.toast(String(localized: "できません"), wait: 2.0)}
         }
     }
     

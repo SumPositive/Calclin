@@ -677,7 +677,7 @@ final class CalcViewModel: ObservableObject {
                         ans_unitFormula = def.formula
                         ansKeyDef = nil
                         if let unitF = ans_unitFormula {
-                            let message = String(localized: "toast.calculatedWithUnit") // [%@]
+                            let message = String(localized: "基準単位[%@]\nで計算しました") // [%@]
                             Manager.shared.toast(
                                 String(format: message, unitF),
                                 wait: 3.0)
