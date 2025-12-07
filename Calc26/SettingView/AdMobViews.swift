@@ -191,7 +191,7 @@ private struct BannerAdView: UIViewRepresentable {
 
     // UIKitの操作を伴うためMainActorに閉じ込め、SwiftUI側と行き来するデータを@Bindingで同期する
     @MainActor
-    final class Coordinator: NSObject {
+    final class Coordinator: NSObject, GADBannerViewDelegate {
         @Binding var height: CGFloat
         @Binding var isLoading: Bool
         var rootViewController: UIViewController? {
@@ -208,10 +208,7 @@ private struct BannerAdView: UIViewRepresentable {
             _height = height
             _isLoading = isLoading
         }
-    }
 
-    @MainActor
-    extension Coordinator: GADBannerViewDelegate {
         func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
             // 読み込み成功時に高さを更新して空白を避ける
             height = CGFloat(bannerView.adSize.size.height)
@@ -229,7 +226,7 @@ private struct BannerAdView: UIViewRepresentable {
 
 // MARK: - Rewarded
 @MainActor
-private final class RewardedAdLoader: NSObject, ObservableObject {
+private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDelegate {
     @Published var rewardStatusText: String?
     @Published var isRewardLoading = false
     private var rewardedAd: GADRewardedAd?
@@ -290,13 +287,9 @@ private final class RewardedAdLoader: NSObject, ObservableObject {
         }
         return controller
     }
-}
 
-// GADFullScreenContentDelegateの実装をMainActor拡張でまとめ、広告SDKからのコールバックがUIスレッドで扱われることを明示
-@MainActor
-private extension RewardedAdLoader: GADFullScreenContentDelegate {
     func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
-        // 閉じたタイミングで次の広告を事前読み込みしておく
+        // 閉じたタイミングで次の広告を事前読み込みしておき、ユーザー体験を切らさない
         reloadRewardAd()
     }
 }
