@@ -21,14 +21,10 @@ struct SettingView: View {
 
     var body: some View {
         NavigationStack {
+            // シンプルな背景で視認性を優先
             ZStack(alignment: .top) {
-                // グラデーション背景
-                LinearGradient(
-                    colors: [Color(.systemGroupedBackground), Color(.systemBackground)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
