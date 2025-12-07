@@ -164,6 +164,21 @@ private struct AdMobLoadedView: View {
     }
 }
 
+// 最前面のUIViewControllerを取得する共通ヘルパー
+// Banner/Reward双方から参照するため、スコープをファイル全体に広げておく
+@MainActor
+fileprivate func findTopViewController() -> UIViewController? {
+    // シーンとキーウインドウを安全に取得する
+    guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return nil }
+    guard let window = scene.windows.first(where: { $0.isKeyWindow }) else { return nil }
+    var controller = window.rootViewController
+    // 最前面まで辿ってpresent元に使う
+    while let presented = controller?.presentedViewController {
+        controller = presented
+    }
+    return controller
+}
+
 // MARK: - Banner
 private struct BannerAdView: UIViewRepresentable {
     @Binding var height: CGFloat
@@ -181,7 +196,7 @@ private struct BannerAdView: UIViewRepresentable {
         bannerView.adUnitID = ADMOB_BANNER_UnitID
         // MainActor上でrootViewControllerを安全に特定する
         Task { @MainActor in
-            bannerView.rootViewController = Coordinator.topViewController()
+            bannerView.rootViewController = findTopViewController()
             bannerView.delegate = context.coordinator
             bannerView.load(GADRequest())
         }
@@ -191,13 +206,12 @@ private struct BannerAdView: UIViewRepresentable {
     func updateUIView(_ uiView: GADBannerView, context: Context) {
         // 更新時もMainActorでrootを付け直す（シーン切り替え対策）
         Task { @MainActor in
-            uiView.rootViewController = Coordinator.topViewController()
+            uiView.rootViewController = findTopViewController()
         }
     }
 
     // UIKitデリゲート呼び出しは必ずメインスレッドで更新する。MainActorにまとめておくことでアクセス警告を抑制
     // （GADBannerViewDelegateのイベント経由でもUI更新を安全に扱えるようにする）
-    @MainActor
     final class Coordinator: NSObject, GADBannerViewDelegate {
         @Binding var height: CGFloat
         @Binding var isLoading: Bool
@@ -205,17 +219,6 @@ private struct BannerAdView: UIViewRepresentable {
         init(height: Binding<CGFloat>, isLoading: Binding<Bool>) {
             _height = height
             _isLoading = isLoading
-        }
-
-        private static func topViewController() -> UIViewController? {
-            // 最前面のビューコントローラを同期的に取得する（MainActor前提のため非同期不要）
-            guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return nil }
-            guard let window = scene.windows.first(where: { $0.isKeyWindow }) else { return nil }
-            var controller = window.rootViewController
-            while let presented = controller?.presentedViewController {
-                controller = presented
-            }
-            return controller
         }
 
         func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
@@ -238,13 +241,14 @@ private struct BannerAdView: UIViewRepresentable {
 }
 
 // MARK: - Rewarded
-@MainActor
+// ObservableObjectだが、プロパティ更新は各メソッド内で明示的にMainActorへ戻す
 private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDelegate {
     @Published var rewardStatusText: String?
     @Published var isRewardLoading = false
     private var rewardedAd: GADRewardedAd?
     private var hasPreparedOnce = false
 
+    @MainActor
     func prepare() {
         // 連続でonAppearが呼ばれても一度だけ読み込むようにする
         guard hasPreparedOnce == false else { return }
@@ -252,6 +256,7 @@ private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenC
         reloadRewardAd()
     }
 
+    @MainActor
     func reloadRewardAd() {
         // UI更新はメインアクターで行う。PackListと同様の流れに合わせる
         isRewardLoading = true
@@ -276,13 +281,14 @@ private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenC
         }
     }
 
+    @MainActor
     func showRewardAd() {
         // UI操作を含むためメインアクター前提で実行する
         guard let ad = rewardedAd else {
             rewardStatusText = adUnavailableMessage
             return
         }
-        guard let root = Self.topViewController() else {
+        guard let root = findTopViewController() else {
             rewardStatusText = String(localized: "広告を表示する画面を特定できませんでした")
             return
         }
@@ -296,17 +302,6 @@ private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenC
     }
 
     @MainActor
-    private static func topViewController() -> UIViewController? {
-        // 表示中の最前面ビューを取得してpresent元に使う（PackListと同じ方式）
-        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return nil }
-        guard let window = scene.windows.first(where: { $0.isKeyWindow }) else { return nil }
-        var controller = window.rootViewController
-        while let presented = controller?.presentedViewController {
-            controller = presented
-        }
-        return controller
-    }
-
     func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
         // 閉じたタイミングで次の広告を事前読み込みしておき、ユーザー体験を切らさない
         reloadRewardAd()
