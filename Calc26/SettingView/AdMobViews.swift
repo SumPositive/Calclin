@@ -7,6 +7,27 @@
 
 import SwiftUI
 
+
+// アプリID は、Info.plistにセット：key:GADApplicationIdentifier
+
+// 利用可能な広告がない場合に共通で表示する文言をまとめておく
+private let adUnavailableMessage = String(localized: "現在、特典付きの広告がありません。後ほどお試しください")
+
+// 広告ユニットID
+#if DEBUG
+// リワード型 テスト用
+let ADMOB_REWARD_1_UnitID  = "ca-app-pub-3940256099942544/1712485313"
+// アダプティブ バナー テスト用
+let ADMOB_BANNER_UnitID = "ca-app-pub-3940256099942544/2435281174"
+#else // RELEASE || TESTFLIGHT
+// リワード型
+let ADMOB_REWARD_1_UnitID  = "ca-app-pub-7576639777972199/5757039341"
+// アダプティブ バナー 本番用
+let ADMOB_BANNER_UnitID = "ca-app-pub-7576639777972199/4375487250"
+#endif
+
+
+
 /// 開発者支援のための広告シートビュー
 /// AdMob SDK導入前でもUIの流れを整えるため、ダミー広告枠を配置している
 struct AdMobViews: View {
