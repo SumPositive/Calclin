@@ -285,7 +285,8 @@ struct AdMobRewardedContentView: View {
 }
 
 /// AdMobの報酬型広告を読み込むクラス
-final class RewardedAdLoader: NSObject, ObservableObject, FullScreenContentDelegate {
+// GoogleMobileAdsが提供するフルスクリーン広告のデリゲートに準拠し、表示やエラーを検知する
+final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDelegate {
     @Published private(set) var isLoading = false
     @Published private(set) var isReady = false
     @Published private(set) var errorMessage: String?
@@ -366,7 +367,7 @@ final class RewardedAdLoader: NSObject, ObservableObject, FullScreenContentDeleg
         }
     }
     
-    func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
+    func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.isReady = false
@@ -376,14 +377,14 @@ final class RewardedAdLoader: NSObject, ObservableObject, FullScreenContentDeleg
         }
     }
     
-    func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
+    func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.onAdPresented?()
         }
     }
     
-    func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
+    func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             // 実際のエラー内容はログに残し、ユーザーには広告非表示の状況だけを示す
