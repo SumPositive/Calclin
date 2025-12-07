@@ -179,22 +179,36 @@ private struct BannerAdView: UIViewRepresentable {
         let bannerView = GADBannerView(adSize: adSize)
         isLoading = true
         bannerView.adUnitID = ADMOB_BANNER_UnitID
-        bannerView.rootViewController = context.coordinator.rootViewController
-        bannerView.delegate = context.coordinator
-        bannerView.load(GADRequest())
+        // MainActor上でrootViewControllerを安全に特定する
+        Task { @MainActor in
+            bannerView.rootViewController = Coordinator.topViewController()
+            bannerView.delegate = context.coordinator
+            bannerView.load(GADRequest())
+        }
         return bannerView
     }
 
     func updateUIView(_ uiView: GADBannerView, context: Context) {
-        uiView.rootViewController = context.coordinator.rootViewController
+        // 更新時もMainActorでrootを付け直す（シーン切り替え対策）
+        Task { @MainActor in
+            uiView.rootViewController = Coordinator.topViewController()
+        }
     }
 
-    // UIKitデリゲート呼び出しは必ずメインスレッドで更新するようにし、クラス自体はMainActorへ隔離しない
-    // （GADBannerViewDelegateがMainActorと交差すると警告になるため、メソッド内で都度MainActorへ跳ね返す）
+    // UIKitデリゲート呼び出しは必ずメインスレッドで更新する。MainActorにまとめておくことでアクセス警告を抑制
+    // （GADBannerViewDelegateのイベント経由でもUI更新を安全に扱えるようにする）
+    @MainActor
     final class Coordinator: NSObject, GADBannerViewDelegate {
         @Binding var height: CGFloat
         @Binding var isLoading: Bool
-        var rootViewController: UIViewController? {
+
+        init(height: Binding<CGFloat>, isLoading: Binding<Bool>) {
+            _height = height
+            _isLoading = isLoading
+        }
+
+        private static func topViewController() -> UIViewController? {
+            // 最前面のビューコントローラを同期的に取得する（MainActor前提のため非同期不要）
             guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return nil }
             guard let window = scene.windows.first(where: { $0.isKeyWindow }) else { return nil }
             var controller = window.rootViewController
@@ -202,11 +216,6 @@ private struct BannerAdView: UIViewRepresentable {
                 controller = presented
             }
             return controller
-        }
-
-        init(height: Binding<CGFloat>, isLoading: Binding<Bool>) {
-            _height = height
-            _isLoading = isLoading
         }
 
         func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
@@ -229,6 +238,7 @@ private struct BannerAdView: UIViewRepresentable {
 }
 
 // MARK: - Rewarded
+@MainActor
 private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDelegate {
     @Published var rewardStatusText: String?
     @Published var isRewardLoading = false
@@ -244,10 +254,8 @@ private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenC
 
     func reloadRewardAd() {
         // UI更新はメインアクターで行う。PackListと同様の流れに合わせる
-        Task { @MainActor in
-            isRewardLoading = true
-            rewardStatusText = nil
-        }
+        isRewardLoading = true
+        rewardStatusText = nil
 
         GADRewardedAd.load(withAdUnitID: ADMOB_REWARD_1_UnitID, request: GADRequest()) { [weak self] ad, error in
             // クロージャはSendable想定なので弱参照でselfを取り込み、MainActor側で実処理をまとめる
@@ -269,22 +277,20 @@ private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenC
     }
 
     func showRewardAd() {
-        // UI操作を含むためメインアクター経由で実行する
-        Task { @MainActor in
-            guard let ad = rewardedAd else {
-                rewardStatusText = adUnavailableMessage
-                return
-            }
-            guard let root = Self.topViewController() else {
-                rewardStatusText = String(localized: "広告を表示する画面を特定できませんでした")
-                return
-            }
-            ad.present(fromRootViewController: root) { [weak self] in
-                // 報酬獲得時にトーストなどへつなげる余地を残す
-                Task { @MainActor in
-                    guard let self else { return }
-                    self.rewardStatusText = String(localized: "ご視聴ありがとうございました")
-                }
+        // UI操作を含むためメインアクター前提で実行する
+        guard let ad = rewardedAd else {
+            rewardStatusText = adUnavailableMessage
+            return
+        }
+        guard let root = Self.topViewController() else {
+            rewardStatusText = String(localized: "広告を表示する画面を特定できませんでした")
+            return
+        }
+        ad.present(fromRootViewController: root) { [weak self] in
+            // 報酬獲得時にトーストなどへつなげる余地を残す
+            Task { @MainActor in
+                guard let self else { return }
+                self.rewardStatusText = String(localized: "ご視聴ありがとうございました")
             }
         }
     }
