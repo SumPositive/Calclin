@@ -23,6 +23,8 @@ struct KeyboardView: View {
 
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
+    // 設定の操作モードを取得して初心者向けヘルプを出す
+    @EnvironmentObject var setting: SettingViewModel
     // @State 変化あればViewが更新される
     @State private var selectedPage: Int = 2 // 初期で3ページ目（インデックス2）を表示
     @State private var dragOffset: CGFloat = 0
@@ -88,11 +90,22 @@ struct KeyboardView: View {
                     }
             )
             // 下部メニュー
-            KeyboardFooterView(
-                selectedPage: selectedPage,
-                pageCount: KeyboardViewModel.pageCount
-            )
-            .opacity(colorScheme == .dark ? 0.60 : 1.0)
+            VStack(spacing: 4) {
+                KeyboardFooterView(
+                    selectedPage: selectedPage,
+                    pageCount: KeyboardViewModel.pageCount
+                )
+                .opacity(colorScheme == .dark ? 0.60 : 1.0)
+
+                if setting.playMode == .beginner {
+                    // 初心者モードでは操作ヒントを補足
+                    Text(String(localized: "hint.keyboard.swipe"))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 12)
+                }
+            }
         }
     }
 }

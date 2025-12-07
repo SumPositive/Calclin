@@ -24,12 +24,18 @@ struct CalcRollView: View {
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
 
+    // 初心者モードかどうかを簡潔に参照するための計算プロパティ
+    private var isBeginner: Bool {
+        setting.playMode == .beginner
+    }
+
     
     var body: some View {
         VStack(spacing: 0) {
-            if singleMode == false {
+            if isBeginner || singleMode == false {
                 // 上部メニュー
                 CalcRollHeaderView(
+                    isBeginner: isBeginner,
                     selectedPage: selectedPage,
                     pageCount: calcViewModels.count,
                     showStart: showStart,
@@ -126,6 +132,7 @@ struct CalcRollView: View {
 
 // 上部メニュー
 struct CalcRollHeaderView: View {
+    let isBeginner: Bool
     let selectedPage: Int
     let pageCount: Int
     let showStart: Int
@@ -140,105 +147,138 @@ struct CalcRollHeaderView: View {
         let IND_SWIPE_RANGE: CGFloat = 20.0
         let HEADER_HEIGHT: CGFloat = 44.0
         
-        HStack(alignment: .center) {
-            // 左ボタン
-            Button(action: {
-                // グループ減少
-                showMinus()
-            }) {
-                Image(systemName: "minus.square")
-                    //.imageScale(.large)
+        HStack(alignment: .top) {
+            // 左ボタン（表示CalcViewを減らす）
+            VStack(spacing: 2) {
+                Button(action: {
+                    // グループ減少
+                    showMinus()
+                }) {
+                    Image(systemName: "minus.square")
+                        //.imageScale(.large)
+                }
+                .opacity(showCount == 1 ? 0.3 : 1.0)
+                .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
+                .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
+                //debug// .border(Color.red)
+
+                if isBeginner {
+                    // 初心者モードではボタンの意味を明記
+                    Text(String(localized: "hint.calcRoll.reduce"))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 80)
+                }
             }
-            .opacity(showCount == 1 ? 0.3 : 1.0)
-            .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
-            .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
-            //debug// .border(Color.red)
-            
+
             Spacer()
-            
+
             // インジケータ部（タップ・スワイプ切り替え含む）
             GeometryReader { geoIndicator in
-                HStack(alignment: .center) {
-                    Spacer()
+                VStack(spacing: 2) {
+                    HStack(alignment: .center) {
+                        Spacer()
 
-                    Image(systemName: "arrowtriangle.left")
-                        .foregroundColor(.accentColor)
-                        .opacity(selectedPage == 0 ? 0.3 : 1.0)
-                        .padding(10)
+                        Image(systemName: "arrowtriangle.left")
+                            .foregroundColor(.accentColor)
+                            .opacity(selectedPage == 0 ? 0.3 : 1.0)
+                            .padding(10)
 
-                    ForEach(0..<pageCount, id: \.self) { index in
-                        Circle()
-                            .fill(showStart <= index && index < showStart + showCount ?
-                                  Color.accentColor : Color.secondary.opacity(0.4))
-                            .frame(width:  selectedPage == index ? IND_CIRCLE_SIZE*1.5 : IND_CIRCLE_SIZE,
-                                   height: selectedPage == index ? IND_CIRCLE_SIZE*1.5 : IND_CIRCLE_SIZE)
-                    }
-
-                    Image(systemName: "arrowtriangle.right")
-                        .foregroundColor(.accentColor)
-                        .opacity(selectedPage == pageCount - 1 ? 0.3 : 1.0)
-                        .padding(10)
-
-                    Spacer()
-                }
-                .frame(height: HEADER_HEIGHT)
-                //debug//.border(Color.blue)
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture()
-                        .onEnded { value in
-                            if IND_SWIPE_RANGE < value.translation.width {
-                                // 右へスワイプ：前ページへ
-                                pagePrev()
-                            }
-                            else if value.translation.width < -1 * IND_SWIPE_RANGE {
-                                // 左へスワイプ：次ページへ
-                                pageNext()
-                            }
+                        ForEach(0..<pageCount, id: \.self) { index in
+                            Circle()
+                                .fill(showStart <= index && index < showStart + showCount ?
+                                      Color.accentColor : Color.secondary.opacity(0.4))
+                                .frame(width:  selectedPage == index ? IND_CIRCLE_SIZE*1.5 : IND_CIRCLE_SIZE,
+                                       height: selectedPage == index ? IND_CIRCLE_SIZE*1.5 : IND_CIRCLE_SIZE)
                         }
-                )
-                .onTapGesture { location in
-                    let midX = geoIndicator.size.width / 2
-                    if location.x < midX + Double(selectedPage - 1) * IND_CIRCLE_SIZE * 2.0 {
-                        // 左側でタップ：前ページへ
-                        pagePrev()
-                    } else {
-                        // 右側でタップ：次ページへ
-                        pageNext()
+
+                        Image(systemName: "arrowtriangle.right")
+                            .foregroundColor(.accentColor)
+                            .opacity(selectedPage == pageCount - 1 ? 0.3 : 1.0)
+                            .padding(10)
+
+                        Spacer()
                     }
-                }
-                .onTapGesture(count: 2) { location in
-                    // ダブルタップで　2列＞3列＞1列　に切り替える
-                    let midX = geoIndicator.size.width / 2
-                    if location.x < midX + Double(selectedPage - 1) * IND_CIRCLE_SIZE * 2.0 {
-                        // 左側でダブルタップ：表示CalcView減少
-                        showMinus()
+                    .frame(height: HEADER_HEIGHT)
+                    //debug//.border(Color.blue)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture()
+                            .onEnded { value in
+                                if IND_SWIPE_RANGE < value.translation.width {
+                                    // 右へスワイプ：前ページへ
+                                    pagePrev()
+                                }
+                                else if value.translation.width < -1 * IND_SWIPE_RANGE {
+                                    // 左へスワイプ：次ページへ
+                                    pageNext()
+                                }
+                            }
+                    )
+                    .onTapGesture { location in
+                        let midX = geoIndicator.size.width / 2
+                        if location.x < midX + Double(selectedPage - 1) * IND_CIRCLE_SIZE * 2.0 {
+                            // 左側でタップ：前ページへ
+                            pagePrev()
+                        } else {
+                            // 右側でタップ：次ページへ
+                            pageNext()
+                        }
                     }
-                    else{
-                        // 右側でダブルタップ：表示CalcView増加
-                        showPlus()
+                    .onTapGesture(count: 2) { location in
+                        // ダブルタップで　2列＞3列＞1列　に切り替える
+                        let midX = geoIndicator.size.width / 2
+                        if location.x < midX + Double(selectedPage - 1) * IND_CIRCLE_SIZE * 2.0 {
+                            // 左側でダブルタップ：表示CalcView減少
+                            showMinus()
+                        }
+                        else{
+                            // 右側でダブルタップ：表示CalcView増加
+                            showPlus()
+                        }
+                    }
+
+                    if isBeginner {
+                        // 初心者モードではインジケータの操作方法を補足
+                        Text(String(localized: "hint.calcRoll.indicator"))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
                     }
                 }
             }
             //制限しない//.frame(width: IND_CIRCLE_SIZE * Double(pageCount) + 50.0 + 50.0)
             //debug//   .border(Color.green)
-            
+
             Spacer()
-            
-            // 右ボタン
-            Button(action: {
-                // 表示CalcView増加
-                showPlus()
-            }) {
-                Image(systemName: "plus.square.on.square")
-                    //.imageScale(.large)
+
+            // 右ボタン（表示CalcViewを増やす）
+            VStack(spacing: 2) {
+                Button(action: {
+                    // 表示CalcView増加
+                    showPlus()
+                }) {
+                    Image(systemName: "plus.square.on.square")
+                        //.imageScale(.large)
+                }
+                .opacity(showCount == pageCount ? 0.3 : 1.0)
+                .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
+                .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
+                //debug// .border(Color.red)
+
+                if isBeginner {
+                    // 初心者モードではボタンの意味を明記
+                    Text(String(localized: "hint.calcRoll.increase"))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 80)
+                }
             }
-            .opacity(showCount == pageCount ? 0.3 : 1.0)
-            .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
-            .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
-            //debug// .border(Color.red)
         }
-        .frame(height: HEADER_HEIGHT)
+        .frame(height: isBeginner ? HEADER_HEIGHT + 40 : HEADER_HEIGHT)
         .padding(.horizontal, 40)
         //debug// .border(Color.red)
     }

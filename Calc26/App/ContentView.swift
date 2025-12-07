@@ -48,19 +48,29 @@ struct ContentView: View {
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
             VStack(spacing: 0) {
-                HStack {
+                HStack(alignment: .top) {
                     // 設定（シート起動ボタン）
-                    Button(action: {
-                        // 左上固定のギアから設定シートを開く
-                        withAnimation {
-                            isSettingSheetPresented = true
+                    VStack(spacing: 2) {
+                        Button(action: {
+                            // 左上固定のギアから設定シートを開く
+                            withAnimation {
+                                isSettingSheetPresented = true
+                            }
+                        }) {
+                            Image(systemName: "gearshape")
+                                .accentColor(.accentColor)
                         }
-                    }) {
-                        Image(systemName: "gearshape")
-                            .accentColor(.accentColor)
+                        .padding()
+                        .contentShape(Rectangle())
+
+                        if setting.playMode == .beginner {
+                            // 初心者モードではボタンの役割を明示
+                            Text(String(localized: "hint.settings.open"))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 4)
+                        }
                     }
-                    .padding()
-                    .contentShape(Rectangle())
 
                     Spacer()
 
@@ -70,7 +80,7 @@ struct ContentView: View {
 
                 }
                 .opacity(colorScheme == .dark ? 0.50 : 1.0)
-                .frame(height: 30)
+                .frame(height: setting.playMode == .beginner ? 60 : 30)
                 .padding(.horizontal)
                 
                 // 複数Calc横スクロールView
@@ -94,6 +104,7 @@ struct ContentView: View {
                     // 選択中のCalcViewへkeyDefを送る
                     selectedViewModel.input(keyDef)
                 })
+                .environmentObject(setting)
                 .padding(.horizontal, 4.0)
                 .frame(minWidth: APP_KB_WIDTH_MIN, maxWidth: APP_KB_WIDTH_MAX,
                        minHeight: APP_KB_HEIGHT_MIN, maxHeight: APP_KB_HEIGHT_MAX)
