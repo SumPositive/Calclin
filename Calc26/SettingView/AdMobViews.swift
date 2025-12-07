@@ -189,8 +189,8 @@ private struct BannerAdView: UIViewRepresentable {
         uiView.rootViewController = context.coordinator.rootViewController
     }
 
-    // UIKitの操作を伴うためMainActorに閉じ込め、SwiftUI側と行き来するデータを@Bindingで同期する
-    @MainActor
+    // UIKitデリゲート呼び出しは必ずメインスレッドで更新するようにし、クラス自体はMainActorへ隔離しない
+    // （GADBannerViewDelegateがMainActorと交差すると警告になるため、メソッド内で都度MainActorへ跳ね返す）
     final class Coordinator: NSObject, GADBannerViewDelegate {
         @Binding var height: CGFloat
         @Binding var isLoading: Bool
@@ -210,16 +210,20 @@ private struct BannerAdView: UIViewRepresentable {
         }
 
         func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
-            // 読み込み成功時に高さを更新して空白を避ける
-            height = CGFloat(bannerView.adSize.size.height)
-            isLoading = false
+            // 読み込み成功時にMainActorへ戻して高さとローディング状態を更新する
+            Task { @MainActor in
+                height = CGFloat(bannerView.adSize.size.height)
+                isLoading = false
+            }
         }
 
         func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
-            // 失敗時も最低限の高さを維持してレイアウト崩れを防止
-            height = max(height, 50.0)
-            isLoading = false
-            log(.warning, "Banner failed: \(error.localizedDescription)")
+            // 失敗時もMainActorで最低限の高さを維持してレイアウト崩れを防止
+            Task { @MainActor in
+                height = max(height, 50.0)
+                isLoading = false
+                log(.warning, "Banner failed: \(error.localizedDescription)")
+            }
         }
     }
 }
@@ -246,8 +250,9 @@ private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenC
         }
 
         GADRewardedAd.load(withAdUnitID: ADMOB_REWARD_1_UnitID, request: GADRequest()) { [weak self] ad, error in
-            guard let self else { return }
-            Task { @MainActor in
+            // クロージャはSendable想定なので弱参照でselfを取り込み、MainActor側で実処理をまとめる
+            Task { @MainActor [weak self] in
+                guard let self else { return }
                 // ロード完了時はメインアクターでUI状態を更新する
                 isRewardLoading = false
                 if let error {
