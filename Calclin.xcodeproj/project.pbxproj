@@ -126,6 +126,7 @@
 /* Begin PBXBuildFile section */
                 B9A4F2012F5C11AA00A1B001 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2022F5C11AA00A1B001 /* GoogleMobileAds */; };
                 B9A4F2072F5C1AAB00A1B001 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */; };
+                B9A4F2082F5C1ABB00A1B001 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -135,6 +136,7 @@
                         files = (
                                 B9A4F2012F5C11AA00A1B001 /* GoogleMobileAds in Frameworks */,
                                 B9A4F2072F5C1AAB00A1B001 /* FirebaseCrashlytics in Frameworks */,
+                                B9A4F2082F5C1ABB00A1B001 /* FirebaseAnalytics in Frameworks */,
                         );
                         runOnlyForDeploymentPostprocessing = 0;
                 };
@@ -194,6 +196,7 @@
                         packageProductDependencies = (
                                 B9A4F2022F5C11AA00A1B001 /* GoogleMobileAds */,
                                 B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */,
+                                B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */,
                         );
                         productName = Calc26;
                         productReference = C30A78A32E10EE8500212729 /* Calclin.app */;
@@ -680,6 +683,7 @@
 /* Begin XCSwiftPackageProductDependency section */
                 B9A4F2022F5C11AA00A1B001 /* GoogleMobileAds */ = {isa = XCSwiftPackageProductDependency; package = B9A4F2032F5C11AA00A1B001 /* GoogleMobileAds */; productName = GoogleMobileAds; };
                 B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */ = {isa = XCSwiftPackageProductDependency; package = B9A4F2062F5C1AAB00A1B001 /* FirebaseCrashlytics */; productName = FirebaseCrashlytics; };
+                B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */ = {isa = XCSwiftPackageProductDependency; package = B9A4F2062F5C1AAB00A1B001 /* FirebaseCrashlytics */; productName = FirebaseAnalytics; };
 /* End XCSwiftPackageProductDependency section */
 
 /* Begin XCRemoteSwiftPackageReference section */
