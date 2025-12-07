@@ -67,7 +67,7 @@ struct SettingView: View {
     /// モード切替（初心者／達人）
     private var modeSection: some View {
         SettingSectionCard(
-            title: "オプション",
+            title: "表示",
             iconName: "switch.2",
             tint: .accentColor
         ) {

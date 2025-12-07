@@ -48,41 +48,48 @@ struct ContentView: View {
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
             VStack(spacing: 0) {
-                HStack(alignment: .top) {
-                    // 設定（シート起動ボタン）
-                    VStack(spacing: 2) {
-                        Button(action: {
-                            // 左上固定のギアから設定シートを開く
-                            withAnimation {
-                                isSettingSheetPresented = true
-                            }
-                        }) {
-                            Image(systemName: "gearshape")
-                                .accentColor(.accentColor)
-                        }
-                        .padding()
-                        .contentShape(Rectangle())
-
-                        if setting.playMode == .beginner {
-                            // 初心者モードではボタンの役割を明示
-                            Text(String(localized: "hint.settings.open"))
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 4)
-                        }
+                ZStack {
+                    HStack {
+                        Spacer()
+                        // タイトル表示は見出しとして常に同じ大きさで見せたいので、Dynamic Typeの拡大縮小に左右されない固定サイズを指定
+                        Text("app.title")
+                            .font(.system(size: 15))
+                            .lineLimit(1)
+                            .frame(minWidth: 50)
+                            .foregroundColor(COLOR_TITLE)
+                        
+                        Spacer()
                     }
-
-                    Spacer()
-
-                    Text("app.title") // LocalizedStringKey
-                        .font(.headline)
-                        .foregroundColor(COLOR_TITLE)
-
+                    HStack {
+                        // 設定（シート起動ボタン）
+                        VStack(spacing: 0) {
+                            Button(action: {
+                                // 左上固定のギアから設定シートを開く
+                                withAnimation {
+                                    isSettingSheetPresented = true
+                                }
+                            }) {
+                                Image(systemName: "gearshape")
+                                    .accentColor(.accentColor)
+                            }
+                            .padding(.horizontal)
+                            .contentShape(Rectangle())
+                            
+                            if setting.playMode == .beginner {
+                                // 初心者モードではボタンの役割を明示
+                                Text(String(localized: "設定を開く"))
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.top, 4)
+                                    .padding(.horizontal, 4)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .opacity(colorScheme == .dark ? 0.50 : 1.0)
+                    .frame(height: setting.playMode == .beginner ? 40 : 30)
+                    .padding(.horizontal)
                 }
-                .opacity(colorScheme == .dark ? 0.50 : 1.0)
-                .frame(height: setting.playMode == .beginner ? 60 : 30)
-                .padding(.horizontal)
-                
                 // 複数Calc横スクロールView
                 CalcRollView(
                     //historyViewModel: historyViewModel,

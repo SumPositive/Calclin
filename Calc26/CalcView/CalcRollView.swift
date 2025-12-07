@@ -164,11 +164,12 @@ struct CalcRollHeaderView: View {
 
                 if isBeginner {
                     // 初心者モードではボタンの意味を明記
-                    Text(String(localized: "hint.calcRoll.reduce"))
+                    Text(String(localized: "表示する計算機を減らす"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 80)
+                        .padding(.top, -14)
                 }
             }
 
@@ -241,11 +242,13 @@ struct CalcRollHeaderView: View {
 
                     if isBeginner {
                         // 初心者モードではインジケータの操作方法を補足
-                        Text(String(localized: "hint.calcRoll.indicator"))
+                        Text(String(localized: "左右にスワイプまたはタップして切り替えできます"))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity)
+//                            .frame(maxWidth: .infinity)
+                            .frame(maxWidth: 140)
+                            .padding(.top, -8)
                     }
                 }
             }
@@ -270,15 +273,16 @@ struct CalcRollHeaderView: View {
 
                 if isBeginner {
                     // 初心者モードではボタンの意味を明記
-                    Text(String(localized: "hint.calcRoll.increase"))
+                    Text(String(localized: "計算機を増やす。ダブルクリックでも増える"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 80)
+                        .padding(.top, -14)
                 }
             }
         }
-        .frame(height: isBeginner ? HEADER_HEIGHT + 40 : HEADER_HEIGHT)
+        .frame(height: isBeginner ? HEADER_HEIGHT + 46 : HEADER_HEIGHT)
         .padding(.horizontal, 40)
         //debug// .border(Color.red)
     }
