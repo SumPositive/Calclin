@@ -18,6 +18,7 @@ struct SettingView: View {
     @Environment(\.dismiss) private var dismiss  // シートを閉じるための環境値
     @State private var showSafari = false  // Safariシート表示有無
     @State private var safariURL: URL?  // 開く予定のURLを保持
+    @State private var showAdMobSheet = false  // 広告表示シートの有無
 
     var body: some View {
         NavigationStack {
@@ -58,6 +59,11 @@ struct SettingView: View {
             if let safariURL {
                 SafariView(url: safariURL)
             }
+        }
+        .sheet(isPresented: $showAdMobSheet) {
+            // PackList同様に広告をシート表示する
+            AdMobViews()
+                .presentationDetents([.medium, .large])
         }
     }
 
@@ -360,6 +366,8 @@ struct SettingView: View {
         ) {
             Button {
                 // 広告シートを表示する
+                // ボタンタップ時にBoolを切り替えてシートを開く
+                showAdMobSheet = true
             } label: {
                 Label("広告を見て寄付する", systemImage: "seal")
                     .padding(.horizontal, 8)

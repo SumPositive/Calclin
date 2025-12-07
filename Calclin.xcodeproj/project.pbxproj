@@ -40,26 +40,27 @@
 				App/Localizable.xcstrings,
 				App/Log.swift,
 				App/Manager.swift,
-				App/PopupView.swift,
-				CalcView/CalcFunc.swift,
-				CalcView/CalcRollView.swift,
-				CalcView/CalcView.swift,
-				CalcView/CalcViewModel.swift,
-				CalcView/FormulaView.swift,
-				CalcView/HistoryView.swift,
-				KeyboardView/initKeyboard.json,
-				KeyboardView/KeyboardView.swift,
-				KeyboardView/KeyboardViewModel.swift,
-				KeyboardView/KeyDefinition.json,
-				PrivacyInfo.xcprivacy,
-				SBCD/SBCD_objC_Wrapper.mm,
-				SBCD/SBCD_Wrapper.swift,
-				SBCD/SBCD.cpp,
-				SettingView/SettingView.swift,
-				SettingView/SettingViewModel.swift,
-			);
-			target = C30A78A22E10EE8500212729 /* Calclin */;
-		};
+                                App/PopupView.swift,
+                                CalcView/CalcFunc.swift,
+                                CalcView/CalcRollView.swift,
+                                CalcView/CalcView.swift,
+                                CalcView/CalcViewModel.swift,
+                                CalcView/FormulaView.swift,
+                                CalcView/HistoryView.swift,
+                                KeyboardView/initKeyboard.json,
+                                KeyboardView/KeyboardView.swift,
+                                KeyboardView/KeyboardViewModel.swift,
+                                KeyboardView/KeyDefinition.json,
+                                PrivacyInfo.xcprivacy,
+                                SBCD/SBCD_objC_Wrapper.mm,
+                                SBCD/SBCD_Wrapper.swift,
+                                SBCD/SBCD.cpp,
+                                SettingView/AdMobViews.swift,
+                                SettingView/SettingView.swift,
+                                SettingView/SettingViewModel.swift,
+                        );
+                        target = C30A78A22E10EE8500212729 /* Calclin */;
+                };
 		C3308B282E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "CalclinTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -81,21 +82,22 @@
 				App/Manager.swift,
 				App/PopupView.swift,
 				CalcView/CalcFunc.swift,
-				CalcView/CalcRollView.swift,
-				CalcView/CalcView.swift,
-				CalcView/CalcViewModel.swift,
-				CalcView/FormulaView.swift,
-				CalcView/HistoryView.swift,
-				KeyboardView/KeyboardView.swift,
-				KeyboardView/KeyboardViewModel.swift,
-				SBCD/SBCD_objC_Wrapper.mm,
-				SBCD/SBCD_Wrapper.swift,
-				SBCD/SBCD.cpp,
-				SettingView/SettingView.swift,
-				SettingView/SettingViewModel.swift,
-			);
-			target = C30A78B92E10EE8700212729 /* CalclinUITests */;
-		};
+                                CalcView/CalcRollView.swift,
+                                CalcView/CalcView.swift,
+                                CalcView/CalcViewModel.swift,
+                                CalcView/FormulaView.swift,
+                                CalcView/HistoryView.swift,
+                                KeyboardView/KeyboardView.swift,
+                                KeyboardView/KeyboardViewModel.swift,
+                                SBCD/SBCD_objC_Wrapper.mm,
+                                SBCD/SBCD_Wrapper.swift,
+                                SBCD/SBCD.cpp,
+                                SettingView/AdMobViews.swift,
+                                SettingView/SettingView.swift,
+                                SettingView/SettingViewModel.swift,
+                        );
+                        target = C30A78B92E10EE8700212729 /* CalclinUITests */;
+                };
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
