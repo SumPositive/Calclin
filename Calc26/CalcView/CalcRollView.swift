@@ -168,10 +168,10 @@ struct CalcRollHeaderView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
-                        .frame(maxWidth: 80)
                         .padding(.top, -14)
                 }
             }
+            .frame(minWidth: 60, maxWidth: 100)
 
             Spacer()
 
@@ -184,7 +184,7 @@ struct CalcRollHeaderView: View {
                         Image(systemName: "arrowtriangle.left")
                             .foregroundColor(.accentColor)
                             .opacity(selectedPage == 0 ? 0.3 : 1.0)
-                            .padding(10)
+                            .padding(.trailing, 10)
 
                         ForEach(0..<pageCount, id: \.self) { index in
                             Circle()
@@ -197,7 +197,7 @@ struct CalcRollHeaderView: View {
                         Image(systemName: "arrowtriangle.right")
                             .foregroundColor(.accentColor)
                             .opacity(selectedPage == pageCount - 1 ? 0.3 : 1.0)
-                            .padding(10)
+                            .padding(.leading, 10)
 
                         Spacer()
                     }
@@ -242,7 +242,7 @@ struct CalcRollHeaderView: View {
 
                     if isBeginner {
                         // 初心者モードではインジケータの操作方法を補足
-                        Text(String(localized: "左右にスワイプまたはタップして切り替えできます"))
+                        Text(String(localized: "左右にスワイプまたはタップして切り替え"))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -277,13 +277,13 @@ struct CalcRollHeaderView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
-                        .frame(maxWidth: 80)
                         .padding(.top, -14)
                 }
             }
+            .frame(minWidth: 60, maxWidth: 100)
         }
-        .frame(height: isBeginner ? HEADER_HEIGHT + 46 : HEADER_HEIGHT)
-        .padding(.horizontal, 40)
+        .frame(height: isBeginner ? HEADER_HEIGHT + 42 : HEADER_HEIGHT)
+        .padding(.horizontal, 12)
         //debug// .border(Color.red)
     }
 

@@ -68,7 +68,7 @@ struct SettingView: View {
     private var modeSection: some View {
         SettingSectionCard(
             title: "表示",
-            iconName: "switch.2",
+            iconName: "display",
             tint: .accentColor
         ) {
             VStack(alignment: .leading, spacing: 8) {
@@ -175,7 +175,7 @@ struct SettingView: View {
     private var decimalSection: some View {
         SettingSectionCard(
             title: "小数部",
-            iconName: "circle.grid.2x2.fill",
+            iconName: "dot.viewfinder",
             tint: Color(.systemIndigo)
         ) {
             VStack(alignment: .leading, spacing: 8) {
@@ -265,7 +265,8 @@ struct SettingView: View {
                 } label: {
                     VStack(spacing: 4) {
                         Label("保存", systemImage: "square.and.arrow.down")
-                            .frame(width: 90, height: 34)
+                            .padding(.horizontal, 8)
+                            .frame(width: .infinity, height: 34)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -284,7 +285,8 @@ struct SettingView: View {
                 } label: {
                     VStack(spacing: 4) {
                         Label("復元", systemImage: "square.and.arrow.up")
-                            .frame(width: 90, height: 34)
+                            .padding(.horizontal, 8)
+                            .frame(width: .infinity, height: 34)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -305,7 +307,8 @@ struct SettingView: View {
                 } label: {
                     VStack(spacing: 4) {
                         Label("初期化", systemImage: "keyboard")
-                            .frame(width: 98, height: 24)
+                            .padding(.horizontal, 8)
+                            .frame(width: .infinity, height: 24)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -335,16 +338,16 @@ struct SettingView: View {
                 openSafari(for: "info.url")
             } label: {
                 Label("開く", systemImage: "book")
-                    .frame(width: 90, height: 34)
+                    .padding(.horizontal, 8)
+                    .frame(width: .infinity, height: 34)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
                             .strokeBorder(.blue, lineWidth: 1)
                     )
             }
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            .padding(.top, -40)
-            .padding(.trailing, 10)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.top, -8)
         }
     }
 
@@ -359,7 +362,8 @@ struct SettingView: View {
                 // 広告シートを表示する
             } label: {
                 Label("広告を見て寄付する", systemImage: "seal")
-                    .frame(width: 190, height: 34)
+                    .padding(.horizontal, 8)
+                    .frame(width: .infinity, height: 34)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
