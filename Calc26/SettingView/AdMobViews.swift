@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-
+import GoogleMobileAds
 
 // アプリID は、Info.plistにセット：key:GADApplicationIdentifier
 
@@ -26,54 +26,115 @@ let ADMOB_REWARD_1_UnitID  = "ca-app-pub-7576639777972199/5757039341"
 let ADMOB_BANNER_UnitID = "ca-app-pub-7576639777972199/4375487250"
 #endif
 
-
-
-/// 開発者支援のための広告シートビュー
-/// AdMob SDK導入前でもUIの流れを整えるため、ダミー広告枠を配置している
 struct AdMobViews: View {
+    var body: some View {
+        // AdMob SDKが組み込まれていることを前提に、実広告表示用のViewを直に返す
+        // （ビルド時にSDKが無ければコンパイルエラーになるため、開発段階で欠落に気付きやすい）
+        AdMobLoadedView()
+    }
+}
+
+// MARK: - 実広告を表示するView
+private struct AdMobLoadedView: View {
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var rewardLoader = RewardedAdLoader()
+    @State private var bannerHeight: CGFloat = 50.0  // アダプティブバナーの高さは読み込み後に更新
+    @State private var isBannerLoading = true
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
-                // 利用者に意図を伝える見出し
-                Text(String(localized: "広告で開発者を応援してください"))
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 8)
+                VStack(spacing: 8) {
+                    Text(String(localized: "広告で開発者を応援してください"))
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .multilineTextAlignment(.center)
+                        .padding(.top, 8)
 
-                // 実広告を差し替えやすいダミー枠
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.thinMaterial)
-                    .frame(height: 240)
-                    .overlay {
-                        VStack(spacing: 8) {
-                            ProgressView()
-                            Text(String(localized: "広告を読み込み中..."))
+                    Text(String(localized: "安定した開発のためにバナー広告とリワード広告を利用しています"))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+
+                VStack(spacing: 8) {
+                    Label(String(localized: "バナー広告"), systemImage: "rectangle.dock")
+                        .font(.subheadline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    BannerAdView(height: $bannerHeight, isLoading: $isBannerLoading)
+                        .frame(height: bannerHeight)
+                        .frame(maxWidth: .infinity)
+                        .background(.thinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay {
+                            if isBannerLoading {
+                                ProgressView(String(localized: "広告を読み込み中..."))
+                                    .font(.caption)
+                            }
+                        }
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Label(String(localized: "動画広告"), systemImage: "play.rectangle.on.rectangle")
+                        .font(.subheadline)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(String(localized: "報酬付き広告を視聴するとアプリ運営を直接支援できます"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        if let status = rewardLoader.rewardStatusText {
+                            Text(status)
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
+                                .padding(8)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color(.systemGray6))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                         }
-                        .padding()
-                    }
 
-                // 広告視聴の案内と安全性の説明
-                VStack(alignment: .leading, spacing: 8) {
-                    Label(String(localized: "広告が表示されない場合は少しお待ちください"), systemImage: "clock")
-                        .font(.subheadline)
-                    Label(String(localized: "視聴後は閉じるボタンでシートを終了できます"), systemImage: "hand.tap")
-                        .font(.subheadline)
+                        HStack(spacing: 10) {
+                            Button {
+                                rewardLoader.showRewardAd()
+                            } label: {
+                                Label(String(localized: "報酬付き広告を視聴する"), systemImage: "film")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.accentColor)
+                            .disabled(rewardLoader.isRewardLoading)
+
+                            Button {
+                                rewardLoader.reloadRewardAd()
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                                    .imageScale(.large)
+                                    .padding(10)
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(Circle())
+                            }
+                            .disabled(rewardLoader.isRewardLoading)
+                        }
+
+                        if rewardLoader.isRewardLoading {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                Text(String(localized: "リワード広告を読み込み中..."))
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
                 .background(Color(.systemGray6))
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                 Spacer()
 
-                // 完了ボタンを置いて明示的に閉じられるようにする
                 Button {
-                    // 広告視聴を終えたのでシートを閉じる
                     dismiss()
                 } label: {
                     Label(String(localized: "閉じる"), systemImage: "xmark.circle.fill")
@@ -89,7 +150,6 @@ struct AdMobViews: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button {
-                        // ユーザーの操作でシートを閉じる
                         dismiss()
                     } label: {
                         Image(systemName: "chevron.down")
@@ -98,6 +158,135 @@ struct AdMobViews: View {
                 }
             }
         }
+        .onAppear {
+            rewardLoader.prepare()
+        }
+    }
+}
+
+// MARK: - Banner
+private struct BannerAdView: UIViewRepresentable {
+    @Binding var height: CGFloat
+    @Binding var isLoading: Bool
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(height: $height, isLoading: $isLoading)
+    }
+
+    func makeUIView(context: Context) -> GADBannerView {
+        // アダプティブバナーのサイズを決定。画面幅に追従させてなるべく表示崩れを防ぐ
+        let adSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(UIScreen.main.bounds.width)
+        let bannerView = GADBannerView(adSize: adSize)
+        isLoading = true
+        bannerView.adUnitID = ADMOB_BANNER_UnitID
+        bannerView.rootViewController = context.coordinator.rootViewController
+        bannerView.delegate = context.coordinator
+        bannerView.load(GADRequest())
+        return bannerView
+    }
+
+    func updateUIView(_ uiView: GADBannerView, context: Context) {
+        uiView.rootViewController = context.coordinator.rootViewController
+    }
+
+    final class Coordinator: NSObject, GADBannerViewDelegate {
+        @Binding var height: CGFloat
+        @Binding var isLoading: Bool
+        var rootViewController: UIViewController? {
+            guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return nil }
+            guard let window = scene.windows.first(where: { $0.isKeyWindow }) else { return nil }
+            var controller = window.rootViewController
+            while let presented = controller?.presentedViewController {
+                controller = presented
+            }
+            return controller
+        }
+
+        init(height: Binding<CGFloat>, isLoading: Binding<Bool>) {
+            _height = height
+            _isLoading = isLoading
+        }
+
+        func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
+            // 読み込み成功時に高さを更新して空白を避ける
+            height = CGFloat(bannerView.adSize.size.height)
+            isLoading = false
+        }
+
+        func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
+            // 失敗時も最低限の高さを維持してレイアウト崩れを防止
+            height = max(height, 50.0)
+            isLoading = false
+            log(.warning, "Banner failed: \(error.localizedDescription)")
+        }
+    }
+}
+
+// MARK: - Rewarded
+private final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDelegate {
+    @Published var rewardStatusText: String?
+    @Published var isRewardLoading = false
+    private var rewardedAd: GADRewardedAd?
+    private var hasPreparedOnce = false
+
+    func prepare() {
+        // 連続でonAppearが呼ばれても一度だけ読み込むようにする
+        guard hasPreparedOnce == false else { return }
+        hasPreparedOnce = true
+        reloadRewardAd()
+    }
+
+    func reloadRewardAd() {
+        isRewardLoading = true
+        rewardStatusText = nil
+        GADRewardedAd.load(withAdUnitID: ADMOB_REWARD_1_UnitID, request: GADRequest()) { [weak self] ad, error in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.isRewardLoading = false
+                if let error {
+                    self.rewardedAd = nil
+                    self.rewardStatusText = error.localizedDescription
+                    log(.warning, "Reward load failed: \(error.localizedDescription)")
+                    return
+                }
+                self.rewardedAd = ad
+                self.rewardedAd?.fullScreenContentDelegate = self
+                self.rewardStatusText = String(localized: "視聴後は閉じるボタンでシートを終了できます")
+            }
+        }
+    }
+
+    func showRewardAd() {
+        guard let ad = rewardedAd else {
+            rewardStatusText = adUnavailableMessage
+            return
+        }
+        guard let root = Self.topViewController() else {
+            rewardStatusText = String(localized: "広告を表示する画面を特定できませんでした")
+            return
+        }
+        ad.present(fromRootViewController: root) { [weak self] in
+            // 報酬獲得時にトーストなどへつなげる余地を残す
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.rewardStatusText = String(localized: "ご視聴ありがとうございました")
+            }
+        }
+    }
+
+    func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+        // 閉じたタイミングで次の広告を事前読み込みしておく
+        reloadRewardAd()
+    }
+
+    private static func topViewController() -> UIViewController? {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return nil }
+        guard let window = scene.windows.first(where: { $0.isKeyWindow }) else { return nil }
+        var controller = window.rootViewController
+        while let presented = controller?.presentedViewController {
+            controller = presented
+        }
+        return controller
     }
 }
 

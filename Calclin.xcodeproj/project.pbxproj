@@ -123,14 +123,19 @@
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
+/* Begin PBXBuildFile section */
+                B9A4F2012F5C11AA00A1B001 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2022F5C11AA00A1B001 /* GoogleMobileAds */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFrameworksBuildPhase section */
-		C30A78A02E10EE8500212729 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+                C30A78A02E10EE8500212729 /* Frameworks */ = {
+                        isa = PBXFrameworksBuildPhase;
+                        buildActionMask = 2147483647;
+                        files = (
+                                B9A4F2012F5C11AA00A1B001 /* GoogleMobileAds in Frameworks */,
+                        );
+                        runOnlyForDeploymentPostprocessing = 0;
+                };
 		C30A78AD2E10EE8700212729 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -181,12 +186,13 @@
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
-			name = Calclin;
-			packageProductDependencies = (
-			);
-			productName = Calc26;
+                        dependencies = (
+                        );
+                        name = Calclin;
+                        packageProductDependencies = (
+                                B9A4F2022F5C11AA00A1B001 /* GoogleMobileAds */,
+                        );
+                        productName = Calc26;
 			productReference = C30A78A32E10EE8500212729 /* Calclin.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -268,17 +274,20 @@
 				Base,
 				ja,
 			);
-			mainGroup = C30A789A2E10EE8500212729;
-			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
-			productRefGroup = C30A78A42E10EE8500212729 /* Products */;
-			projectDirPath = "";
-			projectRoot = "";
-			targets = (
-				C30A78A22E10EE8500212729 /* Calclin */,
-				C30A78AF2E10EE8700212729 /* CalclinTests */,
-				C30A78B92E10EE8700212729 /* CalclinUITests */,
-			);
+                        mainGroup = C30A789A2E10EE8500212729;
+                        minimizedProjectReferenceProxies = 1;
+                        preferredProjectObjectVersion = 77;
+                        productRefGroup = C30A78A42E10EE8500212729 /* Products */;
+                        projectDirPath = "";
+                        projectRoot = "";
+                        packageReferences = (
+                                B9A4F2032F5C11AA00A1B001 /* GoogleMobileAds */,
+                        );
+                        targets = (
+                                C30A78A22E10EE8500212729 /* Calclin */,
+                                C30A78AF2E10EE8700212729 /* CalclinTests */,
+                                C30A78B92E10EE8700212729 /* CalclinUITests */,
+                        );
 		};
 /* End PBXProject section */
 
@@ -653,16 +662,24 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C30A78CA2E10EE8700212729 /* Build configuration list for PBXNativeTarget "CalclinUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				C30A78CB2E10EE8700212729 /* Debug */,
-				C30A78CC2E10EE8700212729 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
+                C30A78CA2E10EE8700212729 /* Build configuration list for PBXNativeTarget "CalclinUITests" */ = {
+                        isa = XCConfigurationList;
+                        buildConfigurations = (
+                                C30A78CB2E10EE8700212729 /* Debug */,
+                                C30A78CC2E10EE8700212729 /* Release */,
+                        );
+                        defaultConfigurationIsVisible = 0;
+                        defaultConfigurationName = Release;
+                };
 /* End XCConfigurationList section */
-	};
-	rootObject = C30A789B2E10EE8500212729 /* Project object */;
+
+/* Begin XCSwiftPackageProductDependency section */
+                B9A4F2022F5C11AA00A1B001 /* GoogleMobileAds */ = {isa = XCSwiftPackageProductDependency; package = B9A4F2032F5C11AA00A1B001 /* GoogleMobileAds */; productName = GoogleMobileAds; };
+/* End XCSwiftPackageProductDependency section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+                B9A4F2032F5C11AA00A1B001 /* GoogleMobileAds */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads"; requirement = {kind = upToNextMajorVersion; minimumVersion = 11.13.0; }; };
+/* End XCRemoteSwiftPackageReference section */
+        };
+        rootObject = C30A789B2E10EE8500212729 /* Project object */;
 }
