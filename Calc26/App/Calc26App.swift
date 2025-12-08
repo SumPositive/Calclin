@@ -6,9 +6,10 @@
 //
 
 import SwiftUI
+
 import FirebaseCore
-import FirebaseCrashlytics
 import FirebaseAnalytics
+import FirebaseCrashlytics
 import GoogleMobileAds
 
 
@@ -26,9 +27,9 @@ struct Calc26App: App {
         Analytics.setAnalyticsCollectionEnabled(true)
         // アプリ起動をAnalyticsへ明示的に通知し、流入経路の把握に備える
         Analytics.logEvent(AnalyticsEventAppOpen, parameters: nil)
-        // アプリ起動時に一度だけAdMob SDKを初期化する。初期化コストを早めに払うことで、実際の広告表示タイミングでの遅延を抑えることを狙う
-        // Swift向けに用意されたプレフィックス無しの型名で統一し、今後のアップデートにも備える
-        MobileAds.shared.start(completionHandler: nil)
+
+        // AdMob SDKを初期化する
+        MobileAds.shared.start()
     }
 
     var body: some Scene {
