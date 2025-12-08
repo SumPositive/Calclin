@@ -31,10 +31,8 @@ struct SettingView: View {
         let safeVersion = (marketingVersion?.isEmpty == false) ? marketingVersion ?? "-" : "-"
         let safeBuild = (buildNumber?.isEmpty == false) ? buildNumber ?? "-" : "-"
 
-        // Localizableでフォーマット文字列を持たせて翻訳しやすくする
-        let format = String(localized: "Version %@.Build %@")
         // 文字列連結より読みやすいのでString(format:)を利用する
-        return String(format: format, safeVersion, safeBuild)
+        return String(format: "Version %@.%@", safeVersion, safeBuild)
     }
 
     var body: some View {

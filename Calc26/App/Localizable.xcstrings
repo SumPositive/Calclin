@@ -593,6 +593,23 @@
         }
       }
     },
+    "Version %@.Build %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@.Build %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@.Build %@"
+          }
+        }
+      }
+    },
     "アプリの紹介・取扱説明" : {
       "localizations" : {
         "en" : {
@@ -1412,22 +1429,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Support the developer"
-          }
-        }
-      }
-    },
-    "Version %@.Build %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Version %@.Build %@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Version %@.Build %@"
           }
         }
       }
