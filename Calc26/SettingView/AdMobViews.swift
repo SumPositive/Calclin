@@ -286,6 +286,7 @@ struct AdMobRewardedContentView: View {
 
 /// AdMobの報酬型広告を読み込むクラス
 // GoogleMobileAdsが提供するフルスクリーン広告のデリゲートに準拠し、表示やエラーを検知する
+@MainActor
 final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDelegate {
     @Published private(set) var isLoading = false
     @Published private(set) var isReady = false
@@ -327,9 +328,10 @@ final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDe
         
         // シンプルな広告リクエストを生成する（テストデバイス設定は必要に応じて別途追加）
         let request = GADRequest()
+        // ロード完了ハンドラは並列実行され得るため、メインアクター上でUI更新する
         GADRewardedAd.load(withAdUnitID: adUnitID, request: request) { [weak self] ad, error in
-            guard let self else { return }
-            DispatchQueue.main.async {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
                 self.isLoading = false
                 if let error {
                     // 具体的な障害内容はCrashlyticsへ残しつつ、画面には優しい文言を出す
@@ -364,14 +366,17 @@ final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDe
         // （デバイス依存の不安定要因を吸収し、Crashlyticsで再現環境を追いやすくする）
         isReady = false
         errorMessage = nil
+        // 広告SDK側の完了クロージャも並列扱いになるため、アクター分離を明示する
         ad.present(from: root) { [weak self] in
-            guard let self else { return }
-            self.onRewardEarned?(ad.adReward)
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.onRewardEarned?(ad.adReward)
+            }
         }
     }
     
     func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
-        DispatchQueue.main.async { [weak self] in
+        Task { @MainActor [weak self] in
             guard let self else { return }
             self.isReady = false
             self.rewardedAd = nil
@@ -379,16 +384,16 @@ final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDe
             self.loadAd()
         }
     }
-    
+
     func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
-        DispatchQueue.main.async { [weak self] in
+        Task { @MainActor [weak self] in
             guard let self else { return }
             self.onAdPresented?()
         }
     }
-    
+
     func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
-        DispatchQueue.main.async { [weak self] in
+        Task { @MainActor [weak self] in
             guard let self else { return }
             // 実際のエラー内容はログに残し、ユーザーには広告非表示の状況だけを示す
             self.errorMessage = adUnavailableMessage
