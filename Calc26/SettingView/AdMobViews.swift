@@ -103,7 +103,7 @@ struct AdMobAdSheetView: View {
                                 .padding()
                                 .frame(maxWidth: .infinity)
                                 .background(Color.accentColor.opacity(0.15))
-                                .foregroundStyle(.accentColor)
+                                .foregroundStyle(Color.accentColor)
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             }
                             .buttonStyle(.plain)
@@ -167,17 +167,17 @@ struct AdMobAdSheetView: View {
 struct BannerAdView: UIViewRepresentable {
     let adUnitID: String
 
-    func makeUIView(context: Context) -> GADBannerView {
+    func makeUIView(context: Context) -> BannerView {
         // アダプティブではなく固定サイズの300x250を使う
-        let bannerSize = GADAdSizeFromCGSize(CGSize(width: 300, height: 250))
-        let banner = GADBannerView(adSize: bannerSize)
+        let bannerSize = adSizeFor(cgSize: CGSize(width: 300, height: 250))
+        let banner = BannerView(adSize: bannerSize)
         banner.adUnitID = adUnitID
         banner.rootViewController = UIApplication.shared.rootController
-        banner.load(GADRequest())
+        banner.load(Request())
         return banner
     }
 
-    func updateUIView(_ uiView: GADBannerView, context: Context) {
+    func updateUIView(_ uiView: BannerView, context: Context) {
         // 表示中に親VCが変わる可能性を考慮して毎回セットする
         uiView.rootViewController = UIApplication.shared.rootController
     }
@@ -189,7 +189,7 @@ final class RewardAdLoader: NSObject, ObservableObject {
     // 広告のロード状況をUIへ通知する
     @Published var isLoading: Bool = false
 
-    private var rewardedAd: GADRewardedAd?
+    private var rewardedAd: RewardedAd?
 
     /// 広告をロードする
     func loadAd() {
@@ -197,8 +197,8 @@ final class RewardAdLoader: NSObject, ObservableObject {
         guard isLoading == false else { return }
         isLoading = true
 
-        let request = GADRequest()
-        GADRewardedAd.load(withAdUnitID: ADMOB_REWARD_1_UnitID, request: request) { [weak self] ad, error in
+        let request = Request()
+        RewardedAd.load(with: ADMOB_REWARD_1_UnitID, request: request) { [weak self] ad, error in
             guard let self else { return }
             self.isLoading = false
 
@@ -225,7 +225,7 @@ final class RewardAdLoader: NSObject, ObservableObject {
             return
         }
 
-        rewardedAd.present(fromRootViewController: rootController) { [weak self] in
+        rewardedAd.present(from: rootController) { [weak self] in
             // 報酬のコールバック。ここでは単純に成功扱いとしてハンドラに伝える
             completion(true)
             // 再利用はできないため破棄して再ロードする
@@ -235,15 +235,15 @@ final class RewardAdLoader: NSObject, ObservableObject {
     }
 }
 
-extension RewardAdLoader: GADFullScreenContentDelegate {
-    func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
+extension RewardAdLoader: FullScreenContentDelegate {
+    func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         // 表示失敗時もCrashlyticsへ送る
         Crashlytics.crashlytics().record(error: error)
         rewardedAd = nil
         loadAd()
     }
 
-    func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+    func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         // ユーザが閉じた場合も再ロードしておく
         rewardedAd = nil
         loadAd()
