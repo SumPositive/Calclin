@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B9A4F2072F5C1AAB00A1B001 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */; };
+		B9A4F2082F5C1ABB00A1B001 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */; };
+		C3165E4D2EE6D6B900169223 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = C3165E4C2EE6D6B900169223 /* GoogleMobileAds */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		C30A78B12E10EE8700212729 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -37,34 +43,36 @@
 				App/Calc26App.swift,
 				App/Config.swift,
 				App/ContentView.swift,
+				"App/GoogleService-Info.plist",
 				App/Localizable.xcstrings,
 				App/Log.swift,
 				App/Manager.swift,
-                                App/PopupView.swift,
-                                CalcView/CalcFunc.swift,
-                                CalcView/CalcRollView.swift,
-                                CalcView/CalcView.swift,
-                                CalcView/CalcViewModel.swift,
-                                CalcView/FormulaView.swift,
-                                CalcView/HistoryView.swift,
-                                KeyboardView/initKeyboard.json,
-                                KeyboardView/KeyboardView.swift,
-                                KeyboardView/KeyboardViewModel.swift,
-                                KeyboardView/KeyDefinition.json,
-                                PrivacyInfo.xcprivacy,
-                                SBCD/SBCD_objC_Wrapper.mm,
-                                SBCD/SBCD_Wrapper.swift,
-                                SBCD/SBCD.cpp,
-                                SettingView/AdMobViews.swift,
-                                SettingView/SettingView.swift,
-                                SettingView/SettingViewModel.swift,
-                        );
-                        target = C30A78A22E10EE8500212729 /* Calclin */;
-                };
+				App/PopupView.swift,
+				CalcView/CalcFunc.swift,
+				CalcView/CalcRollView.swift,
+				CalcView/CalcView.swift,
+				CalcView/CalcViewModel.swift,
+				CalcView/FormulaView.swift,
+				CalcView/HistoryView.swift,
+				KeyboardView/initKeyboard.json,
+				KeyboardView/KeyboardView.swift,
+				KeyboardView/KeyboardViewModel.swift,
+				KeyboardView/KeyDefinition.json,
+				PrivacyInfo.xcprivacy,
+				SBCD/SBCD_objC_Wrapper.mm,
+				SBCD/SBCD_Wrapper.swift,
+				SBCD/SBCD.cpp,
+				SettingView/AdMobViews.swift,
+				SettingView/SettingView.swift,
+				SettingView/SettingViewModel.swift,
+			);
+			target = C30A78A22E10EE8500212729 /* Calclin */;
+		};
 		C3308B282E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "CalclinTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Assets.xcassets,
+				"App/GoogleService-Info.plist",
 				Info.plist,
 				KeyboardView/initKeyboard.json,
 				KeyboardView/KeyDefinition.json,
@@ -82,22 +90,22 @@
 				App/Manager.swift,
 				App/PopupView.swift,
 				CalcView/CalcFunc.swift,
-                                CalcView/CalcRollView.swift,
-                                CalcView/CalcView.swift,
-                                CalcView/CalcViewModel.swift,
-                                CalcView/FormulaView.swift,
-                                CalcView/HistoryView.swift,
-                                KeyboardView/KeyboardView.swift,
-                                KeyboardView/KeyboardViewModel.swift,
-                                SBCD/SBCD_objC_Wrapper.mm,
-                                SBCD/SBCD_Wrapper.swift,
-                                SBCD/SBCD.cpp,
-                                SettingView/AdMobViews.swift,
-                                SettingView/SettingView.swift,
-                                SettingView/SettingViewModel.swift,
-                        );
-                        target = C30A78B92E10EE8700212729 /* CalclinUITests */;
-                };
+				CalcView/CalcRollView.swift,
+				CalcView/CalcView.swift,
+				CalcView/CalcViewModel.swift,
+				CalcView/FormulaView.swift,
+				CalcView/HistoryView.swift,
+				KeyboardView/KeyboardView.swift,
+				KeyboardView/KeyboardViewModel.swift,
+				SBCD/SBCD_objC_Wrapper.mm,
+				SBCD/SBCD_Wrapper.swift,
+				SBCD/SBCD.cpp,
+				SettingView/AdMobViews.swift,
+				SettingView/SettingView.swift,
+				SettingView/SettingViewModel.swift,
+			);
+			target = C30A78B92E10EE8700212729 /* CalclinUITests */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -123,23 +131,17 @@
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
-/* Begin PBXBuildFile section */
-                B9A4F2012F5C11AA00A1B001 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2022F5C11AA00A1B001 /* GoogleMobileAds */; };
-                B9A4F2072F5C1AAB00A1B001 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */; };
-                B9A4F2082F5C1ABB00A1B001 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFrameworksBuildPhase section */
-                C30A78A02E10EE8500212729 /* Frameworks */ = {
-                        isa = PBXFrameworksBuildPhase;
-                        buildActionMask = 2147483647;
-                        files = (
-                                B9A4F2012F5C11AA00A1B001 /* GoogleMobileAds in Frameworks */,
-                                B9A4F2072F5C1AAB00A1B001 /* FirebaseCrashlytics in Frameworks */,
-                                B9A4F2082F5C1ABB00A1B001 /* FirebaseAnalytics in Frameworks */,
-                        );
-                        runOnlyForDeploymentPostprocessing = 0;
-                };
+		C30A78A02E10EE8500212729 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C3165E4D2EE6D6B900169223 /* GoogleMobileAds in Frameworks */,
+				B9A4F2072F5C1AAB00A1B001 /* FirebaseCrashlytics in Frameworks */,
+				B9A4F2082F5C1ABB00A1B001 /* FirebaseAnalytics in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C30A78AD2E10EE8700212729 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -163,6 +165,7 @@
 				C3308AFD2E2F3F34009ED6D6 /* Calc26 */,
 				C30A78B32E10EE8700212729 /* Calc26Tests */,
 				C30A78BD2E10EE8700212729 /* Calc26UITests */,
+				C3165E4A2EE6D5B800169223 /* Frameworks */,
 				C30A78A42E10EE8500212729 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -175,6 +178,13 @@
 				C30A78BA2E10EE8700212729 /* CalclinUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C3165E4A2EE6D5B800169223 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -190,18 +200,18 @@
 			);
 			buildRules = (
 			);
-                        dependencies = (
-                        );
-                        name = Calclin;
-                        packageProductDependencies = (
-                                B9A4F2022F5C11AA00A1B001 /* GoogleMobileAds */,
-                                B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */,
-                                B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */,
-                        );
-                        productName = Calc26;
-                        productReference = C30A78A32E10EE8500212729 /* Calclin.app */;
-                        productType = "com.apple.product-type.application";
-                };
+			dependencies = (
+			);
+			name = Calclin;
+			packageProductDependencies = (
+				B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */,
+				B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */,
+				C3165E4C2EE6D6B900169223 /* GoogleMobileAds */,
+			);
+			productName = Calc26;
+			productReference = C30A78A32E10EE8500212729 /* Calclin.app */;
+			productType = "com.apple.product-type.application";
+		};
 		C30A78AF2E10EE8700212729 /* CalclinTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C30A78C72E10EE8700212729 /* Build configuration list for PBXNativeTarget "CalclinTests" */;
@@ -257,7 +267,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1630;
-				LastUpgradeCheck = 1630;
+				LastUpgradeCheck = 2610;
 				TargetAttributes = {
 					C30A78A22E10EE8500212729 = {
 						CreatedOnToolsVersion = 16.3;
@@ -280,21 +290,21 @@
 				Base,
 				ja,
 			);
-                        mainGroup = C30A789A2E10EE8500212729;
-                        minimizedProjectReferenceProxies = 1;
-                        preferredProjectObjectVersion = 77;
-                        productRefGroup = C30A78A42E10EE8500212729 /* Products */;
-                        projectDirPath = "";
-                        projectRoot = "";
-                        packageReferences = (
-                                B9A4F2032F5C11AA00A1B001 /* GoogleMobileAds */,
-                                B9A4F2062F5C1AAB00A1B001 /* FirebaseCrashlytics */,
-                        );
-                        targets = (
-                                C30A78A22E10EE8500212729 /* Calclin */,
-                                C30A78AF2E10EE8700212729 /* CalclinTests */,
-                                C30A78B92E10EE8700212729 /* CalclinUITests */,
-                        );
+			mainGroup = C30A789A2E10EE8500212729;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B9A4F2062F5C1AAB00A1B001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				C3165E4B2EE6D68A00169223 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = C30A78A42E10EE8500212729 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C30A78A22E10EE8500212729 /* Calclin */,
+				C30A78AF2E10EE8700212729 /* CalclinTests */,
+				C30A78B92E10EE8700212729 /* CalclinUITests */,
+			);
 		};
 /* End PBXProject section */
 
@@ -365,6 +375,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -419,6 +430,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -430,6 +442,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -477,6 +490,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
@@ -506,7 +520,7 @@
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -546,7 +560,7 @@
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -669,27 +683,53 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-                C30A78CA2E10EE8700212729 /* Build configuration list for PBXNativeTarget "CalclinUITests" */ = {
-                        isa = XCConfigurationList;
-                        buildConfigurations = (
-                                C30A78CB2E10EE8700212729 /* Debug */,
-                                C30A78CC2E10EE8700212729 /* Release */,
-                        );
-                        defaultConfigurationIsVisible = 0;
-                        defaultConfigurationName = Release;
-                };
+		C30A78CA2E10EE8700212729 /* Build configuration list for PBXNativeTarget "CalclinUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C30A78CB2E10EE8700212729 /* Debug */,
+				C30A78CC2E10EE8700212729 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
-/* Begin XCSwiftPackageProductDependency section */
-                B9A4F2022F5C11AA00A1B001 /* GoogleMobileAds */ = {isa = XCSwiftPackageProductDependency; package = B9A4F2032F5C11AA00A1B001 /* GoogleMobileAds */; productName = GoogleMobileAds; };
-                B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */ = {isa = XCSwiftPackageProductDependency; package = B9A4F2062F5C1AAB00A1B001 /* FirebaseCrashlytics */; productName = FirebaseCrashlytics; };
-                B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */ = {isa = XCSwiftPackageProductDependency; package = B9A4F2062F5C1AAB00A1B001 /* FirebaseCrashlytics */; productName = FirebaseAnalytics; };
-/* End XCSwiftPackageProductDependency section */
-
 /* Begin XCRemoteSwiftPackageReference section */
-                B9A4F2032F5C11AA00A1B001 /* GoogleMobileAds */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads"; requirement = {kind = upToNextMajorVersion; minimumVersion = 11.13.0; }; };
-                B9A4F2062F5C1AAB00A1B001 /* FirebaseCrashlytics */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git"; requirement = {kind = upToNextMajorVersion; minimumVersion = 10.24.0; }; };
+		B9A4F2062F5C1AAB00A1B001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.24.0;
+			};
+		};
+		C3165E4B2EE6D68A00169223 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 12.14.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
-        };
-        rootObject = C30A789B2E10EE8500212729 /* Project object */;
+
+/* Begin XCSwiftPackageProductDependency section */
+		B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B9A4F2062F5C1AAB00A1B001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+		B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B9A4F2062F5C1AAB00A1B001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		C3165E4C2EE6D6B900169223 /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3165E4B2EE6D68A00169223 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = C30A789B2E10EE8500212729 /* Project object */;
 }
