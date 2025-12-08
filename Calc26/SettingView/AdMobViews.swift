@@ -266,7 +266,7 @@ struct AdMobRewardedContentView: View {
                 Spacer()
             }
             
-            if let errorMessage = loader.errorMessage {
+            if loader.errorMessage != nil {
                 //log(.error, "AdMob rewarded ad loading failed: \(errorMessage)")
                 Button(String(localized: "再読み込み")) {
                     loader.loadAd()
@@ -287,7 +287,7 @@ struct AdMobRewardedContentView: View {
 /// AdMobの報酬型広告を読み込むクラス
 // GoogleMobileAdsが提供するフルスクリーン広告のデリゲートに準拠し、表示やエラーを検知する
 @MainActor
-final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDelegate {
+final class RewardedAdLoader: NSObject, ObservableObject, @MainActor GADFullScreenContentDelegate {
     @Published private(set) var isLoading = false
     @Published private(set) var isReady = false
     @Published private(set) var errorMessage: String?
@@ -367,7 +367,7 @@ final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDe
         isReady = false
         errorMessage = nil
         // 広告SDK側の完了クロージャも並列扱いになるため、アクター分離を明示する
-        ad.present(from: root) { [weak self] in
+        ad.present(fromRootViewController: root) { [weak self] in
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.onRewardEarned?(ad.adReward)
