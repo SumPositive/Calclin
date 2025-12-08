@@ -155,11 +155,15 @@ struct CubeRotationModifier: ViewModifier {
     func body(content: Content) -> some View {
         // 進行度を安全な範囲に制限してから角度を算出
         let clampedProgress = min(max(progress, -1), 1)
-        // 選択中ページから離れている面は、回転角度を少し早めに緩めてチラ見せする
-        // これによりスワイプ開始直後でも次の面がのぞく
-        let earlyPeekScale = 0.55 + 0.45 * pow(1 - abs(clampedProgress), 0.6)
-        let quickerProgress = clampedProgress * earlyPeekScale
-        let angle = quickerProgress * 70 // 90度未満で立体感を保つ
+        // スワイプ開始直後から角度を乗算し、少し多めに回転させて次面を早く見せる
+        // abs(clampedProgress) が小さいほど進行度を強める緩急カーブ（Ease-Out）
+        let easedMagnitude = 1 - pow(1 - min(abs(clampedProgress), 1), 2.2)
+        // スワイプ方向（符号）だけを取り出す。0 のときは右向きと同等扱いで問題ない
+        let direction: CGFloat = clampedProgress < 0 ? -1 : 1
+        // ほんの少しだけ先行角度を足して、触れ始めで素早く回転させる
+        let earlyLead = 0.12 * min(abs(clampedProgress), 1)
+        let boostedProgress = direction * (easedMagnitude + earlyLead)
+        let angle = boostedProgress * 78 // 90度未満で立体感を保つ
 
         // 進行方向に合わせて回転の支点を変える（手前側の辺を軸にする）
         let anchorPoint: UnitPoint = clampedProgress < 0 ? .trailing : .leading
