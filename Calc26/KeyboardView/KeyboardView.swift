@@ -51,9 +51,9 @@ struct KeyboardView: View {
 
                         KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
                             .frame(width: geometry.size.width)
-                            // キューブが回転するような立体的な切り替え演出
+                            // 5ページに合わせ、5角柱が回転するような切り替え演出
                             .modifier(
-                                CubeRotationModifier(
+                                PrismRotationModifier(
                                     progress: progress
                                 )
                             )
@@ -146,8 +146,8 @@ struct PagePerspectiveModifier: ViewModifier {
     }
 }
 
-// キューブ状に回転させるためのモディファイア
-struct CubeRotationModifier: ViewModifier {
+// 5角柱が回るようにページを立体回転させるモディファイア
+struct PrismRotationModifier: ViewModifier {
     /// -1.0 〜 +1.0 を想定したページ移動の進行度（左に動くとマイナス、右に動くとプラス）
     let progress: CGFloat
 
@@ -155,20 +155,36 @@ struct CubeRotationModifier: ViewModifier {
     func body(content: Content) -> some View {
         // 進行度を安全な範囲に制限してから角度を算出
         let clampedProgress = min(max(progress, -1), 1)
-        let angle = clampedProgress * 70 // 90度未満で立体感を保つ
+        // 5角柱の1面あたりの回転角（360 / 5 = 72度）
+        let faceAngle: Double = 72
+        let angle = Double(clampedProgress) * faceAngle
 
-        // 進行方向に合わせて回転の支点を変える（手前側の辺を軸にする）
-        let anchorPoint: UnitPoint = clampedProgress < 0 ? .trailing : .leading
+        // 5角柱の中心を軸にするため、軸位置をわずかに中央寄りにずらす
+        let anchorShift: CGFloat = 0.18 // 0.2未満に抑えて過度な引き寄せを防ぐ
+        let anchorX: CGFloat
+        if clampedProgress < 0 {
+            // 左へ送る時は右寄りの軸で回す（手前の稜線を意識）
+            anchorX = 1.0 - anchorShift
+        } else if 0 < clampedProgress {
+            // 右へ送る時は左寄りの軸で回す
+            anchorX = anchorShift
+        } else {
+            // 静止中は正面のまま中央軸
+            anchorX = 0.5
+        }
+        let anchorPoint = UnitPoint(x: anchorX, y: 0.5)
 
         content
             .rotation3DEffect(
                 .degrees(angle),
                 axis: (x: 0, y: 1, z: 0),
                 anchor: anchorPoint,
-                perspective: 0.7
+                perspective: 0.75 // 5角柱の厚みをわずかに強調
             )
             // ほんの少しだけ持ち上げることで、回転中にページが浮かぶ印象を付与
             .offset(y: abs(clampedProgress) * -4)
+            // 稍縮小させて、立体感を強調しつつページ端の重なりを防ぐ
+            .scaleEffect(1 - abs(clampedProgress) * 0.05)
     }
 }
 
