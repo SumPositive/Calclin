@@ -165,7 +165,7 @@ struct CalcRollHeaderView: View {
                 if isBeginner {
                     // 初心者モードではボタンの意味を明記
                     Text(String(localized: "表示する計算機(枠)を減らす"))
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.top, -14)
@@ -243,7 +243,7 @@ struct CalcRollHeaderView: View {
                     if isBeginner {
                         // 初心者モードではインジケータの操作方法を補足
                         Text(String(localized: "左右にスワイプまたは\n枠内をタップして切り替え\nダブルタップも有効です"))
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
 //                            .frame(maxWidth: .infinity)
@@ -274,7 +274,7 @@ struct CalcRollHeaderView: View {
                 if isBeginner {
                     // 初心者モードではボタンの意味を明記
                     Text(String(localized: "表示する計算機(枠)を増やす"))
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.top, -14)

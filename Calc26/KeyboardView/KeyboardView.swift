@@ -100,7 +100,7 @@ struct KeyboardView: View {
                 if setting.playMode == .beginner {
                     // 初心者モードでは操作ヒントを補足
                     Text("左右にスワイプすればキーボードが切り替わります\nキーを長押しすればキー定義を変更できます")
-                        .font(.footnote)
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 12)

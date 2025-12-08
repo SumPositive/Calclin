@@ -78,7 +78,7 @@ struct ContentView: View {
                             if setting.playMode == .beginner {
                                 // 初心者モードではボタンの役割を明示
                                 Text(String(localized: "設定を開く"))
-                                    .font(.caption)
+                                    .font(.caption2)
                                     .foregroundStyle(.secondary)
                                     .padding(.top, 4)
                                     .padding(.horizontal, 4)

@@ -10,7 +10,7 @@ import UIKit
 import SafariServices
 
 
-let SettingView_HEIGHT: CGFloat = 580.0 // シート表示時の高さ指定
+let SettingView_HEIGHT: CGFloat = 550.0 // シート表示時の高さ指定
 
 struct SettingView: View {
     @EnvironmentObject var viewModel: SettingViewModel
@@ -44,7 +44,6 @@ struct SettingView: View {
                     decimalSection
                     keyboardSection
                     infoSection
-                    supportSection
                     footerSection
                 }
                 .padding(.horizontal)
@@ -281,68 +280,68 @@ struct SettingView: View {
             iconName: "keyboard",
             tint: Color(.systemBlue)
         ) {
-            HStack(spacing: 8) {
-                Button {
-                    keyboardViewModel.saveKeyboardJson()
-                    Manager.shared.toast(String(localized: "保存しました"), wait: 2.0)
-                } label: {
-                    VStack(spacing: 4) {
+            HStack(spacing: 4) {
+                VStack(spacing: 4) {
+                    Button {
+                        keyboardViewModel.saveKeyboardJson()
+                        Manager.shared.toast(String(localized: "保存しました"), wait: 2.0)
+                    } label: {
                         Label("保存", systemImage: "square.and.arrow.down")
+                            .font(.subheadline)
                             .padding(.horizontal, 8)
-                            .frame(width: .infinity, height: 34)
+                            .frame(height: 34)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                                     .strokeBorder(.blue, lineWidth: 1)
                             )
-                        Text("現在の配置を保存する")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
+                    Text("現在の配置を保存する")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                .accessibilityLabel(Text("保存"))
 
-                Button {
-                    keyboardViewModel.loadKeyboardJson()
-                    Manager.shared.toast(String(localized: "保存した配置に戻しました"), wait: 3.0)
-                } label: {
-                    VStack(spacing: 4) {
+                VStack(spacing: 4) {
+                    Button {
+                        keyboardViewModel.loadKeyboardJson()
+                        Manager.shared.toast(String(localized: "保存した配置に戻しました"), wait: 3.0)
+                    } label: {
                         Label("復元", systemImage: "square.and.arrow.up")
+                            .font(.subheadline)
                             .padding(.horizontal, 8)
-                            .frame(width: .infinity, height: 34)
+                            .frame(height: 34)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                                     .strokeBorder(.green, lineWidth: 1)
                             )
-                        Text("保存した配置に戻す")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
+                    Text("保存した配置に戻す")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                .accessibilityLabel(Text("復元"))
 
                 
                 Spacer()
 
-                Button {
-                    keyboardViewModel.initKeyboardJson()
-                } label: {
-                    VStack(spacing: 4) {
+                VStack(spacing: 4) {
+                    Button {
+                        keyboardViewModel.initKeyboardJson()
+                    } label: {
                         Label("初期化", systemImage: "keyboard")
+                            .font(.subheadline)
                             .padding(.horizontal, 8)
-                            .frame(width: .infinity, height: 24)
+                            .frame(height: 24)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                                     .strokeBorder(.red, lineWidth: 1)
                             )
-                        Text("初期のキー定義と配置に戻す")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
+                    Text("初期のキー定義と配置に戻す")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                .accessibilityLabel(Text("初期化"))
             }
             .padding(.top, -8)
             .padding(.leading, 12)
@@ -352,64 +351,45 @@ struct SettingView: View {
     /// アプリの情報リンクをまとめるカード
     private var infoSection: some View {
         SettingSectionCard(
-            title: "アプリの紹介・取扱説明",
-            iconName: "book.closed",
+            iconName: "info.circle",
             tint: Color(.systemPurple)
         ) {
-            Button {
-                // 使い方ページをSafariシートで表示する
-                openSafari(for: "info.url")
-            } label: {
-                Label("開く", systemImage: "book")
-                    .padding(.horizontal, 8)
-                    .frame(width: .infinity, height: 34)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .strokeBorder(.blue, lineWidth: 1)
-                    )
-            }
-            .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.top, -8)
-        }
-    }
-
-    /// 最下部にバージョンとビルド番号を表示するフッター
-    private var footerSection: some View {
-        VStack(spacing: 4) {
-            // システムから取得した文字列をそのまま表示する
-            Text(appVersionText)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 8) {
+                // 取扱説明
+                Button {
+                    // 使い方ページをSafariシートで表示する
+                    openSafari(for: "info.url")
+                } label: {
+                    Label("アプリの紹介・取扱説明", systemImage: "book")
+                        .font(.body)
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(.blue, lineWidth: 1)
+                        )
+                }
                 .frame(maxWidth: .infinity, alignment: .center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-    }
-
-    /// 下部に開発者応援リンクを配置
-    private var supportSection: some View {
-        SettingSectionCard(
-            title: "開発者を応援する",
-            iconName: "heart.fill",
-            tint: Color(.systemPink)
-        ) {
-            Button {
-                // 広告シートを表示する
-                // ボタンタップ時にBoolを切り替えてシートを開く
-                showAdMobSheet = true
-            } label: {
-                Label("広告を見て寄付する", systemImage: "seal")
-                    .padding(.horizontal, 8)
-                    .frame(width: .infinity, height: 34)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .strokeBorder(.blue, lineWidth: 1)
-                    )
+                
+                // 広告
+                Button {
+                    // 広告シートを表示する
+                    // ボタンタップ時にBoolを切り替えてシートを開く
+                    showAdMobSheet = true
+                } label: {
+                    Label("開発者を応援する", systemImage: "flag.2.crossed")
+                        .font(.body)
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(.blue, lineWidth: 1)
+                        )
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
             }
-            .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.top, -8)
         }
     }
 
@@ -424,20 +404,33 @@ struct SettingView: View {
         safariURL = url
         showSafari = true
     }
+
+    /// 最下部にバージョンとビルド番号を表示するフッター
+    private var footerSection: some View {
+        VStack(spacing: 4) {
+            // システムから取得した文字列をそのまま表示する
+            Text(appVersionText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+    }
 }
 
 // MARK: - 共通UIコンポーネント
 
 /// カード感をSwiftUIで再現する共通コンポーネント
 private struct SettingSectionCard<Content: View>: View {
-    let title: LocalizedStringResource
+    let title: LocalizedStringResource?
     let iconName: String
     let tint: Color
     var description: LocalizedStringResource?
     let content: Content
 
     init(
-        title: LocalizedStringResource,
+        title: LocalizedStringResource? = nil,
         iconName: String,
         tint: Color,
         description: LocalizedStringResource? = nil,
@@ -452,28 +445,29 @@ private struct SettingSectionCard<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
-                // 左側のシンボルを角丸のバッジとして描画
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(tint.opacity(0.18))
-                    .frame(width: 38, height: 38)
-                    .overlay(
-                        Image(systemName: iconName)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(tint)
-                    )
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.headline)
-                    if let description {
-                        Text(description)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            if let title {
+                HStack(spacing: 10) {
+                    // 左側のシンボルを角丸のバッジとして描画
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(tint.opacity(0.18))
+                        .frame(width: 30, height: 30)
+                        .overlay(
+                            Image(systemName: iconName)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(tint)
+                        )
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(title)
+                            .font(.headline)
+                        if let description {
+                            Text(description)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                    Spacer()
                 }
-
-                Spacer()
             }
 
             content
