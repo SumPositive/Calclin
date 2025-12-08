@@ -164,7 +164,7 @@ struct CalcRollHeaderView: View {
 
                 if isBeginner {
                     // 初心者モードではボタンの意味を明記
-                    Text(String(localized: "表示する計算機を減らす"))
+                    Text(String(localized: "表示する計算機(枠)を減らす"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -273,7 +273,7 @@ struct CalcRollHeaderView: View {
 
                 if isBeginner {
                     // 初心者モードではボタンの意味を明記
-                    Text(String(localized: "表示する計算機を増やす"))
+                    Text(String(localized: "表示する計算機(枠)を増やす"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
