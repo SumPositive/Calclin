@@ -67,6 +67,7 @@ struct CalcRollView: View {
             GeometryReader { geometry in
                 HStack(spacing: 0) {
                     ForEach(0..<calcViewModels.count, id: \.self) { index in
+                        let isActive = index == selectedPage
                         CalcView(viewModel: calcViewModels[index])
                             .environmentObject(setting) // settingに変化あればCalcViewが再生成される
                             .frame(width: geometry.size.width / CGFloat(showCount))
@@ -75,51 +76,56 @@ struct CalcRollView: View {
                                      : COLOR_CALC_INACTIVE.opacity(0.1), width: 2.0)
                             .cornerRadius(4)
                             .contentShape(Rectangle()) // paddingを含む領域全体がタップ対象になる
-                            .onTapGesture {
-                                // タップでページを切り替える
-                                if index != selectedPage {
-                                    selectedPage = index
-                                    onCalcChange(index)
-                                }
-                            }
-                            //.onTapGesture(count: 2) { location in
-                            // 上ではListが埋まったとき無視されるため下のように対策
-                            .highPriorityGesture( // 親ビューで優先的に処理する。Listへ伝えない
-                                // ダブルタップとタップ位置を検知
-                                SpatialTapGesture(count: 2).onEnded { value in
-                                    let x = value.location.x
-                                    let half = geometry.size.width / 2
-                                    let isLeft: Bool = (x < half) //true=左半分でダブルタップ
-                                    // ダブルタップで拡大（1ページにする）、縮小（2ページにする）
-                                    withAnimation(.easeOut(duration: 0.3)) {
-                                        if showCount == 1 {
-                                            // selectedPageを変えずに2ページにする
-                                            if isLeft {
-                                                // 左半分でダブルタップ＞左方向へ
-                                                if 0 < showStart {
-                                                    showStart -= 1
-                                                }
-                                            }else{
-                                                // 右半分でダブルタップ＞右方向へ
-                                                if showStart == calcViewModels.count - 1 {
-                                                    // 終端戻し
-                                                    showStart -= 1
-                                                }
-                                            }
-                                            showCount = 2 // 2ページにする
-                                            singleMode = false
-                                        } else {
+                            .overlay {
+                                // 非アクティブ時は親がタップを独占し、アクティブ時は子ビューに譲る
+                                if isActive == false {
+                                    Color.clear
+                                        .contentShape(Rectangle())
+                                        .onTapGesture {
+                                            // タップでページを切り替える（親だけが処理）
                                             if index != selectedPage {
                                                 selectedPage = index
                                                 onCalcChange(index)
                                             }
-                                            showStart = selectedPage
-                                            showCount = 1 // 1ページにする
-                                            singleMode = true
                                         }
-                                    }
+                                        .highPriorityGesture( // 親ビューで優先的に処理する。Listへ伝えない
+                                            // ダブルタップとタップ位置を検知（非アクティブ時のみ）
+                                            SpatialTapGesture(count: 2).onEnded { value in
+                                                let x = value.location.x
+                                                let half = geometry.size.width / 2
+                                                let isLeft: Bool = (x < half) // true=左半分でダブルタップ
+                                                // ダブルタップで拡大（1ページにする）、縮小（2ページにする）
+                                                withAnimation(.easeOut(duration: 0.3)) {
+                                                    if showCount == 1 {
+                                                        // selectedPageを変えずに2ページにする
+                                                        if isLeft {
+                                                            // 左半分でダブルタップ＞左方向へ
+                                                            if 0 < showStart {
+                                                                showStart -= 1
+                                                            }
+                                                        }else{
+                                                            // 右半分でダブルタップ＞右方向へ
+                                                            if showStart == calcViewModels.count - 1 {
+                                                                // 終端戻し
+                                                                showStart -= 1
+                                                            }
+                                                        }
+                                                        showCount = 2 // 2ページにする
+                                                        singleMode = false
+                                                    } else {
+                                                        if index != selectedPage {
+                                                            selectedPage = index
+                                                            onCalcChange(index)
+                                                        }
+                                                        showStart = selectedPage
+                                                        showCount = 1 // 1ページにする
+                                                        singleMode = true
+                                                    }
+                                                }
+                                            }
+                                        )
                                 }
-                            )
+                            }
                     }
                 }
                 .offset(x: -CGFloat(showStart) * geometry.size.width / CGFloat(showCount))
