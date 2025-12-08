@@ -329,27 +329,25 @@ final class RewardedAdLoader: NSObject, ObservableObject, @MainActor GADFullScre
         // シンプルな広告リクエストを生成する（テストデバイス設定は必要に応じて別途追加）
         let request = GADRequest()
         // ロード完了ハンドラは並列実行され得るため、メインアクター上でUI更新する
-        GADRewardedAd.load(withAdUnitID: adUnitID, request: request) { [weak self] ad, error in
-            // Task越境で非Sendableなadを扱うとコンパイラが競合を警告するため、
-            // GCD経由でメインキューに切り替えてからUI状態を更新する。
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.isLoading = false
-                if let error {
-                    // 具体的な障害内容はCrashlyticsへ残しつつ、画面には優しい文言を出す
-                    self.errorMessage = adUnavailableMessage
-                    // TestFlightでも原因を追いやすいようCrashlyticsへ記録しておく
-                    Crashlytics.crashlytics().record(error: error)
-                    self.onAdFailedToLoad?(error)
-                    self.rewardedAd = nil
-                } else if let ad {
-                    // 非Sendableなadはこのスコープ内でのみ保持し、
-                    // アクター境界を越えた共有を避ける。
-                    self.rewardedAd = ad
-                    ad.fullScreenContentDelegate = self
-                    self.isReady = true
-                    self.onAdLoaded?()
-                }
+        // completion引数自体を@MainActor化することで、非Sendableなadをクロスアクター転送しない
+        GADRewardedAd.load(withAdUnitID: adUnitID, request: request) { [weak self] ad, error in @MainActor in
+            // ここへ入る時点でメインアクター上におり、selfやadが別アクターへ飛ばない
+            guard let self else { return }
+            self.isLoading = false
+            if let error {
+                // 具体的な障害内容はCrashlyticsへ残しつつ、画面には優しい文言を出す
+                self.errorMessage = adUnavailableMessage
+                // TestFlightでも原因を追いやすいようCrashlyticsへ記録しておく
+                Crashlytics.crashlytics().record(error: error)
+                self.onAdFailedToLoad?(error)
+                self.rewardedAd = nil
+            } else if let ad {
+                // 非Sendableなadはこのスコープ内でのみ保持し、
+                // アクター境界を越えた共有を避ける。
+                self.rewardedAd = ad
+                ad.fullScreenContentDelegate = self
+                self.isReady = true
+                self.onAdLoaded?()
             }
         }
     }
