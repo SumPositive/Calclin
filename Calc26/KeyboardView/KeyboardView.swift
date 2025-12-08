@@ -151,9 +151,9 @@ struct PrismRotationModifier: ViewModifier {
     /// -1.0 〜 +1.0 を想定したページ移動の進行度（左に動くとマイナス、右に動くとプラス）
     let progress: CGFloat
 
-    @ViewBuilder
     func body(content: Content) -> some View {
         // 進行度を安全な範囲に制限してから角度を算出
+        // （ViewBuilderを挟まない形にして、純粋に値計算だけを行う）
         let clampedProgress = min(max(progress, -1), 1)
         // 5角柱の1面あたりの回転角（360 / 5 = 72度）
         let faceAngle: Double = 72
@@ -161,20 +161,15 @@ struct PrismRotationModifier: ViewModifier {
 
         // 5角柱の中心を軸にするため、軸位置をわずかに中央寄りにずらす
         let anchorShift: CGFloat = 0.18 // 0.2未満に抑えて過度な引き寄せを防ぐ
-        let anchorX: CGFloat
-        if clampedProgress < 0 {
-            // 左へ送る時は右寄りの軸で回す（手前の稜線を意識）
-            anchorX = 1.0 - anchorShift
-        } else if 0 < clampedProgress {
-            // 右へ送る時は左寄りの軸で回す
-            anchorX = anchorShift
-        } else {
-            // 静止中は正面のまま中央軸
-            anchorX = 0.5
-        }
+        // ifブロックがViewを返さないことでエラーにならないよう、条件演算子で軸位置を決定
+        let anchorX: CGFloat = clampedProgress < 0
+            ? 1.0 - anchorShift
+            : clampedProgress <= 0
+                ? 0.5
+                : anchorShift
         let anchorPoint = UnitPoint(x: anchorX, y: 0.5)
 
-        content
+        return content
             .rotation3DEffect(
                 .degrees(angle),
                 axis: (x: 0, y: 1, z: 0),
