@@ -286,7 +286,6 @@ struct AdMobRewardedContentView: View {
 
 /// AdMobの報酬型広告を読み込むクラス
 // GoogleMobileAdsが提供するフルスクリーン広告のデリゲートに準拠し、表示やエラーを検知する
-@MainActor
 final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDelegate {
     @Published private(set) var isLoading = false
     @Published private(set) var isReady = false
@@ -321,6 +320,8 @@ final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDe
         userId = id
     }
     
+    @MainActor
+    // メインスレッド限定の状態更新に寄せて、広告SDKの非同期コールバックとUI更新の食い違いを防ぐ
     func loadAd() {
         isLoading = true
         isReady = false
@@ -350,6 +351,8 @@ final class RewardedAdLoader: NSObject, ObservableObject, GADFullScreenContentDe
         }
     }
     
+    @MainActor
+    // UI操作が絡むため、呼び出し元がバックグラウンドでもメインアクターへ寄せて衝突を避ける
     func present(from root: UIViewController) {
         guard let rewardedAd else { return }
         let ad = rewardedAd
