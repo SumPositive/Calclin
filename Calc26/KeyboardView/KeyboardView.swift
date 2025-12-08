@@ -581,7 +581,7 @@ struct EditKeyDefView: View {
                     .frame(width: TITLE_WIDTH)
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("editkeydef.info.symbol")
+                    Text("Apple SF Symbols name")
                         .font(.caption2)
                         .foregroundColor(COLOR_TITLE)
                         .padding(.bottom, 2)
