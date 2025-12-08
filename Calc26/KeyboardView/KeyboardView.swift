@@ -42,13 +42,23 @@ struct KeyboardView: View {
             //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
             GeometryReader { geometry in
                 let frame = geometry.frame(in: .global)
+                let pageWidth = geometry.size.width + KEYBOARD_PAGE_GAP
 
                 HStack(spacing: KEYBOARD_PAGE_GAP) {
                     ForEach(0..<KeyboardViewModel.pageCount, id: \.self) { index in
+                        let offsetFromCenter = CGFloat(index - selectedPage) * pageWidth + dragOffset
+                        let progress = offsetFromCenter / pageWidth
+
                         KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
                             .frame(width: geometry.size.width)
+                            // キューブが回転するような立体的な切り替え演出
                             .modifier(
-                                // 左右ページに遠近感を与える
+                                CubeRotationModifier(
+                                    progress: progress
+                                )
+                            )
+                            .modifier(
+                                // 左右ページに遠近感を与える（既存演出も維持）
                                 PagePerspectiveModifier(
                                     distance: Double(index - selectedPage),
                                     pageWidth: geometry.size.width,
@@ -133,6 +143,32 @@ struct PagePerspectiveModifier: ViewModifier {
                               anchorZ: 0,
                               perspective: 1.0) // 奥行き 0.0〜1.0
             .opacity(distance == 0 ? 1 : 0.5)
+    }
+}
+
+// キューブ状に回転させるためのモディファイア
+struct CubeRotationModifier: ViewModifier {
+    /// -1.0 〜 +1.0 を想定したページ移動の進行度（左に動くとマイナス、右に動くとプラス）
+    let progress: CGFloat
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        // 進行度を安全な範囲に制限してから角度を算出
+        let clampedProgress = min(max(progress, -1), 1)
+        let angle = clampedProgress * 70 // 90度未満で立体感を保つ
+
+        // 進行方向に合わせて回転の支点を変える（手前側の辺を軸にする）
+        let anchorPoint: UnitPoint = clampedProgress < 0 ? .trailing : .leading
+
+        content
+            .rotation3DEffect(
+                .degrees(angle),
+                axis: (x: 0, y: 1, z: 0),
+                anchor: anchorPoint,
+                perspective: 0.7
+            )
+            // ほんの少しだけ持ち上げることで、回転中にページが浮かぶ印象を付与
+            .offset(y: abs(clampedProgress) * -4)
     }
 }
 
