@@ -287,7 +287,7 @@ struct AdMobRewardedContentView: View {
 /// AdMobの報酬型広告を読み込むクラス
 // GoogleMobileAdsが提供するフルスクリーン広告のデリゲートに準拠し、表示やエラーを検知する
 @MainActor
-final class RewardedAdLoader: NSObject, ObservableObject, @MainActor GADFullScreenContentDelegate {
+final class RewardedAdLoader: NSObject, ObservableObject, @MainActor FullScreenContentDelegate {
     @Published private(set) var isLoading = false
     @Published private(set) var isReady = false
     @Published private(set) var errorMessage: String?
@@ -297,13 +297,13 @@ final class RewardedAdLoader: NSObject, ObservableObject, @MainActor GADFullScre
     var onAdPresented: (() -> Void)?
     var onAdFailedToPresent: ((Error) -> Void)?
     var onAdDismissed: (() -> Void)?
-    // 報酬受領イベントはGoogleMobileAdsのGADAdReward型で扱う
-    var onRewardEarned: ((GADAdReward) -> Void)?
+    // 報酬受領イベントはGoogleMobileAdsのプレフィックス無しのAdReward型で扱う
+    var onRewardEarned: ((AdReward) -> Void)?
     
     private let adUnitID: String
     private var userId: String?
     // 最新の報酬型広告インスタンスを保持する
-    private var rewardedAd: GADRewardedAd?
+    private var rewardedAd: RewardedAd?
     
     init(adUnitID: String) {
         self.adUnitID = adUnitID
@@ -327,9 +327,9 @@ final class RewardedAdLoader: NSObject, ObservableObject, @MainActor GADFullScre
         errorMessage = nil
         
         // シンプルな広告リクエストを生成する（テストデバイス設定は必要に応じて別途追加）
-        let request = GADRequest()
+        let request = AdRequest()
         // ロード完了ハンドラは並列実行され得るため、メインアクター上でUI更新する
-        GADRewardedAd.load(withAdUnitID: adUnitID, request: request) { [weak self] ad, error in
+        RewardedAd.load(withAdUnitID: adUnitID, request: request) { [weak self] ad, error in
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.isLoading = false
@@ -375,7 +375,7 @@ final class RewardedAdLoader: NSObject, ObservableObject, @MainActor GADFullScre
         }
     }
     
-    func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+    func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         Task { @MainActor [weak self] in
             guard let self else { return }
             self.isReady = false
@@ -385,14 +385,14 @@ final class RewardedAdLoader: NSObject, ObservableObject, @MainActor GADFullScre
         }
     }
 
-    func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+    func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
         Task { @MainActor [weak self] in
             guard let self else { return }
             self.onAdPresented?()
         }
     }
 
-    func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
+    func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         Task { @MainActor [weak self] in
             guard let self else { return }
             // 実際のエラー内容はログに残し、ユーザーには広告非表示の状況だけを示す
@@ -493,7 +493,7 @@ struct AdMobBannerRepresentable: UIViewControllerRepresentable {
         viewController.view.backgroundColor = .clear
         
         // 表示したいサイズに合わせたバナーインスタンスを生成
-        let bannerView = GADBannerView(adSize: adSizeFor(cgSize: size))
+        let bannerView = BannerView(adSize: adSizeFor(cgSize: size))
         bannerView.adUnitID = adUnitID
         bannerView.rootViewController = viewController
         bannerView.delegate = context.coordinator
@@ -507,7 +507,7 @@ struct AdMobBannerRepresentable: UIViewControllerRepresentable {
         
         context.coordinator.bannerView = bannerView
         // シンプルなリクエストを送信しロードを開始する
-        bannerView.load(GADRequest())
+        bannerView.load(AdRequest())
         
         return viewController
     }
@@ -516,8 +516,8 @@ struct AdMobBannerRepresentable: UIViewControllerRepresentable {
         context.coordinator.bannerView?.rootViewController = uiViewController
     }
     
-    final class Coordinator: NSObject, GADBannerViewDelegate {
-        weak var bannerView: GADBannerView?
+    final class Coordinator: NSObject, BannerViewDelegate {
+        weak var bannerView: BannerView?
         
         private let onReceiveAd: () -> Void
         private let onFailToReceiveAd: (Error) -> Void
@@ -527,20 +527,20 @@ struct AdMobBannerRepresentable: UIViewControllerRepresentable {
             self.onFailToReceiveAd = onFailToReceiveAd
         }
         
-        func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
+        func bannerViewDidReceiveAd(_ bannerView: BannerView) {
             onReceiveAd()
         }
 
-        func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
+        func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
             onFailToReceiveAd(error)
         }
     }
 }
 
-// 指定したCGSizeからGoogleMobileAdsのGADAdSizeを作るユーティリティ
-private func adSizeFor(cgSize: CGSize) -> GADAdSize {
+// 指定したCGSizeからGoogleMobileAdsのAdSizeを作るユーティリティ
+private func adSizeFor(cgSize: CGSize) -> AdSize {
     // 明示的に固定サイズを使うことで、意図しないリサイズを避ける
-    GADAdSizeFromCGSize(cgSize)
+    AdSizeFromCGSize(cgSize)
 }
 
 
