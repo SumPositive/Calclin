@@ -39,6 +39,7 @@
 		C3308B272E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calclin" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"/Localized: App/InfoPlist.strings",
 				App/Assets.xcassets,
 				App/Calc26App.swift,
 				App/Config.swift,
@@ -82,6 +83,7 @@
 		C3308B292E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "CalclinUITests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"/Localized: App/InfoPlist.strings",
 				App/Calc26App.swift,
 				App/Config.swift,
 				App/ContentView.swift,

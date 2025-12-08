@@ -125,7 +125,7 @@ final class CalcFunc {
                     }
                     else if 2 <= tokens.count {
                         if tokens.last == FM_ADD {
-                            // "100 + 5%" ⇒ "100 * (100 + 5) / 100"    ＜＜100の5%増：税込み＞＞　シャープ式
+                            // "100+5%" ⇒ "100*(100+5)/100" = 105 ＜Google式
                             tokens.removeLast()
                             // current = "5"
                             tokens.append(FM_MUL)
@@ -141,17 +141,17 @@ final class CalcFunc {
                             continue
                         }
                         else if tokens.last == FM_SUB {
-                            // "100 - 5%" ⇒ "100 * 100 / (100 + 5)"    ＜＜100の5%減：税抜き＞＞　シャープ式
+                            // "100-5%" ⇒ "100*(100-5)/100" = 95 ＜Google式、税抜き式ではない
                             tokens.removeLast()
                             // current = "5"
                             tokens.append(FM_MUL)
-                            tokens.append(per)
-                            tokens.append(FM_DIV)
                             tokens.append(FM_PT_LEFT)
                             tokens.append(per)
-                            tokens.append(FM_ADD)
+                            tokens.append(FM_SUB)
                             tokens.append(current)
                             tokens.append(FM_PT_RIGHT)
+                            tokens.append(FM_DIV)
+                            tokens.append(per)
                             prevToken = ""
                             current = ""
                             continue
