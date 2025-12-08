@@ -71,7 +71,9 @@ struct KeyboardView: View {
                 .animation(.easeOut(duration: 0.35), value: selectedPage)
             }
             .padding(0)
-            //.clipped() // 選択中の1ページだけ見せるため
+            // iPadでは左右ページの一部が見えてしまうので、iPhone同様に現在のページだけを描画範囲に収める
+            // 立体回転やスワイプ操作は親Viewで処理しているため、クリップしても操作性は変わらない
+            .clipped()
             .highPriorityGesture(
                 DragGesture()
                     .onChanged { value in
