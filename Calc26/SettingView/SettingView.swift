@@ -20,6 +20,23 @@ struct SettingView: View {
     @State private var safariURL: URL?  // 開く予定のURLを保持
     @State private var showAdMobSheet = false  // 広告表示シートの有無
 
+    /// アプリのVersion/Build番号をまとめて返す
+    private var appVersionText: String {
+        // Info.plistから安全に値を拾う。Xcodeのビルド設定で設定されている想定
+        let infoDictionary = Bundle.main.infoDictionary ?? [:]
+        let marketingVersion = (infoDictionary["CFBundleShortVersionString"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let buildNumber = (infoDictionary["CFBundleVersion"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // 空文字やnilの場合でも表示が崩れないようにフォールバックする
+        let safeVersion = (marketingVersion?.isEmpty == false) ? marketingVersion ?? "-" : "-"
+        let safeBuild = (buildNumber?.isEmpty == false) ? buildNumber ?? "-" : "-"
+
+        // Localizableでフォーマット文字列を持たせて翻訳しやすくする
+        let format = String(localized: "Version %@.Build %@")
+        // 文字列連結より読みやすいのでString(format:)を利用する
+        return String(format: format, safeVersion, safeBuild)
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -30,6 +47,7 @@ struct SettingView: View {
                     keyboardSection
                     infoSection
                     supportSection
+                    footerSection
                 }
                 .padding(.horizontal)
                 .padding(.top, 8)
@@ -356,6 +374,19 @@ struct SettingView: View {
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(.top, -8)
         }
+    }
+
+    /// 最下部にバージョンとビルド番号を表示するフッター
+    private var footerSection: some View {
+        VStack(spacing: 4) {
+            // システムから取得した文字列をそのまま表示する
+            Text(appVersionText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
     }
 
     /// 下部に開発者応援リンクを配置
