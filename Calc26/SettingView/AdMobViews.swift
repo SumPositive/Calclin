@@ -367,10 +367,13 @@ final class RewardedAdLoader: NSObject, ObservableObject, @MainActor GADFullScre
         isReady = false
         errorMessage = nil
         // 広告SDK側の完了クロージャも並列扱いになるため、アクター分離を明示する
-        ad.present(fromRootViewController: root) { [weak self] in
+        // 非Sendableな広告インスタンスをTaskへ渡すとデータ競合警告が出るため、クロージャに入る前に報酬だけを値コピーしておく
+        let reward = ad.adReward
+        ad.present(fromRootViewController: root) { [weak self, reward] in
             Task { @MainActor [weak self] in
                 guard let self else { return }
-                self.onRewardEarned?(ad.adReward)
+                // UI層へ通知するのはコピー済みの報酬情報のみとし、非Sendableオブジェクトの越境を避ける
+                self.onRewardEarned?(reward)
             }
         }
     }
