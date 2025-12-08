@@ -102,9 +102,10 @@ struct KeyboardView: View {
             // 下部メニュー
             VStack(spacing: 4) {
                 KeyboardFooterView(
-                    selectedPage: selectedPage,
+                    selectedPage: $selectedPage,
                     pageCount: KeyboardViewModel.pageCount
                 )
+                // キーボード切り替え操作はインジケータでもできることを示すため、暗めの時は少し透過
                 .opacity(colorScheme == .dark ? 0.60 : 1.0)
 
                 if setting.playMode == .beginner {
@@ -174,25 +175,57 @@ struct CubeRotationModifier: ViewModifier {
 
 // 下部メニュー
 struct KeyboardFooterView: View {
-    let selectedPage: Int
+    @Binding var selectedPage: Int
     let pageCount: Int
 
-    
     var body: some View {
         // 下部メニュー関係の固定値
         let IND_CIRCLE_SIZE: CGFloat = 10.0
+        let IND_SWIPE_RANGE: CGFloat = 30.0 // スワイプのしきい値（CalcRollViewに合わせる）
 
-        HStack {
-            Spacer()
-            // インジケータ部（タップ・スワイプ切り替え含む）
-            ForEach(0..<pageCount, id: \.self) { index in
-                Circle()
-                    .fill(index == selectedPage ? Color.primary : Color.secondary.opacity(0.4))
-                    .frame(width: IND_CIRCLE_SIZE, height: IND_CIRCLE_SIZE)
-                    .animation(.easeOut(duration: 0.2), value: selectedPage)
-                    .padding(.horizontal, 0)
+        GeometryReader { geo in
+            let viewWidth = geo.size.width
+
+            HStack {
+                Spacer()
+                // インジケータ部（タップ・スワイプ切り替え含む）
+                ForEach(0..<pageCount, id: \.self) { index in
+                    Circle()
+                        .fill(index == selectedPage ? Color.primary : Color.secondary.opacity(0.4))
+                        .frame(width: IND_CIRCLE_SIZE, height: IND_CIRCLE_SIZE)
+                        .animation(.easeOut(duration: 0.2), value: selectedPage)
+                        .padding(.horizontal, 0)
+                }
+                Spacer()
             }
-            Spacer()
+            // iPhone同様にインジケータ自体でページ切り替えできるように、広いタッチ領域を確保
+            .contentShape(Rectangle())
+            // スワイプ操作をインジケータでも受け付ける
+            .gesture(
+                DragGesture()
+                    .onEnded { value in
+                        if IND_SWIPE_RANGE < value.translation.width {
+                            // 右スワイプで前ページ
+                            selectedPage = selectedPage <= 0 ? 0 : selectedPage - 1
+                        }
+                        else if value.translation.width < -IND_SWIPE_RANGE {
+                            // 左スワイプで次ページ
+                            let lastIndex = pageCount - 1
+                            selectedPage = selectedPage < lastIndex ? selectedPage + 1 : lastIndex
+                        }
+                    }
+            )
+            // タップ位置で前後ページへ移動させる（iPadでもiPhoneと同じ見え方・操作感にする）
+            .onTapGesture { location in
+                let midX = viewWidth / 2
+                if location.x < midX {
+                    selectedPage = selectedPage <= 0 ? 0 : selectedPage - 1
+                }
+                else {
+                    let lastIndex = pageCount - 1
+                    selectedPage = selectedPage < lastIndex ? selectedPage + 1 : lastIndex
+                }
+            }
         }
         .frame(height: 20)
         .padding(0)
