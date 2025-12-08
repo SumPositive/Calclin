@@ -1412,6 +1412,22 @@
         }
       }
     },
+    "Version %@.Build %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@.Build %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@.Build %@"
+          }
+        }
+      }
+    },
     "音が出ます" : {
 
     }
