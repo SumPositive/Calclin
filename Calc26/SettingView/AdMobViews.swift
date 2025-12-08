@@ -330,7 +330,9 @@ final class RewardedAdLoader: NSObject, ObservableObject, @MainActor GADFullScre
         let request = GADRequest()
         // ロード完了ハンドラは並列実行され得るため、メインアクター上でUI更新する
         GADRewardedAd.load(withAdUnitID: adUnitID, request: request) { [weak self] ad, error in
-            Task { @MainActor [weak self] in
+            // Task越境で非Sendableなadを扱うとコンパイラが競合を警告するため、
+            // GCD経由でメインキューに切り替えてからUI状態を更新する。
+            DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 self.isLoading = false
                 if let error {
@@ -341,6 +343,8 @@ final class RewardedAdLoader: NSObject, ObservableObject, @MainActor GADFullScre
                     self.onAdFailedToLoad?(error)
                     self.rewardedAd = nil
                 } else if let ad {
+                    // 非Sendableなadはこのスコープ内でのみ保持し、
+                    // アクター境界を越えた共有を避ける。
                     self.rewardedAd = ad
                     ad.fullScreenContentDelegate = self
                     self.isReady = true
