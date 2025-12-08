@@ -185,6 +185,8 @@ struct BannerAdView: UIViewRepresentable {
 
 
 // MARK: - リワード広告の読み込みと表示を担当するクラス
+// Swift Concurrency に合わせ、UIスレッド（MainActor）に閉じ込めておく
+@MainActor
 final class RewardAdLoader: NSObject, ObservableObject {
     // 広告のロード状況をUIへ通知する
     @Published var isLoading: Bool = false
