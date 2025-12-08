@@ -99,8 +99,8 @@ struct KeyboardView: View {
 
                 if setting.playMode == .beginner {
                     // 初心者モードでは操作ヒントを補足
-                    Text("左右にスワイプすればキーボードが切り替わります。キーを長押しすればキー定義を変更できます")
-                        .font(.caption2)
+                    Text("左右にスワイプすればキーボードが切り替わります\nキーを長押しすればキー定義を変更できます")
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 12)
@@ -343,6 +343,7 @@ struct KeyView: View {
 struct KeyDefListView: View {
     @ObservedObject var viewModel: KeyboardViewModel
     let popupWidth: CGFloat
+    let setting: SettingViewModel
     let onSelect: (KeyDefinition) -> Void
     
     @State private var selectedKeyCode: String = ""
@@ -408,25 +409,48 @@ struct KeyDefListView: View {
     
     @ViewBuilder
     private func headerBar() -> some View {
-        HStack {
-            Button {
-                let kd = KeyDefinition(code: "nop", hidden: false, symbol: nil)
-                onSelect(kd)
-            } label: {
-                Image(systemName: "eraser.line.dashed")
+        VStack(spacing: 0) {
+            HStack {
+                Button {
+                    let kd = KeyDefinition(code: "nop", hidden: false, symbol: nil)
+                    onSelect(kd)
+                } label: {
+                    Image(systemName: "eraser.line.dashed")
+                }
+                .padding(.vertical, 4)
+                .padding(.horizontal, 20)
+                .contentShape(Rectangle())
+                
+                Spacer()
+                Text("キー定義を変更")
+                    .padding(.vertical, 4)
+                Spacer()
+                
+                Button { viewModel.popupKeyDefList = nil } label: {
+                    Image(systemName: "xmark")
+                }
+                .padding(.vertical, 4)
+                .padding(.horizontal, 20)
+                .contentShape(Rectangle())
             }
-            .padding(6)
-            .contentShape(Rectangle())
-            
-            Spacer()
-            Text("メモ").padding(4)
-            Spacer()
-            
-            Button { viewModel.popupKeyDefList = nil } label: {
-                Image(systemName: "xmark")
+            if setting.playMode == .beginner {
+                // 初心者モードではボタンの役割を明示
+                HStack {
+                    Text(String(localized: "キーが空欄・未定義に置き換わります"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 12)
+                    Spacer()
+                    Text(String(localized: "タップしたキーに置き換わります\n【達人限定】長押しで定義の編集や作成ができます"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(String(localized: "閉じる"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 12)
+                }
             }
-            .padding(6)
-            .contentShape(Rectangle())
         }
     }
     
@@ -452,8 +476,10 @@ struct KeyDefListView: View {
                     .simultaneousGesture(
                         LongPressGesture(minimumDuration: 0.6) // 長押し
                             .onEnded { _ in
-                                // キー定義編集をPopupで表示する
-                                viewModel.popupEditKeyDef = keyDef
+                                if setting.playMode == .master {
+                                    // キー定義編集をPopupで表示する
+                                    viewModel.popupEditKeyDef = keyDef
+                                }
                             }
                     )
             }

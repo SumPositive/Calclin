@@ -13,8 +13,10 @@ import FirebaseCrashlytics
 
 // アプリID は、Info.plistにセット：key:GADApplicationIdentifier
 
+//let AdMobAdSheetView_HEIGHT: CGFloat = 560.0 // シート表示時の高さ指定
+
 // 利用可能な広告がない場合に共通で表示する文言をまとめておく
-private let adUnavailableMessage = String(localized: "現在、特典付きの広告がありません。後ほどお試しください")
+private let adUnavailableMessage = String(localized: "現在、寄付できる広告がありません。後ほどお試しください")
 
 // 広告ユニットID
 #if DEBUG
@@ -47,80 +49,96 @@ struct AdMobAdSheetView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 0) {
-                    Text("タップして広告を見て開発者を応援してください")
-                        .font(.footnote)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
+                VStack(spacing: 12) {
+                    // バナー広告の表示領域（Medium Rectangle）
+                    VStack(alignment: .center, spacing: 12) {
+                        Text("タップして広告を見て開発者を応援してください")
+                            .font(.footnote)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.secondary)
 
-                    VStack(alignment: .leading, spacing: 16) {
-
-                        // バナー広告の表示領域（Medium Rectangle）
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("広告バナー")
-                                .font(.headline)
-                            Text("バナーをタップしていただけると開発の励みになります。")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            BannerAdView(adUnitID: ADMOB_BANNER_UnitID)
-                                .frame(width: 300, height: 250)
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                                .shadow(radius: 4)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                        // リワード広告：動画視聴完了後にお礼を出す
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("特典付き動画")
-                                .font(.headline)
-                            Text("動画を視聴すると開発者に寄付できます。視聴完了後に感謝メッセージを表示します。")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Button {
-                                // 視聴可能な広告があるか確認してから再生する
-                                if let rootController = UIApplication.shared.rootController {
-                                    rewardLoader.present(from: rootController) { success in
-                                        if success {
-                                            // 視聴完了のお礼を表示し、シートも閉じる準備をする
-                                            alertMessage = String(localized: "視聴ありがとうございます！開発の支援になります。")
-                                            shouldCloseAfterReward = true
-                                            showAlert = true
-                                        } else {
-                                            alertMessage = adUnavailableMessage
-                                            showAlert = true
-                                        }
-                                    }
-                                } else {
-                                    // 表示元が取れない場合もユーザへ知らせる
-                                    alertMessage = adUnavailableMessage
-                                    showAlert = true
-                                }
-                            } label: {
-                                HStack {
-                                    Image(systemName: "play.rectangle.fill")
-                                    Text("動画を再生する")
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color.accentColor.opacity(0.15))
-                                .foregroundStyle(Color.accentColor)
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(rewardLoader.isLoading)
-
-                            if rewardLoader.isLoading {
-                                // ローディング中はユーザに待機を明示する
-                                ProgressView("読み込み中...")
-                                    .font(.caption)
-                            }
-                        }
-
-
+                        BannerAdView(adUnitID: ADMOB_BANNER_UnitID)
+                            .frame(width: 300, height: 250)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .shadow(radius: 4)
                     }
-                    .padding()
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(uiColor: .tertiarySystemBackground))
+                    )
+                    .padding(12)
+
+                    // リワード広告：動画視聴完了後にお礼を出す
+                    VStack(alignment: .center, spacing: 8) {
+                        HStack {
+                            Text("寄付できる動画広告")
+                                .font(.headline)
+                                .padding(.trailing, 20)
+                            Label {
+                                Text("音が出ます")
+                                    .font(.footnote)
+                                    .foregroundStyle(.red)
+                            } icon: {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .symbolRenderingMode(.hierarchical)
+                                    .foregroundStyle(.red)
+                            }
+                        }
+
+                        Text("動画を視聴すると開発者に寄付できます")
+                            .font(.footnote)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.secondary)
+
+                        Button {
+                            // 視聴可能な広告があるか確認してから再生する
+                            if let rootController = UIApplication.shared.rootController {
+                                rewardLoader.present(from: rootController) { success in
+                                    if success {
+                                        // 視聴完了のお礼を表示し、シートも閉じる準備をする
+                                        alertMessage = String(localized: "視聴ありがとうございます！開発の支援になります。")
+                                        shouldCloseAfterReward = true
+                                        showAlert = true
+                                    } else {
+                                        alertMessage = adUnavailableMessage
+                                        showAlert = true
+                                    }
+                                }
+                            } else {
+                                // 表示元が取れない場合もユーザへ知らせる
+                                alertMessage = adUnavailableMessage
+                                showAlert = true
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: "play.rectangle.fill")
+                                Text("動画を再生する")
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.accentColor.opacity(0.15))
+                            .foregroundStyle(Color.accentColor)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(rewardLoader.isLoading)
+                        
+                        if rewardLoader.isLoading {
+                            // ローディング中はユーザに待機を明示する
+                            ProgressView("読み込み中...")
+                                .font(.caption)
+                        }
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(uiColor: .tertiarySystemBackground))
+                    )
+                    .padding(12)
                 }
-                .padding(.vertical, 8)
             }
             .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             .navigationTitle(Text("広告を見て寄付"))

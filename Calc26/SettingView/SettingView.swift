@@ -64,7 +64,7 @@ struct SettingView: View {
             // PackList同様に広告をシート表示する
             AdMobAdSheetView()
                 .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
+                //.presentationDragIndicator(.visible)
         }
     }
 

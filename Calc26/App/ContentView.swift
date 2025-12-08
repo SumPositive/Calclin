@@ -78,7 +78,7 @@ struct ContentView: View {
                             if setting.playMode == .beginner {
                                 // 初心者モードではボタンの役割を明示
                                 Text(String(localized: "設定を開く"))
-                                    .font(.caption2)
+                                    .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .padding(.top, 4)
                                     .padding(.horizontal, 4)
@@ -159,7 +159,8 @@ struct ContentView: View {
                         onDismiss: { keyboardViewModel.popupKeyDefList = nil }
                     ) {
                         KeyDefListView(viewModel: keyboardViewModel,
-                                       popupWidth: popupWidth) { selectedKeyDef in
+                                       popupWidth: popupWidth,
+                                       setting: setting) { selectedKeyDef in
                             log(.info, "PopupListView selected: \(selectedKeyDef.code)")
                             // Dismiss
                             keyboardViewModel.popupKeyDefList = nil
