@@ -116,6 +116,7 @@ struct KeyboardView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
+                        .padding(.top, -8)
                         .padding(.horizontal, 12)
                 }
             }
@@ -230,7 +231,7 @@ struct KeyboardFooterView: View {
             }
         }
         .frame(height: 20)
-        .padding(0)
+        .padding(.top, 8)
         //debug// .border(Color.red)
     }
 }

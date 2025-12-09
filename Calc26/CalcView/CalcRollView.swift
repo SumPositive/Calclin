@@ -252,7 +252,6 @@ struct CalcRollHeaderView: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
-//                            .frame(maxWidth: .infinity)
                             .frame(maxWidth: 140)
                             .padding(.top, -8)
                     }
