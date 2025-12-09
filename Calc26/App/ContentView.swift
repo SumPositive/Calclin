@@ -57,14 +57,15 @@ struct ContentView: View {
                             .lineLimit(1)
                             .frame(minWidth: 50)
                             .foregroundColor(COLOR_TITLE)
-                        
+
                         Spacer()
                     }
                     HStack {
-                        // 設定（シート起動ボタン）
+                        Spacer()
+                        // 設定（シート起動ボタン）を右上へ寄せてシステムUIとの衝突を回避
                         VStack(spacing: 0) {
                             Button(action: {
-                                // 左上固定のギアから設定シートを開く
+                                // 設定シートを開くアニメーション
                                 withAnimation {
                                     isSettingSheetPresented = true
                                 }
@@ -74,7 +75,7 @@ struct ContentView: View {
                             }
                             .padding(.horizontal)
                             .contentShape(Rectangle())
-                            
+
                             if setting.playMode == .beginner {
                                 // 初心者モードではボタンの役割を明示
                                 Text(String(localized: "設定を開く"))
@@ -84,7 +85,6 @@ struct ContentView: View {
                                     .padding(.horizontal, 4)
                             }
                         }
-                        Spacer()
                     }
                     .opacity(colorScheme == .dark ? 0.50 : 1.0)
                     .frame(height: setting.playMode == .beginner ? 40 : 30)
