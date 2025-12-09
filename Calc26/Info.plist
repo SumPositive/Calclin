@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>2</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-7576639777972199~8430922965</string>
 	<key>SKAdNetworkItems</key>

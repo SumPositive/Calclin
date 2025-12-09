@@ -65,10 +65,8 @@ struct ContentView: View {
                         // 設定（シート起動ボタン）を右上へ寄せてシステムUIとの衝突を回避
                         VStack(spacing: 0) {
                             Button(action: {
-                                // 設定シートを開くアニメーション
-                                withAnimation {
-                                    isSettingSheetPresented = true
-                                }
+                                // 設定シートを開く
+                                isSettingSheetPresented = true
                             }) {
                                 Image(systemName: "gearshape")
                                     .accentColor(.accentColor)
