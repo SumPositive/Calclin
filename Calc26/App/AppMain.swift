@@ -1,6 +1,6 @@
 //
-//  Calc26App.swift
-//  Calc26
+//  AppMain.swift
+//  Calclin
 //
 //  Created by sumpo/azukid on 2025/06/29. SwiftUI練習のためにCalcRoll移植を開始
 //
@@ -14,7 +14,7 @@ import GoogleMobileAds
 
 
 @main
-struct Calc26App: App {
+struct AppMain: App {
     //NG//@StateObject private var setting: SettingViewModel ここに置くと変化の都度、ContentViewが再生成されることになる
 
     @Environment(\.scenePhase) private var scenePhase

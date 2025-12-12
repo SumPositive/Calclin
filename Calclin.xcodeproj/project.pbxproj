@@ -41,8 +41,8 @@
 			membershipExceptions = (
 				"/Localized: App/InfoPlist.strings",
 				App/AppAnalytics.swift,
+				App/AppMain.swift,
 				App/Assets.xcassets,
-				App/Calc26App.swift,
 				App/Config.swift,
 				App/ContentView.swift,
 				"App/GoogleService-Info.plist",
@@ -73,6 +73,7 @@
 		C3308B282E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "CalclinTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				App/AppMain.swift,
 				App/Assets.xcassets,
 				"App/GoogleService-Info.plist",
 				Info.plist,
@@ -85,7 +86,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				"/Localized: App/InfoPlist.strings",
-				App/Calc26App.swift,
 				App/Config.swift,
 				App/ContentView.swift,
 				App/Localizable.xcstrings,
@@ -290,7 +290,6 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
-				Base,
 				ja,
 			);
 			mainGroup = C30A789A2E10EE8500212729;
