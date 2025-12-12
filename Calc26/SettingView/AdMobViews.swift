@@ -87,7 +87,12 @@ struct AdMobAdSheetView: View {
                             }
                         }
 
-                        Text("動画を視聴すると開発者に寄付できます")
+                        Text("動画を最後まで視聴すると開発者に寄付できます")
+                            .font(.footnote)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.secondary)
+                        
+                        Text("最後に閉じる(X)ボタンが現れます")
                             .font(.footnote)
                             .multilineTextAlignment(.center)
                             .foregroundStyle(.secondary)

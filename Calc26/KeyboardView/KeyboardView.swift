@@ -513,7 +513,7 @@ struct KeyDefListView: View {
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 12)
                     Spacer()
-                    Text(String(localized: "タップしたキーに置き換わります\n【達人限定】長押しで定義の編集や作成ができます"))
+                    Text(String(localized: "タップしたキーに置き換わります\n【達人限定】さらに長押しで定義の編集ができます"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
