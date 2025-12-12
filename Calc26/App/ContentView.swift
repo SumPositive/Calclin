@@ -94,6 +94,8 @@ struct ContentView: View {
                     calcViewModels: calcViewModels,
                     onCalcChange: { newCalc in
                         selectedCalc = newCalc
+                        // どの計算パネルが利用されているかをAnalyticsに送信して、人気ページを把握する
+                        AppAnalytics.logCalcPageChanged(to: newCalc)
                     }
                 )
                 .environmentObject(setting)
@@ -216,6 +218,14 @@ struct ContentView: View {
                 .environmentObject(setting)
                 .environmentObject(keyboardViewModel)
                 .presentationDetents([.height(SettingView_HEIGHT), .large])
+                // シートが実際に表示されたタイミングで記録する（タップだけで終わる誤検知を防ぐ）
+                .onAppear {
+                    AppAnalytics.logSettingSheetOpened(currentMode: setting.playMode)
+                }
+                // スワイプダウンなどで閉じられた時も正確に計測する
+                .onDisappear {
+                    AppAnalytics.logSettingSheetClosed()
+                }
 
         }
     }

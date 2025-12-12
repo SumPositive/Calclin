@@ -108,6 +108,8 @@ struct SettingView: View {
                     .onChange(of: viewModel.playMode) { oldValue, newValue in
                         // モード切替のログを残すだけでも利用者に優しい
                         log(.info, "PlayMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
+                        // Analyticsでも切り替え状況を計測して、利用傾向を可視化する
+                        AppAnalytics.logPlayModeChanged(from: oldValue, to: newValue)
                     }
                 }
                 HStack(spacing: 4) {
@@ -163,6 +165,8 @@ struct SettingView: View {
                         SBCD_Config.groupType = newValue.sbcd_config_groupType
                         // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                        // 区切り方式の嗜好を把握するためにAnalyticsへ送信する
+                        AppAnalytics.logGroupTypeChanged(to: newValue)
                     }
                 }
 
@@ -185,6 +189,8 @@ struct SettingView: View {
                         SBCD_Config.groupSeparator = newValue.symbol
                         // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                        // 利用者が好む記号を記録して、次期UI改善の参考にする
+                        AppAnalytics.logGroupSeparatorChanged(to: newValue)
                     }
                 }
             }
@@ -225,6 +231,8 @@ struct SettingView: View {
                         SBCD_Config.decimalTrailZero = false
                         // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                        // 有効桁数の調整頻度を把握し、UI改善に役立てる
+                        AppAnalytics.logDecimalDigitsChanged(to: newValue)
                     })
                 }
                 
@@ -244,6 +252,8 @@ struct SettingView: View {
                         SBCD_Config.decimalRoundType = newValue.sbcd_config_roundType
                         // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                        // 丸め方法の選好をAnalyticsで収集し、デフォルト値検討に活用する
+                        AppAnalytics.logRoundTypeChanged(to: newValue)
                     }
                 }
 
@@ -265,6 +275,8 @@ struct SettingView: View {
                         SBCD_Config.decimalSeparator = newValue.symbol
                         // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                        // ロケール毎の好みを把握してUI文言改善に反映する
+                        AppAnalytics.logDecimalSeparatorChanged(to: newValue)
                     }
                 }
             }
@@ -285,6 +297,8 @@ struct SettingView: View {
                     Button {
                         keyboardViewModel.saveKeyboardJson()
                         Manager.shared.toast(String(localized: "保存しました"), wait: 2.0)
+                        // 保存ボタンの利用状況を計測し、UI改善に活かす
+                        AppAnalytics.logKeyboardSaved()
                     } label: {
                         Label("保存", systemImage: "square.and.arrow.down")
                             .font(.subheadline)
@@ -305,6 +319,8 @@ struct SettingView: View {
                     Button {
                         keyboardViewModel.loadKeyboardJson()
                         Manager.shared.toast(String(localized: "保存した配置に戻しました"), wait: 3.0)
+                        // 復元操作をAnalyticsで追跡し、必要なガイドがないか判断する
+                        AppAnalytics.logKeyboardRestored()
                     } label: {
                         Label("復元", systemImage: "square.and.arrow.up")
                             .font(.subheadline)
@@ -327,6 +343,8 @@ struct SettingView: View {
                 VStack(spacing: 4) {
                     Button {
                         keyboardViewModel.initKeyboardJson()
+                        // 初期化はインパクトが大きいので、誤タップ防止策の検討材料にする
+                        AppAnalytics.logKeyboardReset()
                     } label: {
                         Label("初期化", systemImage: "keyboard")
                             .font(.subheadline)
@@ -358,6 +376,8 @@ struct SettingView: View {
                 // 取扱説明
                 Button {
                     // 使い方ページをSafariシートで表示する
+                    // 開封率を把握して、説明文の改善に活かす
+                    AppAnalytics.logInfoLinkOpened(kind: "manual")
                     openSafari(for: "info.url")
                 } label: {
                     Label("アプリの紹介・取扱説明", systemImage: "book")
@@ -377,6 +397,8 @@ struct SettingView: View {
                     // 広告シートを表示する
                     // ボタンタップ時にBoolを切り替えてシートを開く
                     showAdMobSheet = true
+                    // 広告シートを開く導線の効果を分析する
+                    AppAnalytics.logSupportAdTapped()
                 } label: {
                     Label("開発者を応援する", systemImage: "flag.2.crossed")
                         .font(.body)
