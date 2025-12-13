@@ -10,7 +10,7 @@ import SwiftUI
 import FirebaseCore
 import FirebaseAnalytics
 import FirebaseCrashlytics
-import GoogleMobileAds
+import GoogleMobileAds  // iOSのみ、MacやVisionには対応せずエラーになる
 
 
 @main
