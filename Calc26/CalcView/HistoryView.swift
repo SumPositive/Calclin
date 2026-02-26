@@ -18,64 +18,75 @@ struct HistoryView: View {
     
     
     var body: some View {
+        VStack(spacing: 0.0) {
+            if setting.playMode == .beginner {
+                // 初心者モードだけ、履歴のスワイプ操作ヒントを先頭に表示する
+                Text("履歴行を左右にスワイプすればメモや計算式をコピーできます")
+                    .font(.system(size: 13.0, weight: .regular))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12.0)
+                    .padding(.vertical, 8.0)
+            }
 
-        List {
-            ForEach(Array(viewModel.historyRows.enumerated().reversed()), id: \.offset) { index, row in
-                // カスタム明細セル
-                CustomCell(viewModel: viewModel, row: row)
-                    .listRowInsets(EdgeInsets()) // ← これが肝
-                    .listRowSeparator(.visible, edges: .all)
-                    .padding(.bottom, 8.0)  // 下の余白
-                    .padding(.horizontal, 12.0) // 左右の余白
-                    .background(COLOR_BACK_FORMULA)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        // 左スワイプ （false:全スワイプ即削除を避ける）
-                        Button(role: .destructive) {
-                            // 削除アクション  index行を削除する
-                            viewModel.delateHistory(index)
-                        } label: {
-                            Image("trash.fill_rev").imageScale(.large)
+            List {
+                ForEach(Array(viewModel.historyRows.enumerated().reversed()), id: \.offset) { index, row in
+                    // カスタム明細セル
+                    CustomCell(viewModel: viewModel, row: row)
+                        .listRowInsets(EdgeInsets()) // ← これが肝
+                        .listRowSeparator(.visible, edges: .all)
+                        .padding(.bottom, 8.0)  // 下の余白
+                        .padding(.horizontal, 12.0) // 左右の余白
+                        .background(COLOR_BACK_FORMULA)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            // 左スワイプ （false:全スワイプ即削除を避ける）
+                            Button(role: .destructive) {
+                                // 削除アクション  index行を削除する
+                                viewModel.delateHistory(index)
+                            } label: {
+                                Image("trash.fill_rev").imageScale(.large)
+                            }
                         }
-                    }
-                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                        // 右スワイプ （false:全スワイプ即メモを避ける）
-                        Button() {
-                            // メモする
-                            setting.popupHistoryMemoInfo = (maxLength: 0,
-                                                            index: index)
-                        } label: {
-                            Image("edit_rev").imageScale(.large)
-                        }
-                        .tint(COLOR_MEMO) // スワイプ背景色
+                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                            // 右スワイプ （false:全スワイプ即メモを避ける）
+                            Button() {
+                                // メモする
+                                setting.popupHistoryMemoInfo = (maxLength: 0,
+                                                                index: index)
+                            } label: {
+                                Image("edit_rev").imageScale(.large)
+                            }
+                            .tint(COLOR_MEMO) // スワイプ背景色
 
-                        Button() {
+                            Button() {
+                                // 式コピペ　row.tokenからformulaTextを再現する
+                                viewModel.formulaFromHistoryToken(row)
+                            } label: {
+                                Text("↑=") // 上下逆に表示される
+                                //.font(.system(size: 24.0, weight: .bold))
+                            }
+                            .tint(COLOR_OPERATOR) // スワイプ背景色
+
+                            Button() {
+                                // 答えコピペ  row.answerからformulaTextを再現する
+                                viewModel.formulaFromHistoryAnswer(row)
+                            } label: {
+                                Text("=↑") // 上下逆に表示される
+                            }
+                            .tint(COLOR_ANSWER) // スワイプ背景色
+                        }
+                        .onTapGesture(count: 2) { // ダブルタップ時の処理
                             // 式コピペ　row.tokenからformulaTextを再現する
                             viewModel.formulaFromHistoryToken(row)
-                        } label: {
-                            Text("↑=") // 上下逆に表示される
-                            //.font(.system(size: 24.0, weight: .bold))
                         }
-                        .tint(COLOR_OPERATOR) // スワイプ背景色
-
-                        Button() {
-                            // 答えコピペ  row.answerからformulaTextを再現する
-                            viewModel.formulaFromHistoryAnswer(row)
-                        } label: {
-                            Text("=↑") // 上下逆に表示される
-                        }
-                        .tint(COLOR_ANSWER) // スワイプ背景色
-                    }
-                    .onTapGesture(count: 2) { // ダブルタップ時の処理
-                        // 式コピペ　row.tokenからformulaTextを再現する
-                        viewModel.formulaFromHistoryToken(row)
-                    }
+                }
             }
+            .scaleEffect(y: -1) // 上下反転：下から上にするため ここで元に戻る
+            .listStyle(.plain)
+            .environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
+            .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
+            .padding(0)
         }
-        .scaleEffect(y: -1) // 上下反転：下から上にするため ここで元に戻る
-        .listStyle(.plain)
-        .environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
-        .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
-        .padding(0)
     }
     
 }
@@ -171,5 +182,4 @@ struct HistoryMemoView: View {
         .padding(4)
     }
 }
-
 
