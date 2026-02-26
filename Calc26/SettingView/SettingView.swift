@@ -15,6 +15,7 @@ let SettingView_HEIGHT: CGFloat = 550.0 // シート表示時の高さ指定
 struct SettingView: View {
     @EnvironmentObject var viewModel: SettingViewModel
     @EnvironmentObject var keyboardViewModel: KeyboardViewModel
+    @StateObject private var manager = Manager.shared  // シングルトンのToast状態を監視する
     @Environment(\.dismiss) private var dismiss  // シートを閉じるための環境値
     @State private var showSafari = false  // Safariシート表示有無
     @State private var safariURL: URL?  // 開く予定のURLを保持
@@ -36,37 +37,50 @@ struct SettingView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
-                    modeSection
-                    integerSection
-                    decimalSection
-                    keyboardSection
-                    infoSection
-                    footerSection
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
-                .padding(.bottom)
-            }
-            .navigationTitle(Text("設定"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button {
-                        // シートを閉じてメイン画面へ戻す
-                        dismiss()
-                    } label: {
-                        Label("設定", systemImage: "chevron.down")
-                            .labelStyle(.iconOnly)
-                            .imageScale(.large)
-                            .padding(10)
-                            .background(.thinMaterial)
-                            .clipShape(Circle())
+        ZStack {
+            NavigationStack {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 8) {
+                        modeSection
+                        integerSection
+                        decimalSection
+                        keyboardSection
+                        infoSection
+                        footerSection
                     }
-                    .tint(.accentColor)
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    .padding(.bottom)
                 }
+                .navigationTitle(Text("設定"))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button {
+                            // シートを閉じてメイン画面へ戻す
+                            dismiss()
+                        } label: {
+                            Label("設定", systemImage: "chevron.down")
+                                .labelStyle(.iconOnly)
+                                .imageScale(.large)
+                                .padding(10)
+                                .background(.thinMaterial)
+                                .clipShape(Circle())
+                        }
+                        .tint(.accentColor)
+                    }
+                }
+            }
+            // 設定シート内でもToastを最前面に重ねて、背面に隠れないようにする
+            if manager.showToast {
+                VStack {
+                    Spacer()
+                    ToastView(message: manager.toastMessage)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .padding(.bottom, 24)
+                }
+                // ナビゲーションやスクロールより前面に置く
+                .zIndex(10)
             }
         }
         .sheet(isPresented: $showSafari) {
