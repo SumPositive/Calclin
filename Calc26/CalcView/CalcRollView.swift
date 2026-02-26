@@ -64,12 +64,12 @@ struct CalcRollView: View {
             if isBeginner {
                 // 初心者モードでは、ヘッダー直下に履歴行のスワイプ操作ヒントを表示する
                 // 要望どおり、CalcViewの内側ではなく「CalcRollHeaderViewとCalcViewの間」に配置する
-                Text(String(localized: "履歴行を左右にスワイプすればメモや計算式をコピーできます"))
+                Text("計算式の行をスワイプすればメモしたり、式をコピーできます")
                     .font(.system(size: 13.0, weight: .regular))
                     .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 12.0)
-                    .padding(.vertical, 8.0)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.horizontal, 8.0)
+                    .padding(.bottom, 4.0)
             }
             
             // CalcViewを3個横に並べ、1ページずつ左右に切り替える
