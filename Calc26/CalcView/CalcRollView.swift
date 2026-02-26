@@ -60,6 +60,17 @@ struct CalcRollView: View {
                 )
                 .opacity(colorScheme == .dark ? 0.60 : 1.0)
             }
+
+            if isBeginner {
+                // 初心者モードでは、ヘッダー直下に履歴行のスワイプ操作ヒントを表示する
+                // 要望どおり、CalcViewの内側ではなく「CalcRollHeaderViewとCalcViewの間」に配置する
+                Text(String(localized: "履歴行を左右にスワイプすればメモや計算式をコピーできます"))
+                    .font(.system(size: 13.0, weight: .regular))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12.0)
+                    .padding(.vertical, 8.0)
+            }
             
             // CalcViewを3個横に並べ、1ページずつ左右に切り替える
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した

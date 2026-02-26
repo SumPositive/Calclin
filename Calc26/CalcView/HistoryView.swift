@@ -19,16 +19,6 @@ struct HistoryView: View {
     
     var body: some View {
         VStack(spacing: 0.0) {
-            if setting.playMode == .beginner {
-                // 初心者モードだけ、履歴のスワイプ操作ヒントを先頭に表示する
-                Text("履歴行を左右にスワイプすればメモや計算式をコピーできます")
-                    .font(.system(size: 13.0, weight: .regular))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 12.0)
-                    .padding(.vertical, 8.0)
-            }
-
             List {
                 ForEach(Array(viewModel.historyRows.enumerated().reversed()), id: \.offset) { index, row in
                     // カスタム明細セル
