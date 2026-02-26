@@ -226,7 +226,8 @@ struct ContentView: View {
                 .onDisappear {
                     AppAnalytics.logSettingSheetClosed()
                 }
-
+                .presentationDetents([.height(730), .large]) // シートの高さ
+                .presentationDragIndicator(.visible)
         }
     }
     

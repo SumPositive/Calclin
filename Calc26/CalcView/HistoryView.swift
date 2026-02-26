@@ -28,7 +28,8 @@ struct HistoryView: View {
                     .padding(.bottom, 8.0)  // 下の余白
                     .padding(.horizontal, 12.0) // 左右の余白
                     .background(COLOR_BACK_FORMULA)
-                    .swipeActions(edge: .trailing) { // 左スワイプ：削除
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        // 左スワイプ （false:全スワイプ即削除を避ける）
                         Button(role: .destructive) {
                             // 削除アクション  index行を削除する
                             viewModel.delateHistory(index)
@@ -36,7 +37,8 @@ struct HistoryView: View {
                             Image("trash.fill_rev").imageScale(.large)
                         }
                     }
-                    .swipeActions(edge: .leading) { // 右スワイプ：追加
+                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                        // 右スワイプ （false:全スワイプ即メモを避ける）
                         Button() {
                             // メモする
                             setting.popupHistoryMemoInfo = (maxLength: 0,
@@ -50,7 +52,7 @@ struct HistoryView: View {
                             // 式コピペ　row.tokenからformulaTextを再現する
                             viewModel.formulaFromHistoryToken(row)
                         } label: {
-                            Text("＜＝")
+                            Text("↑=") // 上下逆に表示される
                             //.font(.system(size: 24.0, weight: .bold))
                         }
                         .tint(COLOR_OPERATOR) // スワイプ背景色
@@ -59,7 +61,7 @@ struct HistoryView: View {
                             // 答えコピペ  row.answerからformulaTextを再現する
                             viewModel.formulaFromHistoryAnswer(row)
                         } label: {
-                            Text("＝＞")
+                            Text("=↑") // 上下逆に表示される
                         }
                         .tint(COLOR_ANSWER) // スワイプ背景色
                     }
