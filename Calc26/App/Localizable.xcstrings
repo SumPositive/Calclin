@@ -1,825 +1,855 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "" : {
-
-    },
-    " %lld " : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : " %lld "
+  "sourceLanguage": "en",
+  "strings": {
+    "": {},
+    " %lld ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " %lld "
           }
         }
       }
     },
-    "＜＝" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "<="
+    "＜＝": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "<="
           }
         }
       }
     },
-    "＝＞" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "=>"
+    "＝＞": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "=>"
           }
         }
       }
     },
-    "３桁区切り 123,456,789.0" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "3-digit grouping 123,456,789.0"
+    "３桁区切り 123,456,789.0": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3-digit grouping 123,456,789.0"
           }
         }
       }
     },
-    "４桁区切り 1,2345,6789.0" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "4-digit grouping 1,2345,6789.0"
+    "４桁区切り 1,2345,6789.0": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4-digit grouping 1,2345,6789.0"
           }
         }
       }
     },
-    "app.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Calclin"
+    "app.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calclin"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "カルメモ"
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "カルメモ"
           }
         }
       }
     },
-    "Apple SF Symbols name" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apple SF Symbols name"
+    "Apple SF Symbols name": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple SF Symbols name"
           }
         }
       }
     },
-    "info.url" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "https://docs.azukid.com/en/sumpo/Calclin/calclin"
+    "info.url": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://docs.azukid.com/en/sumpo/Calclin/calclin"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "https://docs.azukid.com/jp/sumpo/Calclin/calclin"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://docs.azukid.com/jp/sumpo/Calclin/calclin"
           }
         }
       }
     },
-    "OK" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OK"
+    "OK": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         }
       }
     },
-    "アプリの紹介・取扱説明" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App introduction & user guide"
+    "アプリの紹介・取扱説明": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App introduction & user guide"
           }
         }
       }
     },
-    "インド式　12,34,56,789.0" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Indian style 12,34,56,789.0"
+    "インド式　12,34,56,789.0": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indian style 12,34,56,789.0"
           }
         }
       }
     },
-    "お知らせ" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Notice"
+    "お知らせ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notice"
           }
         }
       }
     },
-    "キーが空欄・未定義に置き換わります" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The key will be replaced with a blank or undefined value."
+    "キーが空欄・未定義に置き換わります": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The key will be replaced with a blank or undefined value."
           }
         }
       }
     },
-    "キートップ" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Key top"
+    "キートップ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key top"
           }
         }
       }
     },
-    "キーボード上に表示される文字や記号" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Characters and symbols displayed on the keyboard."
+    "キーボード上に表示される文字や記号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Characters and symbols displayed on the keyboard."
           }
         }
       }
     },
-    "キーボード配置" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keyboard layout"
+    "キーボード配置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keyboard layout"
           }
         }
       }
     },
-    "キー定義を変更" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Change key definitions"
+    "キー定義を変更": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change key definitions"
           }
         }
       }
     },
-    "キー定義編集\n　（危険！Hacker Zone）\n　壊れたら再インストールしてね" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Key Definition Editor\n       (Warning! Hacker Zone)\n        If it breaks, just reinstall."
+    "キー定義編集\n　（危険！Hacker Zone）\n　壊れたら再インストールしてね": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key Definition Editor\n       (Warning! Hacker Zone)\n        If it breaks, just reinstall."
           }
         }
       }
     },
-    "コード" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Code"
+    "コード": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code"
           }
         }
       }
     },
-    "タップしたキーに置き換わります\n【達人限定】さらに長押しで定義の編集ができます" : {
-
-    },
-    "タップしたキーに置き換わります\n【達人限定】長押しで定義の編集や作成ができます" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The tapped key will be replaced.\n[Expert only] Long press to edit or create definitions."
+    "タップしたキーに置き換わります\n【達人限定】さらに長押しで定義の編集ができます": {},
+    "タップしたキーに置き換わります\n【達人限定】長押しで定義の編集や作成ができます": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The tapped key will be replaced.\n[Expert only] Long press to edit or create definitions."
           }
         }
       }
     },
-    "タップして広告を見て開発者を応援してください" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap to watch an ad and support the developer."
+    "タップして広告を見て開発者を応援してください": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to watch an ad and support the developer."
           }
         }
       }
     },
-    "できません" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oops, can’t do that"
+    "できません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sorry, not available"
           }
         }
       }
     },
-    "メモ" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Memo"
+    "メモ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Memo"
           }
         }
       }
     },
-    "丸め処理" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rounding"
+    "丸め処理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rounding"
           }
         }
       }
     },
-    "五捨五超入 偶数丸め" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round half to even"
+    "五捨五超入 偶数丸め": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round half to even"
           }
         }
       }
     },
-    "五捨六入" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round half down"
+    "五捨六入": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round half down"
           }
         }
       }
     },
-    "保存" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save"
+    "保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
           }
         }
       }
     },
-    "保存した配置に戻しました" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restored the saved layout"
+    "保存した配置に戻しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to saved layout"
           }
         }
       }
     },
-    "保存した配置に戻す" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restore saved layout"
+    "保存した配置に戻す": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore saved layout"
           }
         }
       }
     },
-    "保存しました" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Saved"
+    "保存しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved!"
           }
         }
       }
     },
-    "最後に閉じる(X)ボタンが現れます" : {
-
+    "最後に閉じる(X)ボタンが現れます": {},
+    "切り上げ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round up"
+          }
+        }
+      }
     },
-    "切り上げ" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round up"
+    "切り捨て": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round down"
           }
         }
       }
     },
-    "切り捨て" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round down"
+    "初心者": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beginner"
           }
         }
       }
     },
-    "初心者" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Beginner"
+    "初期のキー定義と配置に戻す": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset to default key definitions and layout"
           }
         }
       }
     },
-    "初期のキー定義と配置に戻す" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset to default key definitions and layout"
+    "初期の配置に\n戻しましたd": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restored to default layout d"
           }
         }
       }
     },
-    "初期の配置に\n戻しましたd" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restored to default layout d"
+    "初期化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset"
           }
         }
       }
     },
-    "初期化" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset"
+    "動画を再生する": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play video"
           }
         }
       }
+    },
+    "動画を最後まで視聴すると開発者に寄付できます": {
+      "comment": "A description of a feature that allows users to donate by watching videos.",
+      "isCommentAutoGenerated": true
     },
-    "動画を再生する" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Play video"
+    "動画を視聴すると開発者に寄付できます": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Watching the video lets you donate to the developer."
           }
         }
       }
     },
-    "動画を最後まで視聴すると開発者に寄付できます" : {
-      "comment" : "A description of a feature that allows users to donate by watching videos.",
-      "isCommentAutoGenerated" : true
+    "区切りなし   123456789.0": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No grouping 123456789.0"
+          }
+        }
+      }
     },
-    "動画を視聴すると開発者に寄付できます" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Watching the video lets you donate to the developer."
+    "四捨五入": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round half up"
           }
         }
       }
     },
-    "区切りなし   123456789.0" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No grouping 123456789.0"
+    "基準単位": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base unit"
           }
         }
       }
     },
-    "四捨五入" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round half up"
+    "基準単位[%@]\nで計算しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calculated with base unit [%@]"
           }
         }
       }
     },
-    "基準単位" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Base unit"
+    "基準単位にするための倍率。自身が基準単位ならば空白": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Multiplier for the base unit. Leave blank if it is already the base unit."
           }
         }
       }
     },
-    "基準単位[%@]\nで計算しました" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Calculated with base unit [%@]"
+    "基準単位のcodeを記入。基準単位が同じ単位の範囲で加減算や変換が可能": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the base unit code. You can add, subtract, and convert within units that share the same base."
           }
         }
       }
     },
-    "基準単位にするための倍率。自身が基準単位ならば空白" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Multiplier for the base unit. Leave blank if it is already the base unit."
+    "変換倍率": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conversion rate"
           }
         }
       }
     },
-    "基準単位のcodeを記入。基準単位が同じ単位の範囲で加減算や変換が可能" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enter the base unit code. You can add, subtract, and convert within units that share the same base."
+    "寄付できる動画広告": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Donation-eligible video ads"
           }
         }
       }
     },
-    "変換倍率" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Conversion rate"
+    "小数点": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decimal point"
           }
         }
       }
     },
-    "寄付できる動画広告" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Donation-eligible video ads"
+    "小数部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decimal part"
           }
         }
       }
     },
-    "小数点" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Decimal point"
+    "左右にスワイプすればキーボードが切り替わります\nキーを長押しすればキー定義を変更できます": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swipe left or right to switch keyboards.\nLong press a key to change its definition."
           }
         }
       }
     },
-    "小数部" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Decimal part"
+    "左右にスワイプまたは\n枠内をタップして切り替え\nダブルタップも有効です": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swipe left or right or tap inside the frame to switch.\nDouble-tap also works."
           }
         }
       }
     },
-    "左右にスワイプすればキーボードが切り替わります\nキーを長押しすればキー定義を変更できます" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Swipe left or right to switch keyboards.\nLong press a key to change its definition."
+    "広告を見て寄付": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Donate by watching ads"
           }
         }
       }
     },
-    "左右にスワイプまたは\n枠内をタップして切り替え\nダブルタップも有効です" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Swipe left or right or tap inside the frame to switch.\nDouble-tap also works."
+    "広告を見て寄付する": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Watch an ad to donate"
           }
         }
       }
     },
-    "広告を見て寄付" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Donate by watching ads"
+    "復元": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore"
           }
         }
       }
     },
-    "広告を見て寄付する" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Watch an ad to donate"
+    "数式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formula"
           }
         }
       }
     },
-    "復元" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restore"
+    "整数部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integer part"
           }
         }
       }
     },
-    "数式" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Formula"
+    "有効桁数": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decimal digits"
           }
         }
       }
     },
-    "整数部" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Integer part"
+    "桁区切り方式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digit grouping style"
           }
         }
       }
     },
-    "有効桁数" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Decimal digits"
+    "桁区切り記号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digit grouping symbol"
           }
         }
       }
     },
-    "桁区切り方式" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Digit grouping style"
+    "正方向丸め": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round toward positive"
           }
         }
       }
     },
-    "桁区切り記号" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Digit grouping symbol"
+    "現在、寄付できる広告がありません。後ほどお試しください": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No donation ads are available right now. Please try again later."
           }
         }
       }
     },
-    "正方向丸め" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round toward positive"
+    "現在の配置を保存する": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save current layout"
           }
         }
       }
     },
-    "現在、寄付できる広告がありません。後ほどお試しください" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No donation ads are available right now. Please try again later."
+    "視聴ありがとうございます！開発の支援になります。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thank you for watching! Your support helps development."
           }
         }
       }
     },
-    "現在の配置を保存する" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save current layout"
+    "表示": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Display"
           }
         }
       }
     },
-    "視聴ありがとうございます！開発の支援になります。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Thank you for watching! Your support helps development."
+    "表示する計算機(枠)を増やす": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Increase the number of calculator panels displayed."
           }
         }
       }
     },
-    "表示" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Display"
+    "表示する計算機(枠)を減らす": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decrease the number of calculator panels displayed."
           }
         }
       }
     },
-    "表示する計算機(枠)を増やす" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Increase the number of calculator panels displayed."
+    "表示モード": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Display mode"
           }
         }
       }
     },
-    "表示する計算機(枠)を減らす" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Decrease the number of calculator panels displayed."
+    "表示倍率": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom level"
           }
         }
       }
     },
-    "表示モード" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Display mode"
+    "計算式に使われる文字や記号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Characters and symbols used in mathematical expressions."
           }
         }
       }
     },
-    "表示倍率" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zoom level"
+    "計算機(枠)の表示を増やす": {},
+    "計算機(枠)の表示を減らす": {},
+    "記号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Symbol"
           }
         }
       }
     },
-    "計算式に使われる文字や記号" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Characters and symbols used in mathematical expressions."
+    "設定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
           }
         }
       }
     },
-    "計算機(枠)の表示を増やす" : {
-
+    "設定を開く": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open settings"
+          }
+        }
+      }
     },
-    "計算機(枠)の表示を減らす" : {
-
+    "読み込み中...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading..."
+          }
+        }
+      }
     },
-    "記号" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Symbol"
+    "負方向丸め": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round toward negative"
           }
         }
       }
     },
-    "設定" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Settings"
+    "達人": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expert"
           }
         }
       }
     },
-    "設定を開く" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open settings"
+    "閉じる": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
           }
         }
       }
     },
-    "読み込み中..." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading..."
+    "開く": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open"
           }
         }
       }
     },
-    "負方向丸め" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round toward negative"
+    "開発者を応援する": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Support the developer"
           }
         }
       }
     },
-    "達人" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Expert"
+    "音が出ます": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound will play."
           }
         }
       }
     },
-    "閉じる" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Close"
+    "初期の配置に戻しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to default layout"
           }
         }
       }
     },
-    "開く" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open"
+    "保存に失敗しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save failed"
           }
         }
       }
     },
-    "開発者を応援する" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Support the developer"
+    "復元に失敗しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore failed"
           }
         }
       }
     },
-    "音が出ます" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sound will play."
+    "初期化に失敗しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset failed"
           }
         }
       }
     }
   },
-  "version" : "1.1"
+  "version": "1.1"
 }
