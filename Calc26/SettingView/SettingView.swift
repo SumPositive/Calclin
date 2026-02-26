@@ -295,8 +295,13 @@ struct SettingView: View {
             HStack(spacing: 4) {
                 VStack(spacing: 4) {
                     Button {
-                        keyboardViewModel.saveKeyboardJson()
-                        Manager.shared.toast(String(localized: "保存しました"), wait: 2.0)
+                        // 保存処理の成否に応じて、利用者に分かりやすくトースト通知する
+                        let isSuccess = keyboardViewModel.saveKeyboardJson()
+                        if isSuccess {
+                            Manager.shared.toast(String(localized: "保存しました"), wait: 2.0)
+                        } else {
+                            Manager.shared.toast(String(localized: "保存に失敗しました"), wait: 2.0)
+                        }
                         // 保存ボタンの利用状況を計測し、UI改善に活かす
                         AppAnalytics.logKeyboardSaved()
                     } label: {
@@ -317,8 +322,13 @@ struct SettingView: View {
 
                 VStack(spacing: 4) {
                     Button {
-                        keyboardViewModel.loadKeyboardJson()
-                        Manager.shared.toast(String(localized: "保存した配置に戻しました"), wait: 3.0)
+                        // 復元処理の成否に応じて、成功／失敗をトーストで通知する
+                        let isSuccess = keyboardViewModel.loadKeyboardJson()
+                        if isSuccess {
+                            Manager.shared.toast(String(localized: "保存した配置に戻しました"), wait: 3.0)
+                        } else {
+                            Manager.shared.toast(String(localized: "復元に失敗しました"), wait: 2.0)
+                        }
                         // 復元操作をAnalyticsで追跡し、必要なガイドがないか判断する
                         AppAnalytics.logKeyboardRestored()
                     } label: {
@@ -342,7 +352,13 @@ struct SettingView: View {
 
                 VStack(spacing: 4) {
                     Button {
-                        keyboardViewModel.initKeyboardJson()
+                        // 初期化処理の成否に応じて、完了可否をトースト表示する
+                        let isSuccess = keyboardViewModel.initKeyboardJson(isToast: false)
+                        if isSuccess {
+                            Manager.shared.toast(String(localized: "初期の配置に戻しました"), wait: 3.0)
+                        } else {
+                            Manager.shared.toast(String(localized: "初期化に失敗しました"), wait: 2.0)
+                        }
                         // 初期化はインパクトが大きいので、誤タップ防止策の検討材料にする
                         AppAnalytics.logKeyboardReset()
                     } label: {

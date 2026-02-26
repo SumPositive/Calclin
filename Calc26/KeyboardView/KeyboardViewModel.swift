@@ -167,7 +167,9 @@ final class KeyboardViewModel: ObservableObject {
     //    }
     
     // 現在の配置をJSONファイルに保存する
-    func saveKeyboardJson() {
+    // - Returns: 保存に成功したらtrue、失敗したらfalse
+    @discardableResult
+    func saveKeyboardJson() -> Bool {
         let keyboardData = KeyboardJSON(appName: "CalcRoll",
                                         keyboard_1: keyboard)
         let encoder = JSONEncoder()
@@ -183,22 +185,27 @@ final class KeyboardViewModel: ObservableObject {
             let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
                 .appendingPathComponent("keyboard.json")
             try data.write(to: url)
+            return true
         }
         catch {
             log(.error, "書き込み失敗: \(error)")
-            //Manager.shared.toast(String(localized: "toast.saveKeyboard.error"), wait: 2.0)
+            return false
         }
     }
+
     // JSONファイルに保存した配置に戻す
-    func loadKeyboardJson() {
+    // - Returns: 復元に成功したらtrue、失敗したらfalse
+    @discardableResult
+    func loadKeyboardJson() -> Bool {
         let fm = FileManager.default
         let docsURL = fm.urls(for: .documentDirectory, in: .userDomainMask).first!
         let fileURL = docsURL.appendingPathComponent("keyboard.json")
+
         // 存在チェック
         if !fm.fileExists(atPath: fileURL.path) {
-            // 保存ファイルが無ければ初期化
-            initKeyboardJson(isToast: false)
-            return
+            // 保存ファイルが存在しない場合は「復元失敗」と判定する
+            log(.warning, "keyboard.json が存在しないため復元不可")
+            return false
         }
         
         do {
@@ -210,29 +217,31 @@ final class KeyboardViewModel: ObservableObject {
                 
                 if kb.count == 5, kb.first!.count == (5 * 6) { // V2.0.0:keyboard_1
                     keyboard = kb
-                }else{
+                    return true
+                } else {
                     log(.warning, "kb.count != 5: \(kb.count)")
-                    //Manager.shared.toast(String(localized: "toast.loadKeyboard.error"), wait: 2.0)
-                    // 初期化
-                    initKeyboardJson(isToast: false)
+                    return false
                 }
             }
+            log(.warning, "keyboard.json の appName もしくは keyboard_1 が不正")
+            return false
         } catch {
             log(.error, "読み込み失敗: \(error)")
-            //Manager.shared.toast(String(localized: "toast.loadKeyboard.error"), wait: 2.0)
-            // 初期化
-            initKeyboardJson(isToast: false)
+            return false
         }
     }
     
     // 初期のキー定義と配置に戻す　　初期インストール直後の初期でも使用(isToast:false)
-    func initKeyboardJson( isToast: Bool = true ) {
+    // - Returns: 初期化に成功したらtrue、失敗したらfalse
+    @discardableResult
+    func initKeyboardJson( isToast: Bool = true ) -> Bool {
         // 初期のキー定義に戻す
         keyDefs = loadKeyDefinitionJSON(isInitial: true)
         //
         guard let fileURL = Bundle.main.url(forResource: "initKeyboard", withExtension: "json") else {
             log(.fatal, "initKeyboard.json がバンドル内に存在しない")
-            return
+            if isToast { Manager.shared.toast(String(localized: "初期化に失敗しました"), wait: 2.0) }
+            return false
         }
         do {
             let data = try Data(contentsOf: fileURL)
@@ -240,11 +249,15 @@ final class KeyboardViewModel: ObservableObject {
             if decoded.appName == "CalcRoll",
                let kb = decoded.keyboard_1 {
                 keyboard = kb
-                if isToast {Manager.shared.toast(String(localized: "初期の配置に\n戻しましたd"), wait: 3.0)}
+                if isToast { Manager.shared.toast(String(localized: "初期の配置に戻しました"), wait: 3.0) }
+                return true
             }
+            if isToast { Manager.shared.toast(String(localized: "初期化に失敗しました"), wait: 2.0) }
+            return false
         } catch {
             log(.error, "読み込み失敗: \(error)")
-            if isToast {Manager.shared.toast(String(localized: "できません"), wait: 2.0)}
+            if isToast { Manager.shared.toast(String(localized: "初期化に失敗しました"), wait: 2.0) }
+            return false
         }
     }
     
@@ -277,5 +290,4 @@ final class KeyboardViewModel: ObservableObject {
     }
 
 }
-
 
