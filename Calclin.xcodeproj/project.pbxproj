@@ -112,24 +112,24 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		C30A78B32E10EE8700212729 /* Calc26Tests */ = {
+		C30A78B32E10EE8700212729 /* CalclinTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Calc26Tests;
+			path = CalclinTests;
 			sourceTree = "<group>";
 		};
-		C30A78BD2E10EE8700212729 /* Calc26UITests */ = {
+		C30A78BD2E10EE8700212729 /* CalclinUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Calc26UITests;
+			path = CalclinUITests;
 			sourceTree = "<group>";
 		};
-		C3308AFD2E2F3F34009ED6D6 /* Calc26 */ = {
+		C3308AFD2E2F3F34009ED6D6 /* Calclin */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				C3308B272E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "Calclin" target */,
-				C3308B282E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "CalclinTests" target */,
-				C3308B292E2F3F34009ED6D6 /* Exceptions for "Calc26" folder in "CalclinUITests" target */,
+				C3308B272E2F3F34009ED6D6 /* Exceptions for "Calclin" folder in "Calclin" target */,
+				C3308B282E2F3F34009ED6D6 /* Exceptions for "Calclin" folder in "CalclinTests" target */,
+				C3308B292E2F3F34009ED6D6 /* Exceptions for "Calclin" folder in "CalclinUITests" target */,
 			);
-			path = Calc26;
+			path = Calclin;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -165,9 +165,9 @@
 		C30A789A2E10EE8500212729 = {
 			isa = PBXGroup;
 			children = (
-				C3308AFD2E2F3F34009ED6D6 /* Calc26 */,
-				C30A78B32E10EE8700212729 /* Calc26Tests */,
-				C30A78BD2E10EE8700212729 /* Calc26UITests */,
+				C3308AFD2E2F3F34009ED6D6 /* Calclin */,
+				C30A78B32E10EE8700212729 /* CalclinTests */,
+				C30A78BD2E10EE8700212729 /* CalclinUITests */,
 				C3165E4A2EE6D5B800169223 /* Frameworks */,
 				C30A78A42E10EE8500212729 /* Products */,
 			);
@@ -229,8 +229,8 @@
 				C30A78B22E10EE8700212729 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				C30A78B32E10EE8700212729 /* Calc26Tests */,
-				C3308AFD2E2F3F34009ED6D6 /* Calc26 */,
+				C30A78B32E10EE8700212729 /* CalclinTests */,
+				C3308AFD2E2F3F34009ED6D6 /* Calclin */,
 			);
 			name = CalclinTests;
 			packageProductDependencies = (
@@ -253,7 +253,7 @@
 				C30A78BC2E10EE8700212729 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				C30A78BD2E10EE8700212729 /* Calc26UITests */,
+				C30A78BD2E10EE8700212729 /* CalclinUITests */,
 			);
 			name = CalclinUITests;
 			packageProductDependencies = (
@@ -510,7 +510,7 @@
 				DEVELOPMENT_TEAM = 5C2UYK6F45;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Calc26/Info.plist;
+				INFOPLIST_FILE = Calclin/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Calclin;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
@@ -534,7 +534,7 @@
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Calclin/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -551,7 +551,7 @@
 				DEVELOPMENT_TEAM = 5C2UYK6F45;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Calc26/Info.plist;
+				INFOPLIST_FILE = Calclin/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Calclin;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
@@ -575,7 +575,7 @@
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Calclin/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -594,7 +594,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Calclin/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Calclin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Calclin";
@@ -614,7 +614,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Calclin/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Calclin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Calclin";
@@ -632,7 +632,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26UITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Calclin/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Calclin;
@@ -650,7 +650,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26UITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Calclin/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Calclin;
