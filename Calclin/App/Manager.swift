@@ -22,17 +22,35 @@ final class Manager: ObservableObject {
     /// Toast
     @Published var showToast: Bool = false
     @Published var toastMessage: String = ""
+    private var toastQueue: [(message: String, wait: Double)] = []
+    private var isToastProcessing = false
+
     /// Toastを表示する　　ToastViewはContentView上に配置
+    /// 表示中のToastがある場合はキューに積み、終了後に順番に表示する
     /// - Parameters:
     ///   - message: メッセージ
     ///   - wait: 表示時間(s)
     func toast(_ message: String, wait: Double = 2.0) {
-        toastMessage = message
-        showToast = true
-        Task {
-            try? await Task.sleep(for: .seconds(wait))
-            showToast = false
+        toastQueue.append((message, wait))
+        if !isToastProcessing {
+            Task { await processToastQueue() }
         }
+    }
+
+    private func processToastQueue() async {
+        isToastProcessing = true
+        while !toastQueue.isEmpty {
+            let item = toastQueue.removeFirst()
+            toastMessage = item.message
+            showToast = true
+            try? await Task.sleep(for: .seconds(item.wait))
+            showToast = false
+            if !toastQueue.isEmpty {
+                // 次のメッセージが視覚的に区別できるよう短い間隔を空ける
+                try? await Task.sleep(for: .seconds(0.3))
+            }
+        }
+        isToastProcessing = false
     }
 
 
