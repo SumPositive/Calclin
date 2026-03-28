@@ -69,7 +69,8 @@ final class CalcFunc {
         // 逆ポーランド記法に変換
         let rpnTokens = convertToRPN(tokens)
         // RPNから答えを計算
-        let sbcd = evaluateRPN(rpnTokens)
+        let (sbcd, evalError) = evaluateRPN(rpnTokens)
+        if let evalError { return evalError }
         // 文字列化（小数丸め） ここでは、桁区切りしない。List表示時に.formatStringで桁区切りなど書式付きにする
         return sbcd.round().value
     }
@@ -263,7 +264,8 @@ final class CalcFunc {
 
     
     /// RPN記法から答えを計算する
-    static func evaluateRPN(_ rpnTokens: [String]) -> SBCD {
+    /// - Returns: (結果SBCD, エラーメッセージ)。エラーがなければ nil
+    static func evaluateRPN(_ rpnTokens: [String]) -> (SBCD, String?) {
         var stack: [SBCD] = []
         for token in rpnTokens {
             switch token {
@@ -274,9 +276,9 @@ final class CalcFunc {
                         stack.append(a.add(b))
                     }else{
                         log(.error, "RPN stack empty:\(stack) token:\(token)")
-                        return SBCD("-0")
+                        return (SBCD("-0"), nil)
                     }
-                    
+
                 case FM_SUB:
                     if 2 <= stack.count {
                         let b = stack.removeLast()
@@ -284,9 +286,9 @@ final class CalcFunc {
                         stack.append(a.subtract(b))
                     }else{
                         log(.error, "RPN stack empty:\(stack) token:\(token)")
-                        return SBCD("-0")
+                        return (SBCD("-0"), nil)
                     }
-                    
+
                 case FM_MUL, FM_MUL_:
                     if 2 <= stack.count {
                         let b = stack.removeLast()
@@ -294,9 +296,9 @@ final class CalcFunc {
                         stack.append(a.multiply(b))
                     }else{
                         log(.error, "RPN stack empty:\(stack) token:\(token)")
-                        return SBCD("-0")
+                        return (SBCD("-0"), nil)
                     }
-                    
+
                 case FM_DIV, FM_DIV_:
                     if 2 <= stack.count {
                         let b = stack.removeLast()
@@ -304,19 +306,24 @@ final class CalcFunc {
                         stack.append(a.divide(b))
                     }else{
                         log(.error, "RPN stack empty:\(stack) token:\(token)")
-                        return SBCD("-0")
+                        return (SBCD("-0"), nil)
                     }
-                    
+
                 case FM_sqROOT:
                     if 1 <= stack.count {
                         let a = stack.removeLast()
-                        let approx = sqrt(Double(a.value.replacingOccurrences(of: FM_SUB, with: "")) ?? 0)
-                        stack.append(SBCD(String(approx)))
+                        let val = Double(a.value) ?? 0
+                        if val < 0 {
+                            log(.error, "負の数の平方根: \(val)")
+                            return (SBCD("0"), String(localized: "CalcFunc.NegativeSqrt",
+                                                      defaultValue: "Error"))
+                        }
+                        stack.append(SBCD(String(sqrt(val))))
                     }else{
                         log(.error, "RPN stack empty:\(stack) token:\(token)")
-                        return SBCD("-0")
+                        return (SBCD("-0"), nil)
                     }
-                    
+
                 case FM_cuROOT:
                     if 1 <= stack.count {
                         let a = stack.removeLast()
@@ -324,14 +331,14 @@ final class CalcFunc {
                         stack.append(SBCD(String(approx)))
                     }else{
                         log(.error, "RPN stack empty:\(stack) token:\(token)")
-                        return SBCD("-0")
+                        return (SBCD("-0"), nil)
                     }
-                    
+
                 default:
                     stack.append(SBCD(token))
             }
         }
-        return stack.first ?? SBCD("0")
+        return (stack.first ?? SBCD("0"), nil)
     }
 
     /// 立方根（マイナス対応）
