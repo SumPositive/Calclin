@@ -10,7 +10,7 @@ import UIKit
 import SafariServices
 
 
-let SettingView_HEIGHT: CGFloat = 550.0 // シート表示時の高さ指定
+let SettingView_HEIGHT: CGFloat = 730.0 // シート表示時の高さ指定
 
 struct SettingView: View {
     @EnvironmentObject var viewModel: SettingViewModel

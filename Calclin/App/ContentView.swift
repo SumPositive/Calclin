@@ -219,7 +219,6 @@ struct ContentView: View {
             SettingView()
                 .environmentObject(setting)
                 .environmentObject(keyboardViewModel)
-                .presentationDetents([.height(SettingView_HEIGHT), .large])
                 // シートが実際に表示されたタイミングで記録する（タップだけで終わる誤検知を防ぐ）
                 .onAppear {
                     AppAnalytics.logSettingSheetOpened(currentMode: setting.playMode)
@@ -228,7 +227,7 @@ struct ContentView: View {
                 .onDisappear {
                     AppAnalytics.logSettingSheetClosed()
                 }
-                .presentationDetents([.height(730), .large]) // シートの高さ
+                .presentationDetents([.height(SettingView_HEIGHT), .large])
                 .presentationDragIndicator(.visible)
         }
     }
