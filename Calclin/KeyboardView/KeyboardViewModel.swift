@@ -203,18 +203,18 @@ final class KeyboardViewModel: ObservableObject {
 
         // 存在チェック
         if !fm.fileExists(atPath: fileURL.path) {
-            // 保存ファイルが存在しない場合は「復元失敗」と判定する
-            log(.warning, "keyboard.json が存在しないため復元不可")
-            return false
+            // keyboard.json がない場合はバンドルの initKeyboard.json にフォールバック
+            log(.info, "keyboard.json が存在しないため initKeyboard.json にフォールバック")
+            return loadKeyboardFromBundle()
         }
-        
+
         do {
             let data = try Data(contentsOf: fileURL)
             let decoded = try JSONDecoder().decode(KeyboardJSON.self, from: data)
 
             if decoded.appName == "CalcRoll",
                let kb = decoded.keyboard_1 {
-                
+
                 if kb.count == 5, kb.first!.count == (5 * 6) { // V2.0.0:keyboard_1
                     keyboard = kb
                     return true
@@ -227,6 +227,30 @@ final class KeyboardViewModel: ObservableObject {
             return false
         } catch {
             log(.error, "読み込み失敗: \(error)")
+            return false
+        }
+    }
+
+    // バンドルの initKeyboard.json からキー配置を読み込む（keyboard.json がない場合のフォールバック）
+    // - Returns: 読み込みに成功したらtrue、失敗したらfalse
+    @discardableResult
+    private func loadKeyboardFromBundle() -> Bool {
+        guard let bundleURL = Bundle.main.url(forResource: "initKeyboard", withExtension: "json") else {
+            log(.fatal, "initKeyboard.json がバンドル内に存在しない")
+            return false
+        }
+        do {
+            let data = try Data(contentsOf: bundleURL)
+            let decoded = try JSONDecoder().decode(KeyboardJSON.self, from: data)
+            if decoded.appName == "CalcRoll", let kb = decoded.keyboard_1 {
+                keyboard = kb
+                log(.info, "initKeyboard.json からキー配置を読み込みました")
+                return true
+            }
+            log(.warning, "initKeyboard.json の appName もしくは keyboard_1 が不正")
+            return false
+        } catch {
+            log(.error, "initKeyboard.json 読み込み失敗: \(error)")
             return false
         }
     }
