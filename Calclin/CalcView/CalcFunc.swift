@@ -46,7 +46,7 @@ final class CalcFunc {
     static func answer(_ formula: String) -> String {
         if formula.count == 0 {
             log(.warning, "formula: なし")
-            return "No data"
+            return String(localized: "CalcFunc.NoData", defaultValue: "No data")
         }
         if formula.count <= 1 {
             log(.debug, "formula: \(formula) 式を構成できない（数字だけ）")
@@ -54,7 +54,7 @@ final class CalcFunc {
         }
         if FORMULA_LENGTH_MAX <= formula.count {
             log(.warning, "formula: FORMULA_MAX_LENGTH=\(FORMULA_LENGTH_MAX) OVER")
-            return "Too long"
+            return String(localized: "CalcFunc.TooLong", defaultValue: "Too long")
         }
 
         log(.info, "formula: \(formula)")
