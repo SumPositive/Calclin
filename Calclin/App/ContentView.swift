@@ -24,7 +24,9 @@ struct ContentView: View {
         self.calcViewModels = (0..<CALC_COUNT_MAX).map { _ in
             CalcViewModel(keyboardViewModel: keyboardViewModel)
         }
+        #if DEBUG
         log(.info, "init() 1回だけ通ること。もしFormulaViewなどがクリアされるならば再生成されている間違いあり")
+        #endif
     }
     
     // @State 変化あればViewが更新される

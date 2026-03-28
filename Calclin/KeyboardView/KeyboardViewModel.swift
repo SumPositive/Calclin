@@ -11,7 +11,10 @@ import SwiftUI
 
 extension FileManager {
     static var documentsDir: URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        guard let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            fatalError("documentDirectory が取得できない環境は非対応")
+        }
+        return url
     }
 }
 
