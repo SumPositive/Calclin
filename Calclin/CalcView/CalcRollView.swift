@@ -117,7 +117,7 @@ struct CalcRollView: View {
                                                 }
                                             }else{
                                                 // 右半分でダブルタップで右方向へ寄せる
-                                                if showStart == calcViewModels.count - 1 {
+                                                if showStart == max(0, calcViewModels.count - 1) {
                                                     // 終端戻し
                                                     showStart -= 1
                                                 }
@@ -213,7 +213,7 @@ struct CalcRollHeaderView: View {
 
                         Image(systemName: "arrowtriangle.right")
                             .foregroundColor(.accentColor)
-                            .opacity(selectedPage == pageCount - 1 ? 0.3 : 1.0)
+                            .opacity(selectedPage == max(0, pageCount - 1) ? 0.3 : 1.0)
                             .padding(.leading, 10)
 
                         Spacer()
@@ -315,6 +315,7 @@ struct CalcRollHeaderView: View {
 
     // 次ページへ
     private func pageNext() {
+        guard pageCount > 0 else { return }
         if showStart + showCount == selectedPage {
             // 表示CalcView後方へ
             onShowChange(max(showStart + 1, pageCount - 1), showCount)
