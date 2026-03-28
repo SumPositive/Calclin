@@ -54,63 +54,6 @@ struct FormulaView: View {
             }
         }
         .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
-//        .contextMenu {
-//            Button {
-//                paste()
-//            } label: {
-//                Label("貼り付け", systemImage: "doc.on.doc")
-//            }
-//            Button {
-//                UIPasteboard.general.string = "コピーされるテキスト"
-//            } label: {
-//                Label("コピー", systemImage: "doc.on.doc")
-//            }
-//        }
-    }
-    
-    
-    
-    private func paste() {
-        if let str = UIPasteboard.general.string {
-            if let _ = Double(str) {
-                // 答え（数値）
-                viewModel.tokens = []
-                viewModel.tokens.append(str)
-                viewModel.formulaUpdate()
-            }
-        }else{
-            // 計算式 JSON
-            //    """
-            //    {
-            //        "appBandle": "CalcRoll",
-            //        "appVersion": "2.0.0",
-            //        "jsonVersion": "1.0",
-            //        "formula": ["1","+","2","*","3"],
-            //        "answer": 7
-            //    }
-            //    """
-            struct PasteboardData: Codable {
-                let appBandle: String?
-                let appVersion: String?
-                let jsonVersion: String?
-                let formula: [String]?
-                let answer: Int?
-            }
-            if let jsonString = UIPasteboard.general.string {
-                let decoder = JSONDecoder()
-                do {
-                    let data = Data(jsonString.utf8)
-                    let decoded = try decoder.decode(PasteboardData.self, from: data)
-                    // 成功時の使用例
-                    if let formula = decoded.formula {
-                        viewModel.tokens = formula
-                        viewModel.formulaUpdate()
-                    }
-                } catch {
-                    log(.error, "JSON decode error: \(error)")
-                }
-            }
-        }
     }
 }
 
