@@ -211,7 +211,7 @@
 				B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */,
 				C3165E4C2EE6D6B900169223 /* GoogleMobileAds */,
 			);
-			productName = Calc26;
+			productName = Calclin;
 			productReference = C30A78A32E10EE8500212729 /* Calclin.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -235,7 +235,7 @@
 			name = CalclinTests;
 			packageProductDependencies = (
 			);
-			productName = Calc26Tests;
+			productName = CalclinTests;
 			productReference = C30A78B02E10EE8700212729 /* CalclinTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
@@ -258,7 +258,7 @@
 			name = CalclinUITests;
 			packageProductDependencies = (
 			);
-			productName = Calc26UITests;
+			productName = CalclinUITests;
 			productReference = C30A78BA2E10EE8700212729 /* CalclinUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
@@ -635,7 +635,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = Calc26;
+				TEST_TARGET_NAME = Calclin;
 			};
 			name = Debug;
 		};
@@ -653,7 +653,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/calc26/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = Calc26;
+				TEST_TARGET_NAME = Calclin;
 			};
 			name = Release;
 		};
