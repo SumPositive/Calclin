@@ -116,12 +116,15 @@ struct CustomCell: View {
                     unitKt.foregroundColor = COLOR_UNIT //.opacity(0.5)
                     attrStr += unitKt
                 }
-                // 演算子の前で改行させるための処理
-                for index in attrStr.characters.indices.reversed() {
-                    if lineFeedChars.contains(attrStr.characters[index]) {
-                        attrStr.insert(zeroWidthSpace, at: index)
+                // 演算子の前で改行させるための処理（1パスで新規構築し insert() の繰り返し再構築を回避）
+                var built = AttributedString()
+                for idx in attrStr.characters.indices {
+                    if lineFeedChars.contains(attrStr.characters[idx]) {
+                        built += zeroWidthSpace
                     }
+                    built.append(attrStr[idx..<attrStr.characters.index(after: idx)])
                 }
+                attrStr = built
                 // メモ
                 if let memo = row.memo {
                     var memoAt = AttributedString("\n" + memo)
