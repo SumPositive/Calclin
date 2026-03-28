@@ -11,6 +11,7 @@ import SwiftUI
 struct HistoryView: View {
     @EnvironmentObject var setting: SettingViewModel
     @ObservedObject var viewModel: CalcViewModel
+    let calcIndex: Int
     
     @State private var showMemoPopover = false
     @State private var currentMemoText = ""
@@ -42,7 +43,8 @@ struct HistoryView: View {
                             Button() {
                                 // メモする
                                 setting.popupHistoryMemoInfo = (maxLength: 0,
-                                                                index: index)
+                                                                index: index,
+                                                                calcIndex: calcIndex)
                             } label: {
                                 Image("edit_rev").imageScale(.large)
                             }

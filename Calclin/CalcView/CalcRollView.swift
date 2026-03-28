@@ -79,7 +79,7 @@ struct CalcRollView: View {
                 HStack(spacing: 0) {
                     ForEach(0..<calcViewModels.count, id: \.self) { index in
                         let isActive = index == selectedPage
-                        CalcView(viewModel: calcViewModels[index])
+                        CalcView(viewModel: calcViewModels[index], calcIndex: index)
                             .environmentObject(setting) // settingに変化あればCalcViewが再生成される
                             .frame(width: geometry.size.width / CGFloat(showCount))
                             .border( index == selectedPage

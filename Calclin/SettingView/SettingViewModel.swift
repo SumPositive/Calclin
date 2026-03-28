@@ -178,7 +178,7 @@ final class SettingViewModel: ObservableObject {
     @Published var numberFontScale: Double = 1.5
  
     // HistoryMemoViewをPopupで表示する
-    @Published var popupHistoryMemoInfo: (maxLength: Int, index: Int)? = nil
+    @Published var popupHistoryMemoInfo: (maxLength: Int, index: Int, calcIndex: Int)? = nil
     
 }
 

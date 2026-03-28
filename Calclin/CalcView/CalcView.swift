@@ -11,13 +11,14 @@ import SwiftUI
 struct CalcView: View {
     @EnvironmentObject var setting: SettingViewModel
     @ObservedObject var viewModel: CalcViewModel
+    let calcIndex: Int
 
-    
+
     var body: some View {
-        
+
         VStack(spacing: 0) {
 
-            HistoryView(viewModel: viewModel)
+            HistoryView(viewModel: viewModel, calcIndex: calcIndex)
                 .environmentObject(setting) // settingに変化あればHistoryViewが再生成される
                 .frame(maxHeight: .infinity) // 高さを均等にする
 

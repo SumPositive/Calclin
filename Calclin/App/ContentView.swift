@@ -128,20 +128,22 @@ struct ContentView: View {
                     HistoryMemoView(memo: $editingMemo) {
                         // Dismiss
                         setting.popupHistoryMemoInfo = nil
-                        // 編集結果 Save
-                        guard 0 <= info.index, info.index < selectedViewModel.historyRows.count else {
+                        // 編集結果 Save（info.calcIndex でポップアップを開いたパネルを特定）
+                        let target = calcViewModels[info.calcIndex]
+                        guard 0 <= info.index, info.index < target.historyRows.count else {
                             log(.fatal, "index out of range: \(info.index)")
                             return
                         }
-                        selectedViewModel.historyRows[info.index].memo = editingMemo.trimmingCharacters(in: .newlines) // 両端の改行削除
+                        target.historyRows[info.index].memo = editingMemo.trimmingCharacters(in: .newlines) // 両端の改行削除
                     }
                     .onAppear {
-                        // 編集初期値
-                        guard 0 <= info.index, info.index < selectedViewModel.historyRows.count else {
+                        // 編集初期値（info.calcIndex でポップアップを開いたパネルを特定）
+                        let target = calcViewModels[info.calcIndex]
+                        guard 0 <= info.index, info.index < target.historyRows.count else {
                             log(.fatal, "index out of range: \(info.index)")
                             return
                         }
-                        editingMemo = selectedViewModel.historyRows[info.index].memo ?? ""
+                        editingMemo = target.historyRows[info.index].memo ?? ""
                     }
                     .frame(width: 300, height: 200)
                 }
