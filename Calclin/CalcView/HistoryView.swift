@@ -18,10 +18,14 @@ struct HistoryView: View {
     @State private var selectedIndex: Int = 0
     
     
+    private var reversedRows: [(offset: Int, element: CalcViewModel.HistoryRow)] {
+        Array(viewModel.historyRows.enumerated().reversed())
+    }
+
     var body: some View {
         VStack(spacing: 0.0) {
             List {
-                ForEach(Array(viewModel.historyRows.enumerated().reversed()), id: \.offset) { index, row in
+                ForEach(reversedRows, id: \.offset) { index, row in
                     // カスタム明細セル
                     CustomCell(viewModel: viewModel, row: row)
                         .listRowInsets(EdgeInsets()) // ← これが肝
