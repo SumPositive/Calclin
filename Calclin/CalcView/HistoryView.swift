@@ -77,7 +77,7 @@ struct HistoryView: View {
                         }
                 }
             }
-            .scaleEffect(y: -1) // 上下反転：下から上にするため ここで元に戻る
+            .scaleEffect(y: -1) // 上下反転：末尾固定スクロールのため（List+swipeActions維持の唯一の方法）
             .listStyle(.plain)
             .environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
             .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
@@ -131,7 +131,7 @@ struct CustomCell: View {
                 }
                 return attrStr
             }())
-            .scaleEffect(y: -1.0) // y(-1)上下反転：下から上にするため
+            .scaleEffect(y: -1.0) // List の反転を打ち消す
             .font(.system(size: fontSize * setting.numberFontScale, weight: .regular))
             .opacity(colorScheme == .dark ? 0.55 : 1.0)
             .multilineTextAlignment(.trailing) // 複数行で右寄せ
