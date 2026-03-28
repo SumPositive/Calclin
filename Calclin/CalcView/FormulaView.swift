@@ -38,7 +38,7 @@ struct FormulaView: View {
                 }
                 .onChange(of: viewModel.formulaAttr) {
                     // 次のフレームでスクロール実行
-                    DispatchQueue.main.async {
+                    Task { @MainActor in
                         // scrollIdのViewの右端が表示されるようにスクロールする
                         proxy.scrollTo(scrollId, anchor: .trailing)
                     }
@@ -46,7 +46,8 @@ struct FormulaView: View {
                 .onChange(of: geo.size.width) {
                     // 幅の変化でもスクロール実行
                     let delay = 0.35 // 直前のアニメーション時間より少し長めにして競合を回避
-                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .seconds(delay))
                         proxy.scrollTo(scrollId, anchor: .trailing)
                     }
                 }

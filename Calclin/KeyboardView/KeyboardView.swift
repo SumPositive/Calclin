@@ -363,8 +363,9 @@ struct KeyView: View {
         GeometryReader { geo in
             Button(action: {
                 isTapped = true // 押された
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                Task { @MainActor in
                     // 一定時間後に元に戻す
+                    try? await Task.sleep(for: .seconds(0.15))
                     isTapped = false
                 }
                 // .onTap 処理
@@ -468,7 +469,7 @@ struct KeyDefListView: View {
                             viewModel.prevSelectKeyCode = selectedKeyCode
                         }
                         
-                        DispatchQueue.main.async {
+                        Task { @MainActor in
                             proxy.scrollTo(selectedKeyCode, anchor: .center)
                         }
                     }

@@ -160,7 +160,7 @@ struct HistoryMemoView: View {
                 .frame(minHeight: 50)
                 .focused($isFocused) // フォーカス状態とバインド
                 .onAppear {
-                    DispatchQueue.main.async {
+                    Task { @MainActor in
                         isFocused = true // 表示後にフォーカス
                     }
                 }

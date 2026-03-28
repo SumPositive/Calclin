@@ -29,9 +29,9 @@ final class Manager: ObservableObject {
     func toast(_ message: String, wait: Double = 2.0) {
         toastMessage = message
         showToast = true
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
-            self.showToast = false
+        Task {
+            try? await Task.sleep(for: .seconds(wait))
+            showToast = false
         }
     }
 
