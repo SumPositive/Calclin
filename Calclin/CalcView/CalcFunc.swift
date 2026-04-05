@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AZDecimal
 
 
 
@@ -13,7 +14,7 @@ import Foundation
 final class CalcFunc {
     
     // 数値構成文字
-    static let numberChars = SBCD.VA_NUMBER + SBCD.VA_MINUS + SBCD.VA_DECIMAL
+    static let numberChars = "0123456789" + FM_SUB + FM_DECIMAL
     // 演算子構成文字
     static let operatorChars = "+-*/×÷√∛()%割分厘" // [×,÷]は計算式では許可
 //    // スペース文字
@@ -69,10 +70,12 @@ final class CalcFunc {
         // 逆ポーランド記法に変換
         let rpnTokens = convertToRPN(tokens)
         // RPNから答えを計算
-        let (sbcd, evalError) = evaluateRPN(rpnTokens)
+        let (result, evalError) = evaluateRPN(rpnTokens)
         if let evalError { return evalError }
         // 文字列化（小数丸め） ここでは、桁区切りしない。List表示時に.formatStringで桁区切りなど書式付きにする
-        return sbcd.round().value
+        // truncate（切り捨て）は精度を落とさず全桁保持する
+        let rounded = calcConfig.roundType == .truncate ? result : result.rounded(config: calcConfig)
+        return rounded.value
     }
     
     /// 数式をトークンに分割する（演算子と数字を分離）
@@ -264,86 +267,79 @@ final class CalcFunc {
 
     
     /// RPN記法から答えを計算する
-    /// - Returns: (結果SBCD, エラーメッセージ)。エラーがなければ nil
-    static func evaluateRPN(_ rpnTokens: [String]) -> (SBCD, String?) {
-        var stack: [SBCD] = []
+    /// - Returns: (結果AZDecimal, エラーメッセージ)。エラーがなければ nil
+    static func evaluateRPN(_ rpnTokens: [String]) -> (AZDecimal, String?) {
+        var stack: [AZDecimal] = []
         for token in rpnTokens {
             switch token {
                 case FM_ADD:
                     if 2 <= stack.count {
                         let b = stack.removeLast()
                         let a = stack.removeLast()
-                        stack.append(a.add(b))
+                        stack.append(a + b)
                     }else{
                         log(.error, "RPN stack empty:\(stack) token:\(token)")
-                        return (SBCD("-0"), nil)
+                        return (AZDecimal("-0"), nil)
                     }
 
                 case FM_SUB:
                     if 2 <= stack.count {
                         let b = stack.removeLast()
                         let a = stack.removeLast()
-                        stack.append(a.subtract(b))
+                        stack.append(a - b)
                     }else{
                         log(.error, "RPN stack empty:\(stack) token:\(token)")
-                        return (SBCD("-0"), nil)
+                        return (AZDecimal("-0"), nil)
                     }
 
                 case FM_MUL, FM_MUL_:
                     if 2 <= stack.count {
                         let b = stack.removeLast()
                         let a = stack.removeLast()
-                        stack.append(a.multiply(b))
+                        stack.append(a * b)
                     }else{
                         log(.error, "RPN stack empty:\(stack) token:\(token)")
-                        return (SBCD("-0"), nil)
+                        return (AZDecimal("-0"), nil)
                     }
 
                 case FM_DIV, FM_DIV_:
                     if 2 <= stack.count {
                         let b = stack.removeLast()
                         let a = stack.removeLast()
-                        stack.append(a.divide(b))
+                        stack.append(a / b)
                     }else{
                         log(.error, "RPN stack empty:\(stack) token:\(token)")
-                        return (SBCD("-0"), nil)
+                        return (AZDecimal("-0"), nil)
                     }
 
                 case FM_sqROOT:
                     if 1 <= stack.count {
                         let a = stack.removeLast()
-                        let val = Double(a.value) ?? 0
-                        if val < 0 {
-                            log(.error, "負の数の平方根: \(val)")
-                            return (SBCD("0"), String(localized: "CalcFunc.NegativeSqrt",
-                                                      defaultValue: "Error"))
+                        if a.isNegative {
+                            log(.error, "負の数の平方根: \(a.value)")
+                            return (AZDecimal.zero, String(localized: "CalcFunc.NegativeSqrt",
+                                                           defaultValue: "Error"))
                         }
-                        stack.append(SBCD(String(sqrt(val))))
+                        stack.append(a.squareRoot())
                     }else{
                         log(.error, "RPN stack empty:\(stack) token:\(token)")
-                        return (SBCD("-0"), nil)
+                        return (AZDecimal("-0"), nil)
                     }
 
                 case FM_cuROOT:
                     if 1 <= stack.count {
                         let a = stack.removeLast()
-                        let approx = cubeRoot(Double(a.value) ?? 0)
-                        stack.append(SBCD(String(approx)))
+                        stack.append(a.cubeRoot())
                     }else{
                         log(.error, "RPN stack empty:\(stack) token:\(token)")
-                        return (SBCD("-0"), nil)
+                        return (AZDecimal("-0"), nil)
                     }
 
                 default:
-                    stack.append(SBCD(token))
+                    stack.append(AZDecimal(token))
             }
         }
-        return (stack.first ?? SBCD("0"), nil)
-    }
-
-    /// 立方根（マイナス対応）
-    static func cubeRoot(_ x: Double) -> Double {
-        return x < 0 ? -pow(-x, 1.0 / 3.0) : pow(x, 1.0 / 3.0)
+        return (stack.first ?? AZDecimal.zero, nil)
     }
 
 }

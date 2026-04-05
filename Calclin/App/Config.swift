@@ -7,6 +7,17 @@
 
 import Foundation
 import SwiftUI
+import AZDecimal
+
+/// アプリ全体で共有する書式・丸め設定（SettingView で更新、CalcFunc/CalcViewModel で参照）
+@MainActor var calcConfig = AZDecimalConfig(
+    decimalDigits: 3,
+    decimalSeparator: ".",
+    roundType: .r55,
+    trailZero: false,
+    groupType: .threes,
+    groupSeparator: ","
+)
 
 
 // MARK: - Global let value
@@ -49,7 +60,7 @@ let COLOR_BACK_SETTING: Color = Color(.systemGray4)  // SettingView
 //-------------------------------------- CALC関係
 
 // 入力中の最大桁数＝整数桁＋小数桁（小数点は含まない）！！！入力中は小数桁制限丸め処理しない
-let CALC_PRECISION_MAX: Int = 30  // <= SBCD_PRECISION/2 = 60/2
+let CALC_PRECISION_MAX: Int = 30  // <= AZDecimal.precision / 2
 
 // HistoryView最大行数　超過時古い行から削除する
 let CALC_HISTORY_MAX: Int = 100

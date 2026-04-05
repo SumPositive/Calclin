@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine // AnyCancellable
+import AZDecimal
 
 
 @MainActor
@@ -253,7 +254,7 @@ final class CalcViewModel: ObservableObject {
     // HistoryView // 答えコピペ　rowからformulaTextを再現する
     func formulaFromHistoryAnswer(_ row: HistoryRow) {
         tokens = []
-        tokens.append(SBCD(row.answer).value)
+        tokens.append(AZDecimal(row.answer).value)
         formulaUpdate() //(true)
     }
 
@@ -300,7 +301,7 @@ final class CalcViewModel: ObservableObject {
         for token in tokens {
             if Double(token) != nil { // 数値
                 // .format()は小数制限丸め処理しないので SettingViewModel.decimalDigits は影響しない
-                self.formulaAttr += AttributedString(SBCD(token).format())
+                self.formulaAttr += AttributedString(AZDecimal(token).formatted(config: calcConfig))
             }
             else if token.hasPrefix(TOKEN_UNIT_PREFIX) {
                 // 単位
@@ -701,7 +702,7 @@ final class CalcViewModel: ObservableObject {
                 // add History
                 let row = HistoryRow( tokens: tokens,
                                       formula: formulaAttr,
-                                      answer: SBCD(answer).format(),
+                                      answer: AZDecimal(answer).formatted(config: calcConfig),
                                       unitFormula: ans_unitFormula,
                                       memo: nil)
                 // History追加

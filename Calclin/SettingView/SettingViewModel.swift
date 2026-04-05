@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AZDecimal
 
 // ローカル通知名を定義
 extension Notification.Name {
@@ -33,20 +34,15 @@ final class SettingViewModel: ObservableObject {
             groupSeparator = matched
         }
         
-        // SBCD初期化
-        /// 小数点記号（例: "." or "．"）
-        SBCD_Config.decimalSeparator = decimalSeparator.symbol
-        /// 小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する）
-        SBCD_Config.decimalDigits = 3
-        /// 小数部の桁数まで0埋めする／false=末尾0削除する
-        SBCD_Config.decimalTrailZero = false  // 「F」小数末尾0可変
-        /// 丸め方法（R54 = 四捨五入 など）
-        SBCD_Config.decimalRoundType  = .R55 // 五捨五超入　偶数丸め
-        
-        /// 桁区切り記号（例: "," or "，"）
-        SBCD_Config.groupSeparator = groupSeparator.symbol
-        /// 桁区切りの方式（3桁区切り、4桁区切り、インド式など）
-        SBCD_Config.groupType = .G3
+        // calcConfig 初期化
+        calcConfig = AZDecimalConfig(
+            decimalDigits: 3,
+            decimalSeparator: decimalSeparator.symbol,
+            roundType: .r55,   // 五捨五超入　偶数丸め
+            trailZero: false,  // 「F」小数末尾0可変
+            groupType: .threes,
+            groupSeparator: groupSeparator.symbol
+        )
     }
 
 
@@ -78,16 +74,16 @@ final class SettingViewModel: ObservableObject {
         case Rdown
         // Identifiable対応のため
         var id: String { rawValue }
-        // SBCD_Config.RoundTypeを返す
-        var sbcd_config_roundType: SBCD_Config.DecimalRoundType {
+        // AZDecimalConfig.RoundType を返す
+        var azRoundType: AZDecimalConfig.RoundType {
             switch self {
-                case .Rup:    return .Rup
-                case .Rplus:  return .Rplus
-                case .R54:    return .R54
-                case .R55:    return .R55
-                case .R65:    return .R65
-                case .Rminus: return .Rminus
-                case .Rdown:  return .Rdown
+                case .Rup:    return .rup
+                case .Rplus:  return .rPlus
+                case .R54:    return .r54
+                case .R55:    return .r55
+                case .R65:    return .r65
+                case .Rminus: return .rMinus
+                case .Rdown:  return .truncate
             }
         }
         // PickerやText表示用のlocalized文字列
@@ -134,13 +130,13 @@ final class SettingViewModel: ObservableObject {
         case G4
         // Identifiable対応のため
         var id: String { rawValue }
-        // SBCD_Config.GroupTypeを返す
-        var sbcd_config_groupType: SBCD_Config.GroupType {
+        // AZDecimalConfig.GroupType を返す
+        var azGroupType: AZDecimalConfig.GroupType {
             switch self {
                 case .none: return .none
-                case .G3:   return .G3
-                case .G4:   return .G4
-                case .G23:  return .G23
+                case .G3:   return .threes
+                case .G4:   return .fours
+                case .G23:  return .indian
             }
         }
         // PickerやText表示用のlocalized文字列

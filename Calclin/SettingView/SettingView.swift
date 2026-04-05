@@ -175,8 +175,7 @@ struct SettingView: View {
                         log(.info, ".onChange groupType")
                         // 選択されたときに呼ばれる処理
                         viewModel.groupType = newValue
-                        // SBCD_Configにセットする
-                        SBCD_Config.groupType = newValue.sbcd_config_groupType
+                        calcConfig.groupType = newValue.azGroupType
                         // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                         // 区切り方式の嗜好を把握するためにAnalyticsへ送信する
@@ -199,8 +198,7 @@ struct SettingView: View {
                         log(.info, ".onChange groupSeparator")
                         // 選択されたときに呼ばれる処理
                         viewModel.groupSeparator = newValue
-                        // SBCD_Configにセットする
-                        SBCD_Config.groupSeparator = newValue.symbol
+                        calcConfig.groupSeparator = newValue.symbol
                         // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                         // 利用者が好む記号を記録して、次期UI改善の参考にする
@@ -239,10 +237,8 @@ struct SettingView: View {
                         log(.info, ".onChange decimalDigits")
                         // @State decDigi 更新により描画
                         viewModel.decimalDigits = newValue // Double型
-                        // SBCD_Configにセットする
-                        SBCD_Config.decimalDigits = Int(viewModel.decimalDigits)
-                        // 小数部桁数「可変」末尾0削除
-                        SBCD_Config.decimalTrailZero = false
+                        calcConfig.decimalDigits = Int(viewModel.decimalDigits)
+                        calcConfig.trailZero = false
                         // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                         // 有効桁数の調整頻度を把握し、UI改善に役立てる
@@ -262,8 +258,7 @@ struct SettingView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .onChange(of: viewModel.roundType) { oldValue, newValue in
                         log(.info, ".onChange roundType")
-                        // SBCD_Configにセットする
-                        SBCD_Config.decimalRoundType = newValue.sbcd_config_roundType
+                        calcConfig.roundType = newValue.azRoundType
                         // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                         // 丸め方法の選好をAnalyticsで収集し、デフォルト値検討に活用する
@@ -285,8 +280,7 @@ struct SettingView: View {
                         log(.info, ".onChange decimalSeparator")
                         // 選択されたときに呼ばれる処理
                         viewModel.decimalSeparator = newValue
-                        // SBCD_Configにセットする
-                        SBCD_Config.decimalSeparator = newValue.symbol
+                        calcConfig.decimalSeparator = newValue.symbol
                         // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                         NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                         // ロケール毎の好みを把握してUI文言改善に反映する
