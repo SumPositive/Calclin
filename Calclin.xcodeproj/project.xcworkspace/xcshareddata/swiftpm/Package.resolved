@@ -1,5 +1,5 @@
 {
-  "originHash" : "f485fb75b59651d1d5e1bfe15bfd2a2b6dd9737b87cd29eaaa02288efe4fe401",
+  "originHash" : "fc3989d964c73dd5fe1865d136ee26277ee56dc9224dcf534e6fe2e6b3fdf16a",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -17,6 +17,15 @@
       "state" : {
         "revision" : "3b62f154d00019ae29a71e9738800bb6f18b236d",
         "version" : "10.19.2"
+      }
+    },
+    {
+      "identity" : "azcalc",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SumPositive/AZCalc",
+      "state" : {
+        "revision" : "6e15307bd8b4b7da0fa746f554179baeed73a5d4",
+        "version" : "1.1.0"
       }
     },
     {

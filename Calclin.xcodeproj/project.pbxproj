@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AC01000000000000000000A1 /* AZDecimal in Frameworks */ = {isa = PBXBuildFile; productRef = AC01000000000000000000A2 /* AZDecimal */; };
 		B9A4F2072F5C1AAB00A1B001 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */; };
 		B9A4F2082F5C1ABB00A1B001 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */; };
 		C3165E4D2EE6D6B900169223 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = C3165E4C2EE6D6B900169223 /* GoogleMobileAds */; };
@@ -61,9 +62,7 @@
 				KeyboardView/KeyboardViewModel.swift,
 				KeyboardView/KeyDefinition.json,
 				PrivacyInfo.xcprivacy,
-				SBCD/SBCD_objC_Wrapper.mm,
 				SBCD/SBCD_Wrapper.swift,
-				SBCD/SBCD.cpp,
 				SettingView/AdMobViews.swift,
 				SettingView/SettingView.swift,
 				SettingView/SettingViewModel.swift,
@@ -100,9 +99,7 @@
 				CalcView/HistoryView.swift,
 				KeyboardView/KeyboardView.swift,
 				KeyboardView/KeyboardViewModel.swift,
-				SBCD/SBCD_objC_Wrapper.mm,
 				SBCD/SBCD_Wrapper.swift,
-				SBCD/SBCD.cpp,
 				SettingView/AdMobViews.swift,
 				SettingView/SettingView.swift,
 				SettingView/SettingViewModel.swift,
@@ -139,6 +136,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC01000000000000000000A1 /* AZDecimal in Frameworks */,
 				C3165E4D2EE6D6B900169223 /* GoogleMobileAds in Frameworks */,
 				B9A4F2072F5C1AAB00A1B001 /* FirebaseCrashlytics in Frameworks */,
 				B9A4F2082F5C1ABB00A1B001 /* FirebaseAnalytics in Frameworks */,
@@ -207,6 +205,7 @@
 			);
 			name = Calclin;
 			packageProductDependencies = (
+				AC01000000000000000000A2 /* AZDecimal */,
 				B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */,
 				B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */,
 				C3165E4C2EE6D6B900169223 /* GoogleMobileAds */,
@@ -295,6 +294,7 @@
 			mainGroup = C30A789A2E10EE8500212729;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				AC01000000000000000000A5 /* XCRemoteSwiftPackageReference "AZCalc" */,
 				B9A4F2062F5C1AAB00A1B001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				C3165E4B2EE6D68A00169223 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 			);
@@ -534,7 +534,6 @@
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Calclin/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -575,7 +574,6 @@
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Calclin/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -594,7 +592,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Calclin/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Calclin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Calclin";
@@ -614,7 +611,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Calclin/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Calclin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Calclin";
@@ -632,7 +628,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26UITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Calclin/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Calclin;
@@ -650,7 +645,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanwax.calcroll.Calc26UITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Calclin/SBCD/sbcd-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Calclin;
@@ -699,6 +693,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		AC01000000000000000000A5 /* XCRemoteSwiftPackageReference "AZCalc" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SumPositive/AZCalc";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 		B9A4F2062F5C1AAB00A1B001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
@@ -718,6 +720,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		AC01000000000000000000A2 /* AZDecimal */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC01000000000000000000A5 /* XCRemoteSwiftPackageReference "AZCalc" */;
+			productName = AZDecimal;
+		};
 		B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = B9A4F2062F5C1AAB00A1B001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
