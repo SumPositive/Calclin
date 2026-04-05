@@ -26,7 +26,7 @@ final class CalcFunc {
 
         switch AZFormula.evaluateDecimal(formula, config: calcConfig) {
         case .success(let decimal):
-            // .truncate は rounded(config:) が self を返すため全桁保持される
+            // .truncate は rounded(_:) が self を返すため全桁保持される
             return decimal.value
         case .failure(.tooLong):
             log(.warning, "formula: FORMULA_MAX_LENGTH OVER")

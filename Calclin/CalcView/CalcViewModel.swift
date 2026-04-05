@@ -301,7 +301,7 @@ final class CalcViewModel: ObservableObject {
         for token in tokens {
             if Double(token) != nil { // 数値
                 // .format()は小数制限丸め処理しないので SettingViewModel.decimalDigits は影響しない
-                self.formulaAttr += AttributedString(AZDecimal(token).formatted(config: calcConfig))
+                self.formulaAttr += AttributedString(AZDecimal(token).formatted(calcConfig))
             }
             else if token.hasPrefix(TOKEN_UNIT_PREFIX) {
                 // 単位
@@ -702,7 +702,7 @@ final class CalcViewModel: ObservableObject {
                 // add History
                 let row = HistoryRow( tokens: tokens,
                                       formula: formulaAttr,
-                                      answer: AZDecimal(answer).formatted(config: calcConfig),
+                                      answer: AZDecimal(answer).formatted(calcConfig),
                                       unitFormula: ans_unitFormula,
                                       memo: nil)
                 // History追加
