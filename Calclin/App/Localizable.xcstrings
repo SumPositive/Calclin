@@ -851,6 +851,16 @@
           }
         }
       }
+    },
+    "CalcFunc.InvalidExpression" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

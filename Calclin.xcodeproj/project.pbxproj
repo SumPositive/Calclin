@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AC01000000000000000000A1 /* AZDecimal in Frameworks */ = {isa = PBXBuildFile; productRef = AC01000000000000000000A2 /* AZDecimal */; };
+		AC01000000000000000000A3 /* AZFormula in Frameworks */ = {isa = PBXBuildFile; productRef = AC01000000000000000000A4 /* AZFormula */; };
 		B9A4F2072F5C1AAB00A1B001 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */; };
 		B9A4F2082F5C1ABB00A1B001 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */; };
 		C3165E4D2EE6D6B900169223 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = C3165E4C2EE6D6B900169223 /* GoogleMobileAds */; };
@@ -135,6 +136,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AC01000000000000000000A1 /* AZDecimal in Frameworks */,
+				AC01000000000000000000A3 /* AZFormula in Frameworks */,
 				C3165E4D2EE6D6B900169223 /* GoogleMobileAds in Frameworks */,
 				B9A4F2072F5C1AAB00A1B001 /* FirebaseCrashlytics in Frameworks */,
 				B9A4F2082F5C1ABB00A1B001 /* FirebaseAnalytics in Frameworks */,
@@ -204,6 +206,7 @@
 			name = Calclin;
 			packageProductDependencies = (
 				AC01000000000000000000A2 /* AZDecimal */,
+				AC01000000000000000000A4 /* AZFormula */,
 				B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */,
 				B9A4F2092F5C1ABB00A1B001 /* FirebaseAnalytics */,
 				C3165E4C2EE6D6B900169223 /* GoogleMobileAds */,
@@ -722,6 +725,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AC01000000000000000000A5 /* XCRemoteSwiftPackageReference "AZCalc" */;
 			productName = AZDecimal;
+		};
+		AC01000000000000000000A4 /* AZFormula */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC01000000000000000000A5 /* XCRemoteSwiftPackageReference "AZCalc" */;
+			productName = AZFormula;
 		};
 		B9A4F2052F5C1AAB00A1B001 /* FirebaseCrashlytics */ = {
 			isa = XCSwiftPackageProductDependency;
