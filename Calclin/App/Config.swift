@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 import AZDecimal
 
-/// アプリ全体で共有する書式・丸め設定（SettingView で更新、CalcFunc/CalcViewModel で参照）
+/// アプリ全体で共有する書式・丸め設定（SettingView で更新、CalcViewModel で参照）
 @MainActor var calcConfig = AZDecimalConfig(
     decimalDigits: 3,
     decimalSeparator: ".",

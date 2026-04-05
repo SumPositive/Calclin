@@ -8,6 +8,7 @@
 import SwiftUI
 import Combine // AnyCancellable
 import AZDecimal
+import AZFormula
 
 
 @MainActor
@@ -590,7 +591,7 @@ final class CalcViewModel: ObservableObject {
             form += "/" + conv
         }
         // 計算結果（小数制限丸め処理済み）
-        let ans = CalcFunc.answer(form)
+        let ans = answer(form)
         return ans
     }
     
@@ -606,7 +607,7 @@ final class CalcViewModel: ObservableObject {
                 // tokens からUNITに対応した計算式を生成する
                 let formula = makeFormula()
                 // 計算結果（小数制限丸め処理済み）
-                var answer = CalcFunc.answer(formula)
+                var answer = answer(formula)
                 if Double(answer) == nil {
                     // 数値でない ＞ERROR メッセージをToastで表示
                     Manager.shared.toast(answer)
@@ -734,7 +735,32 @@ final class CalcViewModel: ObservableObject {
     
     // MARK: - Private Methods
 
-    
+    /// 数式から答えを計算する（文字列→評価→丸め→raw文字列）
+    /// - Returns: 丸め済みの数値文字列。エラー時はローカライズ済みエラー文字列
+    private func answer(_ formula: String) -> String {
+        guard !formula.isEmpty else {
+            log(.warning, "formula: なし")
+            return String(localized: "CalcFunc.NoData", defaultValue: "No data")
+        }
+
+        log(.info, "formula: \(formula)")
+
+        switch AZFormula.evaluateDecimal(formula, config: calcConfig) {
+        case .success(let decimal):
+            // .truncate は rounded(_:) が self を返すため全桁保持される
+            return decimal.value
+        case .failure(.tooLong):
+            log(.warning, "formula: FORMULA_MAX_LENGTH OVER")
+            return String(localized: "CalcFunc.TooLong", defaultValue: "Too long")
+        case .failure(.negativeSqrt):
+            log(.error, "負の数の平方根")
+            return String(localized: "CalcFunc.NegativeSqrt", defaultValue: "Error")
+        case .failure(.invalidExpression):
+            log(.error, "無効な式: \(formula)")
+            return String(localized: "CalcFunc.InvalidExpression", defaultValue: "Error")
+        }
+    }
+
     /// 小数末尾の"0"を抽出する
     private func extractTrailingZerosAfterDecimal(_ token: String) -> String {
         guard let dotIndex = token.firstIndex(of: FM_DECIMAL.first!) else {
