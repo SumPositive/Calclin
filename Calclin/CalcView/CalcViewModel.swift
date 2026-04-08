@@ -66,7 +66,7 @@ final class CalcViewModel: ObservableObject {
 
     // MARK: - CalcMode
 
-    @Published var calcMode: CalcMode = .formula {
+    @Published var calcMode: CalcMode = .calculator {
         didSet {
             guard oldValue != calcMode else { return }
             tokens = []
@@ -80,7 +80,7 @@ final class CalcViewModel: ObservableObject {
     private var accumulator: AZDecimal = .zero
     private var pendingOp: String? = nil        // 保留中の演算子
     private var isCalcNewEntry: Bool = true     // 次の数字入力で現在値をクリア
-    private var tapeLinesBuilding: [TapeLine] = []
+    @Published private(set) var tapeLinesBuilding: [TapeLine] = []
 
     /// 電卓モードで非活性にするキーかどうかを返す
     func isKeyDisabled(_ code: String) -> Bool {
@@ -771,6 +771,43 @@ final class CalcViewModel: ObservableObject {
     
     // MARK: - Calculator Mode Private Methods
 
+    /// 電卓モード専用 formulaAttr 更新
+    private func formulaUpdateCalc() {
+        formulaAttr = ""
+        // 答え表示中（= 後）
+        if isAnswerMode {
+            if let numStr = tokens.last, Double(numStr) != nil {
+                formulaAttr = AttributedString(AZDecimal(numStr).formatted(calcConfig))
+            }
+            return
+        }
+        // 保留演算子プレフィックス
+        if let op = pendingOp {
+            var opAttr = AttributedString(op)
+            opAttr.foregroundColor = COLOR_OPERATOR
+            formulaAttr = opAttr
+            if !tokens.isEmpty {
+                formulaAttr += AttributedString(" ")
+            }
+        }
+        // 現在の数値
+        guard let numStr = tokens.last, !numStr.isEmpty else { return }
+        if Double(numStr) != nil {
+            formulaAttr += AttributedString(AZDecimal(numStr).formatted(calcConfig))
+            let zero = extractTrailingZerosAfterDecimal(numStr)
+            if zero != "" {
+                formulaAttr += AttributedString(zero)
+            } else if !numStr.contains(FM_DECIMAL) {
+                var dotAttr = AttributedString(FM_DECIMAL)
+                dotAttr.foregroundColor = COLOR_OPERATOR_WAIT.opacity(0.5)
+                formulaAttr += dotAttr
+            }
+        } else {
+            // マイナス符号のみ("-") や "-0" など
+            formulaAttr += AttributedString(numStr)
+        }
+    }
+
     private func resetCalculatorState() {
         accumulator = .zero
         pendingOp = nil
@@ -798,12 +835,12 @@ final class CalcViewModel: ObservableObject {
             tokens = []
             isAnswerMode = false
             resetCalculatorState()
-            formulaUpdate()
+            formulaUpdateCalc()
         case "CS":
             tokens = []
             isCalcNewEntry = true
             isAnswerMode = false
-            formulaUpdate()
+            formulaUpdateCalc()
         case "BS":
             if var last = tokens.last, !last.isEmpty {
                 last.removeLast()
@@ -811,7 +848,7 @@ final class CalcViewModel: ObservableObject {
                 isCalcNewEntry = tokens.isEmpty
             }
             isAnswerMode = false
-            formulaUpdate()
+            formulaUpdateCalc()
         default:
             break
         }
@@ -834,7 +871,7 @@ final class CalcViewModel: ObservableObject {
             tokens = [last]
             isAnswerMode = false
         }
-        formulaUpdate()
+        formulaUpdateCalc()
     }
 
     private func inputDeciCalc() {
@@ -847,7 +884,7 @@ final class CalcViewModel: ObservableObject {
             tokens = [last]
             isAnswerMode = false
         }
-        formulaUpdate()
+        formulaUpdateCalc()
     }
 
     private func inputSignCalc() {
@@ -856,7 +893,7 @@ final class CalcViewModel: ObservableObject {
         tokens = [last]
         isCalcNewEntry = false
         isAnswerMode = false
-        formulaUpdate()
+        formulaUpdateCalc()
     }
 
     private func inputOperatorCalc(_ op: String) {
@@ -884,9 +921,9 @@ final class CalcViewModel: ObservableObject {
         }
         pendingOp = op
         isCalcNewEntry = true
-        tokens = [accumulator.value]
-        isAnswerMode = true
-        formulaUpdate(true)
+        tokens = []
+        isAnswerMode = false
+        formulaUpdateCalc()
     }
 
     private func inputAnswerCalc() {

@@ -159,6 +159,15 @@ struct TapeView: View {
 
     var body: some View {
         List {
+            // ライブ行（演算子入力後・= 前の入力途中テープ）
+            if !viewModel.tapeLinesBuilding.isEmpty {
+                TapeCell(row: CalcViewModel.HistoryRow(tapeLines: viewModel.tapeLinesBuilding))
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.visible, edges: .all)
+                    .padding(.bottom, 6)
+                    .padding(.horizontal, 12)
+                    .background(COLOR_BACK_FORMULA)
+            }
             ForEach(reversedRows, id: \.offset) { index, row in
                 TapeCell(row: row)
                     .listRowInsets(EdgeInsets())
