@@ -199,7 +199,7 @@ struct TapeCell: View {
     @Environment(\.colorScheme) var colorScheme
 
     private let fontSize: CGFloat = 15.0
-    private let opWidth: CGFloat = 18.0  // 演算子列固定幅
+    private let rtWidth: CGFloat = 56.0  // 中間結果列の固定幅
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 0) {
@@ -213,29 +213,26 @@ struct TapeCell: View {
                             .frame(height: 0.5)
                             .padding(.vertical, 2)
                     }
-                    HStack(spacing: 4) {
-                        // 演算子（左固定幅）
-                        Text(line.op.trimmingCharacters(in: .whitespaces))
-                            .font(.system(size: fontSize * setting.numberFontScale, weight: .regular))
-                            .foregroundStyle(line.op == FM_ANS ? COLOR_ANSWER : COLOR_OPERATOR)
-                            .frame(width: opWidth, alignment: .leading)
-                        Spacer()
-                        // 値（右寄せ・モノスペース）
+                    HStack(spacing: 0) {
+                        Spacer(minLength: 4)
+                        // 演算子 + 半角スペース + 値（演算子がある行のみプレフィックス表示）
+                        let opStr = line.op.trimmingCharacters(in: .whitespaces)
+                        if !opStr.isEmpty {
+                            Text(opStr + " ")
+                                .font(.system(size: fontSize * setting.numberFontScale, weight: .regular))
+                                .foregroundStyle(line.isFinal ? COLOR_ANSWER : COLOR_OPERATOR)
+                        }
                         Text(line.value)
                             .font(.system(size: fontSize * setting.numberFontScale,
                                           weight: line.isFinal ? .bold : .regular)
                                 .monospacedDigit())
                             .foregroundStyle(line.isFinal ? COLOR_ANSWER : COLOR_NUMBER)
-                        // 中間結果（幅に余裕があるとき右端に小さく薄く表示）
-                        if let rt = line.runningTotal {
-                            Text("=\(rt)")
-                                .font(.system(size: fontSize * 0.78 * setting.numberFontScale,
-                                              weight: .light)
-                                    .monospacedDigit())
-                                .foregroundStyle(Color.secondary.opacity(0.5))
-                                .lineLimit(1)
-                                .padding(.leading, 6)
-                        }
+                        // 中間結果（右端固定幅列・= なし・数値のみ）
+                        Text(line.runningTotal ?? "")
+                            .font(.system(size: fontSize * 0.78 * setting.numberFontScale, weight: .light)
+                                .monospacedDigit())
+                            .foregroundStyle(Color.secondary.opacity(0.5))
+                            .frame(width: rtWidth, alignment: .trailing)
                     }
                     .opacity(colorScheme == .dark ? 0.55 : 1.0)
                 }
