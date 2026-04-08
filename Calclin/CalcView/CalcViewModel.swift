@@ -49,9 +49,10 @@ final class CalcViewModel: ObservableObject {
 
     
     struct TapeLine: Hashable {
-        var op: String      // " ", "+", "-", "×", "÷", "="
-        var value: String   // 表示用フォーマット済み数値文字列
-        var isFinal: Bool   // true = この計算の最終結果
+        var op: String              // " ", "+", "-", "×", "÷", "="
+        var value: String           // 表示用フォーマット済み数値文字列
+        var isFinal: Bool           // true = この計算の最終結果
+        var runningTotal: String?   // 中間結果（幅が広いとき右側に小さく表示）
     }
 
     struct  HistoryRow: Hashable {
@@ -911,10 +912,11 @@ final class CalcViewModel: ObservableObject {
         if let existingOp = pendingOp {
             // 保留演算子を実行して中間結果をテープへ
             let result = calcBinary(accumulator, existingOp, current)
-            tapeLinesBuilding.append(TapeLine(op: existingOp, value: current.formatted(calcConfig), isFinal: false))
+            tapeLinesBuilding.append(TapeLine(op: existingOp, value: current.formatted(calcConfig),
+                                              isFinal: false, runningTotal: result.formatted(calcConfig)))
             accumulator = result
         } else {
-            // 最初の演算子 — 初期値をテープへ
+            // 最初の演算子 — 初期値をテープへ（中間結果なし）
             tapeLinesBuilding.append(TapeLine(op: " ", value: current.formatted(calcConfig), isFinal: false))
             accumulator = current
         }
@@ -935,7 +937,8 @@ final class CalcViewModel: ObservableObject {
 
         if let existingOp = pendingOp {
             result = calcBinary(accumulator, existingOp, current)
-            tapeLinesBuilding.append(TapeLine(op: existingOp, value: current.formatted(calcConfig), isFinal: false))
+            tapeLinesBuilding.append(TapeLine(op: existingOp, value: current.formatted(calcConfig),
+                                              isFinal: false, runningTotal: result.formatted(calcConfig)))
         } else {
             result = current
         }

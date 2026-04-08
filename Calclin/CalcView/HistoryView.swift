@@ -226,6 +226,16 @@ struct TapeCell: View {
                                           weight: line.isFinal ? .bold : .regular)
                                 .monospacedDigit())
                             .foregroundStyle(line.isFinal ? COLOR_ANSWER : COLOR_NUMBER)
+                        // 中間結果（幅に余裕があるとき右端に小さく薄く表示）
+                        if let rt = line.runningTotal {
+                            Text("=\(rt)")
+                                .font(.system(size: fontSize * 0.78 * setting.numberFontScale,
+                                              weight: .light)
+                                    .monospacedDigit())
+                                .foregroundStyle(Color.secondary.opacity(0.5))
+                                .lineLimit(1)
+                                .padding(.leading, 6)
+                        }
                     }
                     .opacity(colorScheme == .dark ? 0.55 : 1.0)
                 }
