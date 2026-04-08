@@ -912,7 +912,6 @@ final class CalcViewModel: ObservableObject {
             // 保留演算子を実行して中間結果をテープへ
             let result = calcBinary(accumulator, existingOp, current)
             tapeLinesBuilding.append(TapeLine(op: existingOp, value: current.formatted(calcConfig), isFinal: false))
-            tapeLinesBuilding.append(TapeLine(op: FM_ANS,     value: result.formatted(calcConfig), isFinal: false))
             accumulator = result
         } else {
             // 最初の演算子 — 初期値をテープへ
