@@ -102,3 +102,21 @@ let FM_PER_RI   = "厘"   // J厘 /1000
 //let KD_GT       = "GT"  //">GT" // 総計 ＜＜1字目を OP_START にして「開始行」扱いすることを示す＞＞
 
 
+// MARK: - CalcMode
+
+/// 計算方式
+enum CalcMode: String, Hashable {
+    case formula     // 数式計算（優先順位あり）5+5*2=15
+    case calculator  // 電卓計算（左から順）    5+5*2=20
+}
+
+/// 電卓モードで非活性にするキーコードセット
+let CALC_DISABLED_IN_CALCULATOR: Set<String> = [
+    "Paren",   // 括弧
+    "sqRoot",  // 平方根
+    "cuRoot",  // 立方根
+    "Perc",    // %
+    "J割", "J分", "J厘",
+]
+
+

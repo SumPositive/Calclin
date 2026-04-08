@@ -48,14 +48,46 @@ final class CalcViewModel: ObservableObject {
     @Published var isAnswerMode = false
 
     
+    struct TapeLine: Hashable {
+        var op: String      // " ", "+", "-", "×", "÷", "="
+        var value: String   // 表示用フォーマット済み数値文字列
+        var isFinal: Bool   // true = この計算の最終結果
+    }
+
     struct  HistoryRow: Hashable {
         var tokens: [String] = []   // 式コピペのため記録する
         var formula: AttributedString = ""
         var answer: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
         var unitFormula: String?     //= .formula
         var memo: String?           // メモ
+        var tapeLines: [TapeLine]?  // 電卓モード用テープ行。nil = 式モード
     }
     @Published var historyRows: [HistoryRow] = []
+
+    // MARK: - CalcMode
+
+    @Published var calcMode: CalcMode = .formula {
+        didSet {
+            guard oldValue != calcMode else { return }
+            tokens = []
+            isAnswerMode = false
+            resetCalculatorState()
+            formulaUpdate()
+        }
+    }
+
+    // 電卓モード専用状態
+    private var accumulator: AZDecimal = .zero
+    private var pendingOp: String? = nil        // 保留中の演算子
+    private var isCalcNewEntry: Bool = true     // 次の数字入力で現在値をクリア
+    private var tapeLinesBuilding: [TapeLine] = []
+
+    /// 電卓モードで非活性にするキーかどうかを返す
+    func isKeyDisabled(_ code: String) -> Bool {
+        guard calcMode == .calculator else { return false }
+        if CALC_DISABLED_IN_CALCULATOR.contains(code) { return true }
+        return keyboardViewModel.keyDef(code: code)?.unitBase != nil
+    }
 
 
     // MARK: - Private value
@@ -75,6 +107,10 @@ final class CalcViewModel: ObservableObject {
     func input(_ keyDef: KeyDefinition)
     {
         log(.info, "input \(keyDef)")
+        if calcMode == .calculator {
+            inputCalcMode(keyDef)
+            return
+        }
         if let unitBase  = keyDef.unitBase, !unitBase.isEmpty {
             // Unit
             inputUnit(keyDef, unitBase: unitBase)
@@ -733,6 +769,177 @@ final class CalcViewModel: ObservableObject {
 
     
     
+    // MARK: - Calculator Mode Private Methods
+
+    private func resetCalculatorState() {
+        accumulator = .zero
+        pendingOp = nil
+        isCalcNewEntry = true
+        tapeLinesBuilding = []
+    }
+
+    @MainActor
+    private func inputCalcMode(_ keyDef: KeyDefinition) {
+        if isKeyDisabled(keyDef.code) { return }
+        switch keyDef.code {
+        case "#1"..."#9":
+            inputNumberCalc(keyDef.formula, isZeroKey: false)
+        case "#0", "#00", "#000":
+            inputNumberCalc(keyDef.formula, isZeroKey: true)
+        case "Deci":
+            inputDeciCalc()
+        case "Sign":
+            inputSignCalc()
+        case "Add", "Sub", "Mul", "Div":
+            inputOperatorCalc(keyDef.formula)
+        case "Ans":
+            inputAnswerCalc()
+        case "CA":
+            tokens = []
+            isAnswerMode = false
+            resetCalculatorState()
+            formulaUpdate()
+        case "CS":
+            tokens = []
+            isCalcNewEntry = true
+            isAnswerMode = false
+            formulaUpdate()
+        case "BS":
+            if var last = tokens.last, !last.isEmpty {
+                last.removeLast()
+                tokens = last.isEmpty || last == FM_SUB ? [] : [last]
+                isCalcNewEntry = tokens.isEmpty
+            }
+            isAnswerMode = false
+            formulaUpdate()
+        default:
+            break
+        }
+    }
+
+    private func inputNumberCalc(_ num: String, isZeroKey: Bool) {
+        if isCalcNewEntry || tokens.isEmpty {
+            tokens = [isZeroKey ? "0" : num]
+            isCalcNewEntry = false
+            isAnswerMode = false
+        } else {
+            guard var last = tokens.last else { tokens = [num]; return }
+            guard last.count < CALC_PRECISION_MAX else { return }
+            // 整数部の先頭ゼロを抑制
+            if (last == "0" || last == "-0"), !last.contains(FM_DECIMAL) {
+                if !isZeroKey { last = (last == "-0" ? "-" : "") + num } // ゼロキーなら維持
+            } else {
+                last += num
+            }
+            tokens = [last]
+            isAnswerMode = false
+        }
+        formulaUpdate()
+    }
+
+    private func inputDeciCalc() {
+        if isCalcNewEntry || tokens.isEmpty {
+            tokens = ["0" + FM_DECIMAL]
+            isCalcNewEntry = false
+            isAnswerMode = false
+        } else if var last = tokens.last, !last.contains(FM_DECIMAL) {
+            last += FM_DECIMAL
+            tokens = [last]
+            isAnswerMode = false
+        }
+        formulaUpdate()
+    }
+
+    private func inputSignCalc() {
+        guard var last = tokens.last, !last.isEmpty, last != FM_SUB else { return }
+        last = last.hasPrefix(FM_SUB) ? String(last.dropFirst()) : FM_SUB + last
+        tokens = [last]
+        isCalcNewEntry = false
+        isAnswerMode = false
+        formulaUpdate()
+    }
+
+    private func inputOperatorCalc(_ op: String) {
+        // 新規入力待ちで既に演算子があれば置換して終了
+        if isCalcNewEntry {
+            if pendingOp != nil { pendingOp = op }
+            return
+        }
+        guard let currentStr = tokens.last,
+              !currentStr.isEmpty, currentStr != FM_SUB,
+              Double(currentStr) != nil else { return }
+
+        let current = AZDecimal(currentStr)
+
+        if let existingOp = pendingOp {
+            // 保留演算子を実行して中間結果をテープへ
+            let result = calcBinary(accumulator, existingOp, current)
+            tapeLinesBuilding.append(TapeLine(op: existingOp, value: current.formatted(calcConfig), isFinal: false))
+            tapeLinesBuilding.append(TapeLine(op: FM_ANS,     value: result.formatted(calcConfig), isFinal: false))
+            accumulator = result
+        } else {
+            // 最初の演算子 — 初期値をテープへ
+            tapeLinesBuilding.append(TapeLine(op: " ", value: current.formatted(calcConfig), isFinal: false))
+            accumulator = current
+        }
+        pendingOp = op
+        isCalcNewEntry = true
+        tokens = [accumulator.value]
+        isAnswerMode = true
+        formulaUpdate(true)
+    }
+
+    private func inputAnswerCalc() {
+        guard let currentStr = tokens.last,
+              !currentStr.isEmpty, currentStr != FM_SUB,
+              Double(currentStr) != nil else { return }
+
+        let current = AZDecimal(currentStr)
+        let result: AZDecimal
+
+        if let existingOp = pendingOp {
+            result = calcBinary(accumulator, existingOp, current)
+            tapeLinesBuilding.append(TapeLine(op: existingOp, value: current.formatted(calcConfig), isFinal: false))
+        } else {
+            result = current
+        }
+        tapeLinesBuilding.append(TapeLine(op: FM_ANS, value: result.formatted(calcConfig), isFinal: true))
+
+        // 履歴へ記録
+        let row = HistoryRow(tokens: [], formula: AttributedString(""),
+                             answer: result.formatted(calcConfig),
+                             tapeLines: tapeLinesBuilding)
+        historyRows.append(row)
+        if CALC_HISTORY_MAX < historyRows.count { historyRows.removeFirst() }
+
+        // 次の計算へ — 結果を引き継ぐ
+        accumulator = result
+        pendingOp = nil
+        tapeLinesBuilding = []
+        isCalcNewEntry = true
+        tokens = [result.value]
+        isAnswerMode = true
+        formulaUpdate(true)
+    }
+
+    /// 電卓モード用の二項演算（丸め済み）
+    private func calcBinary(_ lhs: AZDecimal, _ op: String, _ rhs: AZDecimal) -> AZDecimal {
+        if (op == FM_DIV || op == FM_DIV_), rhs.isZero {
+            Manager.shared.toast(String(localized: "÷0エラー"))
+            return lhs
+        }
+        let result: AZDecimal
+        switch op {
+        case FM_ADD:            result = lhs + rhs
+        case FM_SUB:            result = lhs - rhs
+        case FM_MUL, FM_MUL_:  result = lhs * rhs
+        case FM_DIV, FM_DIV_:  result = lhs / rhs
+        default:                return lhs
+        }
+        return result.rounded(calcConfig)
+    }
+
+
     // MARK: - Private Methods
 
     /// 数式から答えを計算する（文字列→評価→丸め→raw文字列）

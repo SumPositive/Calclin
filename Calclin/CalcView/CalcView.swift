@@ -18,19 +18,34 @@ struct CalcView: View {
 
         VStack(spacing: 0) {
 
-            HistoryView(viewModel: viewModel, calcIndex: calcIndex)
-                .environmentObject(setting) // settingに変化あればHistoryViewが再生成される
-                .frame(maxHeight: .infinity) // 高さを均等にする
+            // 計算方式切り替えタブ
+            Picker("", selection: $viewModel.calcMode) {
+                Text("電卓").tag(CalcMode.calculator)
+                Text("式").tag(CalcMode.formula)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 8)
+            .padding(.top, 4)
+            .padding(.bottom, 2)
+
+            // 履歴 / テープ
+            Group {
+                if viewModel.calcMode == .formula {
+                    HistoryView(viewModel: viewModel, calcIndex: calcIndex)
+                        .environmentObject(setting)
+                } else {
+                    TapeView(viewModel: viewModel, calcIndex: calcIndex)
+                        .environmentObject(setting)
+                }
+            }
+            .frame(maxHeight: .infinity)
 
             FormulaView(viewModel: viewModel)
-                .environmentObject(setting) // settingに変化あればFormulaViewが再生成される
-                .frame(minHeight: 44) // 最小高さ、フォントサイズで拡大
-                .frame(height: 24.0 * setting.numberFontScale * 1.2) // 最小限の高さに固定（任意で調整）
+                .environmentObject(setting)
+                .frame(minHeight: 44)
+                .frame(height: 24.0 * setting.numberFontScale * 1.2)
                 .padding(.horizontal, 8)
-                //debug//  .border(Color.red)
         }
         .padding(0)
     }
 }
-
-

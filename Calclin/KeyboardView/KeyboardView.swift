@@ -19,6 +19,7 @@ let KEYBOARD_PAGE_GAP = 20.0 // ページ間隔 padding以上無ければ隣ペ�
 
 struct KeyboardView: View {
     @ObservedObject var viewModel: KeyboardViewModel
+    @ObservedObject var activeCalcViewModel: CalcViewModel
     let onTap: (KeyDefinition) -> Void
 
     // ダークモード対応
@@ -49,7 +50,8 @@ struct KeyboardView: View {
                         let offsetFromCenter = CGFloat(index - selectedPage) * pageWidth + dragOffset
                         let progress = offsetFromCenter / pageWidth
 
-                        KeyPageView(viewModel: viewModel, onTap: onTap, page: index)
+                        KeyPageView(viewModel: viewModel, onTap: onTap, page: index,
+                                    isKeyDisabled: activeCalcViewModel.isKeyDisabled)
                             .frame(width: geometry.size.width)
                             // キューブが回転するような立体的な切り替え演出
                             .modifier(
@@ -254,9 +256,10 @@ struct KeyPageView: View {
     @ObservedObject var viewModel: KeyboardViewModel
     let onTap: (KeyDefinition) -> Void
     let page: Int
-    
+    var isKeyDisabled: (String) -> Bool = { _ in false }
+
     // 縦や横に連結拡大可能にするため、LazyVGridやV-HStackを使用せずにposition配置している
-    
+
     var body: some View {
         let colCount: Int = KeyboardViewModel.colCount //列
         let rowCount: Int = KeyboardViewModel.rowCount //行
@@ -272,6 +275,8 @@ struct KeyPageView: View {
                 ForEach(0..<colCount, id: \.self) { col in
                     let index = row * colCount + col
                     if index < keyCodes.count {
+                        let keyCode = keyCodes[index]
+                        let disabled = isKeyDisabled(keyCode)
                         if keyCodes[index] != "", keyCodes[index] != "nop",
                            index < rowCount * colCount - 1,
                            keyCodes[index] == keyCodes[index + 1] {
@@ -282,6 +287,8 @@ struct KeyPageView: View {
                                     x: CGFloat(col) * width + width,
                                     y: CGFloat(row) * height + height / 2
                                 )
+                                .opacity(disabled ? 0.30 : 1.0)
+                                .allowsHitTesting(!disabled)
                         }
                         else if keyCodes[index] != "", keyCodes[index] != "nop",
                                 1 <= index,
@@ -298,6 +305,8 @@ struct KeyPageView: View {
                                     x: CGFloat(col) * width + width / 2,
                                     y: CGFloat(row) * height + height
                                 )
+                                .opacity(disabled ? 0.30 : 1.0)
+                                .allowsHitTesting(!disabled)
                         }
                         else if keyCodes[index] != "", keyCodes[index] != "nop",
                                 colCount <= index,
@@ -312,6 +321,8 @@ struct KeyPageView: View {
                                     x: CGFloat(col) * width + width / 2,
                                     y: CGFloat(row) * height + height / 2
                                 )
+                                .opacity(disabled ? 0.30 : 1.0)
+                                .allowsHitTesting(!disabled)
                         }
                     }
                 }

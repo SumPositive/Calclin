@@ -146,6 +146,99 @@ struct CustomCell: View {
 }
 
 
+// MARK: - TapeView（電卓モード用レシートテープ）
+
+struct TapeView: View {
+    @EnvironmentObject var setting: SettingViewModel
+    @ObservedObject var viewModel: CalcViewModel
+    let calcIndex: Int
+
+    private var reversedRows: [(offset: Int, element: CalcViewModel.HistoryRow)] {
+        Array(viewModel.historyRows.enumerated().reversed())
+    }
+
+    var body: some View {
+        List {
+            ForEach(reversedRows, id: \.offset) { index, row in
+                TapeCell(row: row)
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.visible, edges: .all)
+                    .padding(.bottom, 6)
+                    .padding(.horizontal, 12)
+                    .background(COLOR_BACK_FORMULA)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            viewModel.delateHistory(index)
+                        } label: {
+                            Image("trash.fill_rev").imageScale(.large)
+                        }
+                    }
+            }
+        }
+        .scaleEffect(y: -1)
+        .listStyle(.plain)
+        .environment(\.defaultMinListRowHeight, 10)
+        .frame(maxWidth: .infinity)
+        .padding(0)
+    }
+}
+
+// テープセル（1計算 = 1セル）
+struct TapeCell: View {
+    @EnvironmentObject var setting: SettingViewModel
+    let row: CalcViewModel.HistoryRow
+    @Environment(\.colorScheme) var colorScheme
+
+    private let fontSize: CGFloat = 15.0
+    private let opWidth: CGFloat = 18.0  // 演算子列固定幅
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 0) {
+            if let lines = row.tapeLines {
+                ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                    if line.isFinal {
+                        // 最終結果の直前に区切り線
+                        Rectangle()
+                            .fill(Color.secondary.opacity(0.3))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 0.5)
+                            .padding(.vertical, 2)
+                    }
+                    HStack(spacing: 4) {
+                        // 演算子（左固定幅）
+                        Text(line.op.trimmingCharacters(in: .whitespaces))
+                            .font(.system(size: fontSize * setting.numberFontScale, weight: .regular))
+                            .foregroundStyle(line.op == FM_ANS ? COLOR_ANSWER : COLOR_OPERATOR)
+                            .frame(width: opWidth, alignment: .leading)
+                        Spacer()
+                        // 値（右寄せ・モノスペース）
+                        Text(line.value)
+                            .font(.system(size: fontSize * setting.numberFontScale,
+                                          weight: line.isFinal ? .bold : .regular)
+                                .monospacedDigit())
+                            .foregroundStyle(line.isFinal ? COLOR_ANSWER : COLOR_NUMBER)
+                    }
+                    .opacity(colorScheme == .dark ? 0.55 : 1.0)
+                }
+            }
+            // メモ
+            if let memo = row.memo, !memo.isEmpty {
+                Text(memo)
+                    .font(.system(size: fontSize * 0.8 * setting.numberFontScale, weight: .light))
+                    .foregroundStyle(colorScheme == .dark ? Color.cyan : COLOR_MEMO.opacity(0.7))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.top, 2)
+            }
+        }
+        .scaleEffect(y: -1)
+        .padding(.top, 6)
+        .frame(maxWidth: .infinity)
+    }
+}
+
+
+// MARK: - HistoryMemoView
+
 struct HistoryMemoView: View {
     @Binding var memo: String
     var onSave: () -> Void

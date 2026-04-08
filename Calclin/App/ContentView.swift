@@ -109,6 +109,7 @@ struct ContentView: View {
                 
                 // キーボードView
                 KeyboardView(viewModel: keyboardViewModel,
+                             activeCalcViewModel: selectedViewModel,
                              onTap: { keyDef in
                     // 選択中のCalcViewへkeyDefを送る
                     selectedViewModel.input(keyDef)
