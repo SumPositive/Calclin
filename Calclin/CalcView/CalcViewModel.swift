@@ -82,6 +82,7 @@ final class CalcViewModel: ObservableObject {
     private var pendingOp: String? = nil        // 保留中の演算子
     private var isCalcNewEntry: Bool = true     // 次の数字入力で現在値をクリア
     private var isAfterEquals: Bool = false     // = 直後フラグ（演算子続けで合計引き継ぎ）
+    private var isPercMode: Bool = false        // % 入力済みフラグ（表示は5%のまま、計算時に変換）
     @Published var showRunningTotal: Bool = true // 中間結果の表示
     @Published private(set) var tapeLinesBuilding: [TapeLine] = []
 
@@ -797,13 +798,19 @@ final class CalcViewModel: ObservableObject {
         guard let numStr = tokens.last, !numStr.isEmpty else { return }
         if Double(numStr) != nil {
             formulaAttr += AttributedString(AZDecimal(numStr).formatted(calcConfig))
-            let zero = extractTrailingZerosAfterDecimal(numStr)
-            if zero != "" {
-                formulaAttr += AttributedString(zero)
-            } else if !numStr.contains(FM_DECIMAL) {
-                var dotAttr = AttributedString(FM_DECIMAL)
-                dotAttr.foregroundColor = COLOR_OPERATOR_WAIT.opacity(0.5)
-                formulaAttr += dotAttr
+            if isPercMode {
+                var percAttr = AttributedString("%")
+                percAttr.foregroundColor = COLOR_OPERATOR
+                formulaAttr += percAttr
+            } else {
+                let zero = extractTrailingZerosAfterDecimal(numStr)
+                if zero != "" {
+                    formulaAttr += AttributedString(zero)
+                } else if !numStr.contains(FM_DECIMAL) {
+                    var dotAttr = AttributedString(FM_DECIMAL)
+                    dotAttr.foregroundColor = COLOR_OPERATOR_WAIT.opacity(0.5)
+                    formulaAttr += dotAttr
+                }
             }
         } else {
             // マイナス符号のみ("-") や "-0" など
@@ -816,6 +823,7 @@ final class CalcViewModel: ObservableObject {
         pendingOp = nil
         isCalcNewEntry = true
         isAfterEquals = false
+        isPercMode = false
         tapeLinesBuilding = []
     }
 
@@ -833,6 +841,8 @@ final class CalcViewModel: ObservableObject {
             inputSignCalc()
         case "Add", "Sub", "Mul", "Div":
             inputOperatorCalc(keyDef.formula)
+        case "Perc":
+            inputPercCalc()
         case "Ans":
             inputAnswerCalc()
         case "CA":
@@ -844,9 +854,13 @@ final class CalcViewModel: ObservableObject {
             tokens = []
             isCalcNewEntry = true
             isAnswerMode = false
+            isPercMode = false
             formulaUpdateCalc()
         case "BS":
-            if var last = tokens.last, !last.isEmpty {
+            if isPercMode {
+                // % だけ取り消す（数値はそのまま）
+                isPercMode = false
+            } else if var last = tokens.last, !last.isEmpty {
                 last.removeLast()
                 tokens = last.isEmpty || last == FM_SUB ? [] : [last]
                 isCalcNewEntry = tokens.isEmpty
@@ -864,6 +878,7 @@ final class CalcViewModel: ObservableObject {
             isCalcNewEntry = false
             isAnswerMode = false
             isAfterEquals = false
+            isPercMode = false
         } else {
             guard var last = tokens.last else { tokens = [num]; return }
             guard last.count < CALC_PRECISION_MAX else { return }
@@ -885,6 +900,7 @@ final class CalcViewModel: ObservableObject {
             isCalcNewEntry = false
             isAnswerMode = false
             isAfterEquals = false
+            isPercMode = false
         } else if var last = tokens.last, !last.contains(FM_DECIMAL) {
             last += FM_DECIMAL
             tokens = [last]
@@ -899,6 +915,7 @@ final class CalcViewModel: ObservableObject {
         tokens = [last]
         isCalcNewEntry = false
         isAnswerMode = false
+        isPercMode = false
         formulaUpdateCalc()
     }
 
@@ -913,21 +930,31 @@ final class CalcViewModel: ObservableObject {
         }
 
         let current: AZDecimal
+        let displayValue: String
         if isAfterEquals {
             // = 直後の演算子: 直前の合計値を先頭値として使用
             current = accumulator
+            displayValue = accumulator.formatted(calcConfig)
         } else {
             guard let currentStr = tokens.last,
                   !currentStr.isEmpty, currentStr != FM_SUB,
                   Double(currentStr) != nil else { return }
-            current = AZDecimal(currentStr)
+            let raw = AZDecimal(currentStr)
+            if isPercMode {
+                displayValue = currentStr + "%"
+                current = resolvedPercValue(raw)
+            } else {
+                displayValue = raw.formatted(calcConfig)
+                current = raw
+            }
         }
         isAfterEquals = false
+        isPercMode = false
 
         if let existingOp = pendingOp {
             // 保留演算子を実行して中間結果をテープへ
             let result = calcBinary(accumulator, existingOp, current)
-            tapeLinesBuilding.append(TapeLine(op: existingOp, value: current.formatted(calcConfig),
+            tapeLinesBuilding.append(TapeLine(op: existingOp, value: displayValue,
                                               isFinal: false, runningTotal: result.formatted(calcConfig)))
             accumulator = result
         } else {
@@ -942,6 +969,25 @@ final class CalcViewModel: ObservableObject {
         formulaUpdateCalc()
     }
 
+    private func inputPercCalc() {
+        guard let currentStr = tokens.last,
+              !currentStr.isEmpty, currentStr != FM_SUB,
+              Double(currentStr) != nil else { return }
+        // トークンは変えず表示に % を付けるだけ。計算時に変換する
+        isPercMode = true
+        isAnswerMode = false
+        formulaUpdateCalc()
+    }
+
+    /// isPercMode 時にトークンの値をパーセント変換して返す
+    private func resolvedPercValue(_ current: AZDecimal) -> AZDecimal {
+        if pendingOp == FM_ADD || pendingOp == FM_SUB {
+            return (accumulator * current / AZDecimal("100")).rounded(calcConfig)
+        } else {
+            return (current / AZDecimal("100")).rounded(calcConfig)
+        }
+    }
+
     private func inputAnswerCalc() {
         let result: AZDecimal
 
@@ -954,11 +1000,21 @@ final class CalcViewModel: ObservableObject {
                   !currentStr.isEmpty, currentStr != FM_SUB,
                   Double(currentStr) != nil else { return }
 
-            let current = AZDecimal(currentStr)
+            let raw = AZDecimal(currentStr)
+            let current: AZDecimal
+            let displayValue: String
+            if isPercMode {
+                displayValue = currentStr + "%"
+                current = resolvedPercValue(raw)
+            } else {
+                displayValue = raw.formatted(calcConfig)
+                current = raw
+            }
+            isPercMode = false
 
             if let existingOp = pendingOp {
                 result = calcBinary(accumulator, existingOp, current)
-                tapeLinesBuilding.append(TapeLine(op: existingOp, value: current.formatted(calcConfig),
+                tapeLinesBuilding.append(TapeLine(op: existingOp, value: displayValue,
                                                   isFinal: false, runningTotal: result.formatted(calcConfig)))
             } else {
                 result = current

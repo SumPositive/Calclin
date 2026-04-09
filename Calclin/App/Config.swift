@@ -115,7 +115,6 @@ let CALC_DISABLED_IN_CALCULATOR: Set<String> = [
     "Paren",   // 括弧
     "sqRoot",  // 平方根
     "cuRoot",  // 立方根
-    "Perc",    // %
     "J割", "J分", "J厘",
 ]
 
