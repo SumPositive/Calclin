@@ -18,17 +18,7 @@ struct CalcView: View {
 
         VStack(spacing: 0) {
 
-            // 計算方式切り替えタブ
-            Picker("", selection: $viewModel.calcMode) {
-                Text("電卓").tag(CalcMode.calculator)
-                Text("式").tag(CalcMode.formula)
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, 8)
-            .padding(.top, 4)
-            .padding(.bottom, 2)
-
-            // 履歴 / テープ
+            // 履歴 / テープ（左上にモード切替アイコンボタンをオーバーレイ）
             Group {
                 if viewModel.calcMode == .formula {
                     HistoryView(viewModel: viewModel, calcIndex: calcIndex)
@@ -39,6 +29,19 @@ struct CalcView: View {
                 }
             }
             .frame(maxHeight: .infinity)
+            .overlay(alignment: .topLeading) {
+                Button {
+                    viewModel.calcMode = (viewModel.calcMode == .calculator) ? .formula : .calculator
+                } label: {
+                    Image(systemName: viewModel.calcMode == .calculator ? "plusminus" : "function")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 30, height: 30)
+                        .contentShape(Rectangle())
+                }
+                .padding(.top, 2)
+                .padding(.leading, 4)
+            }
 
             FormulaView(viewModel: viewModel)
                 .environmentObject(setting)
