@@ -53,6 +53,10 @@ final class CalcViewModel: ObservableObject {
         var value: String           // 表示用フォーマット済み数値文字列
         var isFinal: Bool           // true = この計算の最終結果
         var runningTotal: String?   // 中間結果（幅が広いとき左端に小さく表示）
+        // 編集・再計算用（isFinal == false の行のみ有効）
+        var rawBase: String = ""        // 入力値（Base単位、%解決済み）
+        var accBase: String = "0"       // 演算前 accumulator（Base単位）
+        var unitCode: String? = nil     // 表示単位コード（nil = 単位なし）
     }
 
     struct  HistoryRow: Hashable {
@@ -72,6 +76,8 @@ final class CalcViewModel: ObservableObject {
             guard oldValue != calcMode else { return }
             tokens = []
             isAnswerMode = false
+            editingHistoryIndex = nil
+            editingLineIndex = 0
             resetCalculatorState()
             formulaUpdate()
         }
@@ -85,6 +91,9 @@ final class CalcViewModel: ObservableObject {
     private var isPercMode: Bool = false        // % 入力済みフラグ（表示は5%のまま、計算時に変換）
     private var calcUnitDef: KeyDefinition? = nil  // 電卓モードの計算単位（= 結果表示単位）
     @Published private(set) var tapeLinesBuilding: [TapeLine] = []
+    /// 編集中の historyRows インデックス（nil = 通常モード）
+    @Published private(set) var editingHistoryIndex: Int? = nil
+    @Published private(set) var editingLineIndex: Int = 0
 
     /// 電卓モードで非活性にするキーかどうかを返す
     func isKeyDisabled(_ code: String) -> Bool {
@@ -861,7 +870,13 @@ final class CalcViewModel: ObservableObject {
         case "Sign":
             inputSignCalc()
         case "Add", "Sub", "Mul", "Div":
-            inputOperatorCalc(keyDef.formula)
+            // 編集モード中は演算子だけ置換（行を進めない）
+            if editingHistoryIndex != nil {
+                pendingOp = keyDef.formula
+                formulaUpdateCalc()
+            } else {
+                inputOperatorCalc(keyDef.formula)
+            }
         case "Perc":
             inputPercCalc()
         case "Ans":
@@ -869,14 +884,21 @@ final class CalcViewModel: ObservableObject {
         case "CA":
             tokens = []
             isAnswerMode = false
+            editingHistoryIndex = nil
+            editingLineIndex = 0
             resetCalculatorState()
             formulaUpdateCalc()
         case "CS":
-            tokens = []
-            isCalcNewEntry = true
-            isAnswerMode = false
-            isPercMode = false
-            formulaUpdateCalc()
+            // 編集モード中はキャンセル
+            if editingHistoryIndex != nil {
+                cancelTapeEdit()
+            } else {
+                tokens = []
+                isCalcNewEntry = true
+                isAnswerMode = false
+                isPercMode = false
+                formulaUpdateCalc()
+            }
         case "BS":
             if isPercMode {
                 // % だけ取り消す（数値はそのまま）
@@ -956,13 +978,16 @@ final class CalcViewModel: ObservableObject {
         // accumulator は常に Base単位で保持
         let current: AZDecimal      // Base単位
         let displayValue: String    // テープ表示用（元の単位のまま）
+        let lineUnitCode: String?   // 表示単位コード（再計算用）
         if isAfterEquals {
             // = 直後の演算子: 直前の合計値（Base単位）を先頭値として使用
             current = accumulator
             displayValue = accumulator.formatted(calcConfig)
+            lineUnitCode = calcUnitDef?.code
         } else {
             guard let cv = currentCalcValue() else { return }
             let raw = AZDecimal(cv.numStr)
+            lineUnitCode = cv.unitDef?.code
             if isPercMode {
                 displayValue = cv.numStr + "%"
                 current = resolvedPercValue(raw)   // % の場合は Base単位変換なし
@@ -976,6 +1001,7 @@ final class CalcViewModel: ObservableObject {
                 }
             }
         }
+        let prevAccumulator = accumulator   // 演算前の accumulator を保存
         isAfterEquals = false
         isPercMode = false
 
@@ -983,14 +1009,20 @@ final class CalcViewModel: ObservableObject {
             // 保留演算子を実行して中間結果をテープへ（accumulator は Base単位）
             let result = calcBinary(accumulator, existingOp, current)
             tapeLinesBuilding.append(TapeLine(op: existingOp, value: displayValue,
-                                              isFinal: false, runningTotal: unitDisplayStr(result)))
+                                              isFinal: false, runningTotal: unitDisplayStr(result),
+                                              rawBase: current.value,
+                                              accBase: prevAccumulator.value,
+                                              unitCode: lineUnitCode))
             accumulator = result
         } else {
             // 最初の演算子 — 初期値をテープへ（prevTotal なし）
-            tapeLinesBuilding.append(TapeLine(op: " ", value: displayValue, isFinal: false))
+            tapeLinesBuilding.append(TapeLine(op: " ", value: displayValue, isFinal: false,
+                                              rawBase: current.value,
+                                              accBase: "0",
+                                              unitCode: lineUnitCode))
             accumulator = current
             // 最初の数値の単位を記録（= 時の結果表示単位として使う）
-            if !isAfterEquals { calcUnitDef = currentCalcValue()?.unitDef }
+            calcUnitDef = currentCalcValue()?.unitDef
         }
         pendingOp = op
         isCalcNewEntry = true
@@ -1095,6 +1127,12 @@ final class CalcViewModel: ObservableObject {
     }
 
     private func inputAnswerCalc() {
+        // 編集モード中は commitTapeEdit へ委譲
+        if let histIdx = editingHistoryIndex {
+            commitTapeEdit(historyIndex: histIdx)
+            return
+        }
+
         // resultBase = Base単位の結果値
         let resultBase: AZDecimal
 
@@ -1107,6 +1145,7 @@ final class CalcViewModel: ObservableObject {
             let raw = AZDecimal(cv.numStr)
             let current: AZDecimal
             let displayValue: String
+            let lineUnitCode = cv.unitDef?.code
             if isPercMode {
                 displayValue = cv.numStr + "%"
                 current = resolvedPercValue(raw)
@@ -1118,12 +1157,16 @@ final class CalcViewModel: ObservableObject {
                     displayValue = raw.formatted(calcConfig)
                 }
             }
+            let prevAccumulator = accumulator
             isPercMode = false
 
             if let existingOp = pendingOp {
                 resultBase = calcBinary(accumulator, existingOp, current)
                 tapeLinesBuilding.append(TapeLine(op: existingOp, value: displayValue,
-                                                  isFinal: false, runningTotal: unitDisplayStr(resultBase)))
+                                                  isFinal: false, runningTotal: unitDisplayStr(resultBase),
+                                                  rawBase: current.value,
+                                                  accBase: prevAccumulator.value,
+                                                  unitCode: lineUnitCode))
             } else {
                 resultBase = current
             }
@@ -1164,6 +1207,132 @@ final class CalcViewModel: ObservableObject {
         }
         isAnswerMode = false
         formulaUpdateCalc()
+    }
+
+    // MARK: - Tape Line Edit
+
+    /// テープ行の編集を開始する（historyIndex: historyRows の実インデックス、lineIndex: tapeLines 内）
+    func startTapeEdit(historyIndex: Int, lineIndex: Int) {
+        guard tapeLinesBuilding.isEmpty else { return }  // 計算中は編集不可
+        guard historyIndex < historyRows.count,
+              let lines = historyRows[historyIndex].tapeLines,
+              lineIndex < lines.count,
+              !lines[lineIndex].isFinal else { return }
+
+        let line = lines[lineIndex]
+
+        // 電卓状態を編集行の直前状態にセットアップ
+        resetCalculatorState()
+        accumulator = AZDecimal(line.accBase)
+        pendingOp = line.op == " " ? nil : line.op
+        calcUnitDef = line.unitCode.flatMap { keyboardViewModel.keyDef(code: $0) }
+
+        // 現在値を tokens に預置（= を押せばそのまま確定、数字を打てば上書き）
+        tokens = [line.rawBase]
+        if let code = line.unitCode {
+            tokens.append(TOKEN_UNIT_PREFIX + code)
+        }
+        isCalcNewEntry = true   // 数字キーで tokens を上書きできる状態
+        isAfterEquals = false
+        isPercMode = false
+        isAnswerMode = false
+
+        editingHistoryIndex = historyIndex
+        editingLineIndex = lineIndex
+        formulaUpdateCalc()
+    }
+
+    /// 編集キャンセル（CS または CA）
+    func cancelTapeEdit() {
+        editingHistoryIndex = nil
+        editingLineIndex = 0
+        tokens = []
+        resetCalculatorState()
+        formulaUpdateCalc()
+    }
+
+    /// 編集確定・再計算（= 押下時）
+    private func commitTapeEdit(historyIndex: Int) {
+        guard historyIndex < historyRows.count else { cancelTapeEdit(); return }
+        var row = historyRows[historyIndex]
+        guard var lines = row.tapeLines else { cancelTapeEdit(); return }
+        let lineIdx = editingLineIndex
+        guard lineIdx < lines.count, !lines[lineIdx].isFinal else { cancelTapeEdit(); return }
+
+        // 新しい入力値を取得
+        let current: AZDecimal
+        let displayValue: String
+        let newUnitCode: String?
+        if let cv = currentCalcValue() {
+            let raw = AZDecimal(cv.numStr)
+            if isPercMode {
+                current = resolvedPercValue(raw)
+                displayValue = cv.numStr + "%"
+            } else {
+                current = toBaseValue(cv.numStr, unitDef: cv.unitDef)
+                if let def = cv.unitDef {
+                    displayValue = AZDecimal(cv.numStr).formatted(calcConfig) + def.formula
+                } else {
+                    displayValue = raw.formatted(calcConfig)
+                }
+            }
+            newUnitCode = cv.unitDef?.code
+        } else {
+            // 値なし → 既存値を維持
+            current = AZDecimal(lines[lineIdx].rawBase)
+            displayValue = lines[lineIdx].value
+            newUnitCode = lines[lineIdx].unitCode
+        }
+
+        // 演算子（編集中に op キーで pendingOp が更新済み）
+        let newOp: String = lineIdx == 0 ? " " : (pendingOp ?? lines[lineIdx].op)
+
+        // この行の演算前 accumulator（accBase は変わらない）
+        let accBase = lines[lineIdx].accBase
+        var acc = AZDecimal(accBase)
+
+        // この行の演算後 accumulator
+        if newOp == " " {
+            acc = current
+        } else {
+            acc = calcBinary(acc, newOp, current)
+        }
+
+        // 編集行を更新
+        lines[lineIdx].op = newOp
+        lines[lineIdx].value = displayValue
+        lines[lineIdx].rawBase = current.value
+        lines[lineIdx].runningTotal = unitDisplayStr(acc)
+        lines[lineIdx].unitCode = newUnitCode
+        // accBase はそのまま（この行の前の状態は変わらない）
+
+        // 後続行を再計算
+        for idx in (lineIdx + 1)..<lines.count {
+            if lines[idx].isFinal {
+                // 最終行: 結果を再計算
+                let resultDisplayStr: String
+                if let def = calcUnitDef {
+                    let resultNumStr = fromBaseValue(acc, toUnitDef: def)
+                    resultDisplayStr = AZDecimal(resultNumStr).formatted(calcConfig) + def.formula
+                } else {
+                    resultDisplayStr = acc.formatted(calcConfig)
+                }
+                lines[idx].value = resultDisplayStr
+                lines[idx].accBase = acc.value
+                break
+            } else {
+                // 中間行: accBase と runningTotal を更新
+                lines[idx].accBase = acc.value
+                acc = calcBinary(acc, lines[idx].op, AZDecimal(lines[idx].rawBase))
+                lines[idx].runningTotal = unitDisplayStr(acc)
+            }
+        }
+
+        row.tapeLines = lines
+        row.answer = lines.last?.value ?? row.answer
+        historyRows[historyIndex] = row
+
+        cancelTapeEdit()
     }
 
     /// 電卓モード用の二項演算（丸め済み）

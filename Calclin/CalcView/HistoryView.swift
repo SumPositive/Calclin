@@ -163,7 +163,10 @@ struct TapeView: View {
             // ライブ行（演算子入力後・= 前の入力途中テープ）
             if !viewModel.tapeLinesBuilding.isEmpty {
                 TapeCell(row: CalcViewModel.HistoryRow(tapeLines: viewModel.tapeLinesBuilding),
-                         showRunningTotal: showRunningTotal)
+                         showRunningTotal: showRunningTotal,
+                         historyIndex: -1,
+                         editingHistoryIndex: viewModel.editingHistoryIndex,
+                         editingLineIndex: viewModel.editingLineIndex)
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.visible, edges: .all)
                     .padding(.bottom, 6)
@@ -171,7 +174,14 @@ struct TapeView: View {
                     .background(COLOR_BACK_FORMULA)
             }
             ForEach(reversedRows, id: \.offset) { index, row in
-                TapeCell(row: row, showRunningTotal: showRunningTotal)
+                TapeCell(row: row,
+                         showRunningTotal: showRunningTotal,
+                         historyIndex: index,
+                         editingHistoryIndex: viewModel.editingHistoryIndex,
+                         editingLineIndex: viewModel.editingLineIndex,
+                         onTapLine: { lineIdx in
+                             viewModel.startTapeEdit(historyIndex: index, lineIndex: lineIdx)
+                         })
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.visible, edges: .all)
                     .padding(.bottom, 6)
@@ -199,9 +209,17 @@ struct TapeCell: View {
     @EnvironmentObject var setting: SettingViewModel
     let row: CalcViewModel.HistoryRow
     var showRunningTotal: Bool = true
+    var historyIndex: Int = -1
+    var editingHistoryIndex: Int? = nil
+    var editingLineIndex: Int = 0
+    var onTapLine: ((Int) -> Void)? = nil
     @Environment(\.colorScheme) var colorScheme
 
     private let fontSize: CGFloat = 15.0
+
+    private func isEditingLine(_ lineIdx: Int) -> Bool {
+        editingHistoryIndex == historyIndex && editingLineIndex == lineIdx
+    }
 
     @ViewBuilder
     private func rtText(_ value: String, size: CGFloat) -> some View {
@@ -232,7 +250,7 @@ struct TapeCell: View {
     var body: some View {
         VStack(alignment: .trailing, spacing: 0) {
             if let lines = row.tapeLines {
-                ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                ForEach(Array(lines.enumerated()), id: \.offset) { lineIdx, line in
                     if line.isFinal {
                         // 最終結果の直前に区切り線
                         Rectangle()
@@ -244,6 +262,7 @@ struct TapeCell: View {
                     // 左: 中間結果（小）/ 右: 演算子+数値。衝突すれば中間結果を省く
                     let opStr = line.op.trimmingCharacters(in: .whitespaces)
                     let rt = (showRunningTotal && !line.isFinal) ? line.runningTotal : nil
+                    let editing = isEditingLine(lineIdx)
                     ViewThatFits(in: .horizontal) {
                         // 候補1: 中間結果あり（左）＋ op+value（右）
                         if let rt, !rt.isEmpty {
@@ -260,6 +279,14 @@ struct TapeCell: View {
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .opacity(colorScheme == .dark ? 0.55 : 1.0)
+                    .padding(.horizontal, editing ? 4 : 0)
+                    .background(editing ? Color.accentColor.opacity(0.18) : Color.clear,
+                                in: RoundedRectangle(cornerRadius: 4))
+                    .onTapGesture {
+                        if !line.isFinal {
+                            onTapLine?(lineIdx)
+                        }
+                    }
                 }
             }
             // メモ
