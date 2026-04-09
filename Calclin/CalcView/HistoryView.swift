@@ -152,6 +152,7 @@ struct TapeView: View {
     @EnvironmentObject var setting: SettingViewModel
     @ObservedObject var viewModel: CalcViewModel
     let calcIndex: Int
+    var showRunningTotal: Bool = true
 
     private var reversedRows: [(offset: Int, element: CalcViewModel.HistoryRow)] {
         Array(viewModel.historyRows.enumerated().reversed())
@@ -162,7 +163,7 @@ struct TapeView: View {
             // ライブ行（演算子入力後・= 前の入力途中テープ）
             if !viewModel.tapeLinesBuilding.isEmpty {
                 TapeCell(row: CalcViewModel.HistoryRow(tapeLines: viewModel.tapeLinesBuilding),
-                         showRunningTotal: viewModel.showRunningTotal)
+                         showRunningTotal: showRunningTotal)
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.visible, edges: .all)
                     .padding(.bottom, 6)
@@ -170,7 +171,7 @@ struct TapeView: View {
                     .background(COLOR_BACK_FORMULA)
             }
             ForEach(reversedRows, id: \.offset) { index, row in
-                TapeCell(row: row, showRunningTotal: viewModel.showRunningTotal)
+                TapeCell(row: row, showRunningTotal: showRunningTotal)
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.visible, edges: .all)
                     .padding(.bottom, 6)
@@ -211,6 +212,23 @@ struct TapeCell: View {
             .foregroundStyle(Color.secondary.opacity(0.5))
     }
 
+    @ViewBuilder
+    private func valueText(opStr: String, value: String, isFinal: Bool) -> some View {
+        HStack(spacing: 0) {
+            if !opStr.isEmpty {
+                Text(opStr + " ")
+                    .font(.system(size: fontSize * setting.numberFontScale, weight: .regular))
+                    .foregroundStyle(isFinal ? COLOR_ANSWER : COLOR_OPERATOR)
+            }
+            Text(value)
+                .font(.system(size: fontSize * setting.numberFontScale,
+                              weight: isFinal ? .bold : .regular)
+                    .monospacedDigit())
+                .foregroundStyle(isFinal ? COLOR_ANSWER : COLOR_NUMBER)
+        }
+        .fixedSize(horizontal: true, vertical: false)
+    }
+
     var body: some View {
         VStack(alignment: .trailing, spacing: 0) {
             if let lines = row.tapeLines {
@@ -223,37 +241,23 @@ struct TapeCell: View {
                             .frame(height: 0.5)
                             .padding(.vertical, 2)
                     }
-                    // 左半分: 演算子 + 数値（右寄せ）／右半分: 中間結果 or 空
-                    HStack(spacing: 0) {
-                        HStack(spacing: 0) {
-                            let opStr = line.op.trimmingCharacters(in: .whitespaces)
-                            if !opStr.isEmpty {
-                                Text(opStr + " ")
-                                    .font(.system(size: fontSize * setting.numberFontScale, weight: .regular))
-                                    .foregroundStyle(line.isFinal ? COLOR_ANSWER : COLOR_OPERATOR)
-                            }
-                            Text(line.value)
-                                .font(.system(size: fontSize * setting.numberFontScale,
-                                              weight: line.isFinal ? .bold : .regular)
-                                    .monospacedDigit())
-                                .foregroundStyle(line.isFinal ? COLOR_ANSWER : COLOR_NUMBER)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        // 右半分: 中間結果（showRunningTotal=false なら列ごと省略）
-                        if showRunningTotal {
-                            if !line.isFinal, let rt = line.runningTotal, !rt.isEmpty {
-                                let baseSize = fontSize * 0.75 * setting.numberFontScale
-                                ViewThatFits(in: .horizontal) {
-                                    rtText(rt, size: baseSize)
-                                    rtText(rt, size: baseSize * 0.75)
-                                    rtText(rt, size: baseSize * 0.55)
-                                    Color.clear.frame(width: 0, height: 1)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                            } else {
-                                Color.clear.frame(maxWidth: .infinity)
+                    // 左: 中間結果（小）/ 右: 演算子+数値。衝突すれば中間結果を省く
+                    let opStr = line.op.trimmingCharacters(in: .whitespaces)
+                    let rt = (showRunningTotal && !line.isFinal) ? line.runningTotal : nil
+                    ViewThatFits(in: .horizontal) {
+                        // 候補1: 中間結果あり（左）＋ op+value（右）
+                        if let rt, !rt.isEmpty {
+                            HStack(spacing: 0) {
+                                rtText(rt, size: fontSize * 0.75 * setting.numberFontScale)
+                                    .fixedSize(horizontal: true, vertical: false)
+                                Spacer(minLength: 8)
+                                valueText(opStr: opStr, value: line.value, isFinal: line.isFinal)
+                                    .fixedSize(horizontal: true, vertical: false)
                             }
                         }
+                        // 候補2: 中間結果なし（常に収まる）
+                        valueText(opStr: opStr, value: line.value, isFinal: line.isFinal)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .opacity(colorScheme == .dark ? 0.55 : 1.0)
                 }

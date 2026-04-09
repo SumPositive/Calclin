@@ -52,7 +52,7 @@ final class CalcViewModel: ObservableObject {
         var op: String              // " ", "+", "-", "×", "÷", "="
         var value: String           // 表示用フォーマット済み数値文字列
         var isFinal: Bool           // true = この計算の最終結果
-        var runningTotal: String?   // 中間結果（幅が広いとき右側に小さく表示）
+        var runningTotal: String?   // 中間結果（幅が広いとき左端に小さく表示）
     }
 
     struct  HistoryRow: Hashable {
@@ -83,14 +83,15 @@ final class CalcViewModel: ObservableObject {
     private var isCalcNewEntry: Bool = true     // 次の数字入力で現在値をクリア
     private var isAfterEquals: Bool = false     // = 直後フラグ（演算子続けで合計引き継ぎ）
     private var isPercMode: Bool = false        // % 入力済みフラグ（表示は5%のまま、計算時に変換）
-    @Published var showRunningTotal: Bool = true // 中間結果の表示
+    private var calcUnitDef: KeyDefinition? = nil  // 電卓モードの計算単位（= 結果表示単位）
     @Published private(set) var tapeLinesBuilding: [TapeLine] = []
 
     /// 電卓モードで非活性にするキーかどうかを返す
     func isKeyDisabled(_ code: String) -> Bool {
         guard calcMode == .calculator else { return false }
         if CALC_DISABLED_IN_CALCULATOR.contains(code) { return true }
-        return keyboardViewModel.keyDef(code: code)?.unitBase != nil
+        // 単位キー（unitBase を持つ）は電卓モードでも使用可能
+        return false
     }
 
 
@@ -785,23 +786,37 @@ final class CalcViewModel: ObservableObject {
             }
             return
         }
-        // 保留演算子プレフィックス
+        // 保留演算子プレフィックス（accumulator を先頭に小さく薄く表示）
         if let op = pendingOp {
+            var accAttr = AttributedString(unitDisplayStr(accumulator))
+            accAttr.foregroundColor = COLOR_NUMBER.opacity(0.4)
+            formulaAttr = accAttr
+            formulaAttr += AttributedString(" ")
             var opAttr = AttributedString(op)
             opAttr.foregroundColor = COLOR_OPERATOR
-            formulaAttr = opAttr
+            formulaAttr += opAttr
             if !tokens.isEmpty {
                 formulaAttr += AttributedString(" ")
             }
         }
-        // 現在の数値
-        guard let numStr = tokens.last, !numStr.isEmpty else { return }
+        // 現在の数値（単位付きの場合 tokens = ["5", "UKg"] ）
+        let numToken  = tokens.count >= 2 && tokens.last?.hasPrefix(TOKEN_UNIT_PREFIX) == true
+                      ? tokens[tokens.count - 2] : tokens.last
+        let unitToken = tokens.last?.hasPrefix(TOKEN_UNIT_PREFIX) == true ? tokens.last : nil
+        guard let numStr = numToken, !numStr.isEmpty else { return }
         if Double(numStr) != nil {
             formulaAttr += AttributedString(AZDecimal(numStr).formatted(calcConfig))
             if isPercMode {
                 var percAttr = AttributedString("%")
                 percAttr.foregroundColor = COLOR_OPERATOR
                 formulaAttr += percAttr
+            } else if let ut = unitToken {
+                let code = String(ut.dropFirst())
+                if let def = keyboardViewModel.keyDef(code: code) {
+                    var unitAttr = AttributedString(def.formula)
+                    unitAttr.foregroundColor = COLOR_UNIT
+                    formulaAttr += unitAttr
+                }
             } else {
                 let zero = extractTrailingZerosAfterDecimal(numStr)
                 if zero != "" {
@@ -824,12 +839,18 @@ final class CalcViewModel: ObservableObject {
         isCalcNewEntry = true
         isAfterEquals = false
         isPercMode = false
+        calcUnitDef = nil
         tapeLinesBuilding = []
     }
 
     @MainActor
     private func inputCalcMode(_ keyDef: KeyDefinition) {
         if isKeyDisabled(keyDef.code) { return }
+        // 単位キー
+        if let unitBase = keyDef.unitBase, !unitBase.isEmpty, unitBase != UNIT_CODE_BARE {
+            inputUnitCalc(keyDef)
+            return
+        }
         switch keyDef.code {
         case "#1"..."#9":
             inputNumberCalc(keyDef.formula, isZeroKey: false)
@@ -860,6 +881,9 @@ final class CalcViewModel: ObservableObject {
             if isPercMode {
                 // % だけ取り消す（数値はそのまま）
                 isPercMode = false
+            } else if let last = tokens.last, last.hasPrefix(TOKEN_UNIT_PREFIX) {
+                // 単位トークンを取り消す
+                tokens.removeLast()
             } else if var last = tokens.last, !last.isEmpty {
                 last.removeLast()
                 tokens = last.isEmpty || last == FM_SUB ? [] : [last]
@@ -929,44 +953,126 @@ final class CalcViewModel: ObservableObject {
             return
         }
 
-        let current: AZDecimal
-        let displayValue: String
+        // accumulator は常に Base単位で保持
+        let current: AZDecimal      // Base単位
+        let displayValue: String    // テープ表示用（元の単位のまま）
         if isAfterEquals {
-            // = 直後の演算子: 直前の合計値を先頭値として使用
+            // = 直後の演算子: 直前の合計値（Base単位）を先頭値として使用
             current = accumulator
             displayValue = accumulator.formatted(calcConfig)
         } else {
-            guard let currentStr = tokens.last,
-                  !currentStr.isEmpty, currentStr != FM_SUB,
-                  Double(currentStr) != nil else { return }
-            let raw = AZDecimal(currentStr)
+            guard let cv = currentCalcValue() else { return }
+            let raw = AZDecimal(cv.numStr)
             if isPercMode {
-                displayValue = currentStr + "%"
-                current = resolvedPercValue(raw)
+                displayValue = cv.numStr + "%"
+                current = resolvedPercValue(raw)   // % の場合は Base単位変換なし
             } else {
-                displayValue = raw.formatted(calcConfig)
-                current = raw
+                // 単位があれば Base単位に変換
+                current = toBaseValue(cv.numStr, unitDef: cv.unitDef)
+                if let def = cv.unitDef {
+                    displayValue = AZDecimal(cv.numStr).formatted(calcConfig) + def.formula
+                } else {
+                    displayValue = raw.formatted(calcConfig)
+                }
             }
         }
         isAfterEquals = false
         isPercMode = false
 
         if let existingOp = pendingOp {
-            // 保留演算子を実行して中間結果をテープへ
+            // 保留演算子を実行して中間結果をテープへ（accumulator は Base単位）
             let result = calcBinary(accumulator, existingOp, current)
             tapeLinesBuilding.append(TapeLine(op: existingOp, value: displayValue,
-                                              isFinal: false, runningTotal: result.formatted(calcConfig)))
+                                              isFinal: false, runningTotal: unitDisplayStr(result)))
             accumulator = result
         } else {
-            // 最初の演算子 — 初期値をテープへ（中間結果なし）
-            tapeLinesBuilding.append(TapeLine(op: " ", value: current.formatted(calcConfig), isFinal: false))
+            // 最初の演算子 — 初期値をテープへ（prevTotal なし）
+            tapeLinesBuilding.append(TapeLine(op: " ", value: displayValue, isFinal: false))
             accumulator = current
+            // 最初の数値の単位を記録（= 時の結果表示単位として使う）
+            if !isAfterEquals { calcUnitDef = currentCalcValue()?.unitDef }
         }
         pendingOp = op
         isCalcNewEntry = true
         tokens = []
         isAnswerMode = false
         formulaUpdateCalc()
+    }
+
+    /// 電卓モード：現在のトークンから (数値文字列, 単位KeyDef?) を取り出す
+    private func currentCalcValue() -> (numStr: String, unitDef: KeyDefinition?)? {
+        guard !tokens.isEmpty else { return nil }
+        if tokens.count >= 2, let ut = tokens.last, ut.hasPrefix(TOKEN_UNIT_PREFIX) {
+            let code = String(ut.dropFirst())
+            let numStr = tokens[tokens.count - 2]
+            guard Double(numStr) != nil else { return nil }
+            return (numStr, keyboardViewModel.keyDef(code: code))
+        } else {
+            guard let numStr = tokens.last, Double(numStr) != nil else { return nil }
+            return (numStr, nil)
+        }
+    }
+
+    /// 電卓モード：数値を Base単位に変換した AZDecimal を返す
+    private func toBaseValue(_ numStr: String, unitDef: KeyDefinition?) -> AZDecimal {
+        if let def = unitDef, def.code != def.unitBase, let conv = def.unitConv {
+            // Base単位への変換: num * conv
+            let expr = numStr + "*" + conv
+            let baseStr = answer(expr)
+            return AZDecimal(baseStr)
+        }
+        return AZDecimal(numStr)
+    }
+
+    /// 電卓モード：Base単位の AZDecimal を calcUnitDef の表示文字列（数値+単位）に変換する
+    private func unitDisplayStr(_ base: AZDecimal) -> String {
+        guard let def = calcUnitDef else { return base.formatted(calcConfig) }
+        let converted = fromBaseValue(base, toUnitDef: def)
+        return AZDecimal(converted).formatted(calcConfig) + def.formula
+    }
+
+    /// 電卓モード：Base単位の値を指定単位に変換した文字列を返す
+    private func fromBaseValue(_ base: AZDecimal, toUnitDef: KeyDefinition?) -> String {
+        guard let def = toUnitDef, def.code != def.unitBase, let conv = def.unitConv else {
+            return base.rounded(calcConfig).value
+        }
+        let expr = base.value + "/" + conv
+        return answer(expr)
+    }
+
+    /// 電卓モード：単位キー入力
+    private func inputUnitCalc(_ keyDef: KeyDefinition) {
+        if tokens.isEmpty || (isCalcNewEntry && !isAfterEquals) {
+            // 数値なしに単位だけ押した: 何もしない
+            return
+        }
+        // 計算が進行中（calcUnitDef 設定済み）なら同じ unitBase の単位のみ許可
+        if let baseUnit = calcUnitDef?.unitBase, baseUnit != keyDef.unitBase {
+            return
+        }
+        if tokens.count >= 2, let ut = tokens.last, ut.hasPrefix(TOKEN_UNIT_PREFIX) {
+            // すでに単位が付いている → 単位変換
+            let code = String(ut.dropFirst())
+            if let existing = keyboardViewModel.keyDef(code: code),
+               existing.unitBase == keyDef.unitBase {
+                // 同じ unitBase → 変換
+                let numStr = tokens[tokens.count - 2]
+                if let converted = unitConv(num: numStr, unit: existing, toUnit: keyDef) {
+                    tokens[tokens.count - 2] = converted
+                    tokens[tokens.count - 1] = TOKEN_UNIT_PREFIX + keyDef.code
+                    calcUnitDef = keyDef  // 変換後の単位を記録
+                    formulaUpdateCalc()
+                }
+            }
+            // 異なる unitBase の場合は無視
+        } else {
+            // 数値だけ → 単位を付加
+            guard let existing = keyboardViewModel.keyDef(code: keyDef.code),
+                  existing.unitBase == keyDef.unitBase else { return }
+            tokens.append(TOKEN_UNIT_PREFIX + keyDef.code)
+            isPercMode = false
+            formulaUpdateCalc()
+        }
     }
 
     private func inputPercCalc() {
@@ -989,53 +1095,73 @@ final class CalcViewModel: ObservableObject {
     }
 
     private func inputAnswerCalc() {
-        let result: AZDecimal
+        // resultBase = Base単位の結果値
+        let resultBase: AZDecimal
 
         if (isCalcNewEntry || tokens.isEmpty) && !isAfterEquals {
             // 演算子直後など数値未入力で = → accumulator の値で合計を確定
             guard !tapeLinesBuilding.isEmpty else { return }
-            result = accumulator
+            resultBase = accumulator
         } else {
-            guard let currentStr = tokens.last,
-                  !currentStr.isEmpty, currentStr != FM_SUB,
-                  Double(currentStr) != nil else { return }
-
-            let raw = AZDecimal(currentStr)
+            guard let cv = currentCalcValue() else { return }
+            let raw = AZDecimal(cv.numStr)
             let current: AZDecimal
             let displayValue: String
             if isPercMode {
-                displayValue = currentStr + "%"
+                displayValue = cv.numStr + "%"
                 current = resolvedPercValue(raw)
             } else {
-                displayValue = raw.formatted(calcConfig)
-                current = raw
+                current = toBaseValue(cv.numStr, unitDef: cv.unitDef)
+                if let def = cv.unitDef {
+                    displayValue = AZDecimal(cv.numStr).formatted(calcConfig) + def.formula
+                } else {
+                    displayValue = raw.formatted(calcConfig)
+                }
             }
             isPercMode = false
 
             if let existingOp = pendingOp {
-                result = calcBinary(accumulator, existingOp, current)
+                resultBase = calcBinary(accumulator, existingOp, current)
                 tapeLinesBuilding.append(TapeLine(op: existingOp, value: displayValue,
-                                                  isFinal: false, runningTotal: result.formatted(calcConfig)))
+                                                  isFinal: false, runningTotal: unitDisplayStr(resultBase)))
             } else {
-                result = current
+                resultBase = current
             }
         }
-        tapeLinesBuilding.append(TapeLine(op: FM_ANS, value: result.formatted(calcConfig), isFinal: true))
+
+        // 結果を表示単位に変換
+        let displayUnit = calcUnitDef
+        let resultDisplayStr: String
+        let resultNumStr: String
+        if let def = displayUnit {
+            resultNumStr = fromBaseValue(resultBase, toUnitDef: def)
+            resultDisplayStr = AZDecimal(resultNumStr).formatted(calcConfig) + def.formula
+        } else {
+            resultNumStr = resultBase.rounded(calcConfig).value
+            resultDisplayStr = resultBase.formatted(calcConfig)
+        }
+
+        tapeLinesBuilding.append(TapeLine(op: FM_ANS, value: resultDisplayStr, isFinal: true))
 
         // 履歴へ記録
         let row = HistoryRow(tokens: [], formula: AttributedString(""),
-                             answer: result.formatted(calcConfig),
+                             answer: resultDisplayStr,
                              tapeLines: tapeLinesBuilding)
         historyRows.append(row)
         if CALC_HISTORY_MAX < historyRows.count { historyRows.removeFirst() }
 
-        // 次の計算へ — 入力行クリア、合計値を保持
-        accumulator = result
+        // 次の計算へ — 結果トークンを表示単位で保持、accumulator は Base単位
+        accumulator = resultBase
         pendingOp = nil
         tapeLinesBuilding = []
         isCalcNewEntry = true
         isAfterEquals = true
-        tokens = []
+        isPercMode = false
+        // tokens に結果を表示単位で格納（単位変換キーで変換できるように）
+        tokens = [resultNumStr]
+        if let def = displayUnit {
+            tokens.append(TOKEN_UNIT_PREFIX + def.code)
+        }
         isAnswerMode = false
         formulaUpdateCalc()
     }

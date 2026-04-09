@@ -116,6 +116,7 @@ let CALC_DISABLED_IN_CALCULATOR: Set<String> = [
     "sqRoot",  // 平方根
     "cuRoot",  // 立方根
     "J割", "J分", "J厘",
+    // 単位キーは電卓モードでも使用可能（isKeyDisabled で unitBase を持つものを除外しない）
 ]
 
 
