@@ -50,8 +50,8 @@ struct KeyboardView: View {
                         let offsetFromCenter = CGFloat(index - selectedPage) * pageWidth + dragOffset
                         let progress = offsetFromCenter / pageWidth
 
-                        KeyPageView(viewModel: viewModel, onTap: onTap, page: index,
-                                    isKeyDisabled: activeCalcViewModel.isKeyDisabled)
+                        KeyPageView(viewModel: viewModel, calcViewModel: activeCalcViewModel,
+                                    onTap: onTap, page: index)
                             .frame(width: geometry.size.width)
                             // キューブが回転するような立体的な切り替え演出
                             .modifier(
@@ -254,9 +254,9 @@ private func shareContent() {
 // キーボード・ページ
 struct KeyPageView: View {
     @ObservedObject var viewModel: KeyboardViewModel
+    @ObservedObject var calcViewModel: CalcViewModel
     let onTap: (KeyDefinition) -> Void
     let page: Int
-    var isKeyDisabled: (String) -> Bool = { _ in false }
 
     // 縦や横に連結拡大可能にするため、LazyVGridやV-HStackを使用せずにposition配置している
 
@@ -276,7 +276,7 @@ struct KeyPageView: View {
                     let index = row * colCount + col
                     if index < keyCodes.count {
                         let keyCode = keyCodes[index]
-                        let disabled = isKeyDisabled(keyCode)
+                        let disabled = calcViewModel.isKeyDisabled(keyCode)
                         if keyCodes[index] != "", keyCodes[index] != "nop",
                            index < rowCount * colCount - 1,
                            keyCodes[index] == keyCodes[index + 1] {
