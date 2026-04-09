@@ -81,6 +81,8 @@ final class CalcViewModel: ObservableObject {
     private var accumulator: AZDecimal = .zero
     private var pendingOp: String? = nil        // 保留中の演算子
     private var isCalcNewEntry: Bool = true     // 次の数字入力で現在値をクリア
+    private var isAfterEquals: Bool = false     // = 直後フラグ（演算子続けで合計引き継ぎ）
+    @Published var showRunningTotal: Bool = true // 中間結果の表示
     @Published private(set) var tapeLinesBuilding: [TapeLine] = []
 
     /// 電卓モードで非活性にするキーかどうかを返す
@@ -813,6 +815,7 @@ final class CalcViewModel: ObservableObject {
         accumulator = .zero
         pendingOp = nil
         isCalcNewEntry = true
+        isAfterEquals = false
         tapeLinesBuilding = []
     }
 
@@ -860,6 +863,7 @@ final class CalcViewModel: ObservableObject {
             tokens = [isZeroKey ? "0" : num]
             isCalcNewEntry = false
             isAnswerMode = false
+            isAfterEquals = false
         } else {
             guard var last = tokens.last else { tokens = [num]; return }
             guard last.count < CALC_PRECISION_MAX else { return }
@@ -880,6 +884,7 @@ final class CalcViewModel: ObservableObject {
             tokens = ["0" + FM_DECIMAL]
             isCalcNewEntry = false
             isAnswerMode = false
+            isAfterEquals = false
         } else if var last = tokens.last, !last.contains(FM_DECIMAL) {
             last += FM_DECIMAL
             tokens = [last]
@@ -898,16 +903,26 @@ final class CalcViewModel: ObservableObject {
     }
 
     private func inputOperatorCalc(_ op: String) {
-        // 新規入力待ちで既に演算子があれば置換して終了
-        if isCalcNewEntry {
-            if pendingOp != nil { pendingOp = op }
+        // 新規入力待ちで既に演算子があれば置換して終了（= 直後は例外: 合計引き継ぎ）
+        if isCalcNewEntry && !isAfterEquals {
+            if pendingOp != nil {
+                pendingOp = op
+                formulaUpdateCalc()  // 演算子表示を即更新
+            }
             return
         }
-        guard let currentStr = tokens.last,
-              !currentStr.isEmpty, currentStr != FM_SUB,
-              Double(currentStr) != nil else { return }
 
-        let current = AZDecimal(currentStr)
+        let current: AZDecimal
+        if isAfterEquals {
+            // = 直後の演算子: 直前の合計値を先頭値として使用
+            current = accumulator
+        } else {
+            guard let currentStr = tokens.last,
+                  !currentStr.isEmpty, currentStr != FM_SUB,
+                  Double(currentStr) != nil else { return }
+            current = AZDecimal(currentStr)
+        }
+        isAfterEquals = false
 
         if let existingOp = pendingOp {
             // 保留演算子を実行して中間結果をテープへ
@@ -928,19 +943,26 @@ final class CalcViewModel: ObservableObject {
     }
 
     private func inputAnswerCalc() {
-        guard let currentStr = tokens.last,
-              !currentStr.isEmpty, currentStr != FM_SUB,
-              Double(currentStr) != nil else { return }
-
-        let current = AZDecimal(currentStr)
         let result: AZDecimal
 
-        if let existingOp = pendingOp {
-            result = calcBinary(accumulator, existingOp, current)
-            tapeLinesBuilding.append(TapeLine(op: existingOp, value: current.formatted(calcConfig),
-                                              isFinal: false, runningTotal: result.formatted(calcConfig)))
+        if (isCalcNewEntry || tokens.isEmpty) && !isAfterEquals {
+            // 演算子直後など数値未入力で = → accumulator の値で合計を確定
+            guard !tapeLinesBuilding.isEmpty else { return }
+            result = accumulator
         } else {
-            result = current
+            guard let currentStr = tokens.last,
+                  !currentStr.isEmpty, currentStr != FM_SUB,
+                  Double(currentStr) != nil else { return }
+
+            let current = AZDecimal(currentStr)
+
+            if let existingOp = pendingOp {
+                result = calcBinary(accumulator, existingOp, current)
+                tapeLinesBuilding.append(TapeLine(op: existingOp, value: current.formatted(calcConfig),
+                                                  isFinal: false, runningTotal: result.formatted(calcConfig)))
+            } else {
+                result = current
+            }
         }
         tapeLinesBuilding.append(TapeLine(op: FM_ANS, value: result.formatted(calcConfig), isFinal: true))
 
@@ -951,14 +973,15 @@ final class CalcViewModel: ObservableObject {
         historyRows.append(row)
         if CALC_HISTORY_MAX < historyRows.count { historyRows.removeFirst() }
 
-        // 次の計算へ — 結果を引き継ぐ
+        // 次の計算へ — 入力行クリア、合計値を保持
         accumulator = result
         pendingOp = nil
         tapeLinesBuilding = []
         isCalcNewEntry = true
-        tokens = [result.value]
-        isAnswerMode = true
-        formulaUpdate(true)
+        isAfterEquals = true
+        tokens = []
+        isAnswerMode = false
+        formulaUpdateCalc()
     }
 
     /// 電卓モード用の二項演算（丸め済み）

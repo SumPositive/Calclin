@@ -42,6 +42,21 @@ struct CalcView: View {
                 .padding(.top, 2)
                 .padding(.leading, 4)
             }
+            .overlay(alignment: .topTrailing) {
+                if viewModel.calcMode == .calculator {
+                    Button {
+                        viewModel.showRunningTotal.toggle()
+                    } label: {
+                        Image(systemName: viewModel.showRunningTotal ? "eye" : "eye.slash")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 30, height: 30)
+                            .contentShape(Rectangle())
+                    }
+                    .padding(.top, 2)
+                    .padding(.trailing, 4)
+                }
+            }
 
             FormulaView(viewModel: viewModel)
                 .environmentObject(setting)
