@@ -39,11 +39,20 @@ struct CalcView: View {
                     Button {
                         viewModel.calcMode = (viewModel.calcMode == .calculator) ? .formula : .calculator
                     } label: {
-                        Image(systemName: viewModel.calcMode == .calculator ? "plus.forwardslash.minus" : "function")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 28, height: 24)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        HStack(spacing: 4) {
+                            Image(systemName: viewModel.calcMode == .calculator ? "plus.forwardslash.minus" : "function")
+                                .font(.system(size: 13, weight: .bold))
+                            if setting.playMode == .beginner {
+                                Text(viewModel.calcMode == .calculator
+                                     ? String(localized: "電卓")
+                                     : String(localized: "数式"))
+                                    .font(.system(size: 11, weight: .regular))
+                            }
+                        }
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .frame(height: 24)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
                     }
                     .padding(.top, 4)
                     .padding(.leading, 6)

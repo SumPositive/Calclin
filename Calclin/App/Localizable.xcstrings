@@ -626,6 +626,16 @@
         }
       }
     },
+    "電卓" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calc"
+          }
+        }
+      }
+    },
     "整数部" : {
       "localizations" : {
         "en" : {
