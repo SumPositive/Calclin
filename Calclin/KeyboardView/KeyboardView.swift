@@ -281,7 +281,7 @@ struct KeyPageView: View {
                            index < rowCount * colCount - 1,
                            keyCodes[index] == keyCodes[index + 1] {
                             // 右に連結：幅2倍
-                            KeyView(viewModel: viewModel, onTap: onTap, page: page, index: index)
+                            KeyView(viewModel: viewModel, calcViewModel: calcViewModel, onTap: onTap, page: page, index: index)
                                 .frame(width: width * 2 - space, height: height - space)
                                 .position(
                                     x: CGFloat(col) * width + width,
@@ -299,7 +299,7 @@ struct KeyPageView: View {
                                 index < rowCount * colCount - colCount,
                                 keyCodes[index] == keyCodes[index + colCount] {
                             // 下に連結：高さ2倍
-                            KeyView(viewModel: viewModel, onTap: onTap, page: page, index: index)
+                            KeyView(viewModel: viewModel, calcViewModel: calcViewModel, onTap: onTap, page: page, index: index)
                                 .frame(width: width - space, height: height * 2 - space)
                                 .position(
                                     x: CGFloat(col) * width + width / 2,
@@ -315,7 +315,7 @@ struct KeyPageView: View {
                         }
                         else {
                             // 通常サイズキー
-                            KeyView(viewModel: viewModel, onTap: onTap, page: page, index: index)
+                            KeyView(viewModel: viewModel, calcViewModel: calcViewModel, onTap: onTap, page: page, index: index)
                                 .frame(width: width - space, height: height - space)
                                 .position(
                                     x: CGFloat(col) * width + width / 2,
@@ -334,9 +334,10 @@ struct KeyPageView: View {
 // キー
 struct KeyView: View {
     @ObservedObject var viewModel: KeyboardViewModel
+    @ObservedObject var calcViewModel: CalcViewModel
     let onTap: (KeyDefinition) -> Void
 
-    
+
     private var keyDef: KeyDefinition?
     private var keyTop: String = ""
     private var symbol: String = ""
@@ -344,9 +345,11 @@ struct KeyView: View {
     private var index: Int
 
     init(viewModel: KeyboardViewModel,
+         calcViewModel: CalcViewModel,
          onTap: @escaping (KeyDefinition) -> Void,
          page: Int,
          index: Int) {
+        self.calcViewModel = calcViewModel
 
         self.viewModel = viewModel
         self.onTap = onTap
@@ -386,24 +389,29 @@ struct KeyView: View {
                 isLongTapped = false
             }) {
                 // KeyButtonStyle方式では、Image切替の反応が悪いため、直埋めにした
+                let isEditReturn = keyDef?.code == "Ans" && calcViewModel.editingHistoryIndex != nil
                 ZStack {
                     Image(isTapped ? "keyDown" : "keyUp")
                         .resizable()
                         //.colorMultiply(colorScheme == .dark ? .gray : .white)
                         .opacity(colorScheme == .dark ? 0.40 : 1.0)
 
-                    if symbol != "" {
+                    if isEditReturn {
+                        Image(systemName: "return")
+                            .font(.system(size: 24, weight: .heavy))
+                            .foregroundColor(COLOR_OPERATOR)
+                    } else if symbol != "" {
                         Image(systemName: symbol)
                             .imageScale(.large)
                             .foregroundColor(keyDef?.unitBase == nil ? COLOR_NUMBER : COLOR_UNIT)
-                    }else{
+                    } else {
                         Text(keyTop)
                             .foregroundColor(keyDef?.unitBase == nil ? COLOR_NUMBER : COLOR_UNIT)
                             .font(.system(size: 24,
                                           weight: (keyDef?.unitBase == nil ||
-                                                   keyDef?.unitBase == keyDef?.code) ? .bold : .light)) //.light.regular.bold.heavy
-                            .minimumScaleFactor(0.5) // 最小で50%まで縮小
-                            .lineLimit(1)            // 複数行にしない
+                                                   keyDef?.unitBase == keyDef?.code) ? .bold : .light))
+                            .minimumScaleFactor(0.5)
+                            .lineLimit(1)
                             .padding(.horizontal, 8)
                     }
                 }

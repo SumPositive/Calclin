@@ -62,9 +62,12 @@ struct CalcRollView: View {
             }
 
             if isBeginner {
-                // 初心者モードでは、ヘッダー直下に履歴行のスワイプ操作ヒントを表示する
+                // 初心者モードでは、ヘッダー直下に操作ヒントを表示する
                 // 要望どおり、CalcViewの内側ではなく「CalcRollHeaderViewとCalcViewの間」に配置する
-                Text("計算式の行をスワイプすればメモしたり、式をコピーできます")
+                let isCalcMode = calcViewModels[selectedPage].calcMode == .calculator
+                Text(isCalcMode
+                     ? String(localized: "計算途中の行をタップすれば編集できます")
+                     : String(localized: "数式の行をスワイプすればメモしたり、式をコピーできます"))
                     .font(.system(size: 13.0, weight: .regular))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)

@@ -166,7 +166,10 @@ struct TapeView: View {
                          showRunningTotal: showRunningTotal,
                          historyIndex: -1,
                          editingHistoryIndex: viewModel.editingHistoryIndex,
-                         editingLineIndex: viewModel.editingLineIndex)
+                         editingLineIndex: viewModel.editingLineIndex,
+                         onTapLine: { lineIdx in
+                             viewModel.startTapeEdit(historyIndex: -1, lineIndex: lineIdx)
+                         })
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.visible, edges: .all)
                     .padding(.bottom, 6)
@@ -282,6 +285,7 @@ struct TapeCell: View {
                     .padding(.horizontal, editing ? 4 : 0)
                     .background(editing ? Color.accentColor.opacity(0.18) : Color.clear,
                                 in: RoundedRectangle(cornerRadius: 4))
+                    .contentShape(Rectangle())
                     .onTapGesture {
                         if !line.isFinal {
                             onTapLine?(lineIdx)

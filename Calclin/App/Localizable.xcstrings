@@ -756,12 +756,22 @@
         }
       }
     },
-    "計算式の行をスワイプすればメモしたり、式をコピーできます" : {
+    "数式の行をスワイプすればメモしたり、式をコピーできます" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Swipe a formula row to add a memo or copy it."
+          }
+        }
+      }
+    },
+    "計算途中の行をタップすれば編集できます" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap an intermediate row to edit it."
           }
         }
       }
