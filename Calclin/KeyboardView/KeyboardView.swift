@@ -77,12 +77,9 @@ struct KeyboardView: View {
             // 立体回転やスワイプ操作は親Viewで処理しているため、クリップしても操作性は変わらない
             .clipped()
             .highPriorityGesture(
-                DragGesture()
+                DragGesture(minimumDistance: SWIPE_RANGE)
                     .onChanged { value in
-                        let w = value.translation.width
-                        if SWIPE_RANGE < abs(w) {
-                            dragOffset = value.translation.width
-                        }
+                        dragOffset = value.translation.width
                     }
                     .onEnded { value in
                         withAnimation(.easeOut(duration: 0.3)) {
@@ -414,6 +411,8 @@ struct KeyView: View {
                     }
                 }
             }
+
+            .contentShape(Rectangle())
             .simultaneousGesture(
                 LongPressGesture(minimumDuration: 0.6) // 長押し
                     .onEnded { _ in
