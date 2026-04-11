@@ -52,7 +52,7 @@ final class CalcViewModel: ObservableObject {
     @Published var inputStartTrigger: Int = 0
 
     
-    struct TapeLine: Hashable {
+    struct RollLine: Hashable {
         var op: String              // " ", "+", "-", "×", "÷", "="
         var value: String           // 表示用フォーマット済み数値文字列
         var isFinal: Bool           // true = この計算の最終結果
@@ -69,7 +69,7 @@ final class CalcViewModel: ObservableObject {
         var answer: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
         var unitFormula: String?     //= .formula
         var memo: String?           // メモ
-        var tapeLines: [TapeLine]?  // 電卓モード用テープ行。nil = 式モード
+        var rollLines: [RollLine]?  // 電卓モード用ロール行。nil = 式モード
     }
     @Published var historyRows: [HistoryRow] = []
 
@@ -95,7 +95,7 @@ final class CalcViewModel: ObservableObject {
     private var isPercMode: Bool = false        // % 入力済みフラグ（表示は5%のまま、計算時に変換）
     private var isCalcNewEntryAfterUnit: Bool = false // 単位キー直後フラグ（次の数値入力で数値のみ置き換え）
     private var calcUnitDef: KeyDefinition? = nil  // 電卓モードの計算単位（= 結果表示単位）
-    @Published private(set) var tapeLinesBuilding: [TapeLine] = []
+    @Published private(set) var rollLinesBuilding: [RollLine] = []
     /// 編集中の historyRows インデックス（nil = 通常モード）
     @Published private(set) var editingHistoryIndex: Int? = nil
     @Published private(set) var editingLineIndex: Int = 0
@@ -866,7 +866,7 @@ final class CalcViewModel: ObservableObject {
         isPercMode = false
         isCalcNewEntryAfterUnit = false
         calcUnitDef = nil
-        tapeLinesBuilding = []
+        rollLinesBuilding = []
     }
 
     @MainActor
@@ -908,7 +908,7 @@ final class CalcViewModel: ObservableObject {
         case "CS":
             // 編集モード中はキャンセル
             if editingHistoryIndex != nil {
-                cancelTapeEdit()
+                cancelRollEdit()
             } else {
                 tokens = []
                 isCalcNewEntry = true
@@ -1016,7 +1016,7 @@ final class CalcViewModel: ObservableObject {
 
         // accumulator は常に Base単位で保持
         let current: AZDecimal      // Base単位
-        let displayValue: String    // テープ表示用（元の単位のまま）
+        let displayValue: String    // ロール表示用（元の単位のまま）
         let lineUnitCode: String?   // 表示単位コード（再計算用）
         if isAfterEquals {
             // = 直後の演算子: 直前の合計値（Base単位）を先頭値として使用
@@ -1045,17 +1045,17 @@ final class CalcViewModel: ObservableObject {
         isPercMode = false
 
         if let existingOp = pendingOp {
-            // 保留演算子を実行して中間結果をテープへ（accumulator は Base単位）
+            // 保留演算子を実行して中間結果をロールへ（accumulator は Base単位）
             let result = calcBinary(accumulator, existingOp, current)
-            tapeLinesBuilding.append(TapeLine(op: existingOp, value: displayValue,
+            rollLinesBuilding.append(RollLine(op: existingOp, value: displayValue,
                                               isFinal: false, runningTotal: baseUnitDisplayStr(result),
                                               rawBase: current.value,
                                               accBase: prevAccumulator.value,
                                               unitCode: lineUnitCode))
             accumulator = result
         } else {
-            // 最初の演算子 — 初期値をテープへ（prevTotal なし）
-            tapeLinesBuilding.append(TapeLine(op: " ", value: displayValue, isFinal: false,
+            // 最初の演算子 — 初期値をロールへ（prevTotal なし）
+            rollLinesBuilding.append(RollLine(op: " ", value: displayValue, isFinal: false,
                                               rawBase: current.value,
                                               accBase: "0",
                                               unitCode: lineUnitCode))
@@ -1178,9 +1178,9 @@ final class CalcViewModel: ObservableObject {
     }
 
     private func inputAnswerCalc() {
-        // 編集モード中は commitTapeEdit へ委譲
+        // 編集モード中は commitRollEdit へ委譲
         if let histIdx = editingHistoryIndex {
-            commitTapeEdit(historyIndex: histIdx)
+            commitRollEdit(historyIndex: histIdx)
             return
         }
 
@@ -1189,7 +1189,7 @@ final class CalcViewModel: ObservableObject {
 
         if (isCalcNewEntry || tokens.isEmpty) && !isAfterEquals {
             // 演算子直後など数値未入力で = → accumulator の値で合計を確定
-            guard !tapeLinesBuilding.isEmpty else { return }
+            guard !rollLinesBuilding.isEmpty else { return }
             resultBase = accumulator
         } else {
             guard let cv = currentCalcValue() else { return }
@@ -1213,7 +1213,7 @@ final class CalcViewModel: ObservableObject {
 
             if let existingOp = pendingOp {
                 resultBase = calcBinary(accumulator, existingOp, current)
-                tapeLinesBuilding.append(TapeLine(op: existingOp, value: displayValue,
+                rollLinesBuilding.append(RollLine(op: existingOp, value: displayValue,
                                                   isFinal: false, runningTotal: baseUnitDisplayStr(resultBase),
                                                   rawBase: current.value,
                                                   accBase: prevAccumulator.value,
@@ -1235,19 +1235,19 @@ final class CalcViewModel: ObservableObject {
             resultDisplayStr = resultBase.formatted(calcConfig)
         }
 
-        tapeLinesBuilding.append(TapeLine(op: FM_ANS, value: resultDisplayStr, isFinal: true))
+        rollLinesBuilding.append(RollLine(op: FM_ANS, value: resultDisplayStr, isFinal: true))
 
         // 履歴へ記録
         let row = HistoryRow(tokens: [], formula: AttributedString(""),
                              answer: resultDisplayStr,
-                             tapeLines: tapeLinesBuilding)
+                             rollLines: rollLinesBuilding)
         historyRows.append(row)
         if CALC_HISTORY_MAX < historyRows.count { historyRows.removeFirst() }
 
         // 次の計算へ — 結果トークンを表示単位で保持、accumulator は Base単位
         accumulator = resultBase
         pendingOp = nil
-        tapeLinesBuilding = []
+        rollLinesBuilding = []
         isCalcNewEntry = true
         isAfterEquals = true
         isPercMode = false
@@ -1260,42 +1260,42 @@ final class CalcViewModel: ObservableObject {
         formulaUpdateCalc()
     }
 
-    // MARK: - Tape Line Edit
+    // MARK: - Roll Line Edit
 
-    /// テープ行の編集を開始する（historyIndex: historyRows の実インデックス、lineIndex: tapeLines 内）
-    // 進行中テープを編集開始前に退避する（キャンセル時の復元用）
-    private var savedTapeLinesBuilding: [TapeLine] = []
+    /// ロール行の編集を開始する（historyIndex: historyRows の実インデックス、lineIndex: rollLines 内）
+    // 進行中ロールを編集開始前に退避する（キャンセル時の復元用）
+    private var savedRollLinesBuilding: [RollLine] = []
     private var savedAccumulator: AZDecimal = .zero
     private var savedPendingOp: String? = nil
     private var savedCalcUnitDef: KeyDefinition? = nil
 
-    func startTapeEdit(historyIndex: Int, lineIndex: Int) {
-        // historyIndex == -1 は進行中テープの編集
-        let lines: [TapeLine]
+    func startRollEdit(historyIndex: Int, lineIndex: Int) {
+        // historyIndex == -1 は進行中ロールの編集
+        let lines: [RollLine]
         if historyIndex == -1 {
-            // 進行中テープから取得
-            guard lineIndex < tapeLinesBuilding.count,
-                  !tapeLinesBuilding[lineIndex].isFinal else { return }
-            lines = tapeLinesBuilding
+            // 進行中ロールから取得
+            guard lineIndex < rollLinesBuilding.count,
+                  !rollLinesBuilding[lineIndex].isFinal else { return }
+            lines = rollLinesBuilding
             // 現在の計算状態を退避
-            savedTapeLinesBuilding = tapeLinesBuilding
+            savedRollLinesBuilding = rollLinesBuilding
             savedAccumulator = accumulator
             savedPendingOp = pendingOp
             savedCalcUnitDef = calcUnitDef
         } else {
             guard historyIndex < historyRows.count,
-                  let hl = historyRows[historyIndex].tapeLines,
+                  let hl = historyRows[historyIndex].rollLines,
                   lineIndex < hl.count,
                   !hl[lineIndex].isFinal else { return }
             lines = hl
-            savedTapeLinesBuilding = []
+            savedRollLinesBuilding = []
         }
 
         let line = lines[lineIndex]
 
         // 電卓状態を編集行の直前状態にセットアップ
-        // 進行中テープ編集時は tapeLinesBuilding をそのまま残してハイライト表示を維持する
-        if historyIndex != -1 { tapeLinesBuilding = [] }
+        // 進行中ロール編集時は rollLinesBuilding をそのまま残してハイライト表示を維持する
+        if historyIndex != -1 { rollLinesBuilding = [] }
         accumulator = AZDecimal(line.accBase)
         pendingOp = line.op == " " ? nil : line.op
         calcUnitDef = line.unitCode.flatMap { keyboardViewModel.keyDef(code: $0) }
@@ -1322,18 +1322,18 @@ final class CalcViewModel: ObservableObject {
     }
 
     /// 編集キャンセル（CS または CA）
-    func cancelTapeEdit() {
+    func cancelRollEdit() {
         if editingHistoryIndex == -1 {
-            // 進行中テープの編集キャンセル → 退避した状態を復元
-            tapeLinesBuilding = savedTapeLinesBuilding
+            // 進行中ロールの編集キャンセル → 退避した状態を復元
+            rollLinesBuilding = savedRollLinesBuilding
             accumulator = savedAccumulator
             pendingOp = savedPendingOp
             calcUnitDef = savedCalcUnitDef
         } else {
-            tapeLinesBuilding = []
+            rollLinesBuilding = []
             resetCalculatorState()
         }
-        savedTapeLinesBuilding = []
+        savedRollLinesBuilding = []
         editingHistoryIndex = nil
         editingLineIndex = 0
         editingAccDisplay = ""
@@ -1341,11 +1341,11 @@ final class CalcViewModel: ObservableObject {
         formulaUpdateCalc()
     }
 
-    /// 進行中テープの編集確定・再計算
-    private func commitLiveTapeEdit() {
-        var lines = savedTapeLinesBuilding
+    /// 進行中ロールの編集確定・再計算
+    private func commitLiveRollEdit() {
+        var lines = savedRollLinesBuilding
         let lineIdx = editingLineIndex
-        guard lineIdx < lines.count, !lines[lineIdx].isFinal else { cancelTapeEdit(); return }
+        guard lineIdx < lines.count, !lines[lineIdx].isFinal else { cancelRollEdit(); return }
 
         // 新しい入力値を取得
         let current: AZDecimal
@@ -1381,7 +1381,7 @@ final class CalcViewModel: ObservableObject {
         lines[lineIdx].runningTotal = baseUnitDisplayStr(acc)
         lines[lineIdx].unitCode = newUnitCode
 
-        // 後続行を再計算（進行中テープに最終行はないので全行中間行）
+        // 後続行を再計算（進行中ロールに最終行はないので全行中間行）
         for idx in (lineIdx + 1)..<lines.count {
             lines[idx].accBase = acc.value
             acc = calcBinary(acc, lines[idx].op, AZDecimal(lines[idx].rawBase))
@@ -1389,12 +1389,12 @@ final class CalcViewModel: ObservableObject {
         }
 
         // 再計算後の accumulator と pendingOp を復元（最後の演算子は savedPendingOp）
-        tapeLinesBuilding = lines
+        rollLinesBuilding = lines
         accumulator = acc
         pendingOp = savedPendingOp
         calcUnitDef = savedCalcUnitDef ?? calcUnitDef
 
-        savedTapeLinesBuilding = []
+        savedRollLinesBuilding = []
         editingHistoryIndex = nil
         editingLineIndex = 0
         editingAccDisplay = ""
@@ -1407,17 +1407,17 @@ final class CalcViewModel: ObservableObject {
     }
 
     /// 編集確定・再計算（= 押下時）
-    private func commitTapeEdit(historyIndex: Int) {
-        // 進行中テープの編集確定
+    private func commitRollEdit(historyIndex: Int) {
+        // 進行中ロールの編集確定
         if historyIndex == -1 {
-            commitLiveTapeEdit()
+            commitLiveRollEdit()
             return
         }
-        guard historyIndex < historyRows.count else { cancelTapeEdit(); return }
+        guard historyIndex < historyRows.count else { cancelRollEdit(); return }
         var row = historyRows[historyIndex]
-        guard var lines = row.tapeLines else { cancelTapeEdit(); return }
+        guard var lines = row.rollLines else { cancelRollEdit(); return }
         let lineIdx = editingLineIndex
-        guard lineIdx < lines.count, !lines[lineIdx].isFinal else { cancelTapeEdit(); return }
+        guard lineIdx < lines.count, !lines[lineIdx].isFinal else { cancelRollEdit(); return }
 
         // 新しい入力値を取得
         let current: AZDecimal
@@ -1488,11 +1488,11 @@ final class CalcViewModel: ObservableObject {
             }
         }
 
-        row.tapeLines = lines
+        row.rollLines = lines
         row.answer = lines.last?.value ?? row.answer
         historyRows[historyIndex] = row
 
-        cancelTapeEdit()
+        cancelRollEdit()
     }
 
     /// 電卓モード用の二項演算（丸め済み）

@@ -84,7 +84,16 @@ struct HistoryView: View {
                 .environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
                 .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
                 .padding(0)
-                .onChange(of: viewModel.historyRows.count) { _, _ in
+                .overlay(alignment: .top) {
+                    LinearGradient(
+                        colors: [Color(uiColor: .systemBackground).opacity(0.7), Color.clear],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 44)
+                    .allowsHitTesting(false)
+                }
+            .onChange(of: viewModel.historyRows.count) { _, _ in
                     guard setting.autoScroll == .onEquals,
                           let first = reversedRows.first else { return }
                     Task { @MainActor in
@@ -163,9 +172,9 @@ struct CustomCell: View {
 }
 
 
-// MARK: - TapeView（電卓モード用レシートテープ）
+// MARK: - RollView（電卓モード用レシートロール）
 
-struct TapeView: View {
+struct RollView: View {
     @EnvironmentObject var setting: SettingViewModel
     @ObservedObject var viewModel: CalcViewModel
     let calcIndex: Int
@@ -178,15 +187,15 @@ struct TapeView: View {
     var body: some View {
         ScrollViewReader { proxy in
             List {
-                // ライブ行（演算子入力後・= 前の入力途中テープ）
-                if !viewModel.tapeLinesBuilding.isEmpty {
-                    TapeCell(row: CalcViewModel.HistoryRow(tapeLines: viewModel.tapeLinesBuilding),
+                // ライブ行（演算子入力後・= 前の入力途中ロール）
+                if !viewModel.rollLinesBuilding.isEmpty {
+                    RollCell(row: CalcViewModel.HistoryRow(rollLines: viewModel.rollLinesBuilding),
                              showRunningTotal: showRunningTotal,
                              historyIndex: -1,
                              editingHistoryIndex: viewModel.editingHistoryIndex,
                              editingLineIndex: viewModel.editingLineIndex,
                              onTapLine: { lineIdx in
-                                 viewModel.startTapeEdit(historyIndex: -1, lineIndex: lineIdx)
+                                 viewModel.startRollEdit(historyIndex: -1, lineIndex: lineIdx)
                              })
                         .id("live")
                         .listRowInsets(EdgeInsets())
@@ -196,14 +205,14 @@ struct TapeView: View {
                         .background(COLOR_BACK_FORMULA)
                 }
                 ForEach(reversedRows, id: \.offset) { index, row in
-                    TapeCell(row: row,
+                    RollCell(row: row,
                              showRunningTotal: showRunningTotal,
                              historyIndex: index,
                              calcIndex: calcIndex,
                              editingHistoryIndex: viewModel.editingHistoryIndex,
                              editingLineIndex: viewModel.editingLineIndex,
                              onTapLine: { lineIdx in
-                                 viewModel.startTapeEdit(historyIndex: index, lineIndex: lineIdx)
+                                 viewModel.startRollEdit(historyIndex: index, lineIndex: lineIdx)
                              })
                         .id(index)
                         .listRowInsets(EdgeInsets())
@@ -225,6 +234,15 @@ struct TapeView: View {
             .environment(\.defaultMinListRowHeight, 10)
             .frame(maxWidth: .infinity)
             .padding(0)
+            .overlay(alignment: .top) {
+                LinearGradient(
+                    colors: [Color(uiColor: .systemBackground).opacity(0.7), Color.clear],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 44)
+                .allowsHitTesting(false)
+            }
             .onChange(of: viewModel.historyRows.count) { _, _ in
                 guard setting.autoScroll == .onEquals,
                       let first = reversedRows.first else { return }
@@ -235,7 +253,7 @@ struct TapeView: View {
             .onChange(of: viewModel.inputStartTrigger) { _, _ in
                 guard setting.autoScroll == .onInput else { return }
                 Task { @MainActor in
-                    if !viewModel.tapeLinesBuilding.isEmpty {
+                    if !viewModel.rollLinesBuilding.isEmpty {
                         proxy.scrollTo("live", anchor: .top)
                     } else if let first = reversedRows.first {
                         proxy.scrollTo(first.offset, anchor: .top)
@@ -246,8 +264,8 @@ struct TapeView: View {
     }
 }
 
-// テープセル（1計算 = 1セル）
-struct TapeCell: View {
+// ロールセル（1計算 = 1セル）
+struct RollCell: View {
     @EnvironmentObject var setting: SettingViewModel
     let row: CalcViewModel.HistoryRow
     var showRunningTotal: Bool = true
@@ -292,7 +310,7 @@ struct TapeCell: View {
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 0) {
-            if let lines = row.tapeLines {
+            if let lines = row.rollLines {
                 ForEach(Array(lines.enumerated()), id: \.offset) { lineIdx, line in
                     if line.isFinal {
                         // 最終結果の直前に区切り線

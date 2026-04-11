@@ -23,13 +23,13 @@ struct CalcView: View {
 
             VStack(spacing: 0) {
 
-                // 履歴 / テープ（左上にモード切替アイコンボタンをオーバーレイ）
+                // 履歴 / ロール（左上にモード切替アイコンボタンをオーバーレイ）
                 Group {
                     if viewModel.calcMode == .formula {
                         HistoryView(viewModel: viewModel, calcIndex: calcIndex)
                             .environmentObject(setting)
                     } else {
-                        TapeView(viewModel: viewModel, calcIndex: calcIndex,
+                        RollView(viewModel: viewModel, calcIndex: calcIndex,
                                  showRunningTotal: !isNarrow)
                             .environmentObject(setting)
                     }
