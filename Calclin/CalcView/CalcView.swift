@@ -16,6 +16,10 @@ struct CalcView: View {
 
     private let narrowWidth: CGFloat = 320
 
+    @State private var shareURL: URL?
+    @State private var isSharing = false
+    @State private var isGeneratingPDF = false
+
     var body: some View {
 
         GeometryReader { geo in
@@ -57,6 +61,35 @@ struct CalcView: View {
                     .padding(.top, 4)
                     .padding(.leading, 6)
                 }
+                .overlay(alignment: .topTrailing) {
+                    Button {
+                        isGeneratingPDF = true
+                        Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 80_000_000)
+                            let url = makeCalcPDF(viewModel: viewModel, fontScale: setting.numberFontScale)
+                            isGeneratingPDF = false
+                            if let url {
+                                shareURL = url
+                                isSharing = true
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 14, weight: .semibold))
+                            if setting.playMode == .beginner {
+                                Text("PDF")
+                                    .font(.system(size: 13, weight: .medium))
+                            }
+                        }
+                        .foregroundStyle(.primary.opacity(0.6))
+                        .padding(.horizontal, 8)
+                        .frame(height: 30)
+                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
+                    .padding(.top, 4)
+                    .padding(.trailing, 6)
+                }
 
                 FormulaView(viewModel: viewModel)
                     .environmentObject(setting)
@@ -65,6 +98,27 @@ struct CalcView: View {
                     .padding(.horizontal, 8)
             }
             .padding(0)
+            .overlay {
+                if isGeneratingPDF {
+                    ZStack {
+                        Color.black.opacity(0.25).ignoresSafeArea()
+                        VStack(spacing: 10) {
+                            ProgressView()
+                                .controlSize(.large)
+                            Text("PDF作成中…")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(28)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+                }
+            }
+            .sheet(isPresented: $isSharing) {
+                if let url = shareURL {
+                    ActivityViewController(activityItems: [url])
+                }
+            }
             .onAppear {
                 viewModel.numberFontScale = setting.numberFontScale
             }
