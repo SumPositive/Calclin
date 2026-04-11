@@ -8,10 +8,13 @@
 import SwiftUI
 import UIKit
 
-import GoogleMobileAds  // iOSのみ、MacやVisionには対応せずエラーになる
+@preconcurrency import GoogleMobileAds  // iOSのみ、MacやVisionには対応せずエラーになる
 import FirebaseCrashlytics
 
 // アプリID は、Info.plistにセット：key:GADApplicationIdentifier
+
+/// Swift 6 の Sendable チェックを回避するための汎用ラッパー（非 Sendable な SDK 型用）
+private struct UncheckedSendable<T>: @unchecked Sendable { let value: T }
 
 //let AdMobAdSheetView_HEIGHT: CGFloat = 560.0 // シート表示時の高さ指定
 
@@ -224,19 +227,22 @@ final class RewardAdLoader: NSObject, ObservableObject {
 
         let request = Request()
         RewardedAd.load(with: ADMOB_REWARD_1_UnitID, request: request) { [weak self] ad, error in
-            guard let self else { return }
-            self.isLoading = false
+            let sendableAd = UncheckedSendable(value: ad) // 非 Sendable な RewardedAd を安全に渡す
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.isLoading = false
 
-            if let error {
-                // エラー時はCrashlyticsに記録し、UI側でメッセージを出しやすいよう nil にする
-                Crashlytics.crashlytics().record(error: error)
-                self.rewardedAd = nil
-                return
+                if let error {
+                    // エラー時はCrashlyticsに記録し、UI側でメッセージを出しやすいよう nil にする
+                    Crashlytics.crashlytics().record(error: error)
+                    self.rewardedAd = nil
+                    return
+                }
+
+                // 正常にロードできたので保持しておく
+                self.rewardedAd = sendableAd.value
+                self.rewardedAd?.fullScreenContentDelegate = self
             }
-
-            // 正常にロードできたので保持しておく
-            self.rewardedAd = ad
-            self.rewardedAd?.fullScreenContentDelegate = self
         }
     }
 

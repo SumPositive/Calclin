@@ -32,7 +32,7 @@ struct KeyboardView: View {
 
     var body: some View {
         
-        let SWIPE_RANGE = 30.0     // スワイプ無効範囲、キータップ時のズレを感知しないようにするため
+        let SWIPE_RANGE = 50.0     // スワイプ無効範囲、キータップ時のズレを感知しないようにするため
         let SWIPE_THRESHOLD = 120.0 // スワイプ感知して動作開始する
 
         
@@ -42,7 +42,6 @@ struct KeyboardView: View {
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
             //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
             GeometryReader { geometry in
-                let frame = geometry.frame(in: .global)
                 let pageWidth = geometry.size.width + KEYBOARD_PAGE_GAP
 
                 HStack(spacing: KEYBOARD_PAGE_GAP) {
