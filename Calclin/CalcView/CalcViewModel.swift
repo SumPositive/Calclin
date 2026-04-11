@@ -46,6 +46,10 @@ final class CalcViewModel: ObservableObject {
     @Published var formulaAttr: AttributedString = ""
     // [Ans]直後の答えが表示されて単位変換が行われている間(true)である
     @Published var isAnswerMode = false
+    // フォントスケール（SettingViewModelから同期）
+    var numberFontScale: CGFloat = 1.5
+    // 自動スクロール用トリガー：= 直後の最初のキー入力で +1 する
+    @Published var inputStartTrigger: Int = 0
 
     
     struct TapeLine: Hashable {
@@ -94,6 +98,7 @@ final class CalcViewModel: ObservableObject {
     /// 編集中の historyRows インデックス（nil = 通常モード）
     @Published private(set) var editingHistoryIndex: Int? = nil
     @Published private(set) var editingLineIndex: Int = 0
+    @Published private(set) var editingAccDisplay: String = ""  // 編集行の前の累積値表示文字列
 
     /// 電卓モードで非活性にするキーかどうかを返す
     func isKeyDisabled(_ code: String) -> Bool {
@@ -121,6 +126,14 @@ final class CalcViewModel: ObservableObject {
     func input(_ keyDef: KeyDefinition)
     {
         log(.info, "input \(keyDef)")
+        // 入力開始トリガー：= 直後の最初のキー入力（自動スクロール用）
+        if !historyRows.isEmpty {
+            if calcMode == .calculator && isAfterEquals {
+                inputStartTrigger += 1
+            } else if calcMode != .calculator && isAnswerMode {
+                inputStartTrigger += 1
+            }
+        }
         if calcMode == .calculator {
             inputCalcMode(keyDef)
             return
@@ -797,8 +810,10 @@ final class CalcViewModel: ObservableObject {
         }
         // 保留演算子プレフィックス（accumulator を先頭に小さく薄く表示）
         if let op = pendingOp {
-            var accAttr = AttributedString(unitDisplayStr(accumulator))
+            let accStr = editingAccDisplay.isEmpty ? unitDisplayStr(accumulator) : editingAccDisplay
+            var accAttr = AttributedString(accStr)
             accAttr.foregroundColor = COLOR_NUMBER.opacity(0.4)
+            accAttr.font = Font.system(size: 15.0 * numberFontScale, weight: .bold).monospacedDigit()
             formulaAttr = accAttr
             formulaAttr += AttributedString(" ")
             var opAttr = AttributedString(op)
@@ -1009,7 +1024,7 @@ final class CalcViewModel: ObservableObject {
             // 保留演算子を実行して中間結果をテープへ（accumulator は Base単位）
             let result = calcBinary(accumulator, existingOp, current)
             tapeLinesBuilding.append(TapeLine(op: existingOp, value: displayValue,
-                                              isFinal: false, runningTotal: unitDisplayStr(result),
+                                              isFinal: false, runningTotal: baseUnitDisplayStr(result),
                                               rawBase: current.value,
                                               accBase: prevAccumulator.value,
                                               unitCode: lineUnitCode))
@@ -1061,6 +1076,17 @@ final class CalcViewModel: ObservableObject {
         guard let def = calcUnitDef else { return base.formatted(calcConfig) }
         let converted = fromBaseValue(base, toUnitDef: def)
         return AZDecimal(converted).formatted(calcConfig) + def.formula
+    }
+
+    /// 電卓モード：中間結果（runningTotal）用 — Base単位のままで表示する
+    private func baseUnitDisplayStr(_ base: AZDecimal) -> String {
+        guard let def = calcUnitDef,
+              let baseCode = def.unitBase, baseCode != UNIT_CODE_BARE,
+              def.code != baseCode,
+              let baseDef = keyboardViewModel.keyDef(code: baseCode) else {
+            return base.formatted(calcConfig)
+        }
+        return base.formatted(calcConfig) + baseDef.formula
     }
 
     /// 電卓モード：Base単位の値を指定単位に変換した文字列を返す
@@ -1163,7 +1189,7 @@ final class CalcViewModel: ObservableObject {
             if let existingOp = pendingOp {
                 resultBase = calcBinary(accumulator, existingOp, current)
                 tapeLinesBuilding.append(TapeLine(op: existingOp, value: displayValue,
-                                                  isFinal: false, runningTotal: unitDisplayStr(resultBase),
+                                                  isFinal: false, runningTotal: baseUnitDisplayStr(resultBase),
                                                   rawBase: current.value,
                                                   accBase: prevAccumulator.value,
                                                   unitCode: lineUnitCode))
@@ -1250,9 +1276,12 @@ final class CalcViewModel: ObservableObject {
         calcUnitDef = line.unitCode.flatMap { keyboardViewModel.keyDef(code: $0) }
 
         // 現在値を tokens に預置（= を押せばそのまま確定、数字を打てば上書き）
-        tokens = [line.rawBase]
-        if let code = line.unitCode {
-            tokens.append(TOKEN_UNIT_PREFIX + code)
+        // rawBase は Base単位なので表示単位に変換して tokens にセット
+        if let code = line.unitCode, let def = keyboardViewModel.keyDef(code: code) {
+            let displayNum = fromBaseValue(AZDecimal(line.rawBase), toUnitDef: def)
+            tokens = [displayNum, TOKEN_UNIT_PREFIX + code]
+        } else {
+            tokens = [line.rawBase]
         }
         isCalcNewEntry = true
         isAfterEquals = false
@@ -1261,6 +1290,9 @@ final class CalcViewModel: ObservableObject {
 
         editingHistoryIndex = historyIndex
         editingLineIndex = lineIndex
+        editingAccDisplay = lineIndex > 0
+            ? (lines[lineIndex - 1].runningTotal ?? lines[lineIndex - 1].value)
+            : ""
         formulaUpdateCalc()
     }
 
@@ -1279,6 +1311,7 @@ final class CalcViewModel: ObservableObject {
         savedTapeLinesBuilding = []
         editingHistoryIndex = nil
         editingLineIndex = 0
+        editingAccDisplay = ""
         tokens = []
         formulaUpdateCalc()
     }
@@ -1320,14 +1353,14 @@ final class CalcViewModel: ObservableObject {
         lines[lineIdx].op = newOp
         lines[lineIdx].value = displayValue
         lines[lineIdx].rawBase = current.value
-        lines[lineIdx].runningTotal = unitDisplayStr(acc)
+        lines[lineIdx].runningTotal = baseUnitDisplayStr(acc)
         lines[lineIdx].unitCode = newUnitCode
 
         // 後続行を再計算（進行中テープに最終行はないので全行中間行）
         for idx in (lineIdx + 1)..<lines.count {
             lines[idx].accBase = acc.value
             acc = calcBinary(acc, lines[idx].op, AZDecimal(lines[idx].rawBase))
-            lines[idx].runningTotal = unitDisplayStr(acc)
+            lines[idx].runningTotal = baseUnitDisplayStr(acc)
         }
 
         // 再計算後の accumulator と pendingOp を復元（最後の演算子は savedPendingOp）
@@ -1339,6 +1372,7 @@ final class CalcViewModel: ObservableObject {
         savedTapeLinesBuilding = []
         editingHistoryIndex = nil
         editingLineIndex = 0
+        editingAccDisplay = ""
         tokens = []
         isCalcNewEntry = true
         isAfterEquals = false
@@ -1403,7 +1437,7 @@ final class CalcViewModel: ObservableObject {
         lines[lineIdx].op = newOp
         lines[lineIdx].value = displayValue
         lines[lineIdx].rawBase = current.value
-        lines[lineIdx].runningTotal = unitDisplayStr(acc)
+        lines[lineIdx].runningTotal = baseUnitDisplayStr(acc)
         lines[lineIdx].unitCode = newUnitCode
         // accBase はそのまま（この行の前の状態は変わらない）
 
@@ -1425,7 +1459,7 @@ final class CalcViewModel: ObservableObject {
                 // 中間行: accBase と runningTotal を更新
                 lines[idx].accBase = acc.value
                 acc = calcBinary(acc, lines[idx].op, AZDecimal(lines[idx].rawBase))
-                lines[idx].runningTotal = unitDisplayStr(acc)
+                lines[idx].runningTotal = baseUnitDisplayStr(acc)
             }
         }
 

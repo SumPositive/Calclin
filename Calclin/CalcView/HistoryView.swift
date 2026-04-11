@@ -24,64 +24,81 @@ struct HistoryView: View {
 
     var body: some View {
         VStack(spacing: 0.0) {
-            List {
-                ForEach(reversedRows, id: \.offset) { index, row in
-                    // カスタム明細セル
-                    CustomCell(viewModel: viewModel, row: row)
-                        .listRowInsets(EdgeInsets()) // ← これが肝
-                        .listRowSeparator(.visible, edges: .all)
-                        .padding(.bottom, 8.0)  // 下の余白
-                        .padding(.horizontal, 12.0) // 左右の余白
-                        .background(COLOR_BACK_FORMULA)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            // 左スワイプ （false:全スワイプ即削除を避ける）
-                            Button(role: .destructive) {
-                                // 削除アクション  index行を削除する
-                                viewModel.delateHistory(index)
-                            } label: {
-                                Image("trash.fill_rev").imageScale(.large)
+            ScrollViewReader { proxy in
+                List {
+                    ForEach(reversedRows, id: \.offset) { index, row in
+                        // カスタム明細セル
+                        CustomCell(viewModel: viewModel, row: row)
+                            .id(index)
+                            .listRowInsets(EdgeInsets()) // ← これが肝
+                            .listRowSeparator(.visible, edges: .all)
+                            .padding(.bottom, 8.0)  // 下の余白
+                            .padding(.horizontal, 12.0) // 左右の余白
+                            .background(COLOR_BACK_FORMULA)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                // 左スワイプ （false:全スワイプ即削除を避ける）
+                                Button(role: .destructive) {
+                                    // 削除アクション  index行を削除する
+                                    viewModel.delateHistory(index)
+                                } label: {
+                                    Image("trash.fill_rev").imageScale(.large)
+                                }
                             }
-                        }
-                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                            // 右スワイプ （false:全スワイプ即メモを避ける）
-                            Button() {
-                                // メモする
-                                setting.popupHistoryMemoInfo = (maxLength: 0,
-                                                                index: index,
-                                                                calcIndex: calcIndex)
-                            } label: {
-                                Image("edit_rev").imageScale(.large)
-                            }
-                            .tint(COLOR_MEMO) // スワイプ背景色
+                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                // 右スワイプ （false:全スワイプ即メモを避ける）
+                                Button() {
+                                    // メモする
+                                    setting.popupHistoryMemoInfo = (maxLength: 0,
+                                                                    index: index,
+                                                                    calcIndex: calcIndex)
+                                } label: {
+                                    Image("edit_rev").imageScale(.large)
+                                }
+                                .tint(COLOR_MEMO) // スワイプ背景色
 
-                            Button() {
+                                Button() {
+                                    // 式コピペ　row.tokenからformulaTextを再現する
+                                    viewModel.formulaFromHistoryToken(row)
+                                } label: {
+                                    Text("↑=") // 上下逆に表示される
+                                    //.font(.system(size: 24.0, weight: .bold))
+                                }
+                                .tint(COLOR_OPERATOR) // スワイプ背景色
+
+                                Button() {
+                                    // 答えコピペ  row.answerからformulaTextを再現する
+                                    viewModel.formulaFromHistoryAnswer(row)
+                                } label: {
+                                    Text("=↑") // 上下逆に表示される
+                                }
+                                .tint(COLOR_ANSWER) // スワイプ背景色
+                            }
+                            .onTapGesture(count: 2) { // ダブルタップ時の処理
                                 // 式コピペ　row.tokenからformulaTextを再現する
                                 viewModel.formulaFromHistoryToken(row)
-                            } label: {
-                                Text("↑=") // 上下逆に表示される
-                                //.font(.system(size: 24.0, weight: .bold))
                             }
-                            .tint(COLOR_OPERATOR) // スワイプ背景色
-
-                            Button() {
-                                // 答えコピペ  row.answerからformulaTextを再現する
-                                viewModel.formulaFromHistoryAnswer(row)
-                            } label: {
-                                Text("=↑") // 上下逆に表示される
-                            }
-                            .tint(COLOR_ANSWER) // スワイプ背景色
-                        }
-                        .onTapGesture(count: 2) { // ダブルタップ時の処理
-                            // 式コピペ　row.tokenからformulaTextを再現する
-                            viewModel.formulaFromHistoryToken(row)
-                        }
+                    }
+                }
+                .scaleEffect(y: -1) // 上下反転：末尾固定スクロールのため（List+swipeActions維持の唯一の方法）
+                .listStyle(.plain)
+                .environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
+                .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
+                .padding(0)
+                .onChange(of: viewModel.historyRows.count) { _, _ in
+                    guard setting.autoScroll == .onEquals,
+                          let first = reversedRows.first else { return }
+                    Task { @MainActor in
+                        proxy.scrollTo(first.offset, anchor: .top)
+                    }
+                }
+                .onChange(of: viewModel.inputStartTrigger) { _, _ in
+                    guard setting.autoScroll == .onInput,
+                          let first = reversedRows.first else { return }
+                    Task { @MainActor in
+                        proxy.scrollTo(first.offset, anchor: .top)
+                    }
                 }
             }
-            .scaleEffect(y: -1) // 上下反転：末尾固定スクロールのため（List+swipeActions維持の唯一の方法）
-            .listStyle(.plain)
-            .environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
-            .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
-            .padding(0)
         }
     }
     
@@ -159,51 +176,73 @@ struct TapeView: View {
     }
 
     var body: some View {
-        List {
-            // ライブ行（演算子入力後・= 前の入力途中テープ）
-            if !viewModel.tapeLinesBuilding.isEmpty {
-                TapeCell(row: CalcViewModel.HistoryRow(tapeLines: viewModel.tapeLinesBuilding),
-                         showRunningTotal: showRunningTotal,
-                         historyIndex: -1,
-                         editingHistoryIndex: viewModel.editingHistoryIndex,
-                         editingLineIndex: viewModel.editingLineIndex,
-                         onTapLine: { lineIdx in
-                             viewModel.startTapeEdit(historyIndex: -1, lineIndex: lineIdx)
-                         })
-                    .listRowInsets(EdgeInsets())
-                    .listRowSeparator(.visible, edges: .all)
-                    .padding(.bottom, 6)
-                    .padding(.horizontal, 12)
-                    .background(COLOR_BACK_FORMULA)
-            }
-            ForEach(reversedRows, id: \.offset) { index, row in
-                TapeCell(row: row,
-                         showRunningTotal: showRunningTotal,
-                         historyIndex: index,
-                         editingHistoryIndex: viewModel.editingHistoryIndex,
-                         editingLineIndex: viewModel.editingLineIndex,
-                         onTapLine: { lineIdx in
-                             viewModel.startTapeEdit(historyIndex: index, lineIndex: lineIdx)
-                         })
-                    .listRowInsets(EdgeInsets())
-                    .listRowSeparator(.visible, edges: .all)
-                    .padding(.bottom, 6)
-                    .padding(.horizontal, 12)
-                    .background(COLOR_BACK_FORMULA)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            viewModel.delateHistory(index)
-                        } label: {
-                            Image("trash.fill_rev").imageScale(.large)
+        ScrollViewReader { proxy in
+            List {
+                // ライブ行（演算子入力後・= 前の入力途中テープ）
+                if !viewModel.tapeLinesBuilding.isEmpty {
+                    TapeCell(row: CalcViewModel.HistoryRow(tapeLines: viewModel.tapeLinesBuilding),
+                             showRunningTotal: showRunningTotal,
+                             historyIndex: -1,
+                             editingHistoryIndex: viewModel.editingHistoryIndex,
+                             editingLineIndex: viewModel.editingLineIndex,
+                             onTapLine: { lineIdx in
+                                 viewModel.startTapeEdit(historyIndex: -1, lineIndex: lineIdx)
+                             })
+                        .id("live")
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.visible, edges: .all)
+                        .padding(.bottom, 6)
+                        .padding(.horizontal, 12)
+                        .background(COLOR_BACK_FORMULA)
+                }
+                ForEach(reversedRows, id: \.offset) { index, row in
+                    TapeCell(row: row,
+                             showRunningTotal: showRunningTotal,
+                             historyIndex: index,
+                             calcIndex: calcIndex,
+                             editingHistoryIndex: viewModel.editingHistoryIndex,
+                             editingLineIndex: viewModel.editingLineIndex,
+                             onTapLine: { lineIdx in
+                                 viewModel.startTapeEdit(historyIndex: index, lineIndex: lineIdx)
+                             })
+                        .id(index)
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.visible, edges: .all)
+                        .padding(.bottom, 6)
+                        .padding(.horizontal, 12)
+                        .background(COLOR_BACK_FORMULA)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                viewModel.delateHistory(index)
+                            } label: {
+                                Image("trash.fill_rev").imageScale(.large)
+                            }
                         }
+                }
+            }
+            .scaleEffect(y: -1)
+            .listStyle(.plain)
+            .environment(\.defaultMinListRowHeight, 10)
+            .frame(maxWidth: .infinity)
+            .padding(0)
+            .onChange(of: viewModel.historyRows.count) { _, _ in
+                guard setting.autoScroll == .onEquals,
+                      let first = reversedRows.first else { return }
+                Task { @MainActor in
+                    proxy.scrollTo(first.offset, anchor: .top)
+                }
+            }
+            .onChange(of: viewModel.inputStartTrigger) { _, _ in
+                guard setting.autoScroll == .onInput else { return }
+                Task { @MainActor in
+                    if !viewModel.tapeLinesBuilding.isEmpty {
+                        proxy.scrollTo("live", anchor: .top)
+                    } else if let first = reversedRows.first {
+                        proxy.scrollTo(first.offset, anchor: .top)
                     }
+                }
             }
         }
-        .scaleEffect(y: -1)
-        .listStyle(.plain)
-        .environment(\.defaultMinListRowHeight, 10)
-        .frame(maxWidth: .infinity)
-        .padding(0)
     }
 }
 
@@ -213,6 +252,7 @@ struct TapeCell: View {
     let row: CalcViewModel.HistoryRow
     var showRunningTotal: Bool = true
     var historyIndex: Int = -1
+    var calcIndex: Int = 0
     var editingHistoryIndex: Int? = nil
     var editingLineIndex: Int = 0
     var onTapLine: ((Int) -> Void)? = nil
@@ -230,7 +270,7 @@ struct TapeCell: View {
             .font(.system(size: size, weight: .light).monospacedDigit())
             .lineLimit(1)
             .fixedSize(horizontal: true, vertical: false)
-            .foregroundStyle(Color.secondary.opacity(0.5))
+            .foregroundStyle(Color.secondary.opacity(0.7))
     }
 
     @ViewBuilder
@@ -270,7 +310,7 @@ struct TapeCell: View {
                         // 候補1: 中間結果あり（左）＋ op+value（右）
                         if let rt, !rt.isEmpty {
                             HStack(spacing: 0) {
-                                rtText(rt, size: fontSize * 0.75 * setting.numberFontScale)
+                                rtText(rt, size: fontSize * 0.65 * setting.numberFontScale)
                                     .fixedSize(horizontal: true, vertical: false)
                                 Spacer(minLength: 8)
                                 valueText(opStr: opStr, value: line.value, isFinal: line.isFinal)
@@ -287,7 +327,13 @@ struct TapeCell: View {
                                 in: RoundedRectangle(cornerRadius: 4))
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        if !line.isFinal {
+                        if line.isFinal {
+                            if historyIndex >= 0 {
+                                setting.popupHistoryMemoInfo = (maxLength: 0,
+                                                                index: historyIndex,
+                                                                calcIndex: calcIndex)
+                            }
+                        } else {
                             onTapLine?(lineIdx)
                         }
                     }

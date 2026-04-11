@@ -65,6 +65,13 @@ struct CalcView: View {
                     .padding(.horizontal, 8)
             }
             .padding(0)
+            .onAppear {
+                viewModel.numberFontScale = setting.numberFontScale
+            }
+            .onChange(of: setting.numberFontScale) { _, newScale in
+                viewModel.numberFontScale = newScale
+                viewModel.formulaUpdate()
+            }
         }
     }
 }

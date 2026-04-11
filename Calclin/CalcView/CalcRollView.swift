@@ -66,7 +66,7 @@ struct CalcRollView: View {
                 // 要望どおり、CalcViewの内側ではなく「CalcRollHeaderViewとCalcViewの間」に配置する
                 let isCalcMode = calcViewModels[selectedPage].calcMode == .calculator
                 Text(isCalcMode
-                     ? String(localized: "計算途中の行をタップすれば編集できます")
+                     ? String(localized: "明細行をタップすれば編集できます。=行はメモ入力できます")
                      : String(localized: "数式の行をスワイプすればメモしたり、式をコピーできます"))
                     .font(.system(size: 13.0, weight: .regular))
                     .foregroundStyle(.secondary)

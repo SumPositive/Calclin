@@ -127,6 +127,17 @@ struct SettingView: View {
                     }
                 }
                 HStack(spacing: 4) {
+                    Label("自動スクロール", systemImage: "arrow.down.to.line")
+                        .labelStyle(.titleAndIcon)
+                        .font(.subheadline)
+                    Picker("自動スクロール", selection: $viewModel.autoScroll) {
+                        ForEach(SettingViewModel.AutoScroll.allCases) { mode in
+                            Text(mode.localized).tag(mode)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                }
+                HStack(spacing: 4) {
                     Label("表示倍率", systemImage: "plus.magnifyingglass")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
@@ -159,10 +170,11 @@ struct SettingView: View {
             tint: Color(.systemTeal)
         ) {
             VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 4) {
+                HStack(alignment: .top, spacing: 4) {
                     // 桁区切りタイプ
                     Text("桁区切り方式")
                         .font(.subheadline)
+                        .padding(.top, 6)
                     Picker("桁区切り方式", selection: $viewModel.groupType) {
                         ForEach(SettingViewModel.GroupType.allCases) { type in
                             Text(type.localized).tag(type)
@@ -170,6 +182,7 @@ struct SettingView: View {
                     }
                     .pickerStyle(MenuPickerStyle())
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
                     //.tint(.accentColor)
                     .onChange(of: viewModel.groupType) { oldValue, newValue in
                         log(.info, ".onChange groupType")

@@ -172,7 +172,23 @@ final class SettingViewModel: ObservableObject {
 
     // フォント倍率
     @Published var numberFontScale: Double = 1.5
- 
+
+    /// 自動スクロールタイミング
+    enum AutoScroll: String, CaseIterable, Identifiable {
+        case never    // しない
+        case onInput  // 入力開始時
+        case onEquals // ＝タップ時
+        var id: String { rawValue }
+        var localized: String {
+            switch self {
+            case .never:    return String(localized: "しない")
+            case .onInput:  return String(localized: "入力開始時")
+            case .onEquals: return String(localized: "＝タップ時")
+            }
+        }
+    }
+    @Published var autoScroll: AutoScroll = .onInput
+
     // HistoryMemoViewをPopupで表示する
     @Published var popupHistoryMemoInfo: (maxLength: Int, index: Int, calcIndex: Int)? = nil
     
