@@ -53,23 +53,11 @@ struct KeyboardView: View {
                         KeyPageView(viewModel: viewModel, calcViewModel: activeCalcViewModel,
                                     onTap: onTap, page: index)
                             .frame(width: geometry.size.width)
-                            // キューブが回転するような立体的な切り替え演出
-                            .modifier(
-                                CubeRotationModifier(
-                                    progress: progress
-                                )
-                            )
-                            .modifier(
-                                // 左右ページに遠近感を与える（既存演出も維持）
-                                PagePerspectiveModifier(
-                                    distance: Double(index - selectedPage),
-                                    pageWidth: geometry.size.width,
-                                    margin: frame.minX
-                                )
-                            )
+                            // 5角柱の面を回転させるエフェクト（隣接面は72°で接合）
+                            .modifier(PentagonRotationModifier(progress: progress))
                     }
                 }
-                .offset(x: -CGFloat(selectedPage) * (geometry.size.width + KEYBOARD_PAGE_GAP) + dragOffset)
+                .offset(x: -CGFloat(selectedPage) * pageWidth + dragOffset)
                 .animation(.easeOut(duration: 0.35), value: selectedPage)
             }
             .padding(0)
@@ -120,6 +108,27 @@ struct KeyboardView: View {
                 }
             }
         }
+    }
+}
+
+// 5角柱の面を回転させるモディファイア（隣接面は72°で接合）
+struct PentagonRotationModifier: ViewModifier {
+    /// -1.0 〜 +1.0：0 = 正面、±1 = 隣接ページ
+    let progress: CGFloat
+
+    func body(content: Content) -> some View {
+        let clamped = min(max(progress, -1), 1)
+        let angle   = clamped * 72.0  // 360°/5 = 72°
+        // 左ページは右辺を軸に、右ページは左辺を軸に折り畳まれている
+        let anchor: UnitPoint = clamped <= 0 ? .trailing : .leading
+
+        content
+            .rotation3DEffect(
+                .degrees(Double(angle)),
+                axis: (x: 0, y: 1, z: 0),
+                anchor: anchor,
+                perspective: 0.5
+            )
     }
 }
 
