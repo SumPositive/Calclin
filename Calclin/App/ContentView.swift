@@ -40,6 +40,7 @@ struct ContentView: View {
     // Popup関連の一時編集データ
     @State private var editingMemo: String = ""
     @State private var editingKeyDef: KeyDefinition = KeyDefinition(code: "new")
+
     
     // 選択中のCalcViewModelを返す
     private var selectedViewModel: CalcViewModel {
@@ -217,6 +218,7 @@ struct ContentView: View {
             }
             
         }
+        .ignoresSafeArea(.keyboard) // システムキーボードに押し上げられない
         .sheet(isPresented: $isSettingSheetPresented) {
             // PackList同様にシート表示で設定を開く
             SettingView()
