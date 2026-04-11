@@ -930,6 +930,48 @@ final class CalcViewModel: ObservableObject {
             }
             isAnswerMode = false
             formulaUpdateCalc()
+
+        case "Pi", "Golden", "Napier":
+            // 定数キー：数値×定数トークン形式で入力（例: 2π）
+            guard keyDef.unitConv != nil else { break }
+            // 数値が未入力・新規入力状態なら 1 をデフォルトにする
+            if tokens.isEmpty || isCalcNewEntry || isAnswerMode || isAfterEquals {
+                tokens = ["1"]
+                isCalcNewEntry = false
+                isAnswerMode = false
+                isAfterEquals = false
+            }
+            // 末尾が既に定数トークンなら置き換え、なければ追加
+            if let ut = tokens.last, ut.hasPrefix(TOKEN_UNIT_PREFIX) {
+                tokens[tokens.count - 1] = TOKEN_UNIT_PREFIX + keyDef.code
+            } else {
+                tokens.append(TOKEN_UNIT_PREFIX + keyDef.code)
+            }
+            isCalcNewEntryAfterUnit = true
+            isPercMode = false
+            formulaUpdateCalc()
+
+        case "sqRoot", "cuRoot":
+            // 現在の数値に平方根または立方根を適用
+            guard let numStr = tokens.last,
+                  !numStr.isEmpty, numStr != FM_SUB else { break }
+            let val = AZDecimal(numStr)
+            let result: AZDecimal
+            if keyDef.code == "sqRoot" {
+                guard !val.isNegative else {
+                    Manager.shared.toast(String(localized: "負の数の√は計算できません"))
+                    break
+                }
+                result = val.squareRoot().rounded(calcConfig)
+            } else {
+                result = val.cubeRoot().rounded(calcConfig)
+            }
+            tokens = [result.value]
+            isCalcNewEntry = false
+            isAnswerMode = false
+            isPercMode = false
+            formulaUpdateCalc()
+
         default:
             break
         }
@@ -1061,7 +1103,9 @@ final class CalcViewModel: ObservableObject {
                                               unitCode: lineUnitCode))
             accumulator = current
             // 最初の数値の単位を記録（= 時の結果表示単位として使う）
-            calcUnitDef = currentCalcValue()?.unitDef
+            // Bare単位（π,φ,e）は結果を定数単位で表示しない（通常の数値として扱う）
+            let firstUnitDef = currentCalcValue()?.unitDef
+            calcUnitDef = (firstUnitDef?.unitBase == UNIT_CODE_BARE) ? nil : firstUnitDef
         }
         pendingOp = op
         isCalcNewEntry = true
