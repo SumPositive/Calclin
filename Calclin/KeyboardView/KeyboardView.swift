@@ -42,21 +42,37 @@ struct KeyboardView: View {
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
             //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
             GeometryReader { geometry in
-                let pageWidth = geometry.size.width + KEYBOARD_PAGE_GAP
+                // ZStack + 巡回差分オフセットで5角形巡回を実現
+                let pageWidth = geometry.size.width
+                let pageCount = KeyboardViewModel.pageCount
+                let halfCount = pageCount / 2 // 5ページなら2
 
-                HStack(spacing: KEYBOARD_PAGE_GAP) {
-                    ForEach(0..<KeyboardViewModel.pageCount, id: \.self) { index in
-                        let offsetFromCenter = CGFloat(index - selectedPage) * pageWidth + dragOffset
-                        let progress = offsetFromCenter / pageWidth
+                ZStack {
+                    ForEach(0..<pageCount, id: \.self) { index in
+                        // 巡回差分：-halfCount〜+halfCount の最短経路
+                        let diff: Int = {
+                            let d = index - selectedPage
+                            if d > halfCount  { return d - pageCount }
+                            if d < -halfCount { return d + pageCount }
+                            return d
+                        }()
+
+                        let xOffset  = CGFloat(diff) * pageWidth + dragOffset
+                        let progress = xOffset / pageWidth
 
                         KeyPageView(viewModel: viewModel, calcViewModel: activeCalcViewModel,
                                     onTap: onTap, page: index)
-                            .frame(width: geometry.size.width)
-                            // 5角柱の面を回転させるエフェクト（隣接面は72°で接合）
+                            .frame(width: pageWidth)
+                            // 先に回転（ZStack中心±端を軸）してからoffsetで配置する
                             .modifier(PentagonRotationModifier(progress: progress))
+                            .offset(x: xOffset)
+                            // diff=±2 のページはテレポート時にちらつかないよう即座に非表示
+                            .opacity(abs(diff) >= 2 ? 0 : 1)
+                            .transaction { t in
+                                if abs(diff) >= 2 { t.animation = nil }
+                            }
                     }
                 }
-                .offset(x: -CGFloat(selectedPage) * pageWidth + dragOffset)
                 .animation(.easeOut(duration: 0.35), value: selectedPage)
             }
             .padding(0)
@@ -76,12 +92,12 @@ struct KeyboardView: View {
                                     // 元に戻す
                                 }
                             } else if w > SWIPE_THRESHOLD {
-                                // 右へスワイプ：前KeyPageViewへ
-                                selectedPage = max(selectedPage - 1, 0)
+                                // 右へスワイプ：前KeyPageViewへ（巡回）
+                                selectedPage = (selectedPage - 1 + KeyboardViewModel.pageCount) % KeyboardViewModel.pageCount
                             }
                             else if w < -SWIPE_THRESHOLD {
-                                // 左へスワイプ：次KeyPageViewへ
-                                selectedPage = min(selectedPage + 1, KeyboardViewModel.pageCount - 1)
+                                // 左へスワイプ：次KeyPageViewへ（巡回）
+                                selectedPage = (selectedPage + 1) % KeyboardViewModel.pageCount
                             }
                             dragOffset = 0
                         }
@@ -215,13 +231,12 @@ struct KeyboardFooterView: View {
                 DragGesture()
                     .onEnded { value in
                         if IND_SWIPE_RANGE < value.translation.width {
-                            // 右スワイプで前ページ
-                            selectedPage = selectedPage <= 0 ? 0 : selectedPage - 1
+                            // 右スワイプで前ページ（巡回）
+                            selectedPage = (selectedPage - 1 + pageCount) % pageCount
                         }
                         else if value.translation.width < -IND_SWIPE_RANGE {
-                            // 左スワイプで次ページ
-                            let lastIndex = pageCount - 1
-                            selectedPage = selectedPage < lastIndex ? selectedPage + 1 : lastIndex
+                            // 左スワイプで次ページ（巡回）
+                            selectedPage = (selectedPage + 1) % pageCount
                         }
                     }
             )
@@ -229,11 +244,10 @@ struct KeyboardFooterView: View {
             .onTapGesture { location in
                 let midX = viewWidth / 2
                 if location.x < midX {
-                    selectedPage = selectedPage <= 0 ? 0 : selectedPage - 1
+                    selectedPage = (selectedPage - 1 + pageCount) % pageCount
                 }
                 else {
-                    let lastIndex = pageCount - 1
-                    selectedPage = selectedPage < lastIndex ? selectedPage + 1 : lastIndex
+                    selectedPage = (selectedPage + 1) % pageCount
                 }
             }
         }
