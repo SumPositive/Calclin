@@ -127,10 +127,10 @@ struct SettingView: View {
                     }
                 }
                 HStack(spacing: 4) {
-                    Label("自動スクロール", systemImage: "arrow.down.to.line")
+                    Label("最下行へ", systemImage: "arrow.down.to.line")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
-                    Picker("自動スクロール", selection: $viewModel.autoScroll) {
+                    Picker("最下行へ", selection: $viewModel.autoScroll) {
                         ForEach(SettingViewModel.AutoScroll.allCases) { mode in
                             Text(mode.localized).tag(mode)
                         }

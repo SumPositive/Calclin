@@ -398,6 +398,16 @@
         }
       }
     },
+    "最下行へ" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "to Latest"
+          }
+        }
+      }
+    },
     "最後に閉じる(X)ボタンが現れます" : {
       "localizations" : {
         "en" : {
@@ -680,6 +690,16 @@
         }
       }
     },
+    "明細行をタップすれば編集できます。=行はメモ入力できます" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a row to edit. Tap = row to add a note."
+          }
+        }
+      }
+    },
     "有効桁数" : {
       "localizations" : {
         "en" : {
@@ -751,6 +771,7 @@
       }
     },
     "自動スクロール" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -816,16 +837,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show fewer calculator frames"
-          }
-        }
-      }
-    },
-    "明細行をタップすれば編集できます。=行はメモ入力できます" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap a row to edit. Tap = row to add a note."
           }
         }
       }
