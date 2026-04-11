@@ -93,6 +93,7 @@ final class CalcViewModel: ObservableObject {
     private var isCalcNewEntry: Bool = true     // 次の数字入力で現在値をクリア
     private var isAfterEquals: Bool = false     // = 直後フラグ（演算子続けで合計引き継ぎ）
     private var isPercMode: Bool = false        // % 入力済みフラグ（表示は5%のまま、計算時に変換）
+    private var isCalcNewEntryAfterUnit: Bool = false // 単位キー直後フラグ（次の数値入力で数値のみ置き換え）
     private var calcUnitDef: KeyDefinition? = nil  // 電卓モードの計算単位（= 結果表示単位）
     @Published private(set) var tapeLinesBuilding: [TapeLine] = []
     /// 編集中の historyRows インデックス（nil = 通常モード）
@@ -863,6 +864,7 @@ final class CalcViewModel: ObservableObject {
         isCalcNewEntry = true
         isAfterEquals = false
         isPercMode = false
+        isCalcNewEntryAfterUnit = false
         calcUnitDef = nil
         tapeLinesBuilding = []
     }
@@ -940,6 +942,27 @@ final class CalcViewModel: ObservableObject {
             isAnswerMode = false
             isAfterEquals = false
             isPercMode = false
+            isCalcNewEntryAfterUnit = false
+        } else if isCalcNewEntryAfterUnit,
+                  tokens.count >= 2,
+                  let ut = tokens.last, ut.hasPrefix(TOKEN_UNIT_PREFIX) {
+            // 単位キー直後の最初の数値入力：数値だけ置き換え、単位を維持
+            tokens[tokens.count - 2] = isZeroKey ? "0" : num
+            isCalcNewEntryAfterUnit = false
+            isAnswerMode = false
+            isPercMode = false
+        } else if tokens.count >= 2,
+                  let ut = tokens.last, ut.hasPrefix(TOKEN_UNIT_PREFIX) {
+            // 単位付き状態での数値追記：数値部分に追記、単位を維持
+            var numStr = tokens[tokens.count - 2]
+            guard numStr.count < CALC_PRECISION_MAX else { return }
+            if (numStr == "0" || numStr == "-0"), !numStr.contains(FM_DECIMAL) {
+                if !isZeroKey { numStr = (numStr == "-0" ? "-" : "") + num }
+            } else {
+                numStr += num
+            }
+            tokens[tokens.count - 2] = numStr
+            isAnswerMode = false
         } else {
             guard var last = tokens.last else { tokens = [num]; return }
             guard last.count < CALC_PRECISION_MAX else { return }
@@ -981,6 +1004,7 @@ final class CalcViewModel: ObservableObject {
     }
 
     private func inputOperatorCalc(_ op: String) {
+        isCalcNewEntryAfterUnit = false
         // 新規入力待ちで既に演算子があれば置換して終了（= 直後は例外: 合計引き継ぎ）
         if isCalcNewEntry && !isAfterEquals {
             if pendingOp != nil {
@@ -1128,6 +1152,7 @@ final class CalcViewModel: ObservableObject {
             guard let existing = keyboardViewModel.keyDef(code: keyDef.code),
                   existing.unitBase == keyDef.unitBase else { return }
             tokens.append(TOKEN_UNIT_PREFIX + keyDef.code)
+            isCalcNewEntryAfterUnit = true  // 次の数値入力で数値のみ置き換え
             isPercMode = false
             formulaUpdateCalc()
         }

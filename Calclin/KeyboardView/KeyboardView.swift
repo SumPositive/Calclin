@@ -288,7 +288,6 @@ struct KeyPageView: View {
                                     y: CGFloat(row) * height + height / 2
                                 )
                                 .opacity(disabled ? 0.30 : 1.0)
-                                .allowsHitTesting(!disabled)
                         }
                         else if keyCodes[index] != "", keyCodes[index] != "nop",
                                 1 <= index,
@@ -306,7 +305,6 @@ struct KeyPageView: View {
                                     y: CGFloat(row) * height + height
                                 )
                                 .opacity(disabled ? 0.30 : 1.0)
-                                .allowsHitTesting(!disabled)
                         }
                         else if keyCodes[index] != "", keyCodes[index] != "nop",
                                 colCount <= index,
@@ -322,7 +320,6 @@ struct KeyPageView: View {
                                     y: CGFloat(row) * height + height / 2
                                 )
                                 .opacity(disabled ? 0.30 : 1.0)
-                                .allowsHitTesting(!disabled)
                         }
                     }
                 }
@@ -382,8 +379,9 @@ struct KeyView: View {
                     try? await Task.sleep(for: .seconds(0.15))
                     isTapped = false
                 }
-                // .onTap 処理
-                if let keyDef = keyDef, isLongTapped == false {
+                // .onTap 処理（非活性キーはタップを無視。ロングタップは別途 simultaneousGesture で処理）
+                if let keyDef = keyDef, isLongTapped == false,
+                   !calcViewModel.isKeyDisabled(keyDef.code) {
                     self.onTap(keyDef)
                 }
                 isLongTapped = false
