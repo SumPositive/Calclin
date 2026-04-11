@@ -8,6 +8,23 @@
 import SwiftUI
 import UIKit
 import SafariServices
+import UniformTypeIdentifiers
+
+// キーボード配置 JSON のエクスポート用ドキュメント型
+struct KeyboardFileDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.json] }
+    var data: Data
+    init(data: Data) { self.data = data }
+    init(configuration: ReadConfiguration) throws {
+        guard let data = configuration.file.regularFileContents else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        self.data = data
+    }
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: data)
+    }
+}
 
 
 let SettingView_HEIGHT: CGFloat = 730.0 // シート表示時の高さ指定
@@ -20,6 +37,9 @@ struct SettingView: View {
     @State private var showSafari = false  // Safariシート表示有無
     @State private var safariURL: URL?  // 開く予定のURLを保持
     @State private var showAdMobSheet = false  // 広告表示シートの有無
+    @State private var isExporting = false  // キーボードエクスポートシート
+    @State private var isImporting = false  // キーボードインポートシート
+    @State private var exportDocument: KeyboardFileDocument?  // エクスポート対象
 
     /// アプリのVersion/Build番号をまとめて返す
     private var appVersionText: String {
@@ -94,6 +114,35 @@ struct SettingView: View {
             AdMobAdSheetView()
                 .presentationDetents([.large])
                 //.presentationDragIndicator(.visible)
+        }
+        .fileExporter(
+            isPresented: $isExporting,
+            document: exportDocument,
+            contentType: .json,
+            defaultFilename: "calclin-keyboard"
+        ) { result in
+            switch result {
+            case .success:
+                Manager.shared.toast(String(localized: "エクスポートしました"), wait: 2.0)
+            case .failure:
+                Manager.shared.toast(String(localized: "エクスポートに失敗しました"), wait: 2.0)
+            }
+        }
+        .fileImporter(
+            isPresented: $isImporting,
+            allowedContentTypes: [.json]
+        ) { result in
+            switch result {
+            case .success(let url):
+                let ok = keyboardViewModel.importKeyboardJson(from: url)
+                Manager.shared.toast(
+                    ok ? String(localized: "インポートしました") : String(localized: "インポートに失敗しました"),
+                    wait: 2.0
+                )
+                if ok { AppAnalytics.logKeyboardRestored() }
+            case .failure:
+                Manager.shared.toast(String(localized: "インポートに失敗しました"), wait: 2.0)
+            }
         }
     }
 
@@ -316,18 +365,17 @@ struct SettingView: View {
             HStack(spacing: 4) {
                 VStack(spacing: 4) {
                     Button {
-                        // 保存処理の成否に応じて、利用者に分かりやすくトースト通知する
-                        let isSuccess = keyboardViewModel.saveKeyboardJson()
-                        if isSuccess {
-                            Manager.shared.toast(String(localized: "保存しました"), wait: 2.0)
+                        if let data = keyboardViewModel.makeExportData() {
+                            exportDocument = KeyboardFileDocument(data: data)
+                            isExporting = true
                         } else {
-                            Manager.shared.toast(String(localized: "保存に失敗しました"), wait: 2.0)
+                            Manager.shared.toast(String(localized: "エクスポートに失敗しました"), wait: 2.0)
                         }
-                        // 保存ボタンの利用状況を計測し、UI改善に活かす
                         AppAnalytics.logKeyboardSaved()
                     } label: {
-                        Label("保存", systemImage: "square.and.arrow.down")
-                            .font(.subheadline)
+                        Label("エクスポート", systemImage: "square.and.arrow.up")
+                            .font(.footnote)
+                            .fixedSize()
                             .padding(.horizontal, 8)
                             .frame(height: 34)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -336,25 +384,18 @@ struct SettingView: View {
                                     .strokeBorder(.blue, lineWidth: 1)
                             )
                     }
-                    Text("現在の配置を保存する")
+                    Text("JSONファイルに書き出す")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
                 VStack(spacing: 4) {
                     Button {
-                        // 復元処理の成否に応じて、成功／失敗をトーストで通知する
-                        let isSuccess = keyboardViewModel.loadKeyboardJson()
-                        if isSuccess {
-                            Manager.shared.toast(String(localized: "保存した配置に戻しました"), wait: 3.0)
-                        } else {
-                            Manager.shared.toast(String(localized: "復元に失敗しました"), wait: 2.0)
-                        }
-                        // 復元操作をAnalyticsで追跡し、必要なガイドがないか判断する
-                        AppAnalytics.logKeyboardRestored()
+                        isImporting = true
                     } label: {
-                        Label("復元", systemImage: "square.and.arrow.up")
-                            .font(.subheadline)
+                        Label("インポート", systemImage: "square.and.arrow.down")
+                            .font(.footnote)
+                            .fixedSize()
                             .padding(.horizontal, 8)
                             .frame(height: 34)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -363,7 +404,7 @@ struct SettingView: View {
                                     .strokeBorder(.green, lineWidth: 1)
                             )
                     }
-                    Text("保存した配置に戻す")
+                    Text("JSONファイルから読み込む")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -383,8 +424,9 @@ struct SettingView: View {
                         // 初期化はインパクトが大きいので、誤タップ防止策の検討材料にする
                         AppAnalytics.logKeyboardReset()
                     } label: {
-                        Label("初期化", systemImage: "keyboard")
+                        Text("初期化")
                             .font(.subheadline)
+                            .fixedSize()
                             .padding(.horizontal, 8)
                             .frame(height: 24)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))

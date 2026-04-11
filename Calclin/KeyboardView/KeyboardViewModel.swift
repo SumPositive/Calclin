@@ -196,6 +196,38 @@ final class KeyboardViewModel: ObservableObject {
         }
     }
 
+    // 現在の配置をエクスポート用 Data として返す（ファイルには書かない）
+    func makeExportData() -> Data? {
+        let keyboardData = KeyboardJSON(appName: "CalcRoll", keyboard_1: keyboard)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        return try? encoder.encode(keyboardData)
+    }
+
+    // 外部 URL から keyboard.json をインポートする（fileImporter 用）
+    // - Returns: 成功したら true
+    @discardableResult
+    func importKeyboardJson(from url: URL) -> Bool {
+        let accessing = url.startAccessingSecurityScopedResource()
+        defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+        do {
+            let data = try Data(contentsOf: url)
+            let decoded = try JSONDecoder().decode(KeyboardJSON.self, from: data)
+            guard decoded.appName == "CalcRoll",
+                  let kb = decoded.keyboard_1,
+                  kb.count == 5,
+                  let first = kb.first, first.count == (5 * 6) else {
+                log(.warning, "インポートファイルの形式が不正")
+                return false
+            }
+            keyboard = kb
+            return true
+        } catch {
+            log(.error, "インポート失敗: \(error)")
+            return false
+        }
+    }
+
     // JSONファイルに保存した配置に戻す
     // - Returns: 復元に成功したらtrue、失敗したらfalse
     @discardableResult
