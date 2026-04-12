@@ -95,6 +95,8 @@ final class CalcViewModel: ObservableObject {
     private var isPercMode: Bool = false        // % 入力済みフラグ（表示は5%のまま、計算時に変換）
     private var isCalcNewEntryAfterUnit: Bool = false // 単位キー直後フラグ（次の数値入力で数値のみ置き換え）
     private var calcUnitDef: KeyDefinition? = nil  // 電卓モードの計算単位（= 結果表示単位）
+    private var isCalcRootResult = false           // √/∛ 直後フラグ（表示を最大精度にする）
+    private var isAccRootResult  = false           // accumulator がルート結果フラグ（演算子後も継続）
     @Published private(set) var rollLinesBuilding: [RollLine] = []
     /// 編集中の historyRows インデックス（nil = 通常モード）
     @Published private(set) var editingHistoryIndex: Int? = nil
@@ -811,7 +813,9 @@ final class CalcViewModel: ObservableObject {
         }
         // 保留演算子プレフィックス（accumulator を先頭に小さく薄く表示）
         if let op = pendingOp {
-            let accStr = editingAccDisplay.isEmpty ? unitDisplayStr(accumulator) : editingAccDisplay
+            let accStr = editingAccDisplay.isEmpty
+                ? (isAccRootResult ? accumulator.formatted(calcMaxConfig) : unitDisplayStr(accumulator))
+                : editingAccDisplay
             var accAttr = AttributedString(accStr)
             accAttr.foregroundColor = COLOR_NUMBER.opacity(0.4)
             accAttr.font = Font.system(size: 15.0 * numberFontScale, weight: .bold).monospacedDigit()
@@ -830,7 +834,11 @@ final class CalcViewModel: ObservableObject {
         let unitToken = tokens.last?.hasPrefix(TOKEN_UNIT_PREFIX) == true ? tokens.last : nil
         guard let numStr = numToken, !numStr.isEmpty else { return }
         if Double(numStr) != nil {
-            formulaAttr += AttributedString(AZDecimal(numStr).formatted(calcConfig))
+            // √/∛ 直後は設定上限桁数(10)で表示
+            let displayStr = isCalcRootResult
+                ? AZDecimal(numStr).formatted(calcMaxConfig)
+                : AZDecimal(numStr).formatted(calcConfig)
+            formulaAttr += AttributedString(displayStr)
             if isPercMode {
                 var percAttr = AttributedString("%")
                 percAttr.foregroundColor = COLOR_OPERATOR
@@ -866,7 +874,20 @@ final class CalcViewModel: ObservableObject {
         isPercMode = false
         isCalcNewEntryAfterUnit = false
         calcUnitDef = nil
+        isCalcRootResult = false
+        isAccRootResult  = false
         rollLinesBuilding = []
+    }
+
+    /// 設定上限桁数（10）の AZDecimalConfig（√/∛ 結果の表示に使用）
+    private var calcMaxConfig: AZDecimalConfig {
+        AZDecimalConfig(
+            decimalDigits: Int(SETTING_decimalDigits_MAX),
+            decimalSeparator: calcConfig.decimalSeparator,
+            roundType: calcConfig.roundType,
+            trailZero: false,
+            groupType: calcConfig.groupType,
+            groupSeparator: calcConfig.groupSeparator)
     }
 
     @MainActor
@@ -952,7 +973,7 @@ final class CalcViewModel: ObservableObject {
             formulaUpdateCalc()
 
         case "sqRoot", "cuRoot":
-            // 現在の数値に平方根または立方根を適用
+            // 現在の数値に√/∛ を適用（設定上限10桁で格納・表示、次の計算結果で設定桁数に丸める）
             guard let numStr = tokens.last,
                   !numStr.isEmpty, numStr != FM_SUB else { break }
             let val = AZDecimal(numStr)
@@ -962,11 +983,12 @@ final class CalcViewModel: ObservableObject {
                     Manager.shared.toast(String(localized: "負の数の√は計算できません"))
                     break
                 }
-                result = val.squareRoot().rounded(calcConfig)
+                result = val.squareRoot().rounded(calcMaxConfig)   // 設定上限(10桁)で丸めて格納
             } else {
-                result = val.cubeRoot().rounded(calcConfig)
+                result = val.cubeRoot().rounded(calcMaxConfig)     // 設定上限(10桁)で丸めて格納
             }
             tokens = [result.value]
+            isCalcRootResult = true         // 設定上限桁数で表示するフラグ
             isCalcNewEntry = false
             isAnswerMode = false
             isPercMode = false
@@ -978,6 +1000,7 @@ final class CalcViewModel: ObservableObject {
     }
 
     private func inputNumberCalc(_ num: String, isZeroKey: Bool) {
+        isCalcRootResult = false
         if isCalcNewEntry || tokens.isEmpty {
             tokens = [isZeroKey ? "0" : num]
             isCalcNewEntry = false
@@ -1077,6 +1100,9 @@ final class CalcViewModel: ObservableObject {
                 current = toBaseValue(cv.numStr, unitDef: cv.unitDef)
                 if let def = cv.unitDef {
                     displayValue = AZDecimal(cv.numStr).formatted(calcConfig) + def.formula
+                } else if isCalcRootResult {
+                    // √/∛ 直後は設定上限(10桁)のまま丸めずにロール表示
+                    displayValue = raw.formatted(calcMaxConfig)
                 } else {
                     displayValue = raw.formatted(calcConfig)
                 }
@@ -1089,12 +1115,17 @@ final class CalcViewModel: ObservableObject {
         if let existingOp = pendingOp {
             // 保留演算子を実行して中間結果をロールへ（accumulator は Base単位）
             let result = calcBinary(accumulator, existingOp, current)
+            // accumulator（prevAccumulator）がルート結果なら最大桁数で runningTotal 表示
+            let rtStr = isAccRootResult
+                ? prevAccumulator.formatted(calcMaxConfig)
+                : baseUnitDisplayStr(prevAccumulator)
             rollLinesBuilding.append(RollLine(op: existingOp, value: displayValue,
-                                              isFinal: false, runningTotal: baseUnitDisplayStr(result),
+                                              isFinal: false, runningTotal: rtStr,
                                               rawBase: current.value,
                                               accBase: prevAccumulator.value,
                                               unitCode: lineUnitCode))
             accumulator = result
+            isAccRootResult = false   // 演算結果はもうルート直後ではない
         } else {
             // 最初の演算子 — 初期値をロールへ（prevTotal なし）
             rollLinesBuilding.append(RollLine(op: " ", value: displayValue, isFinal: false,
@@ -1102,6 +1133,7 @@ final class CalcViewModel: ObservableObject {
                                               accBase: "0",
                                               unitCode: lineUnitCode))
             accumulator = current
+            isAccRootResult = isCalcRootResult  // ルート結果が accumulator になった
             // 最初の数値の単位を記録（= 時の結果表示単位として使う）
             // Bare単位（π,φ,e）は結果を定数単位で表示しない（通常の数値として扱う）
             let firstUnitDef = currentCalcValue()?.unitDef
@@ -1109,6 +1141,7 @@ final class CalcViewModel: ObservableObject {
         }
         pendingOp = op
         isCalcNewEntry = true
+        isCalcRootResult = false
         tokens = []
         isAnswerMode = false
         formulaUpdateCalc()
@@ -1257,8 +1290,11 @@ final class CalcViewModel: ObservableObject {
 
             if let existingOp = pendingOp {
                 resultBase = calcBinary(accumulator, existingOp, current)
+                let rtStr = isAccRootResult
+                    ? prevAccumulator.formatted(calcMaxConfig)
+                    : baseUnitDisplayStr(prevAccumulator)
                 rollLinesBuilding.append(RollLine(op: existingOp, value: displayValue,
-                                                  isFinal: false, runningTotal: baseUnitDisplayStr(resultBase),
+                                                  isFinal: false, runningTotal: rtStr,
                                                   rawBase: current.value,
                                                   accBase: prevAccumulator.value,
                                                   unitCode: lineUnitCode))
@@ -1360,7 +1396,7 @@ final class CalcViewModel: ObservableObject {
         editingHistoryIndex = historyIndex
         editingLineIndex = lineIndex
         editingAccDisplay = lineIndex > 0
-            ? (lines[lineIndex - 1].runningTotal ?? lines[lineIndex - 1].value)
+            ? baseUnitDisplayStr(AZDecimal(lines[lineIndex].accBase))
             : ""
         formulaUpdateCalc()
     }
@@ -1422,14 +1458,14 @@ final class CalcViewModel: ObservableObject {
         lines[lineIdx].op = newOp
         lines[lineIdx].value = displayValue
         lines[lineIdx].rawBase = current.value
-        lines[lineIdx].runningTotal = baseUnitDisplayStr(acc)
+        lines[lineIdx].runningTotal = baseUnitDisplayStr(AZDecimal(lines[lineIdx].accBase))
         lines[lineIdx].unitCode = newUnitCode
 
         // 後続行を再計算（進行中ロールに最終行はないので全行中間行）
         for idx in (lineIdx + 1)..<lines.count {
             lines[idx].accBase = acc.value
             acc = calcBinary(acc, lines[idx].op, AZDecimal(lines[idx].rawBase))
-            lines[idx].runningTotal = baseUnitDisplayStr(acc)
+            lines[idx].runningTotal = baseUnitDisplayStr(AZDecimal(lines[idx].accBase))
         }
 
         // 再計算後の accumulator と pendingOp を復元（最後の演算子は savedPendingOp）
@@ -1506,7 +1542,7 @@ final class CalcViewModel: ObservableObject {
         lines[lineIdx].op = newOp
         lines[lineIdx].value = displayValue
         lines[lineIdx].rawBase = current.value
-        lines[lineIdx].runningTotal = baseUnitDisplayStr(acc)
+        lines[lineIdx].runningTotal = baseUnitDisplayStr(AZDecimal(lines[lineIdx].accBase))
         lines[lineIdx].unitCode = newUnitCode
         // accBase はそのまま（この行の前の状態は変わらない）
 
@@ -1528,7 +1564,7 @@ final class CalcViewModel: ObservableObject {
                 // 中間行: accBase と runningTotal を更新
                 lines[idx].accBase = acc.value
                 acc = calcBinary(acc, lines[idx].op, AZDecimal(lines[idx].rawBase))
-                lines[idx].runningTotal = baseUnitDisplayStr(acc)
+                lines[idx].runningTotal = baseUnitDisplayStr(AZDecimal(lines[idx].accBase))
             }
         }
 
