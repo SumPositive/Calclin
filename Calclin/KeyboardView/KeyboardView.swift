@@ -296,7 +296,6 @@ struct KeyPageView: View {
                     let index = row * colCount + col
                     if index < keyCodes.count {
                         let keyCode = keyCodes[index]
-                        let disabled = calcViewModel.isKeyDisabled(keyCode)
                         let valid = keyCode != "" && keyCode != "nop"
 
                         // 隣接セルに同じコードがあるか（valid なセルのみ連結対象）
@@ -343,7 +342,6 @@ struct KeyPageView: View {
                                     x: CGFloat(col) * width + width / 2,
                                     y: CGFloat(row) * height + height * CGFloat(runLen) / 2
                                 )
-                                .opacity(disabled ? 0.30 : 1.0)
                         } else if isHTail {
                             // 横連結の非先頭セル → 非表示
                         } else if isHHead {
@@ -364,16 +362,14 @@ struct KeyPageView: View {
                                     x: CGFloat(col) * width + width * CGFloat(runLen) / 2,
                                     y: CGFloat(row) * height + height / 2
                                 )
-                                .opacity(disabled ? 0.30 : 1.0)
-                        } else if valid || keyCode == "nop" {
-                            // 単独キー（nopは長押しで再定義可能）
+                        } else if valid || keyCode == "nop" || keyCode == "" {
+                            // 単独キー（nop・空文字は長押しで再定義可能）
                             KeyView(viewModel: viewModel, calcViewModel: calcViewModel, onTap: onTap, page: page, index: index)
                                 .frame(width: width - space, height: height - space)
                                 .position(
                                     x: CGFloat(col) * width + width / 2,
                                     y: CGFloat(row) * height + height / 2
                                 )
-                                .opacity(disabled ? 0.30 : 1.0)
                         }
                     }
                 }
@@ -394,6 +390,8 @@ struct KeyView: View {
     private var symbol: String = ""
     private var page: Int
     private var index: Int
+    /// true = 未定義キー（"" or "nop"）：タップ無効・長押しで再定義可能
+    private var isBlankKey: Bool = false
 
     init(viewModel: KeyboardViewModel,
          calcViewModel: CalcViewModel,
@@ -410,6 +408,7 @@ struct KeyView: View {
         if page < viewModel.keyboard.count,
            index < viewModel.keyboard[page].count {
             let keyCode = viewModel.keyboard[page][index]
+            isBlankKey = keyCode.isEmpty || keyCode == "nop"
             if let def = viewModel.keyDef(code: keyCode) {
                 keyTop = def.keyTop
                 symbol = def.symbol ?? ""
@@ -427,15 +426,17 @@ struct KeyView: View {
     var body: some View {
         GeometryReader { geo in
             Button(action: {
-                isTapped = true // 押された
-                Task { @MainActor in
-                    // 一定時間後に元に戻す
-                    try? await Task.sleep(for: .seconds(0.15))
-                    isTapped = false
+                let keyIsDisabled = calcViewModel.isKeyDisabled(keyDef?.code ?? "")
+                // 非活性キーはタップアニメーションなし（長押しは別途 simultaneousGesture で有効）
+                if !keyIsDisabled {
+                    isTapped = true
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .seconds(0.15))
+                        isTapped = false
+                    }
                 }
-                // .onTap 処理（非活性キーはタップを無視。ロングタップは別途 simultaneousGesture で処理）
-                if let keyDef = keyDef, isLongTapped == false,
-                   !calcViewModel.isKeyDisabled(keyDef.code) {
+                // .onTap 処理（非活性キーはタップを無視）
+                if let keyDef = keyDef, isLongTapped == false, !keyIsDisabled {
                     self.onTap(keyDef)
                 }
                 isLongTapped = false
@@ -443,9 +444,12 @@ struct KeyView: View {
                 // KeyButtonStyle方式では、Image切替の反応が悪いため、直埋めにした
                 let isEditReturn = keyDef?.code == "Ans" && calcViewModel.editingHistoryIndex != nil
                 ZStack {
+                    // 活性キーは少し暗く、非活性キーは通常の明るさ（透過なし）
+                    let isDisabled = calcViewModel.isKeyDisabled(keyDef?.code ?? "")
                     Image(isTapped ? "keyDown" : "keyUp")
                         .resizable()
                         .opacity(colorScheme == .dark ? 0.40 : 1.0)
+                        .colorMultiply(isDisabled ? Color(white: 0.92) : .white)
 
                     // ダークモードはキートップを黒で表示
                     let keyTextColor: Color = colorScheme == .dark
@@ -474,6 +478,7 @@ struct KeyView: View {
                 }
             }
 
+            .buttonStyle(.plain) // Buttonデフォルトのハイライトアニメーションを無効化
             .contentShape(Rectangle())
             .simultaneousGesture(
                 LongPressGesture(minimumDuration: 0.6) // 長押し

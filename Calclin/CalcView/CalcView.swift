@@ -54,55 +54,55 @@ struct CalcView: View {
                         .allowsHitTesting(false)
                 }
                 .overlay(alignment: .topLeading) {
-                    Button {
-                        viewModel.calcMode = (viewModel.calcMode == .calculator) ? .formula : .calculator
-                    } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: viewModel.calcMode == .calculator ? "plus.forwardslash.minus" : "function")
-                                .font(.system(size: 15, weight: .bold))
-                            if setting.playMode == .beginner {
-                                Text(viewModel.calcMode == .calculator
-                                     ? String(localized: "電卓")
-                                     : String(localized: "数式"))
-                                    .font(.system(size: 13, weight: .medium))
+                    HStack(spacing: 6) {
+                        // 電卓／数式モード切替ボタン
+                        Button {
+                            viewModel.calcMode = (viewModel.calcMode == .calculator) ? .formula : .calculator
+                        } label: {
+                            HStack(spacing: 5) {
+                                Image(systemName: viewModel.calcMode == .calculator ? "plus.forwardslash.minus" : "function")
+                                    .font(.system(size: 15, weight: .bold))
+                                if setting.playMode == .beginner {
+                                    Text(viewModel.calcMode == .calculator
+                                         ? String(localized: "電卓")
+                                         : String(localized: "数式"))
+                                        .font(.system(size: 13, weight: .medium))
+                                }
                             }
+                            .foregroundStyle(.primary.opacity(0.6))
+                            .padding(.horizontal, 8)
+                            .frame(height: 30)
+                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
-                        .foregroundStyle(.primary.opacity(0.6))
-                        .padding(.horizontal, 8)
-                        .frame(height: 30)
-                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        // PDFボタン（モード切替ボタンの右隣）
+                        Button {
+                            isGeneratingPDF = true
+                            Task { @MainActor in
+                                try? await Task.sleep(nanoseconds: 80_000_000)
+                                let url = makeCalcPDF(viewModel: viewModel, fontScale: setting.numberFontScale)
+                                isGeneratingPDF = false
+                                if let url {
+                                    shareURL = url
+                                    isSharing = true
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.system(size: 14, weight: .semibold))
+                                if setting.playMode == .beginner {
+                                    Text("PDF")
+                                        .font(.system(size: 13, weight: .medium))
+                                }
+                            }
+                            .foregroundStyle(.primary.opacity(0.6))
+                            .padding(.horizontal, 8)
+                            .frame(height: 30)
+                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        }
                     }
                     .padding(.top, 4)
                     .padding(.leading, 6)
-                }
-                .overlay(alignment: .topTrailing) {
-                    Button {
-                        isGeneratingPDF = true
-                        Task { @MainActor in
-                            try? await Task.sleep(nanoseconds: 80_000_000)
-                            let url = makeCalcPDF(viewModel: viewModel, fontScale: setting.numberFontScale)
-                            isGeneratingPDF = false
-                            if let url {
-                                shareURL = url
-                                isSharing = true
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 14, weight: .semibold))
-                            if setting.playMode == .beginner {
-                                Text("PDF")
-                                    .font(.system(size: 13, weight: .medium))
-                            }
-                        }
-                        .foregroundStyle(.primary.opacity(0.6))
-                        .padding(.horizontal, 8)
-                        .frame(height: 30)
-                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    }
-                    .padding(.top, 4)
-                    .padding(.trailing, 6)
                 }
 
                 FormulaView(viewModel: viewModel)
