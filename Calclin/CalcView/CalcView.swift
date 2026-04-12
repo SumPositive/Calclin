@@ -39,6 +39,20 @@ struct CalcView: View {
                     }
                 }
                 .frame(maxHeight: .infinity)
+                .overlay(alignment: .top) {
+                    // 上端影：ロールが沈み込む演出
+                    LinearGradient(
+                        stops: [
+                            .init(color: Color.black.opacity(0.68), location: 0.0),
+                            .init(color: Color.black.opacity(0.38), location: 0.10),
+                            .init(color: Color.black.opacity(0.18), location: 0.35),
+                            .init(color: Color.black.opacity(0.04), location: 0.70),
+                            .init(color: Color.black.opacity(0.00), location: 1.0),
+                        ],
+                        startPoint: .top, endPoint: .bottom)
+                        .frame(height: 36)
+                        .allowsHitTesting(false)
+                }
                 .overlay(alignment: .topLeading) {
                     Button {
                         viewModel.calcMode = (viewModel.calcMode == .calculator) ? .formula : .calculator
