@@ -1248,9 +1248,9 @@ final class CalcViewModel: ObservableObject {
     /// isPercMode 時にトークンの値をパーセント変換して返す
     private func resolvedPercValue(_ current: AZDecimal) -> AZDecimal {
         if pendingOp == FM_ADD || pendingOp == FM_SUB {
-            return (accumulator * current / AZDecimal("100")).rounded(calcConfig)
+            return accumulator * current / AZDecimal("100")   // 丸めなし
         } else {
-            return (current / AZDecimal("100")).rounded(calcConfig)
+            return current / AZDecimal("100")                 // 丸めなし
         }
     }
 
@@ -1589,7 +1589,7 @@ final class CalcViewModel: ObservableObject {
         case FM_DIV, FM_DIV_:  result = lhs / rhs
         default:                return lhs
         }
-        return result.rounded(calcConfig)
+        return result   // 丸めなし：accumulator は最大精度で保持し、表示時に formatted(calcConfig) で丸める
     }
 
 

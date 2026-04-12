@@ -297,42 +297,76 @@ struct KeyPageView: View {
                     if index < keyCodes.count {
                         let keyCode = keyCodes[index]
                         let disabled = calcViewModel.isKeyDisabled(keyCode)
-                        if keyCodes[index] != "", keyCodes[index] != "nop",
-                           index < rowCount * colCount - 1,
-                           keyCodes[index] == keyCodes[index + 1] {
-                            // 右に連結：幅2倍
+                        let valid = keyCode != "" && keyCode != "nop"
+
+                        // 隣接セルに同じコードがあるか（valid なセルのみ連結対象）
+                        let hasAbove = valid && row > 0          && keyCodes[index - colCount] == keyCode
+                        let hasBelow = valid && row < rowCount-1 && keyCodes[index + colCount] == keyCode
+                        let hasLeft  = valid && col > 0          && keyCodes[index - 1]        == keyCode
+                        let hasRight = valid && col < colCount-1 && keyCodes[index + 1]        == keyCode
+
+                        // 縦優先：V隣接があれば縦メンバー（横隣接があっても縦を優先）
+                        let isV = hasAbove || hasBelow
+                        // 横：V隣接がない場合のみ横メンバー候補
+                        let isH = !isV && (hasLeft || hasRight)
+
+                        // 縦先頭：上に同コードなし・下に同コードあり
+                        let isVHead = isV && hasBelow && !hasAbove
+
+                        // 左セルがVメンバーか（左に同コードがあり、かつ左セルがV隣接を持つ）
+                        let leftHasV = col > 0 && (
+                            (row > 0          && keyCodes[(row-1)*colCount+col-1] == keyCode) ||
+                            (row < rowCount-1  && keyCodes[(row+1)*colCount+col-1] == keyCode)
+                        )
+                        // 左セルが同コードのHメンバーか（V隣接なし）
+                        let leftIsSameH = hasLeft && !leftHasV
+
+                        // 横先頭：右に同コードあり・左が同HメンバーでないことOR左がVメンバー
+                        let isHHead = isH && hasRight && !leftIsSameH
+                        // 横非先頭（スキップ）：左が同Hメンバー
+                        let isHTail = isH && leftIsSameH
+
+                        if isV && !isVHead {
+                            // 縦連結の非先頭セル → 非表示
+                        } else if isVHead {
+                            // 縦連結の先頭：連続数を計算（全縦メンバーを含む）
+                            let runLen: Int = {
+                                var n = 1; var r = row + 1
+                                while r < rowCount && keyCodes[r*colCount+col] == keyCode {
+                                    n += 1; r += 1
+                                }
+                                return n
+                            }()
                             KeyView(viewModel: viewModel, calcViewModel: calcViewModel, onTap: onTap, page: page, index: index)
-                                .frame(width: width * 2 - space, height: height - space)
+                                .frame(width: width - space, height: height * CGFloat(runLen) - space)
                                 .position(
-                                    x: CGFloat(col) * width + width,
+                                    x: CGFloat(col) * width + width / 2,
+                                    y: CGFloat(row) * height + height * CGFloat(runLen) / 2
+                                )
+                                .opacity(disabled ? 0.30 : 1.0)
+                        } else if isHTail {
+                            // 横連結の非先頭セル → 非表示
+                        } else if isHHead {
+                            // 横連結の先頭：Vメンバーのセルで停止しながら連続数を計算
+                            let runLen: Int = {
+                                var n = 1; var c = col + 1
+                                while c < colCount && keyCodes[row*colCount+c] == keyCode {
+                                    let nVU = row > 0          && keyCodes[(row-1)*colCount+c] == keyCode
+                                    let nVD = row < rowCount-1  && keyCodes[(row+1)*colCount+c] == keyCode
+                                    if nVU || nVD { break }  // Vメンバーのセルで停止
+                                    n += 1; c += 1
+                                }
+                                return n
+                            }()
+                            KeyView(viewModel: viewModel, calcViewModel: calcViewModel, onTap: onTap, page: page, index: index)
+                                .frame(width: width * CGFloat(runLen) - space, height: height - space)
+                                .position(
+                                    x: CGFloat(col) * width + width * CGFloat(runLen) / 2,
                                     y: CGFloat(row) * height + height / 2
                                 )
                                 .opacity(disabled ? 0.30 : 1.0)
-                        }
-                        else if keyCodes[index] != "", keyCodes[index] != "nop",
-                                1 <= index,
-                                keyCodes[index - 1] == keyCodes[index] {
-                            // 左に連結：非表示
-                        }
-                        else if keyCodes[index] != "", keyCodes[index] != "nop",
-                                index < rowCount * colCount - colCount,
-                                keyCodes[index] == keyCodes[index + colCount] {
-                            // 下に連結：高さ2倍
-                            KeyView(viewModel: viewModel, calcViewModel: calcViewModel, onTap: onTap, page: page, index: index)
-                                .frame(width: width - space, height: height * 2 - space)
-                                .position(
-                                    x: CGFloat(col) * width + width / 2,
-                                    y: CGFloat(row) * height + height
-                                )
-                                .opacity(disabled ? 0.30 : 1.0)
-                        }
-                        else if keyCodes[index] != "", keyCodes[index] != "nop",
-                                colCount <= index,
-                                keyCodes[index - colCount] == keyCodes[index] {
-                            // 上に連結：非表示
-                        }
-                        else {
-                            // 通常サイズキー
+                        } else if valid || keyCode == "nop" {
+                            // 単独キー（nopは長押しで再定義可能）
                             KeyView(viewModel: viewModel, calcViewModel: calcViewModel, onTap: onTap, page: page, index: index)
                                 .frame(width: width - space, height: height - space)
                                 .position(

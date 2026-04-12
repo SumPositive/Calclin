@@ -182,8 +182,8 @@ final class SettingViewModel: ObservableObject {
         var localized: String {
             switch self {
             case .never:    return String(localized: "しない")
-            case .onInput:  return String(localized: "入力開始時")
-            case .onEquals: return String(localized: "＝タップ時")
+            case .onInput:  return String(localized: "入力時")
+            case .onEquals: return String(localized: "＝合計時")
             }
         }
     }

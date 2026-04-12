@@ -172,13 +172,13 @@ struct ContentView: View {
                             keyboardViewModel.popupKeyDefList = nil
                             // 最終選択を記録
                             keyboardViewModel.prevSelectKeyCode = selectedKeyDef.code
-                            // keyboardを更新する
+                            // 連結グループ全体を新しいコードに更新（連結解除も含む）
                             if info.page < keyboardViewModel.keyboard.count,
                                info.index < keyboardViewModel.keyboard[info.page].count {
-                                // keyboardを更新する
-                                keyboardViewModel.keyboard[info.page][info.index] = selectedKeyDef.code
-                                // 都度、不揮発記録にkeyboardを保存する
-                                keyboardViewModel.saveKeyboardJson()
+                                keyboardViewModel.updateMergedGroup(
+                                    page: info.page,
+                                    index: info.index,
+                                    newCode: selectedKeyDef.code)
                             }
                         }.frame(width: popupWidth, height: popupHeight)
                     }

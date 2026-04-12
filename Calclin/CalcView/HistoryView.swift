@@ -100,7 +100,7 @@ struct HistoryView: View {
                         proxy.scrollTo(first.offset, anchor: .top)
                     }
                 }
-                .onChange(of: viewModel.inputStartTrigger) { _, _ in
+                .onChange(of: viewModel.formulaAttr) { _, _ in
                     guard setting.autoScroll == .onInput,
                           let first = reversedRows.first else { return }
                     Task { @MainActor in
@@ -110,7 +110,7 @@ struct HistoryView: View {
             }
         }
     }
-    
+
 }
 
 // カスタム明細セル
@@ -250,7 +250,7 @@ struct RollView: View {
                     proxy.scrollTo(first.offset, anchor: .top)
                 }
             }
-            .onChange(of: viewModel.inputStartTrigger) { _, _ in
+            .onChange(of: viewModel.formulaAttr) { _, _ in
                 guard setting.autoScroll == .onInput else { return }
                 Task { @MainActor in
                     if !viewModel.rollLinesBuilding.isEmpty {

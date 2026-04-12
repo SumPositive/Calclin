@@ -147,6 +147,70 @@ final class KeyboardViewModel: ObservableObject {
         return keyDefs.first { $0.code == code }
     }
     
+    /// 指定セルと同じコードで連続隣接しているセルのインデックスを返す
+    /// 縦横両方に同じコードが隣接する場合は連結しない（単独セルを返す）
+    func mergedIndices(page: Int, index: Int) -> [Int] {
+        let cols = Self.colCount
+        let rows = Self.rowCount
+        let total = cols * rows
+        guard page < keyboard.count, index < keyboard[page].count else { return [index] }
+        let code = keyboard[page][index]
+        guard !code.isEmpty, code != "nop" else { return [index] }
+
+        let row = index / cols
+        let col = index % cols
+
+        let hasUp    = row > 0        && keyboard[page][index - cols] == code
+        let hasDown  = row < rows - 1 && keyboard[page][index + cols] == code
+        let hasLeft  = col > 0        && keyboard[page][index - 1]    == code
+        let hasRight = col < cols - 1 && keyboard[page][index + 1]    == code
+
+        // 縦優先：V隣接があれば縦スキャン（横隣接があっても縦を優先）
+        if hasUp || hasDown {
+            var result: [Int] = [index]
+            var r = row + 1
+            while r < rows && keyboard[page][r * cols + col] == code {
+                result.append(r * cols + col); r += 1
+            }
+            r = row - 1
+            while r >= 0 && keyboard[page][r * cols + col] == code {
+                result.append(r * cols + col); r -= 1
+            }
+            return result
+        }
+
+        // 横スキャン：V隣接なし・Vメンバーのセルで停止
+        if hasLeft || hasRight {
+            var result: [Int] = [index]
+            var c = col + 1
+            while c < cols && keyboard[page][row * cols + c] == code {
+                let nVU = row > 0        && keyboard[page][(row - 1) * cols + c] == code
+                let nVD = row < rows - 1 && keyboard[page][(row + 1) * cols + c] == code
+                if nVU || nVD { break }  // Vメンバーのセルで停止
+                result.append(row * cols + c); c += 1
+            }
+            c = col - 1
+            while c >= 0 && keyboard[page][row * cols + c] == code {
+                let nVU = row > 0        && keyboard[page][(row - 1) * cols + c] == code
+                let nVD = row < rows - 1 && keyboard[page][(row + 1) * cols + c] == code
+                if nVU || nVD { break }
+                result.append(row * cols + c); c -= 1
+            }
+            return result
+        }
+
+        return [index]
+    }
+
+    /// 連結グループ全体のキーコードを newCode に更新して保存する
+    func updateMergedGroup(page: Int, index: Int, newCode: String) {
+        let indices = mergedIndices(page: page, index: index)
+        for idx in indices {
+            keyboard[page][idx] = newCode
+        }
+        saveKeyboardJson()
+    }
+
     func saveKeyDef(_ keyDef: KeyDefinition) {
         if let index = keyDefs.firstIndex(where: {$0.code == keyDef.code}) {
             keyDefs[index] = keyDef
