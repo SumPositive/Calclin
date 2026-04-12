@@ -63,6 +63,7 @@ struct KeyboardView: View {
                         KeyPageView(viewModel: viewModel, calcViewModel: activeCalcViewModel,
                                     onTap: onTap, page: index)
                             .frame(width: pageWidth)
+                            .background(colorScheme == .dark ? Color.black : Color(.systemGray6))
                             // 先に回転（ZStack中心±端を軸）してからoffsetで配置する
                             .modifier(PentagonRotationModifier(progress: progress))
                             .offset(x: xOffset)
@@ -410,20 +411,25 @@ struct KeyView: View {
                 ZStack {
                     Image(isTapped ? "keyDown" : "keyUp")
                         .resizable()
-                        //.colorMultiply(colorScheme == .dark ? .gray : .white)
                         .opacity(colorScheme == .dark ? 0.40 : 1.0)
+
+                    // ダークモードはキートップを黒で表示
+                    let keyTextColor: Color = colorScheme == .dark
+                        ? .black
+                        : (keyDef?.unitBase == nil ? COLOR_NUMBER : COLOR_UNIT)
+                    let keyUnitColor: Color = colorScheme == .dark ? .black : COLOR_UNIT
 
                     if isEditReturn {
                         Image(systemName: "return")
                             .font(.system(size: 24, weight: .heavy))
-                            .foregroundColor(COLOR_OPERATOR)
+                            .foregroundColor(colorScheme == .dark ? .black : COLOR_OPERATOR)
                     } else if symbol != "" {
                         Image(systemName: symbol)
                             .imageScale(.large)
-                            .foregroundColor(keyDef?.unitBase == nil ? COLOR_NUMBER : COLOR_UNIT)
+                            .foregroundColor(keyDef?.unitBase == nil ? keyTextColor : keyUnitColor)
                     } else {
                         Text(keyTop)
-                            .foregroundColor(keyDef?.unitBase == nil ? COLOR_NUMBER : COLOR_UNIT)
+                            .foregroundColor(keyDef?.unitBase == nil ? keyTextColor : keyUnitColor)
                             .font(.system(size: 24,
                                           weight: (keyDef?.unitBase == nil ||
                                                    keyDef?.unitBase == keyDef?.code) ? .bold : .light))
