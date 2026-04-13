@@ -246,8 +246,15 @@ final class CalcViewModel: ObservableObject {
                 case "Paren": // 前"("後")"の丸括弧を判定して追加する
                     if let last = tokens.last {
                         if Double(last) != nil || last == FM_PT_RIGHT || last.hasPrefix(TOKEN_UNIT_PREFIX) {
-                            // 数値 or ")" or 単位
-                            if 0 < needRightParentheses {
+                            // 数値だけの入力行（[数値] or [数値][単位]）なら "(" を数値の前に挿入
+                            let isOnlyNumber = (tokens.count == 1 && Double(tokens[0]) != nil)
+                                            || (tokens.count == 2 && Double(tokens[0]) != nil
+                                                && tokens[1].hasPrefix(TOKEN_UNIT_PREFIX))
+                            if isOnlyNumber {
+                                tokens.insert(FM_PT_LEFT, at: 0)
+                                formulaUpdate()
+                            } else if 0 < needRightParentheses {
+                                // 未閉じ括弧がある → ")" を追加
                                 tokens.append(FM_PT_RIGHT)
                                 formulaUpdate()
                             }
