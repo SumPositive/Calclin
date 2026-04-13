@@ -14,11 +14,34 @@ let SettingView_HEIGHT: CGFloat = 730.0 // シート表示時の高さ指定
 
 /// UIActivityViewController を SwiftUI から使うラッパー
 private struct ActivityView: UIViewControllerRepresentable {
-    let url: URL
+    let data: Data
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        UIActivityViewController(activityItems: [JSONExportSource(data)], applicationActivities: nil)
     }
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+/// JSON データをファイル名付きで共有するための UIActivityItemSource 実装
+/// ファイルURLを使わず Data を直接渡すことでシミュレータでも動作する
+private final class JSONExportSource: NSObject, UIActivityItemSource {
+    private let data: Data
+    init(_ data: Data) { self.data = data }
+
+    func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
+        data
+    }
+    func activityViewController(_ activityViewController: UIActivityViewController,
+                                itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
+        data
+    }
+    func activityViewController(_ activityViewController: UIActivityViewController,
+                                dataTypeIdentifierForActivityType activityType: UIActivity.ActivityType?) -> String {
+        UTType.json.identifier
+    }
+    func activityViewController(_ activityViewController: UIActivityViewController,
+                                subjectForActivityType activityType: UIActivity.ActivityType?) -> String {
+        "calclin-keyboard"
+    }
 }
 
 struct SettingView: View {
@@ -30,7 +53,7 @@ struct SettingView: View {
     @State private var safariURL: URL?  // 開く予定のURLを保持
     @State private var showAdMobSheet = false  // 広告表示シートの有無
     @State private var isPreparingExport = false  // エクスポート準備中（プログレス表示）
-    @State private var exportShareURL: URL?       // 共有シートに渡す一時ファイルURL
+    @State private var exportShareData: Data?     // 共有シートに渡す JSON データ
     @State private var isImporting = false        // キーボードインポートシート
 
     /// アプリのVersion/Build番号をまとめて返す
@@ -121,11 +144,11 @@ struct SettingView: View {
                 //.presentationDragIndicator(.visible)
         }
         .sheet(isPresented: Binding(
-            get: { exportShareURL != nil },
-            set: { if !$0 { exportShareURL = nil } }
+            get: { exportShareData != nil },
+            set: { if !$0 { exportShareData = nil } }
         )) {
-            if let url = exportShareURL {
-                ActivityView(url: url)
+            if let data = exportShareData {
+                ActivityView(data: data)
                     .presentationDetents([.medium, .large])
             }
         }
@@ -366,23 +389,16 @@ struct SettingView: View {
             HStack(spacing: 4) {
                 VStack(spacing: 4) {
                     Button {
-                        guard let data = keyboardViewModel.makeExportData() else {
-                            Manager.shared.toast(String(localized: "エクスポートに失敗しました"), wait: 2.0)
-                            return
-                        }
                         isPreparingExport = true
-                        Task.detached(priority: .userInitiated) {
-                            let tmp = FileManager.default.temporaryDirectory
-                                .appendingPathComponent("calclin-keyboard.json")
-                            let ok = (try? data.write(to: tmp)) != nil
-                            await MainActor.run {
-                                isPreparingExport = false
-                                if ok {
-                                    exportShareURL = tmp
-                                    AppAnalytics.logKeyboardSaved()
-                                } else {
-                                    Manager.shared.toast(String(localized: "エクスポートに失敗しました"), wait: 2.0)
-                                }
+                        Task {
+                            // makeExportData は MainActor 上で実行、エンコード後に共有
+                            let data = keyboardViewModel.makeExportData()
+                            isPreparingExport = false
+                            if let data {
+                                exportShareData = data
+                                AppAnalytics.logKeyboardSaved()
+                            } else {
+                                Manager.shared.toast(String(localized: "エクスポートに失敗しました"), wait: 2.0)
                             }
                         }
                     } label: {
