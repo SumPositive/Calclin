@@ -25,7 +25,13 @@ private struct ActivityView: UIViewControllerRepresentable {
 /// ファイルURLを使わず Data を直接渡すことでシミュレータでも動作する
 private final class JSONExportSource: NSObject, UIActivityItemSource {
     private let data: Data
-    init(_ data: Data) { self.data = data }
+    private let filename: String  // 拡張子なし
+
+    init(_ data: Data) {
+        self.data = data
+        let dateStr = DateFormatter.yyyyMMdd.string(from: Date())
+        self.filename = "CalclinKeyboard_\(dateStr)"
+    }
 
     func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
         data
@@ -40,7 +46,7 @@ private final class JSONExportSource: NSObject, UIActivityItemSource {
     }
     func activityViewController(_ activityViewController: UIActivityViewController,
                                 subjectForActivityType activityType: UIActivity.ActivityType?) -> String {
-        "calclin-keyboard"
+        filename
     }
 }
 
@@ -685,6 +691,16 @@ struct SafariView: UIViewControllerRepresentable {
         return SFSafariViewController(url: url)
     }
     func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
+}
+
+private extension DateFormatter {
+    /// "yyyyMMdd" フォーマットの共有インスタンス（ファイル名生成用）
+    static let yyyyMMdd: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyyMMdd"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
 }
 
 #Preview {
