@@ -16,38 +16,13 @@ let SettingView_HEIGHT: CGFloat = 730.0 // シート表示時の高さ指定
 private struct ActivityView: UIViewControllerRepresentable {
     let data: Data
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: [JSONExportSource(data)], applicationActivities: nil)
+        let dateStr = DateFormatter.yyyyMMdd.string(from: Date())
+        let provider = NSItemProvider(item: data as NSData, typeIdentifier: UTType.json.identifier)
+        // suggestedName がファイル保存ダイアログの初期ファイル名になる
+        provider.suggestedName = "CalclinKeyboard_\(dateStr)"
+        return UIActivityViewController(activityItems: [provider], applicationActivities: nil)
     }
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
-
-/// JSON データをファイル名付きで共有するための UIActivityItemSource 実装
-/// ファイルURLを使わず Data を直接渡すことでシミュレータでも動作する
-private final class JSONExportSource: NSObject, UIActivityItemSource {
-    private let data: Data
-    private let filename: String  // 拡張子なし
-
-    init(_ data: Data) {
-        self.data = data
-        let dateStr = DateFormatter.yyyyMMdd.string(from: Date())
-        self.filename = "CalclinKeyboard_\(dateStr)"
-    }
-
-    func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
-        data
-    }
-    func activityViewController(_ activityViewController: UIActivityViewController,
-                                itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
-        data
-    }
-    func activityViewController(_ activityViewController: UIActivityViewController,
-                                dataTypeIdentifierForActivityType activityType: UIActivity.ActivityType?) -> String {
-        UTType.json.identifier
-    }
-    func activityViewController(_ activityViewController: UIActivityViewController,
-                                subjectForActivityType activityType: UIActivity.ActivityType?) -> String {
-        filename
-    }
 }
 
 struct SettingView: View {
