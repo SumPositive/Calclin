@@ -21,8 +21,8 @@ struct ContentView: View {
         let keyboardViewModel = KeyboardViewModel(setting: setting)
         _keyboardViewModel = StateObject(wrappedValue: keyboardViewModel)
         
-        self.calcViewModels = (0..<CALC_COUNT_MAX).map { _ in
-            CalcViewModel(keyboardViewModel: keyboardViewModel)
+        self.calcViewModels = (0..<CALC_COUNT_MAX).map { i in
+            CalcViewModel(keyboardViewModel: keyboardViewModel, index: i)
         }
         #if DEBUG
         log(.info, "init() 1回だけ通ること。もしFormulaViewなどがクリアされるならば再生成されている間違いあり")
@@ -138,7 +138,7 @@ struct ContentView: View {
                             log(.fatal, "index out of range: \(info.index)")
                             return
                         }
-                        target.historyRows[info.index].memo = editingMemo.trimmingCharacters(in: .newlines) // 両端の改行削除
+                        target.setMemo(editingMemo.trimmingCharacters(in: .newlines), at: info.index) // 両端の改行削除 + 永続化
                     }
                     .onAppear {
                         // 編集初期値（info.calcIndex でポップアップを開いたパネルを特定）

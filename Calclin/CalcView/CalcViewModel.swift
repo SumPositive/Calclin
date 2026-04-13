@@ -14,11 +14,15 @@ import AZFormula
 @MainActor
 final class CalcViewModel: ObservableObject {
     let keyboardViewModel: KeyboardViewModel  // init()で取得
+    let index: Int                            // パネル識別子（0〜CALC_COUNT_MAX-1）
 
     private var cancellables = Set<AnyCancellable>()
+    private var isLoading = false             // load() 中は save() をスキップする
+
     /// 初期化
-    init(keyboardViewModel: KeyboardViewModel) {
+    init(keyboardViewModel: KeyboardViewModel, index: Int) {
         self.keyboardViewModel = keyboardViewModel
+        self.index = index
 
         // ローカル通知 受信：SBCD_Configが変更された ＞ CalcView表示更新
         NotificationCenter.default.publisher(for: .SBCD_Config_Change)
@@ -28,6 +32,9 @@ final class CalcViewModel: ObservableObject {
                 log(.info, "Notification sink .SBCD_Config_Change CALC_COUNT回発生する")
             }
             .store(in: &cancellables)
+
+        // Cold Start後、キー定義が揃った状態で状態を復元する
+        load()
     }
     
     
@@ -248,6 +255,10 @@ final class CalcViewModel: ObservableObject {
                             tokens.append(FM_PT_LEFT)
                             formulaUpdate()
                         }
+                    } else {
+                        // tokens が空（式の先頭）→ "(" を追加
+                        tokens.append(FM_PT_LEFT)
+                        formulaUpdate()
                     }
                     
                 case "CA": // [CA] Clear All
@@ -393,6 +404,7 @@ final class CalcViewModel: ObservableObject {
         if isAns {
             log(.info, "End Answer")
             self.isAnswerMode = true
+            save()
             return
         }
 
@@ -420,6 +432,7 @@ final class CalcViewModel: ObservableObject {
             self.formulaAttr += attr // 予定[)]表示
         }
         log(.info, "End")
+        save()
     }
     
     
@@ -866,6 +879,7 @@ final class CalcViewModel: ObservableObject {
             // マイナス符号のみ("-") や "-0" など
             formulaAttr += AttributedString(numStr)
         }
+        save()
     }
 
     private func resetCalculatorState() {
@@ -1637,6 +1651,157 @@ final class CalcViewModel: ObservableObject {
             return String(localized: "CalcFunc.InvalidExpression", defaultValue: "Error")
         }
     }
+
+    // MARK: - Persistence
+
+    private static func stateFileURL(for idx: Int) -> URL {
+        FileManager.documentsDir.appendingPathComponent("calcState_\(idx).json")
+    }
+
+    /// 現在の状態を Documents/calcState_{index}.json に保存する
+    func save() {
+        guard !isLoading else { return }
+        let state = CalcStateCodable(
+            calcMode: calcMode.rawValue,
+            tokens: tokens,
+            isAnswerMode: isAnswerMode,
+            historyRows: historyRows.map { row in
+                HistoryRowCodable(
+                    tokens: row.tokens,
+                    answer: row.answer,
+                    unitFormula: row.unitFormula,
+                    memo: row.memo,
+                    rollLines: row.rollLines?.map { rl in
+                        RollLineCodable(op: rl.op, value: rl.value, isFinal: rl.isFinal,
+                                        runningTotal: rl.runningTotal, rawBase: rl.rawBase,
+                                        accBase: rl.accBase, unitCode: rl.unitCode)
+                    }
+                )
+            },
+            accumulator: accumulator.description,
+            pendingOp: pendingOp,
+            isCalcNewEntry: isCalcNewEntry,
+            isAfterEquals: isAfterEquals,
+            isPercMode: isPercMode,
+            percDivisor: percDivisor.description,
+            percSymbol: percSymbol,
+            isCalcNewEntryAfterUnit: isCalcNewEntryAfterUnit,
+            calcUnitDef: calcUnitDef,
+            isCalcRootResult: isCalcRootResult,
+            isAccRootResult: isAccRootResult,
+            rollLinesBuilding: rollLinesBuilding.map { rl in
+                RollLineCodable(op: rl.op, value: rl.value, isFinal: rl.isFinal,
+                                runningTotal: rl.runningTotal, rawBase: rl.rawBase,
+                                accBase: rl.accBase, unitCode: rl.unitCode)
+            }
+        )
+        do {
+            let data = try JSONEncoder().encode(state)
+            try data.write(to: Self.stateFileURL(for: index), options: .atomic)
+        } catch {
+            log(.error, "CalcState[\(index)] save error: \(error)")
+        }
+    }
+
+    /// Documents/calcState_{index}.json から状態を復元する
+    func load() {
+        let url = Self.stateFileURL(for: index)
+        guard FileManager.default.fileExists(atPath: url.path),
+              let data = try? Data(contentsOf: url),
+              let state = try? JSONDecoder().decode(CalcStateCodable.self, from: data) else {
+            log(.info, "CalcState[\(index)]: no saved state, use default")
+            return
+        }
+
+        isLoading = true
+
+        // calcMode を先にセット（didSet が tokens 等をリセットするが isLoading で save はブロック）
+        calcMode = CalcMode(rawValue: state.calcMode) ?? .calculator
+
+        // 履歴を復元（formula: AttributedString は tokens から再構築）
+        historyRows = state.historyRows.map { row in
+            HistoryRow(
+                tokens: row.tokens,
+                formula: makeFormulaAttr(from: row.tokens),
+                answer: row.answer,
+                unitFormula: row.unitFormula,
+                memo: row.memo,
+                rollLines: row.rollLines?.map { rl in
+                    RollLine(op: rl.op, value: rl.value, isFinal: rl.isFinal,
+                             runningTotal: rl.runningTotal, rawBase: rl.rawBase,
+                             accBase: rl.accBase, unitCode: rl.unitCode)
+                }
+            )
+        }
+
+        // 共通状態を復元
+        tokens = state.tokens
+        isAnswerMode = state.isAnswerMode
+
+        // 電卓モード専用状態を復元
+        accumulator = AZDecimal(state.accumulator)
+        pendingOp = state.pendingOp
+        isCalcNewEntry = state.isCalcNewEntry
+        isAfterEquals = state.isAfterEquals
+        isPercMode = state.isPercMode
+        percDivisor = AZDecimal(state.percDivisor)
+        percSymbol = state.percSymbol
+        isCalcNewEntryAfterUnit = state.isCalcNewEntryAfterUnit
+        calcUnitDef = state.calcUnitDef
+        isCalcRootResult = state.isCalcRootResult
+        isAccRootResult = state.isAccRootResult
+        rollLinesBuilding = state.rollLinesBuilding.map { rl in
+            RollLine(op: rl.op, value: rl.value, isFinal: rl.isFinal,
+                     runningTotal: rl.runningTotal, rawBase: rl.rawBase,
+                     accBase: rl.accBase, unitCode: rl.unitCode)
+        }
+
+        isLoading = false
+
+        // 表示更新（この呼び出しで save() も実行され初回保存される）
+        if calcMode == .calculator {
+            formulaUpdateCalc()
+        } else {
+            formulaUpdate()
+        }
+
+        log(.info, "CalcState[\(index)]: loaded history=\(historyRows.count) mode=\(calcMode)")
+    }
+
+    /// tokens の配列から HistoryRow.formula 用 AttributedString を再構築する
+    private func makeFormulaAttr(from rowTokens: [String]) -> AttributedString {
+        var attr = AttributedString("")
+        for token in rowTokens {
+            if Double(token) != nil {
+                attr += AttributedString(AZDecimal(token).formatted(calcConfig))
+            } else if token.hasPrefix(TOKEN_UNIT_PREFIX) {
+                let code = String(token.dropFirst())
+                if let def = keyboardViewModel.keyDef(code: code), let _ = def.unitBase {
+                    var a = AttributedString(def.formula)
+                    a.foregroundColor = COLOR_UNIT
+                    attr += a
+                }
+            } else {
+                var a = AttributedString(token)
+                a.foregroundColor = COLOR_OPERATOR
+                attr += a
+            }
+        }
+        return attr
+    }
+
+    /// メモを更新して永続化する
+    func setMemo(_ memo: String, at rowIndex: Int) {
+        guard 0 <= rowIndex, rowIndex < historyRows.count else {
+            log(.fatal, "setMemo index out of range: \(rowIndex)")
+            return
+        }
+        historyRows[rowIndex].memo = memo
+        save()
+    }
+
+
+    // MARK: - Private Methods
 
     /// 小数末尾の"0"を抽出する
     private func extractTrailingZerosAfterDecimal(_ token: String) -> String {
