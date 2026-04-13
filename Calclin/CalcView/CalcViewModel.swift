@@ -1257,7 +1257,7 @@ final class CalcViewModel: ObservableObject {
 
     /// isPercMode / percSymbol / percDivisor を一括リセットする
     private func resetPercMode() {
-        resetPercMode()
+        isPercMode = false
         percSymbol = FM_PERC
         percDivisor = AZDecimal("100")
     }
