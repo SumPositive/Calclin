@@ -92,7 +92,9 @@ final class CalcViewModel: ObservableObject {
     private var pendingOp: String? = nil        // 保留中の演算子
     private var isCalcNewEntry: Bool = true     // 次の数字入力で現在値をクリア
     private var isAfterEquals: Bool = false     // = 直後フラグ（演算子続けで合計引き継ぎ）
-    private var isPercMode: Bool = false        // % 入力済みフラグ（表示は5%のまま、計算時に変換）
+    private var isPercMode: Bool = false        // % / 割 / 分 / 厘 入力済みフラグ
+    private var percDivisor: AZDecimal = AZDecimal("100")  // 除数: %=100, 割=10, 分=100, 厘=1000
+    private var percSymbol: String = FM_PERC               // 表示記号: "%", "割", "分", "厘"
     private var isCalcNewEntryAfterUnit: Bool = false // 単位キー直後フラグ（次の数値入力で数値のみ置き換え）
     private var calcUnitDef: KeyDefinition? = nil  // 電卓モードの計算単位（= 結果表示単位）
     private var isCalcRootResult = false           // √/∛ 直後フラグ（表示を最大精度にする）
@@ -840,7 +842,7 @@ final class CalcViewModel: ObservableObject {
                 : AZDecimal(numStr).formatted(calcConfig)
             formulaAttr += AttributedString(displayStr)
             if isPercMode {
-                var percAttr = AttributedString("%")
+                var percAttr = AttributedString(percSymbol)
                 percAttr.foregroundColor = COLOR_OPERATOR
                 formulaAttr += percAttr
             } else if let ut = unitToken {
@@ -871,7 +873,7 @@ final class CalcViewModel: ObservableObject {
         pendingOp = nil
         isCalcNewEntry = true
         isAfterEquals = false
-        isPercMode = false
+        resetPercMode()
         isCalcNewEntryAfterUnit = false
         calcUnitDef = nil
         isCalcRootResult = false
@@ -916,7 +918,13 @@ final class CalcViewModel: ObservableObject {
                 inputOperatorCalc(keyDef.formula)
             }
         case "Perc":
-            inputPercCalc()
+            inputPercCalc(symbol: FM_PERC,     divisor: AZDecimal("100"))
+        case "J割":
+            inputPercCalc(symbol: FM_PER_WARI, divisor: AZDecimal("10"))
+        case "J分":
+            inputPercCalc(symbol: FM_PER_BU,   divisor: AZDecimal("100"))
+        case "J厘":
+            inputPercCalc(symbol: FM_PER_RI,   divisor: AZDecimal("1000"))
         case "Ans":
             inputAnswerCalc()
         case "CA":
@@ -934,13 +942,13 @@ final class CalcViewModel: ObservableObject {
                 tokens = []
                 isCalcNewEntry = true
                 isAnswerMode = false
-                isPercMode = false
+                resetPercMode()
                 formulaUpdateCalc()
             }
         case "BS":
             if isPercMode {
                 // % だけ取り消す（数値はそのまま）
-                isPercMode = false
+                resetPercMode()
             } else if let last = tokens.last, last.hasPrefix(TOKEN_UNIT_PREFIX) {
                 // 単位トークンを取り消す
                 tokens.removeLast()
@@ -969,7 +977,7 @@ final class CalcViewModel: ObservableObject {
                 tokens.append(TOKEN_UNIT_PREFIX + keyDef.code)
             }
             isCalcNewEntryAfterUnit = true
-            isPercMode = false
+            resetPercMode()
             formulaUpdateCalc()
 
         case "sqRoot", "cuRoot":
@@ -991,7 +999,7 @@ final class CalcViewModel: ObservableObject {
             isCalcRootResult = true         // 設定上限桁数で表示するフラグ
             isCalcNewEntry = false
             isAnswerMode = false
-            isPercMode = false
+            resetPercMode()
             formulaUpdateCalc()
 
         default:
@@ -1006,7 +1014,7 @@ final class CalcViewModel: ObservableObject {
             isCalcNewEntry = false
             isAnswerMode = false
             isAfterEquals = false
-            isPercMode = false
+            resetPercMode()
             isCalcNewEntryAfterUnit = false
         } else if isCalcNewEntryAfterUnit,
                   tokens.count >= 2,
@@ -1015,7 +1023,7 @@ final class CalcViewModel: ObservableObject {
             tokens[tokens.count - 2] = isZeroKey ? "0" : num
             isCalcNewEntryAfterUnit = false
             isAnswerMode = false
-            isPercMode = false
+            resetPercMode()
         } else if tokens.count >= 2,
                   let ut = tokens.last, ut.hasPrefix(TOKEN_UNIT_PREFIX) {
             // 単位付き状態での数値追記：数値部分に追記、単位を維持
@@ -1049,7 +1057,7 @@ final class CalcViewModel: ObservableObject {
             isCalcNewEntry = false
             isAnswerMode = false
             isAfterEquals = false
-            isPercMode = false
+            resetPercMode()
         } else if var last = tokens.last, !last.contains(FM_DECIMAL) {
             last += FM_DECIMAL
             tokens = [last]
@@ -1064,7 +1072,7 @@ final class CalcViewModel: ObservableObject {
         tokens = [last]
         isCalcNewEntry = false
         isAnswerMode = false
-        isPercMode = false
+        resetPercMode()
         formulaUpdateCalc()
     }
 
@@ -1110,7 +1118,7 @@ final class CalcViewModel: ObservableObject {
         }
         let prevAccumulator = accumulator   // 演算前の accumulator を保存
         isAfterEquals = false
-        isPercMode = false
+        resetPercMode()
 
         if let existingOp = pendingOp {
             // 保留演算子を実行して中間結果をロールへ（accumulator は Base単位）
@@ -1230,27 +1238,36 @@ final class CalcViewModel: ObservableObject {
                   existing.unitBase == keyDef.unitBase else { return }
             tokens.append(TOKEN_UNIT_PREFIX + keyDef.code)
             isCalcNewEntryAfterUnit = true  // 次の数値入力で数値のみ置き換え
-            isPercMode = false
+            resetPercMode()
             formulaUpdateCalc()
         }
     }
 
-    private func inputPercCalc() {
+    private func inputPercCalc(symbol: String = FM_PERC, divisor: AZDecimal = AZDecimal("100")) {
         guard let currentStr = tokens.last,
               !currentStr.isEmpty, currentStr != FM_SUB,
               Double(currentStr) != nil else { return }
-        // トークンは変えず表示に % を付けるだけ。計算時に変換する
+        // トークンは変えず表示に記号を付けるだけ。計算時に変換する
         isPercMode = true
+        percSymbol = symbol
+        percDivisor = divisor
         isAnswerMode = false
         formulaUpdateCalc()
     }
 
-    /// isPercMode 時にトークンの値をパーセント変換して返す
+    /// isPercMode / percSymbol / percDivisor を一括リセットする
+    private func resetPercMode() {
+        resetPercMode()
+        percSymbol = FM_PERC
+        percDivisor = AZDecimal("100")
+    }
+
+    /// isPercMode 時にトークンの値を割合変換して返す（%, 割, 分, 厘 共通）
     private func resolvedPercValue(_ current: AZDecimal) -> AZDecimal {
         if pendingOp == FM_ADD || pendingOp == FM_SUB {
-            return accumulator * current / AZDecimal("100")   // 丸めなし
+            return accumulator * current / percDivisor   // 丸めなし
         } else {
-            return current / AZDecimal("100")                 // 丸めなし
+            return current / percDivisor                 // 丸めなし
         }
     }
 
@@ -1286,7 +1303,7 @@ final class CalcViewModel: ObservableObject {
                 }
             }
             let prevAccumulator = accumulator
-            isPercMode = false
+            resetPercMode()
 
             if let existingOp = pendingOp {
                 resultBase = calcBinary(accumulator, existingOp, current)
@@ -1330,7 +1347,7 @@ final class CalcViewModel: ObservableObject {
         rollLinesBuilding = []
         isCalcNewEntry = true
         isAfterEquals = true
-        isPercMode = false
+        resetPercMode()
         // tokens に結果を表示単位で格納（単位変換キーで変換できるように）
         tokens = [resultNumStr]
         if let def = displayUnit {
@@ -1390,7 +1407,7 @@ final class CalcViewModel: ObservableObject {
         }
         isCalcNewEntry = true
         isAfterEquals = false
-        isPercMode = false
+        resetPercMode()
         isAnswerMode = false
 
         editingHistoryIndex = historyIndex
@@ -1481,7 +1498,7 @@ final class CalcViewModel: ObservableObject {
         tokens = []
         isCalcNewEntry = true
         isAfterEquals = false
-        isPercMode = false
+        resetPercMode()
         isAnswerMode = false
         formulaUpdateCalc()
     }
