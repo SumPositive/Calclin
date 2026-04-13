@@ -1101,7 +1101,7 @@ final class CalcViewModel: ObservableObject {
             let raw = AZDecimal(cv.numStr)
             lineUnitCode = cv.unitDef?.code
             if isPercMode {
-                displayValue = cv.numStr + "%"
+                displayValue = cv.numStr + percSymbol
                 current = resolvedPercValue(raw)   // % の場合は Base単位変換なし
             } else {
                 // 単位があれば Base単位に変換
@@ -1292,7 +1292,7 @@ final class CalcViewModel: ObservableObject {
             let displayValue: String
             let lineUnitCode = cv.unitDef?.code
             if isPercMode {
-                displayValue = cv.numStr + "%"
+                displayValue = cv.numStr + percSymbol
                 current = resolvedPercValue(raw)
             } else {
                 current = toBaseValue(cv.numStr, unitDef: cv.unitDef)
@@ -1452,7 +1452,7 @@ final class CalcViewModel: ObservableObject {
             let raw = AZDecimal(cv.numStr)
             if isPercMode {
                 current = resolvedPercValue(raw)
-                displayValue = cv.numStr + "%"
+                displayValue = cv.numStr + percSymbol
             } else {
                 current = toBaseValue(cv.numStr, unitDef: cv.unitDef)
                 if let def = cv.unitDef {
@@ -1524,7 +1524,7 @@ final class CalcViewModel: ObservableObject {
             let raw = AZDecimal(cv.numStr)
             if isPercMode {
                 current = resolvedPercValue(raw)
-                displayValue = cv.numStr + "%"
+                displayValue = cv.numStr + percSymbol
             } else {
                 current = toBaseValue(cv.numStr, unitDef: cv.unitDef)
                 if let def = cv.unitDef {
