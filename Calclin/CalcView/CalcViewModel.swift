@@ -1642,13 +1642,5 @@ final class CalcViewModel: ObservableObject {
         return trailingZeros
     }
     
-    /// 単位処理
-    /// - Parameter keyDef: KeyDefinition
-    private func handleUnit(_ keyDef: KeyDefinition) {
-        
-        
-    }
-    
-    
 }
 
