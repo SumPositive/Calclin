@@ -2,7 +2,7 @@
 
 A drum-style calculator for iOS, built with SwiftUI.
 
-![Platform](https://img.shields.io/badge/platform-iOS%2016%2B-blue)
+![Platform](https://img.shields.io/badge/platform-iOS%2018%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-6-orange)
 [![App Store](https://img.shields.io/badge/App%20Store-Download-blue)](https://apps.apple.com/app/id385216637)
 
@@ -21,7 +21,9 @@ The app uses **BCD (Binary Coded Decimal) arithmetic** via the [AZCalc](https://
 - BCD arithmetic — no floating-point errors
 - Roll row editing — tap a past row in calculator mode to edit and recalculate
 - Add memos to roll rows
-- Custom keyboard — configurable via JSON
+- **Custom keyboard** — 5 pages × 30 keys, fully configurable via long-press. Supports vertical and horizontal key merging (vertical-priority). Undefined keys (nop) remain visible and long-pressable for re-definition.
+- **Keyboard export / import** — export layout as `CalclinKeyboard_yyyyMMdd.json` via share sheet (AirDrop, Files, Mail, etc.); import from any JSON file
+- **PDF export** — export the current calculation roll as a PDF
 - Multiple rounding modes and digit grouping options
 - **Beginner / Master display mode** — beginner mode shows operation hints and button labels throughout the UI
 
@@ -42,7 +44,7 @@ Calclin/
 
 ## Requirements
 
-- iOS 16.0+
+- iOS 18.0+
 - Xcode 16+
 - Swift 6
 
