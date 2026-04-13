@@ -51,6 +51,7 @@
 				App/Localizable.xcstrings,
 				App/Log.swift,
 				App/Manager.swift,
+				App/ReviewManager.swift,
 				App/PopupView.swift,
 				CalcView/CalcRollView.swift,
 				CalcView/CalcShareHelper.swift,

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import StoreKit
 
 
 struct ContentView: View {
@@ -29,6 +30,8 @@ struct ContentView: View {
         #endif
     }
     
+    // App Store レビュー依頼
+    @Environment(\.requestReview) private var requestReview
     // @State 変化あればViewが更新される
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
@@ -219,6 +222,14 @@ struct ContentView: View {
             
         }
         .ignoresSafeArea(.keyboard) // システムキーボードに押し上げられない
+        // いずれかの CalcViewModel でレビュー依頼フラグが立ったらダイアログを表示
+        .onChange(of: calcViewModels.map(\.shouldRequestReview)) { _, flags in
+            if flags.contains(true) {
+                requestReview()
+                // フラグをリセット
+                calcViewModels.forEach { $0.shouldRequestReview = false }
+            }
+        }
         .sheet(isPresented: $isSettingSheetPresented) {
             // PackList同様にシート表示で設定を開く
             SettingView()
