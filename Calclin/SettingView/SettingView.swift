@@ -10,24 +10,16 @@ import UIKit
 import SafariServices
 import UniformTypeIdentifiers
 
-// キーボード配置 JSON のエクスポート用ドキュメント型
-struct KeyboardFileDocument: FileDocument {
-    static var readableContentTypes: [UTType] { [.json] }
-    var data: Data
-    init(data: Data) { self.data = data }
-    init(configuration: ReadConfiguration) throws {
-        guard let data = configuration.file.regularFileContents else {
-            throw CocoaError(.fileReadCorruptFile)
-        }
-        self.data = data
-    }
-    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        FileWrapper(regularFileWithContents: data)
-    }
-}
-
-
 let SettingView_HEIGHT: CGFloat = 730.0 // シート表示時の高さ指定
+
+/// UIActivityViewController を SwiftUI から使うラッパー
+private struct ActivityView: UIViewControllerRepresentable {
+    let url: URL
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: [url], applicationActivities: nil)
+    }
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
 
 struct SettingView: View {
     @EnvironmentObject var viewModel: SettingViewModel
@@ -37,9 +29,9 @@ struct SettingView: View {
     @State private var showSafari = false  // Safariシート表示有無
     @State private var safariURL: URL?  // 開く予定のURLを保持
     @State private var showAdMobSheet = false  // 広告表示シートの有無
-    @State private var isExporting = false  // キーボードエクスポートシート
-    @State private var isImporting = false  // キーボードインポートシート
-    @State private var exportDocument: KeyboardFileDocument?  // エクスポート対象
+    @State private var isPreparingExport = false  // エクスポート準備中（プログレス表示）
+    @State private var exportShareURL: URL?       // 共有シートに渡す一時ファイルURL
+    @State private var isImporting = false        // キーボードインポートシート
 
     /// アプリのVersion/Build番号をまとめて返す
     private var appVersionText: String {
@@ -91,6 +83,19 @@ struct SettingView: View {
                     }
                 }
             }
+            // エクスポート準備中のプログレス表示
+            if isPreparingExport {
+                Color.black.opacity(0.25)
+                    .ignoresSafeArea()
+                    .zIndex(9)
+                ProgressView()
+                    .progressViewStyle(.circular)
+                    .scaleEffect(1.4)
+                    .padding(24)
+                    .background(.thinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .zIndex(10)
+            }
             // 設定シート内でもToastを最前面に重ねて、背面に隠れないようにする
             if manager.showToast {
                 VStack {
@@ -115,17 +120,13 @@ struct SettingView: View {
                 .presentationDetents([.large])
                 //.presentationDragIndicator(.visible)
         }
-        .fileExporter(
-            isPresented: $isExporting,
-            document: exportDocument,
-            contentType: .json,
-            defaultFilename: "calclin-keyboard"
-        ) { result in
-            switch result {
-            case .success:
-                Manager.shared.toast(String(localized: "エクスポートしました"), wait: 2.0)
-            case .failure:
-                Manager.shared.toast(String(localized: "エクスポートに失敗しました"), wait: 2.0)
+        .sheet(isPresented: Binding(
+            get: { exportShareURL != nil },
+            set: { if !$0 { exportShareURL = nil } }
+        )) {
+            if let url = exportShareURL {
+                ActivityView(url: url)
+                    .presentationDetents([.medium, .large])
             }
         }
         .fileImporter(
@@ -365,13 +366,25 @@ struct SettingView: View {
             HStack(spacing: 4) {
                 VStack(spacing: 4) {
                     Button {
-                        if let data = keyboardViewModel.makeExportData() {
-                            exportDocument = KeyboardFileDocument(data: data)
-                            isExporting = true
-                        } else {
+                        guard let data = keyboardViewModel.makeExportData() else {
                             Manager.shared.toast(String(localized: "エクスポートに失敗しました"), wait: 2.0)
+                            return
                         }
-                        AppAnalytics.logKeyboardSaved()
+                        isPreparingExport = true
+                        Task.detached(priority: .userInitiated) {
+                            let tmp = FileManager.default.temporaryDirectory
+                                .appendingPathComponent("calclin-keyboard.json")
+                            let ok = (try? data.write(to: tmp)) != nil
+                            await MainActor.run {
+                                isPreparingExport = false
+                                if ok {
+                                    exportShareURL = tmp
+                                    AppAnalytics.logKeyboardSaved()
+                                } else {
+                                    Manager.shared.toast(String(localized: "エクスポートに失敗しました"), wait: 2.0)
+                                }
+                            }
+                        }
                     } label: {
                         Label("エクスポート", systemImage: "square.and.arrow.up")
                             .font(.footnote)
