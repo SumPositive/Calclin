@@ -285,6 +285,7 @@ final class KeyboardViewModel: ObservableObject {
                 return false
             }
             keyboard = kb
+            saveKeyboardJson()  // 不揮発保存
             return true
         } catch {
             log(.error, "インポート失敗: \(error)")
