@@ -372,6 +372,7 @@ final class KeyboardViewModel: ObservableObject {
             if decoded.appName == "CalcRoll",
                let kb = decoded.keyboard_1 {
                 keyboard = kb
+                saveKeyboardJson()  // 不揮発保存
                 if isToast { Manager.shared.toast(String(localized: "初期の配置に戻しました"), wait: 3.0) }
                 return true
             }
