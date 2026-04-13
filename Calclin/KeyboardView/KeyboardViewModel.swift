@@ -264,7 +264,7 @@ final class KeyboardViewModel: ObservableObject {
     func makeExportData() -> Data? {
         let keyboardData = KeyboardJSON(appName: "CalcRoll", keyboard_1: keyboard)
         let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.outputFormatting = []  // 改行なしのコンパクト形式
         return try? encoder.encode(keyboardData)
     }
 
