@@ -50,8 +50,6 @@ final class CalcViewModel: ObservableObject {
     var numberFontScale: CGFloat = 1.5
     // 自動スクロール用トリガー：= 直後の最初のキー入力で +1 する
     @Published var inputStartTrigger: Int = 0
-    // App Store レビュー依頼トリガー：View側で監視して requestReview を呼ぶ
-    @Published var shouldRequestReview: Bool = false
 
     
     struct RollLine: Hashable {
@@ -779,8 +777,6 @@ final class CalcViewModel: ObservableObject {
                 if CALC_HISTORY_MAX < historyRows.count {
                     historyRows.removeFirst() // 最初の履歴を削除
                 }
-                // レビュー依頼チェック
-                if ReviewManager.shared.recordCalculation() { shouldRequestReview = true }
                 // New
                 tokens = [] //.removeAll()
                 tokens.append(answer)
@@ -1327,8 +1323,6 @@ final class CalcViewModel: ObservableObject {
                              rollLines: rollLinesBuilding)
         historyRows.append(row)
         if CALC_HISTORY_MAX < historyRows.count { historyRows.removeFirst() }
-        // レビュー依頼チェック
-        if ReviewManager.shared.recordCalculation() { shouldRequestReview = true }
 
         // 次の計算へ — 結果トークンを表示単位で保持、accumulator は Base単位
         accumulator = resultBase
