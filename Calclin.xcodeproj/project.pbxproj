@@ -67,6 +67,7 @@
 				SettingView/AdMobViews.swift,
 				SettingView/SettingView.swift,
 				SettingView/SettingViewModel.swift,
+				SettingView/TipStore.swift,
 			);
 			target = C30A78A22E10EE8500212729 /* Calclin */;
 		};
@@ -104,6 +105,7 @@
 				SettingView/AdMobViews.swift,
 				SettingView/SettingView.swift,
 				SettingView/SettingViewModel.swift,
+				SettingView/TipStore.swift,
 			);
 			target = C30A78B92E10EE8700212729 /* CalclinUITests */;
 		};

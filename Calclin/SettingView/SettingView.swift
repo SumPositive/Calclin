@@ -33,6 +33,7 @@ struct SettingView: View {
     @State private var showSafari = false  // Safariシート表示有無
     @State private var safariURL: URL?  // 開く予定のURLを保持
     @State private var showAdMobSheet = false  // 広告表示シートの有無
+    @State private var showTipSheet = false    // 投げ銭シートの有無
     @State private var isPreparingExport = false  // エクスポート準備中（プログレス表示）
     @State private var exportShareData: Data?     // 共有シートに渡す JSON データ
     @State private var isImporting = false        // キーボードインポートシート
@@ -61,6 +62,7 @@ struct SettingView: View {
                         integerSection
                         decimalSection
                         keyboardSection
+                        supportSection
                         infoSection
                         footerSection
                     }
@@ -455,6 +457,46 @@ struct SettingView: View {
         }
     }
 
+    /// 開発者応援ボタンをまとめるカード
+    private var supportSection: some View {
+        SettingSectionCard(
+            title: "開発者を応援",
+            iconName: "heart.fill",
+            tint: .pink
+        ) {
+            HStack(spacing: 12) {
+                // 投げ銭
+                Button {
+                    showTipSheet = true
+                    AppAnalytics.logSupportTipTapped()
+                } label: {
+                    Label("投げ銭で応援する", systemImage: "heart.fill")
+                        .font(.body)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.pink)
+                .sheet(isPresented: $showTipSheet) {
+                    TipSheetView()
+                }
+
+                // 広告
+                Button {
+                    showAdMobSheet = true
+                    AppAnalytics.logSupportAdTapped()
+                } label: {
+                    Label("広告を見て応援する", systemImage: "play.rectangle.fill")
+                        .font(.body)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.brown)
+            }
+        }
+    }
+
     /// アプリの情報リンクをまとめるカード
     private var infoSection: some View {
         SettingSectionCard(
@@ -470,26 +512,6 @@ struct SettingView: View {
                     openSafari(for: "info.url")
                 } label: {
                     Label("アプリの紹介・取扱説明", systemImage: "book")
-                        .font(.body)
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 8)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .strokeBorder(.blue, lineWidth: 1)
-                        )
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                
-                // 広告
-                Button {
-                    // 広告シートを表示する
-                    // ボタンタップ時にBoolを切り替えてシートを開く
-                    showAdMobSheet = true
-                    // 広告シートを開く導線の効果を分析する
-                    AppAnalytics.logSupportAdTapped()
-                } label: {
-                    Label("開発者を応援する", systemImage: "flag.2.crossed")
                         .font(.body)
                         .padding(.vertical, 4)
                         .padding(.horizontal, 8)
@@ -527,6 +549,83 @@ struct SettingView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
+    }
+}
+
+// MARK: - 投げ銭シート
+
+private struct TipSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var store = TipStore.shared
+    @State private var showThankYou = false
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.pink)
+                    .symbolEffect(.breathe.pulse.byLayer, options: .repeat(.periodic(delay: 0.0)))
+
+                Text("このアプリの開発を応援していただけると励みになります。")
+                    .font(.callout)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
+
+                if store.isLoadingProducts {
+                    ProgressView()
+                } else if store.products.isEmpty {
+                    Text("現在ご利用いただけません。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                } else {
+                    HStack(spacing: 12) {
+                        ForEach(store.products, id: \.id) { product in
+                            Button {
+                                Task {
+                                    if await store.purchase(product) {
+                                        showThankYou = true
+                                    }
+                                }
+                            } label: {
+                                Text(product.displayPrice)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.pink)
+                            .disabled(store.isPurchasing)
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+
+                Spacer()
+            }
+            .padding(.top, 32)
+            .navigationTitle(Text("投げ銭で応援する"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.down")
+                            .imageScale(.large)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                }
+            }
+            .alert(
+                "ありがとうございます！",
+                isPresented: $showThankYou
+            ) {
+                Button("OK") { dismiss() }
+            } message: {
+                Text("応援いただきありがとうございます。これからも改善を続けてまいります！")
+            }
+        }
+        .task { await store.loadProducts() }
     }
 }
 

@@ -1,0 +1,60 @@
+{
+  "identifier" : "C1D2E3F4-A5B6-C7D8-E9F0-A1B2C3D4E5F6",
+  "nonConsumableProducts" : [
+
+  ],
+  "nonRenewingSubscriptionProducts" : [
+
+  ],
+  "consumableProducts" : [
+    {
+      "displayPrice" : "0.99",
+      "familySharable" : false,
+      "internalID" : "D2E3F4A5-B6C7-D8E9-F0A1-B2C3D4E5F6A7",
+      "localizations" : [
+        {
+          "description" : "開発者への少額サポートです",
+          "displayName" : "投げ銭 小",
+          "locale" : "ja_JP"
+        },
+        {
+          "description" : "A small tip to support the developer.",
+          "displayName" : "Small Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "Calclin_Tips_1",
+      "referenceName" : "Calclin_Tips_1",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familySharable" : false,
+      "internalID" : "E3F4A5B6-C7D8-E9F0-A1B2-C3D4E5F6A7B8",
+      "localizations" : [
+        {
+          "description" : "開発者への大きなサポートです",
+          "displayName" : "投げ銭 大",
+          "locale" : "ja_JP"
+        },
+        {
+          "description" : "A larger tip to support the developer.",
+          "displayName" : "Large Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "Calclin_Tips_5",
+      "referenceName" : "Calclin_Tips_5",
+      "type" : "Consumable"
+    }
+  ],
+  "autoRenewableSubscriptionProducts" : [
+
+  ],
+  "version" : {
+    "major" : 2,
+    "minor" : 0
+  },
+  "storefront" : "JPN",
+  "storeforontRegion" : "JPN"
+}

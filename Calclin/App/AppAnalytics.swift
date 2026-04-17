@@ -96,6 +96,11 @@ struct AppAnalytics {
         Analytics.logEvent("support_ad_sheet_presented", parameters: nil)
     }
 
+    /// 投げ銭ボタンを押した
+    static func logSupportTipTapped() {
+        Analytics.logEvent("support_tip_sheet_presented", parameters: nil)
+    }
+
     /// 計算パネルのページを切り替えた
     static func logCalcPageChanged(to index: Int) {
         // どのページがよく使われるかを把握するために index を送信する

@@ -152,7 +152,6 @@ final class KeyboardViewModel: ObservableObject {
     func mergedIndices(page: Int, index: Int) -> [Int] {
         let cols = Self.colCount
         let rows = Self.rowCount
-        let total = cols * rows
         guard page < keyboard.count, index < keyboard[page].count else { return [index] }
         let code = keyboard[page][index]
         guard !code.isEmpty, code != "nop" else { return [index] }
