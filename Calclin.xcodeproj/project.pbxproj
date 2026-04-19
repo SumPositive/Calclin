@@ -702,8 +702,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SumPositive/AZCalc";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
+				branch = develop;
+				kind = branch;
 			};
 		};
 		B9A4F2062F5C1AAB00A1B001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {

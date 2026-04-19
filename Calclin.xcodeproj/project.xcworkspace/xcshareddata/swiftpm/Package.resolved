@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SumPositive/AZCalc",
       "state" : {
-        "revision" : "1d0734ee943c72ebf2134ab10af0c000048b169b",
-        "version" : "1.2.2"
+        "branch" : "develop",
+        "revision" : "1d0734ee943c72ebf2134ab10af0c000048b169b"
       }
     },
     {
