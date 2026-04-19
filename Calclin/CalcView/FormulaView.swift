@@ -11,6 +11,7 @@ import SwiftUI
 struct FormulaView: View {
     @EnvironmentObject var setting: SettingViewModel
     @ObservedObject var viewModel: CalcViewModel
+    var onTextWidthChange: ((CGFloat) -> Void)? = nil
     
     @State private var scrollId = UUID()
     let hSpace: CGFloat = 20.0
@@ -29,12 +30,22 @@ struct FormulaView: View {
                         .opacity(colorScheme == .dark ? 0.60 : 1.0)
                         .lineLimit(1)
                         .fixedSize() // 高さと幅を最小限にする
+                        .background {
+                            GeometryReader { textGeo in
+                                Color.clear
+                                    .preference(key: FormulaTextWidthPreferenceKey.self,
+                                                value: textGeo.size.width)
+                            }
+                        }
                         .frame(minWidth: geo.size.width, // - hSpace*2, // GeometryReaderで取得した現在の幅
                                maxWidth: .infinity,     // ScrollView最大幅まで拡張
                                alignment: .trailing)    // 右寄せ
                         .padding(.horizontal, 0)
                         .id(scrollId) // このViewにIDを付与する
                    //     .textSelection(.enabled)
+                }
+                .onPreferenceChange(FormulaTextWidthPreferenceKey.self) { width in
+                    onTextWidthChange?(width)
                 }
                 .onChange(of: viewModel.formulaAttr) {
                     // 次のフレームでスクロール実行
@@ -57,3 +68,10 @@ struct FormulaView: View {
     }
 }
 
+private struct FormulaTextWidthPreferenceKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}

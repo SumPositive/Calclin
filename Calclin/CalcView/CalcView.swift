@@ -12,6 +12,7 @@ struct CalcView: View {
     @EnvironmentObject var setting: SettingViewModel
     @ObservedObject var viewModel: CalcViewModel
     let calcIndex: Int
+    var isActive: Bool = true
 
 
     private let narrowWidth: CGFloat = 320
@@ -19,11 +20,15 @@ struct CalcView: View {
     @State private var shareURL: URL?
     @State private var isSharing = false
     @State private var isGeneratingPDF = false
+    @State private var formulaTextWidth: CGFloat = 0
+    @State private var inputToolsWidth: CGFloat = 0
 
     var body: some View {
 
         GeometryReader { geo in
             let isNarrow = geo.size.width < narrowWidth
+            let showsInputTools = geo.size.width > 300
+                && formulaTextWidth + inputToolsWidth + 28 < geo.size.width
 
             VStack(spacing: 0) {
 
@@ -39,77 +44,47 @@ struct CalcView: View {
                     }
                 }
                 .frame(maxHeight: .infinity)
+                .overlay {
+                    PaperRollLighting()
+                }
                 .overlay(alignment: .top) {
-                    // 上端影：ロールが沈み込む演出
+                    // 上からの光を受けたロール紙の曲面を、上端ハイライトで表現する
                     LinearGradient(
                         stops: [
-                            .init(color: Color.black.opacity(0.68), location: 0.0),
-                            .init(color: Color.black.opacity(0.38), location: 0.10),
-                            .init(color: Color.black.opacity(0.18), location: 0.35),
-                            .init(color: Color.black.opacity(0.04), location: 0.70),
+                            .init(color: Color.white.opacity(0.42), location: 0.0),
+                            .init(color: Color.white.opacity(0.28), location: 0.22),
+                            .init(color: Color.white.opacity(0.12), location: 0.55),
                             .init(color: Color.black.opacity(0.00), location: 1.0),
                         ],
                         startPoint: .top, endPoint: .bottom)
-                        .frame(height: 36)
+                        .frame(height: 54)
                         .allowsHitTesting(false)
                 }
-                .overlay(alignment: .topLeading) {
-                    HStack(spacing: 6) {
-                        // 電卓／数式モード切替ボタン
-                        Button {
-                            viewModel.calcMode = (viewModel.calcMode == .calculator) ? .formula : .calculator
-                        } label: {
-                            HStack(spacing: 5) {
-                                Image(systemName: viewModel.calcMode == .calculator ? "plus.forwardslash.minus" : "function")
-                                    .font(.system(size: 15, weight: .bold))
-                                if setting.playMode == .beginner {
-                                    Text(viewModel.calcMode == .calculator
-                                         ? String(localized: "電卓")
-                                         : String(localized: "数式"))
-                                        .font(.system(size: 13, weight: .medium))
-                                }
-                            }
-                            .foregroundStyle(.primary.opacity(0.6))
-                            .padding(.horizontal, 8)
-                            .frame(height: 30)
-                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        }
-                        // PDFボタン（モード切替ボタンの右隣）
-                        Button {
-                            isGeneratingPDF = true
-                            Task { @MainActor in
-                                try? await Task.sleep(nanoseconds: 80_000_000)
-                                let url = makeCalcPDF(viewModel: viewModel, fontScale: setting.numberFontScale)
-                                isGeneratingPDF = false
-                                if let url {
-                                    shareURL = url
-                                    isSharing = true
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "square.and.arrow.up")
-                                    .font(.system(size: 14, weight: .semibold))
-                                if setting.playMode == .beginner {
-                                    Text("PDF")
-                                        .font(.system(size: 13, weight: .medium))
-                                }
-                            }
-                            .foregroundStyle(.primary.opacity(0.6))
-                            .padding(.horizontal, 8)
-                            .frame(height: 30)
-                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        }
-                    }
-                    .padding(.top, 4)
-                    .padding(.leading, 6)
-                }
 
-                FormulaView(viewModel: viewModel)
+                FormulaView(viewModel: viewModel) { width in
+                    formulaTextWidth = width
+                }
                     .environmentObject(setting)
                     .frame(minHeight: 44)
                     .frame(height: 24.0 * setting.numberFontScale * 1.2)
                     .padding(.horizontal, 8)
+                    .background(PaperPlaneBackground())
+                    .overlay(alignment: .leading) {
+                        inputLineTools
+                            .padding(.leading, 6)
+                            .opacity(showsInputTools ? 1 : 0)
+                            .allowsHitTesting(showsInputTools)
+                            .background {
+                                GeometryReader { toolsGeo in
+                                    Color.clear
+                                        .preference(key: InputToolsWidthPreferenceKey.self,
+                                                    value: toolsGeo.size.width)
+                                }
+                            }
+                    }
+                    .onPreferenceChange(InputToolsWidthPreferenceKey.self) { width in
+                        inputToolsWidth = width
+                    }
             }
             .padding(0)
             .overlay {
@@ -141,5 +116,89 @@ struct CalcView: View {
                 viewModel.formulaUpdate()
             }
         }
+    }
+
+    private var inputLineTools: some View {
+        HStack(spacing: 12) {
+            Button {
+                viewModel.calcMode = (viewModel.calcMode == .calculator) ? .formula : .calculator
+            } label: {
+                PaperToolButtonLabel(
+                    systemName: viewModel.calcMode == .calculator ? "plus.forwardslash.minus" : "function",
+                    title: viewModel.calcMode == .calculator
+                        ? String(localized: "電卓")
+                        : String(localized: "数式"),
+                    showsTitle: setting.playMode == .beginner
+                )
+            }
+
+            Button {
+                isGeneratingPDF = true
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 80_000_000)
+                    let url = makeCalcPDF(viewModel: viewModel, fontScale: setting.numberFontScale)
+                    isGeneratingPDF = false
+                    if let url {
+                        shareURL = url
+                        isSharing = true
+                    }
+                }
+            } label: {
+                PaperToolButtonLabel(
+                    systemName: "square.and.arrow.up",
+                    title: "PDF",
+                    showsTitle: setting.playMode == .beginner
+                )
+            }
+        }
+    }
+}
+
+private struct InputToolsWidthPreferenceKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+private struct PaperPlaneBackground: View {
+    var body: some View {
+        ZStack {
+            COLOR_BACK_FORMULA
+            PaperRollLighting()
+        }
+    }
+}
+
+private struct PaperToolButtonLabel: View {
+    let systemName: String
+    let title: String
+    let showsTitle: Bool
+
+    var body: some View {
+        HStack(spacing: showsTitle ? 5 : 0) {
+            Image(systemName: systemName)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(COLOR_CALC_ACTIVE.opacity(0.62))
+
+            if showsTitle {
+                Text(title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.secondary.opacity(0.70))
+            }
+        }
+        .frame(minWidth: showsTitle ? 0 : 36, minHeight: 36)
+        .contentShape(Rectangle())
+    }
+}
+
+private struct PaperRollLighting: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Color.black
+            .opacity(colorScheme == .dark ? 0.08 : 0.035)
+            .allowsHitTesting(false)
     }
 }

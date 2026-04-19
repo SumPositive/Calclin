@@ -79,16 +79,20 @@ struct CalcRollView: View {
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
             //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
             GeometryReader { geometry in
-                HStack(spacing: 0) {
+                let rollGap: CGFloat = showCount > 1 ? 2 : 0
+                let calcWidth = (geometry.size.width - rollGap * CGFloat(max(showCount - 1, 0))) / CGFloat(showCount)
+
+                HStack(spacing: rollGap) {
                     ForEach(0..<calcViewModels.count, id: \.self) { index in
                         let isActive = index == selectedPage
-                        CalcView(viewModel: calcViewModels[index], calcIndex: index)
+                        CalcView(viewModel: calcViewModels[index],
+                                 calcIndex: index,
+                                 isActive: isActive)
                             .environmentObject(setting) // settingに変化あればCalcViewが再生成される
-                            .frame(width: geometry.size.width / CGFloat(showCount))
-                            .border( index == selectedPage
-                                     ? COLOR_CALC_ACTIVE.opacity(0.5)
-                                     : COLOR_CALC_INACTIVE.opacity(0.1), width: 2.0)
-                            .cornerRadius(4)
+                            .frame(width: calcWidth)
+                            .overlay {
+                                PaperRollEdgeLines(isActive: isActive)
+                            }
                             .contentShape(Rectangle()) // paddingを含む領域全体がタップ対象になる
                             .overlay {
                                 // 非アクティブ時は親がタップを独占し、アクティブ時は子ビューに譲る
@@ -142,10 +146,63 @@ struct CalcRollView: View {
                             )
                     }
                 }
-                .offset(x: -CGFloat(showStart) * geometry.size.width / CGFloat(showCount))
+                .offset(x: -CGFloat(showStart) * (calcWidth + rollGap))
             }
             .padding(0)
         }
+    }
+}
+
+private struct PaperRollEdgeLines: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    let isActive: Bool
+
+    private var edgeBaseColor: Color {
+        if isActive {
+            return COLOR_CALC_ACTIVE
+        }
+        return COLOR_CALC_INACTIVE
+    }
+
+    private var edgeGradient: LinearGradient {
+        LinearGradient(
+            stops: [
+                .init(color: Color.white.opacity(0.90), location: 0.00),
+                .init(color: Color.white.opacity(0.62), location: 0.08),
+                .init(color: edgeBaseColor.opacity(isActive ? 0.20 : 0.12), location: 0.18),
+                .init(color: edgeBaseColor.opacity(isActive ? 0.34 : 0.20), location: 0.30),
+                .init(color: edgeBaseColor.opacity(activeCenterOpacity), location: 0.50),
+                .init(color: edgeBaseColor.opacity(isActive ? 0.34 : 0.20), location: 0.74),
+                .init(color: edgeBaseColor.opacity(isActive ? 0.18 : 0.10), location: 1.00),
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    private var activeCenterOpacity: Double {
+        guard isActive else { return 0.34 }
+        return colorScheme == .dark ? 1.0 : 0.75
+    }
+
+    private var edgeWidth: CGFloat {
+        3
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Rectangle()
+                .fill(edgeGradient)
+                .frame(width: edgeWidth)
+
+            Spacer(minLength: 0)
+
+            Rectangle()
+                .fill(edgeGradient)
+                .frame(width: edgeWidth)
+        }
+        .allowsHitTesting(false)
     }
 }
 
@@ -354,4 +411,3 @@ struct CalcRollHeaderView: View {
     }
 
 }
-

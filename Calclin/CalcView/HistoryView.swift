@@ -81,6 +81,9 @@ struct HistoryView: View {
                 }
                 .scaleEffect(y: -1) // 上下反転：末尾固定スクロールのため（List+swipeActions維持の唯一の方法）
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .scrollIndicators(.hidden)
+                .background(COLOR_BACK_FORMULA)
                 .environment(\.defaultMinListRowHeight, 10) // デフォルトの最小行高を縮小
                 .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
                 .padding(0)
@@ -231,6 +234,9 @@ struct RollView: View {
             }
             .scaleEffect(y: -1)
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .scrollIndicators(.hidden)
+            .background(COLOR_BACK_FORMULA)
             .environment(\.defaultMinListRowHeight, 10)
             .frame(maxWidth: .infinity)
             .padding(0)
@@ -410,4 +416,3 @@ struct HistoryMemoView: View {
         .padding(4)
     }
 }
-

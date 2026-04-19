@@ -53,7 +53,9 @@ let COLOR_UNIT: Color = .secondary          // 単位
 let COLOR_MEMO: Color = .purple             // メモ
 let COLOR_WARN: Color = .red                // 危険！警告色
 // 背景色
-let COLOR_BACK_FORMULA: Color = Color(.systemGray6)  // FormulaView
+let COLOR_BACK_FORMULA: Color = Color(UIColor { traitCollection in
+    traitCollection.userInterfaceStyle == .dark ? .black : .systemGray6
+})  // CalcView paper plane
 let COLOR_BACK_SETTING: Color = Color(.systemGray4)  // SettingView
 
 
@@ -115,5 +117,4 @@ let CALC_DISABLED_IN_CALCULATOR: Set<String> = [
     "Paren",   // 括弧
     // 単位キーは電卓モードでも使用可能（isKeyDisabled で unitBase を持つものを除外しない）
 ]
-
 
