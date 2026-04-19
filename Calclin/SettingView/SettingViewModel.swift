@@ -61,6 +61,32 @@ final class SettingViewModel: ObservableObject {
     }
     @Published var playMode: PlayMode = .beginner
 
+    /// 外観モード（自動／ライト／ダーク）
+    enum AppearanceMode: String, CaseIterable, Identifiable {
+        case automatic
+        case light
+        case dark
+
+        var id: String { rawValue }
+
+        var localized: String {
+            switch self {
+            case .automatic: return String(localized: "自動")
+            case .light:     return String(localized: "ライト")
+            case .dark:      return String(localized: "ダーク")
+            }
+        }
+
+        var colorScheme: ColorScheme? {
+            switch self {
+            case .automatic: return nil
+            case .light:     return .light
+            case .dark:      return .dark
+            }
+        }
+    }
+    @Published var appearanceMode: AppearanceMode = .automatic
+
 
     /// 丸めタイプ　　　PickerデータソースにするためCaseIterable, Identifiableに準拠
     enum RoundType: String, CaseIterable, Identifiable {
@@ -193,4 +219,3 @@ final class SettingViewModel: ObservableObject {
     @Published var popupHistoryMemoInfo: (maxLength: Int, index: Int, calcIndex: Int)? = nil
     
 }
-

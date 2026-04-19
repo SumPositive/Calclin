@@ -451,6 +451,16 @@
         }
       }
     },
+    "ダーク" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dark"
+          }
+        }
+      }
+    },
     "タップしたキーに置き換わります\n【達人限定】さらに長押しで定義の編集ができます" : {
       "localizations" : {
         "en" : {
@@ -477,6 +487,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Note"
+          }
+        }
+      }
+    },
+    "ライト" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light"
           }
         }
       }
@@ -768,6 +788,16 @@
         }
       }
     },
+    "外観モード" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appearance"
+          }
+        }
+      }
+    },
     "寄付できる動画広告" : {
       "localizations" : {
         "en" : {
@@ -1002,6 +1032,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thank you for watching! Your support helps development."
+          }
+        }
+      }
+    },
+    "自動" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto"
           }
         }
       }

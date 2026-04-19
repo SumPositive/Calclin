@@ -183,6 +183,21 @@ struct SettingView: View {
                     }
                 }
                 HStack(spacing: 4) {
+                    Label("外観モード", systemImage: viewModel.appearanceMode == .dark
+                                                    ? "moon" : "sun.max")
+                        .labelStyle(.titleAndIcon)
+                        .font(.subheadline)
+                    Picker("外観モード", selection: $viewModel.appearanceMode) {
+                        ForEach(SettingViewModel.AppearanceMode.allCases) { mode in
+                            Text(mode.localized).tag(mode)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .onChange(of: viewModel.appearanceMode) { oldValue, newValue in
+                        log(.info, "AppearanceMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
+                    }
+                }
+                HStack(spacing: 4) {
                     Label("最下行へ", systemImage: "arrow.down.to.line")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)

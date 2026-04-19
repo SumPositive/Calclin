@@ -47,6 +47,10 @@ struct ContentView: View {
         calcViewModels[selectedCalc]
     }
 
+    private var settingSheetColorScheme: ColorScheme? {
+        setting.appearanceMode.colorScheme ?? colorScheme
+    }
+
     
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
@@ -219,11 +223,13 @@ struct ContentView: View {
             
         }
         .ignoresSafeArea(.keyboard) // システムキーボードに押し上げられない
+        .preferredColorScheme(setting.appearanceMode.colorScheme)
         .sheet(isPresented: $isSettingSheetPresented) {
             // PackList同様にシート表示で設定を開く
             SettingView()
                 .environmentObject(setting)
                 .environmentObject(keyboardViewModel)
+                .preferredColorScheme(settingSheetColorScheme)
                 // シートが実際に表示されたタイミングで記録する（タップだけで終わる誤検知を防ぐ）
                 .onAppear {
                     AppAnalytics.logSettingSheetOpened(currentMode: setting.playMode)
@@ -243,4 +249,3 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
-
