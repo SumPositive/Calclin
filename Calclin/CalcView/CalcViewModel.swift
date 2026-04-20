@@ -318,9 +318,9 @@ final class CalcViewModel: ObservableObject {
     
     // HistoryView // 履歴削除
     func delateHistory(_ index: Int) {
-        let originalIndex = historyRows.count - 1 - index
-        if 0 <= originalIndex && originalIndex < historyRows.count {
-            historyRows.remove(at: originalIndex)
+        if 0 <= index && index < historyRows.count {
+            historyRows.remove(at: index)
+            save()
         }
     }
     
@@ -1832,4 +1832,3 @@ final class CalcViewModel: ObservableObject {
     }
     
 }
-
