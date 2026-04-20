@@ -17,6 +17,9 @@ extension Notification.Name {
 
 @MainActor
 final class SettingViewModel: ObservableObject {
+    private enum StorageKey {
+        static let appearanceMode = "appearanceMode"
+    }
     
     /// 初期化
     init() {
@@ -43,6 +46,11 @@ final class SettingViewModel: ObservableObject {
             groupType: .threes,
             groupSeparator: groupSeparator.symbol
         )
+
+        if let rawValue = UserDefaults.standard.string(forKey: StorageKey.appearanceMode),
+           let mode = AppearanceMode(rawValue: rawValue) {
+            appearanceMode = mode
+        }
     }
 
 
@@ -85,7 +93,11 @@ final class SettingViewModel: ObservableObject {
             }
         }
     }
-    @Published var appearanceMode: AppearanceMode = .automatic
+    @Published var appearanceMode: AppearanceMode = .automatic {
+        didSet {
+            UserDefaults.standard.set(appearanceMode.rawValue, forKey: StorageKey.appearanceMode)
+        }
+    }
 
 
     /// 丸めタイプ　　　PickerデータソースにするためCaseIterable, Identifiableに準拠
