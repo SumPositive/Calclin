@@ -17,8 +17,18 @@ extension Notification.Name {
 
 @MainActor
 final class SettingViewModel: ObservableObject {
+    private var isInitializing = true
+
     private enum StorageKey {
+        static let playMode = "playMode"
         static let appearanceMode = "appearanceMode"
+        static let roundType = "roundType"
+        static let decimalDigits = "decimalDigits"
+        static let decimalSeparator = "decimalSeparator"
+        static let groupType = "groupType"
+        static let groupSeparator = "groupSeparator"
+        static let numberFontScale = "numberFontScale"
+        static let autoScroll = "autoScroll"
     }
     
     /// 初期化
@@ -47,10 +57,9 @@ final class SettingViewModel: ObservableObject {
             groupSeparator: groupSeparator.symbol
         )
 
-        if let rawValue = UserDefaults.standard.string(forKey: StorageKey.appearanceMode),
-           let mode = AppearanceMode(rawValue: rawValue) {
-            appearanceMode = mode
-        }
+        loadPersistentSettings()
+        applyCalcConfigFromSettings()
+        isInitializing = false
     }
 
 
@@ -67,7 +76,11 @@ final class SettingViewModel: ObservableObject {
             }
         }
     }
-    @Published var playMode: PlayMode = .beginner
+    @Published var playMode: PlayMode = .beginner {
+        didSet {
+            save(playMode.rawValue, forKey: StorageKey.playMode)
+        }
+    }
 
     /// 外観モード（自動／ライト／ダーク）
     enum AppearanceMode: String, CaseIterable, Identifiable {
@@ -95,7 +108,7 @@ final class SettingViewModel: ObservableObject {
     }
     @Published var appearanceMode: AppearanceMode = .automatic {
         didSet {
-            UserDefaults.standard.set(appearanceMode.rawValue, forKey: StorageKey.appearanceMode)
+            save(appearanceMode.rawValue, forKey: StorageKey.appearanceMode)
         }
     }
 
@@ -137,9 +150,20 @@ final class SettingViewModel: ObservableObject {
             }
         }
     }
-    @Published var roundType: RoundType = .R55
+    @Published var roundType: RoundType = .R55 {
+        didSet {
+            save(roundType.rawValue, forKey: StorageKey.roundType)
+            calcConfig.roundType = roundType.azRoundType
+        }
+    }
     /// 丸め：小数部の桁数（例：3 → 小数点以下4桁目を丸めて3桁表示する） Slider引数にするためDouble型
-    @Published var decimalDigits: Double = 3.0 // 初期
+    @Published var decimalDigits: Double = 3.0 { // 初期
+        didSet {
+            save(decimalDigits, forKey: StorageKey.decimalDigits)
+            calcConfig.decimalDigits = Int(decimalDigits)
+            calcConfig.trailZero = false
+        }
+    }
 
     /// 小数点記号
     enum DecimalSeparator: String, CaseIterable, Identifiable {
@@ -157,7 +181,12 @@ final class SettingViewModel: ObservableObject {
             }
         }
     }
-    @Published var decimalSeparator: DecimalSeparator = .dot
+    @Published var decimalSeparator: DecimalSeparator = .dot {
+        didSet {
+            save(decimalSeparator.symbol, forKey: StorageKey.decimalSeparator)
+            calcConfig.decimalSeparator = decimalSeparator.symbol
+        }
+    }
 
     
     // 桁区切りタイプ    　　PickerデータソースにするためCaseIterable, Identifiableに準拠
@@ -187,7 +216,12 @@ final class SettingViewModel: ObservableObject {
             }
         }
     }
-    @Published var groupType: GroupType = .G3
+    @Published var groupType: GroupType = .G3 {
+        didSet {
+            save(groupType.rawValue, forKey: StorageKey.groupType)
+            calcConfig.groupType = groupType.azGroupType
+        }
+    }
     /// 桁区切り記号（例: "," or "，"）
     enum GroupSeparator: String, CaseIterable, Identifiable {
         case conma  = "9,9"
@@ -206,10 +240,19 @@ final class SettingViewModel: ObservableObject {
             }
         }
     }
-    @Published var groupSeparator: GroupSeparator = .conma
+    @Published var groupSeparator: GroupSeparator = .conma {
+        didSet {
+            save(groupSeparator.symbol, forKey: StorageKey.groupSeparator)
+            calcConfig.groupSeparator = groupSeparator.symbol
+        }
+    }
 
     // フォント倍率
-    @Published var numberFontScale: Double = 1.5
+    @Published var numberFontScale: Double = 1.5 {
+        didSet {
+            save(numberFontScale, forKey: StorageKey.numberFontScale)
+        }
+    }
 
     /// 自動スクロールタイミング
     enum AutoScroll: String, CaseIterable, Identifiable {
@@ -225,9 +268,69 @@ final class SettingViewModel: ObservableObject {
             }
         }
     }
-    @Published var autoScroll: AutoScroll = .onInput
+    @Published var autoScroll: AutoScroll = .onInput {
+        didSet {
+            save(autoScroll.rawValue, forKey: StorageKey.autoScroll)
+        }
+    }
 
     // HistoryMemoViewをPopupで表示する
     @Published var popupHistoryMemoInfo: (maxLength: Int, index: Int, calcIndex: Int)? = nil
+
+    private func loadPersistentSettings() {
+        let defaults = UserDefaults.standard
+
+        playMode = storedEnum(forKey: StorageKey.playMode, default: playMode)
+        appearanceMode = storedEnum(forKey: StorageKey.appearanceMode, default: appearanceMode)
+        roundType = storedEnum(forKey: StorageKey.roundType, default: roundType)
+        decimalSeparator = storedDecimalSeparator(default: decimalSeparator)
+        groupType = storedEnum(forKey: StorageKey.groupType, default: groupType)
+        groupSeparator = storedGroupSeparator(default: groupSeparator)
+        autoScroll = storedEnum(forKey: StorageKey.autoScroll, default: autoScroll)
+
+        if defaults.object(forKey: StorageKey.decimalDigits) != nil {
+            decimalDigits = min(max(defaults.double(forKey: StorageKey.decimalDigits), 0), SETTING_decimalDigits_MAX)
+        }
+        if defaults.object(forKey: StorageKey.numberFontScale) != nil {
+            numberFontScale = min(max(defaults.double(forKey: StorageKey.numberFontScale), 0.5), 3.0)
+        }
+    }
+
+    private func storedEnum<T>(forKey key: String, default defaultValue: T) -> T
+    where T: RawRepresentable, T.RawValue == String {
+        guard let rawValue = UserDefaults.standard.string(forKey: key),
+              let value = T(rawValue: rawValue) else {
+            return defaultValue
+        }
+        return value
+    }
+
+    private func storedDecimalSeparator(default defaultValue: DecimalSeparator) -> DecimalSeparator {
+        guard let value = UserDefaults.standard.string(forKey: StorageKey.decimalSeparator) else {
+            return defaultValue
+        }
+        return DecimalSeparator.allCases.first { $0.symbol == value || $0.rawValue == value } ?? defaultValue
+    }
+
+    private func storedGroupSeparator(default defaultValue: GroupSeparator) -> GroupSeparator {
+        guard let value = UserDefaults.standard.string(forKey: StorageKey.groupSeparator) else {
+            return defaultValue
+        }
+        return GroupSeparator.allCases.first { $0.symbol == value || $0.rawValue == value } ?? defaultValue
+    }
+
+    private func save(_ value: Any, forKey key: String) {
+        guard !isInitializing else { return }
+        UserDefaults.standard.set(value, forKey: key)
+    }
+
+    private func applyCalcConfigFromSettings() {
+        calcConfig.decimalDigits = Int(decimalDigits)
+        calcConfig.decimalSeparator = decimalSeparator.symbol
+        calcConfig.roundType = roundType.azRoundType
+        calcConfig.trailZero = false
+        calcConfig.groupType = groupType.azGroupType
+        calcConfig.groupSeparator = groupSeparator.symbol
+    }
     
 }
