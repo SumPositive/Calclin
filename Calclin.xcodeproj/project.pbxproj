@@ -290,11 +290,12 @@
 				};
 			};
 			buildConfigurationList = C30A789E2E10EE8500212729 /* Build configuration list for PBXProject "Calclin" */;
-			developmentRegion = ja;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				ja,
 				en,
+				ja,
+				Base,
 			);
 			mainGroup = C30A789A2E10EE8500212729;
 			minimizedProjectReferenceProxies = 1;
