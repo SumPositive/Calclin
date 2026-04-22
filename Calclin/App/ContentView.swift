@@ -8,6 +8,58 @@
 import SwiftUI
 
 
+private struct KeyboardResizeHandle: View {
+    let isActive: Bool
+    let onLongPressChanged: (Bool) -> Void
+    let onDragChanged: (CGFloat) -> Void
+    let onEnded: () -> Void
+
+    var body: some View {
+        // 入力行中央に重ね、通常時は見せずに長押し成立後だけ表示する
+        Rectangle()
+            .fill(Color.clear)
+            .frame(width: 180, height: 44)
+            .contentShape(Rectangle())
+            .overlay {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(.regularMaterial.opacity(isActive ? 0.92 : 0.0))
+                    .overlay {
+                        Capsule()
+                            .fill(Color.accentColor.opacity(isActive ? 0.72 : 0.0))
+                            .frame(width: 132, height: 5)
+                    }
+                    .frame(width: 168, height: 24)
+                    .animation(.easeOut(duration: 0.12), value: isActive)
+            }
+            .gesture(
+                LongPressGesture(minimumDuration: 0.5)
+                    .sequenced(before: DragGesture(minimumDistance: 0))
+                    .onChanged { value in
+                        switch value {
+                        case .second(true, _):
+                            onLongPressChanged(true)
+                            if case .second(true, let drag) = value, let drag {
+                                onDragChanged(drag.translation.height)
+                            }
+                        default:
+                            break
+                        }
+                    }
+                    .onEnded { _ in
+                        onEnded()
+                    }
+            )
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onEnded { _ in
+                        // 長押し未成立のタップ終了でも、表示状態を確実に解除する
+                        onEnded()
+                    }
+            )
+    }
+}
+
+
 struct ContentView: View {
     @StateObject private var setting: SettingViewModel  // 必要なViewに.environmentObject(setting)で注入する
     @StateObject private var keyboardViewModel: KeyboardViewModel
@@ -36,6 +88,12 @@ struct ContentView: View {
     @State private var isSettingSheetPresented = false
     // @State 変化あればViewが更新される
     @State private var selectedCalc: Int = 0
+    // キーボード領域の高さを保存し、履歴領域との比率を復元する
+    @AppStorage("keyboardAreaHeight") private var keyboardAreaHeight: Double = 360.0
+    // 長押しでリサイズ操作に入った時の開始高さ
+    @State private var keyboardResizeStartHeight: CGFloat = 360.0
+    // 長押しリサイズ中だけ境界を薄く表示する
+    @State private var isKeyboardResizing = false
 
     // Popup関連の一時編集データ
     @State private var editingMemo: String = ""
@@ -49,6 +107,14 @@ struct ContentView: View {
 
     private var settingSheetColorScheme: ColorScheme? {
         setting.appearanceMode.colorScheme ?? colorScheme
+    }
+
+    private var normalizedKeyboardHeight: CGFloat {
+        clampedKeyboardHeight(CGFloat(keyboardAreaHeight))
+    }
+
+    private func clampedKeyboardHeight(_ height: CGFloat) -> CGFloat {
+        min(max(height, APP_KB_HEIGHT_MIN), APP_KB_HEIGHT_MAX)
     }
 
     
@@ -108,9 +174,27 @@ struct ContentView: View {
                 .environmentObject(setting)
                 .transition(.opacity) // フェード
                 .padding(.horizontal, 4)
-                .padding(.bottom, 4)
                 .frame(minWidth: APP_CALC_WIDTH_MIN, maxWidth: APP_CALC_WIDTH_MAX,
                        minHeight: APP_CALC_HEIGHT_MIN, maxHeight: APP_CALC_HEIGHT_MAX)
+                .overlay(alignment: .bottom) {
+                    KeyboardResizeHandle(
+                        isActive: isKeyboardResizing,
+                        onLongPressChanged: { isPressing in
+                            if isPressing {
+                                keyboardResizeStartHeight = normalizedKeyboardHeight
+                                isKeyboardResizing = true
+                            }
+                        },
+                        onDragChanged: { translationHeight in
+                            let nextHeight = keyboardResizeStartHeight - translationHeight
+                            keyboardAreaHeight = Double(clampedKeyboardHeight(nextHeight))
+                        },
+                        onEnded: {
+                            isKeyboardResizing = false
+                        }
+                    )
+                    .zIndex(2)
+                }
                 
                 // キーボードView
                 KeyboardView(viewModel: keyboardViewModel,
@@ -123,6 +207,7 @@ struct ContentView: View {
                 .padding(.horizontal, 4.0)
                 .frame(minWidth: APP_KB_WIDTH_MIN, maxWidth: APP_KB_WIDTH_MAX,
                        minHeight: APP_KB_HEIGHT_MIN, maxHeight: APP_KB_HEIGHT_MAX)
+                .frame(height: normalizedKeyboardHeight)
             }
             .background(Color.primary.opacity(0.05)) // 控えめな背景
             .zIndex(0)
