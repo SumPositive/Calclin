@@ -19,7 +19,7 @@ private struct UncheckedSendable<T>: @unchecked Sendable { let value: T }
 //let AdMobAdSheetView_HEIGHT: CGFloat = 560.0 // シート表示時の高さ指定
 
 // 利用可能な広告がない場合に共通で表示する文言をまとめておく
-private let adUnavailableMessage = String(localized: "現在、寄付できる広告がありません。後ほどお試しください")
+private let adUnavailableMessage = String(localized: "support.ad.unavailable")
 
 // 広告ユニットID
 #if DEBUG
@@ -55,7 +55,7 @@ struct AdMobAdSheetView: View {
                 VStack(spacing: 12) {
                     // バナー広告の表示領域（Medium Rectangle）
                     VStack(alignment: .center, spacing: 12) {
-                        Text("タップして広告を見て開発者を応援してください")
+                        Text("support.ad.prompt")
                             .font(.footnote)
                             .multilineTextAlignment(.center)
                             .foregroundStyle(.secondary)
@@ -76,11 +76,11 @@ struct AdMobAdSheetView: View {
                     // リワード広告：動画視聴完了後にお礼を出す
                     VStack(alignment: .center, spacing: 8) {
                         HStack {
-                            Text("寄付できる動画広告")
+                            Text("support.ad.videoTitle")
                                 .font(.headline)
                                 .padding(.trailing, 20)
                             Label {
-                                Text("音が出ます")
+                                Text("support.ad.soundWarning")
                                     .font(.footnote)
                                     .foregroundStyle(.red)
                             } icon: {
@@ -90,12 +90,12 @@ struct AdMobAdSheetView: View {
                             }
                         }
 
-                        Text("動画を最後まで視聴すると開発者に寄付できます")
+                        Text("support.ad.description")
                             .font(.footnote)
                             .multilineTextAlignment(.center)
                             .foregroundStyle(.secondary)
                         
-                        Text("最後に閉じる(X)ボタンが現れます")
+                        Text("support.ad.closeHint")
                             .font(.footnote)
                             .multilineTextAlignment(.center)
                             .foregroundStyle(.secondary)
@@ -106,7 +106,7 @@ struct AdMobAdSheetView: View {
                                 rewardLoader.present(from: rootController) { success in
                                     if success {
                                         // 視聴完了のお礼を表示し、シートも閉じる準備をする
-                                        alertMessage = String(localized: "視聴ありがとうございます！開発の支援になります。")
+                                        alertMessage = String(localized: "support.ad.thanks")
                                         shouldCloseAfterReward = true
                                         showAlert = true
                                     } else {
@@ -122,7 +122,7 @@ struct AdMobAdSheetView: View {
                         } label: {
                             HStack {
                                 Image(systemName: "play.rectangle.fill")
-                                Text("動画を再生する")
+                                Text("support.ad.play")
                             }
                             .padding()
                             .frame(maxWidth: .infinity)
@@ -135,7 +135,7 @@ struct AdMobAdSheetView: View {
                         
                         if rewardLoader.isLoading {
                             // ローディング中はユーザに待機を明示する
-                            ProgressView("読み込み中...")
+                            ProgressView("common.loading")
                                 .font(.caption)
                         }
                     }
@@ -149,7 +149,7 @@ struct AdMobAdSheetView: View {
                 }
             }
             .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
-            .navigationTitle(Text("広告を見て応援する"))
+            .navigationTitle(Text("support.ad"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -171,9 +171,9 @@ struct AdMobAdSheetView: View {
         }
         .alert(isPresented: $showAlert) {
             Alert(
-                title: Text("お知らせ"),
+                title: Text("common.notice"),
                 message: Text(alertMessage ?? ""),
-                dismissButton: .default(Text("OK")) {
+                dismissButton: .default(Text("common.ok")) {
                     // お礼表示後はシートを閉じる
                     if shouldCloseAfterReward {
                         dismiss()

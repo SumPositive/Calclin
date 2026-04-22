@@ -94,7 +94,7 @@ struct CalcView: View {
                         VStack(spacing: 10) {
                             ProgressView()
                                 .controlSize(.large)
-                            Text("PDF作成中…")
+                            Text("calc.pdf.generating")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -126,8 +126,8 @@ struct CalcView: View {
                 PaperToolButtonLabel(
                     systemName: viewModel.calcMode == .calculator ? "plus.forwardslash.minus" : "function",
                     title: viewModel.calcMode == .calculator
-                        ? String(localized: "電卓")
-                        : String(localized: "数式"),
+                        ? String(localized: "calc.mode.calculator")
+                        : String(localized: "calc.mode.formula"),
                     showsTitle: setting.playMode == .beginner
                 )
             }
@@ -146,7 +146,7 @@ struct CalcView: View {
             } label: {
                 PaperToolButtonLabel(
                     systemName: "square.and.arrow.up",
-                    title: "PDF",
+                    title: String(localized: "common.pdf"),
                     showsTitle: setting.playMode == .beginner
                 )
             }

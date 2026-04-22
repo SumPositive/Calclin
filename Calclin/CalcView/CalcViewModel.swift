@@ -767,7 +767,7 @@ final class CalcViewModel: ObservableObject {
                         ans_unitFormula = def.formula
                         ansKeyDef = nil
                         if let unitF = ans_unitFormula {
-                            let message = String(localized: "基準単位[%@]\nで計算しました") // [%@]
+                            let message = String(localized: "calc.baseUnit.usedFormat") // [%@]
                             Manager.shared.toast(
                                 String(format: message, unitF),
                                 wait: 3.0)
@@ -1009,7 +1009,7 @@ final class CalcViewModel: ObservableObject {
             let result: AZDecimal
             if keyDef.code == "sqRoot" {
                 guard !val.isNegative else {
-                    Manager.shared.toast(String(localized: "負の数の√は計算できません"))
+                    Manager.shared.toast(String(localized: "calc.error.negativeSqrt"))
                     break
                 }
                 result = val.squareRoot().rounded(calcMaxConfig)   // 設定上限(10桁)で丸めて格納
@@ -1616,7 +1616,7 @@ final class CalcViewModel: ObservableObject {
     /// 電卓モード用の二項演算（丸め済み）
     private func calcBinary(_ lhs: AZDecimal, _ op: String, _ rhs: AZDecimal) -> AZDecimal {
         if (op == FM_DIV || op == FM_DIV_), rhs.isZero {
-            Manager.shared.toast(String(localized: "÷0エラー"))
+            Manager.shared.toast(String(localized: "calc.error.divideByZero"))
             return lhs
         }
         let result: AZDecimal
@@ -1638,7 +1638,7 @@ final class CalcViewModel: ObservableObject {
     private func answer(_ formula: String) -> String {
         guard !formula.isEmpty else {
             log(.warning, "formula: なし")
-            return String(localized: "CalcFunc.NoData", defaultValue: "No data")
+            return String(localized: "calc.result.noData", defaultValue: "No data")
         }
 
         log(.info, "formula: \(formula)")
@@ -1649,13 +1649,13 @@ final class CalcViewModel: ObservableObject {
             return decimal.value
         case .failure(.tooLong):
             log(.warning, "formula: FORMULA_MAX_LENGTH OVER")
-            return String(localized: "CalcFunc.TooLong", defaultValue: "Too long")
+            return String(localized: "calc.result.tooLong", defaultValue: "Too long")
         case .failure(.negativeSqrt):
             log(.error, "負の数の平方根")
-            return String(localized: "CalcFunc.NegativeSqrt", defaultValue: "Error")
+            return String(localized: "calc.result.error", defaultValue: "Error")
         case .failure(.invalidExpression):
             log(.error, "無効な式: \(formula)")
-            return String(localized: "CalcFunc.InvalidExpression", defaultValue: "Error")
+            return String(localized: "calc.result.error", defaultValue: "Error")
         }
     }
 

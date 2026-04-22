@@ -37,11 +37,11 @@ private struct CalcPDFContent: View {
 
             // ヘッダー
             HStack {
-                Text(title)
+                Text(verbatim: title)
                     .font(.headline)
                     .foregroundStyle(Color.primary)
                 Spacer()
-                Text(dateStr)
+                Text(verbatim: dateStr)
                     .font(.caption)
                     .foregroundStyle(Color.secondary)
             }
@@ -66,17 +66,17 @@ private struct CalcPDFContent: View {
                                 let op = line.op.trimmingCharacters(in: .whitespaces)
                                 HStack(spacing: 4) {
                                     if !op.isEmpty {
-                                        Text(op)
+                                        Text(verbatim: op)
                                             .foregroundStyle(line.isFinal ? COLOR_ANSWER : COLOR_OPERATOR)
                                     }
-                                    Text(line.value)
+                                    Text(verbatim: line.value)
                                         .fontWeight(line.isFinal ? .bold : .regular)
                                         .foregroundStyle(line.isFinal ? COLOR_ANSWER : COLOR_NUMBER)
                                 }
                                 .font(.system(size: base * fontScale).monospacedDigit())
                             }
                             if let memo = row.memo, !memo.isEmpty {
-                                Text(memo)
+                                Text(verbatim: memo)
                                     .font(.system(size: base * 0.85 * fontScale))
                                     .foregroundStyle(COLOR_MEMO)
                                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -95,12 +95,12 @@ private struct CalcPDFContent: View {
                         Text(row.formula)
                             .font(.system(size: base * fontScale))
                         if !row.answer.isEmpty {
-                            Text(row.answer)
+                            Text(verbatim: row.answer)
                                 .font(.system(size: base * fontScale, weight: .bold).monospacedDigit())
                                 .foregroundStyle(COLOR_ANSWER)
                         }
                         if let memo = row.memo, !memo.isEmpty {
-                            Text(memo)
+                            Text(verbatim: memo)
                                 .font(.system(size: base * 0.85 * fontScale))
                                 .foregroundStyle(COLOR_MEMO)
                         }
@@ -131,8 +131,8 @@ func makeCalcPDF(viewModel: CalcViewModel, fontScale: CGFloat) -> URL? {
     formatter.timeStyle = .short
     let dateStr = formatter.string(from: Date())
     let title = viewModel.calcMode == .calculator
-        ? String(localized: "カルメモ（電卓）")
-        : String(localized: "カルメモ（数式）")
+        ? String(localized: "calc.share.title.calculator")
+        : String(localized: "calc.share.title.formula")
 
     // 完了行 + 途中行を結合
     var rows = viewModel.historyRows

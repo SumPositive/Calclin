@@ -70,7 +70,7 @@ struct SettingView: View {
                     .padding(.top, 8)
                     .padding(.bottom)
                 }
-                .navigationTitle(Text("設定"))
+                .navigationTitle(Text("settings.title"))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
@@ -78,7 +78,7 @@ struct SettingView: View {
                             // シートを閉じてメイン画面へ戻す
                             dismiss()
                         } label: {
-                            Label("設定", systemImage: "chevron.down")
+                            Label("settings.title", systemImage: "chevron.down")
                                 .labelStyle(.iconOnly)
                                 .imageScale(.large)
                                 .padding(10)
@@ -143,12 +143,12 @@ struct SettingView: View {
             case .success(let url):
                 let ok = keyboardViewModel.importKeyboardJson(from: url)
                 Manager.shared.toast(
-                    ok ? String(localized: "インポートしました") : String(localized: "インポートに失敗しました"),
+                    ok ? String(localized: "keyboard.importSuccess") : String(localized: "keyboard.importFailure"),
                     wait: 2.0
                 )
                 if ok { AppAnalytics.logKeyboardRestored() }
             case .failure:
-                Manager.shared.toast(String(localized: "インポートに失敗しました"), wait: 2.0)
+                Manager.shared.toast(String(localized: "keyboard.importFailure"), wait: 2.0)
             }
         }
     }
@@ -159,17 +159,17 @@ struct SettingView: View {
     /// モード切替（初心者／達人）
     private var modeSection: some View {
         SettingSectionCard(
-            title: "表示",
+            title: "settings.section.display",
             iconName: "display",
             tint: .accentColor
         ) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 4) {
-                    Label("表示モード", systemImage: viewModel.playMode == .beginner
+                    Label("settings.displayMode", systemImage: viewModel.playMode == .beginner
                                                     ? "tortoise" : "hare")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
-                    Picker("表示モード", selection: $viewModel.playMode) {
+                    Picker("settings.displayMode", selection: $viewModel.playMode) {
                         ForEach(SettingViewModel.PlayMode.allCases) { mode in
                             Text(mode.localized).tag(mode)
                         }
@@ -183,11 +183,11 @@ struct SettingView: View {
                     }
                 }
                 HStack(spacing: 4) {
-                    Label("外観モード", systemImage: viewModel.appearanceMode == .dark
+                    Label("settings.appearanceMode", systemImage: viewModel.appearanceMode == .dark
                                                     ? "moon" : "sun.max")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
-                    Picker("外観モード", selection: $viewModel.appearanceMode) {
+                    Picker("settings.appearanceMode", selection: $viewModel.appearanceMode) {
                         ForEach(SettingViewModel.AppearanceMode.allCases) { mode in
                             Text(mode.localized).tag(mode)
                         }
@@ -198,10 +198,10 @@ struct SettingView: View {
                     }
                 }
                 HStack(spacing: 4) {
-                    Label("最下行へ", systemImage: "arrow.down.to.line")
+                    Label("settings.autoScroll", systemImage: "arrow.down.to.line")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
-                    Picker("最下行へ", selection: $viewModel.autoScroll) {
+                    Picker("settings.autoScroll", selection: $viewModel.autoScroll) {
                         ForEach(SettingViewModel.AutoScroll.allCases) { mode in
                             Text(mode.localized).tag(mode)
                         }
@@ -209,7 +209,7 @@ struct SettingView: View {
                     .pickerStyle(SegmentedPickerStyle())
                 }
                 HStack(spacing: 4) {
-                    Label("表示倍率", systemImage: "plus.magnifyingglass")
+                    Label("settings.zoomLevel", systemImage: "plus.magnifyingglass")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
                     Text(String(format: " %.1f ", viewModel.numberFontScale))
@@ -236,17 +236,17 @@ struct SettingView: View {
     /// 整数部の見え方をまとめるカード
     private var integerSection: some View {
         SettingSectionCard(
-            title: "整数部",
+            title: "settings.section.integer",
             iconName: "number",
             tint: Color(.systemTeal)
         ) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top, spacing: 4) {
                     // 桁区切りタイプ
-                    Text("桁区切り方式")
+                    Text("settings.groupingStyle")
                         .font(.subheadline)
                         .padding(.top, 6)
-                    Picker("桁区切り方式", selection: $viewModel.groupType) {
+                    Picker("settings.groupingStyle", selection: $viewModel.groupType) {
                         ForEach(SettingViewModel.GroupType.allCases) { type in
                             Text(type.localized).tag(type)
                         }
@@ -269,9 +269,9 @@ struct SettingView: View {
 
                 // 桁区切り記号
                 HStack(spacing: 4) {
-                    Text("桁区切り記号")
+                    Text("settings.groupingSymbol")
                         .font(.subheadline)
-                    Picker("桁区切り記号", selection: $viewModel.groupSeparator) {
+                    Picker("settings.groupingSymbol", selection: $viewModel.groupSeparator) {
                         ForEach(SettingViewModel.GroupSeparator.allCases) { type in
                             Text(type.rawValue).tag(type)
                                 //.font(.title) 指定できない
@@ -298,13 +298,13 @@ struct SettingView: View {
     /// 小数部の見え方をまとめるカード
     private var decimalSection: some View {
         SettingSectionCard(
-            title: "小数部",
+            title: "settings.section.decimal",
             iconName: "dot.viewfinder",
             tint: Color(.systemIndigo)
         ) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 4) {
-                    Text("有効桁数")
+                    Text("settings.decimalDigits")
                         .font(.subheadline)
                     Text(" \(Int(viewModel.decimalDigits)) ")
                         .monospacedDigit()
@@ -331,9 +331,9 @@ struct SettingView: View {
                 }
                 
                 HStack(spacing: 4) {
-                    Text("丸め処理")
+                    Text("settings.rounding")
                         .font(.subheadline)
-                    Picker("丸め処理", selection: $viewModel.roundType) {
+                    Picker("settings.rounding", selection: $viewModel.roundType) {
                         ForEach(SettingViewModel.RoundType.allCases) { type in
                             Text(type.localized).tag(type)
                         }
@@ -352,9 +352,9 @@ struct SettingView: View {
 
                 // 小数点
                 HStack(spacing: 4) {
-                    Text("小数点")
+                    Text("settings.decimalPoint")
                         .font(.subheadline)
-                    Picker("小数点", selection: $viewModel.decimalSeparator) {
+                    Picker("settings.decimalPoint", selection: $viewModel.decimalSeparator) {
                         ForEach(SettingViewModel.DecimalSeparator.allCases) { type in
                             Text(type.rawValue).tag(type)
                         }
@@ -380,7 +380,7 @@ struct SettingView: View {
     /// キーボード設定の保存・読込カード
     private var keyboardSection: some View {
         SettingSectionCard(
-            title: "キーボード配置",
+            title: "keyboard.layout",
             iconName: "keyboard",
             tint: Color(.systemBlue)
         ) {
@@ -396,11 +396,11 @@ struct SettingView: View {
                                 exportShareData = data
                                 AppAnalytics.logKeyboardSaved()
                             } else {
-                                Manager.shared.toast(String(localized: "エクスポートに失敗しました"), wait: 2.0)
+                                Manager.shared.toast(String(localized: "keyboard.exportFailure"), wait: 2.0)
                             }
                         }
                     } label: {
-                        Label("エクスポート", systemImage: "square.and.arrow.up")
+                        Label("keyboard.export", systemImage: "square.and.arrow.up")
                             .font(.footnote)
                             .fixedSize()
                             .padding(.horizontal, 8)
@@ -411,7 +411,7 @@ struct SettingView: View {
                                     .strokeBorder(.blue, lineWidth: 1)
                             )
                     }
-                    Text("JSONファイルに書き出す")
+                    Text("keyboard.exportHelp")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -420,7 +420,7 @@ struct SettingView: View {
                     Button {
                         isImporting = true
                     } label: {
-                        Label("インポート", systemImage: "square.and.arrow.down")
+                        Label("keyboard.import", systemImage: "square.and.arrow.down")
                             .font(.footnote)
                             .fixedSize()
                             .padding(.horizontal, 8)
@@ -431,7 +431,7 @@ struct SettingView: View {
                                     .strokeBorder(.green, lineWidth: 1)
                             )
                     }
-                    Text("JSONファイルから読み込む")
+                    Text("keyboard.importHelp")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -444,14 +444,14 @@ struct SettingView: View {
                         // 初期化処理の成否に応じて、完了可否をトースト表示する
                         let isSuccess = keyboardViewModel.initKeyboardJson(isToast: false)
                         if isSuccess {
-                            Manager.shared.toast(String(localized: "初期の配置に戻しました"), wait: 3.0)
+                            Manager.shared.toast(String(localized: "keyboard.resetSuccess"), wait: 3.0)
                         } else {
-                            Manager.shared.toast(String(localized: "初期化に失敗しました"), wait: 2.0)
+                            Manager.shared.toast(String(localized: "keyboard.resetFailure"), wait: 2.0)
                         }
                         // 初期化はインパクトが大きいので、誤タップ防止策の検討材料にする
                         AppAnalytics.logKeyboardReset()
                     } label: {
-                        Text("初期化")
+                        Text("keyboard.reset")
                             .font(.subheadline)
                             .fixedSize()
                             .padding(.horizontal, 8)
@@ -462,7 +462,7 @@ struct SettingView: View {
                                     .strokeBorder(.red, lineWidth: 1)
                             )
                     }
-                    Text("初期のキー定義と配置に戻す")
+                    Text("keyboard.resetHelp")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -475,7 +475,7 @@ struct SettingView: View {
     /// 開発者応援ボタンをまとめるカード
     private var supportSection: some View {
         SettingSectionCard(
-            title: "開発者を応援",
+            title: "support.section",
             iconName: "heart.fill",
             tint: .pink
         ) {
@@ -485,7 +485,7 @@ struct SettingView: View {
                     showTipSheet = true
                     AppAnalytics.logSupportTipTapped()
                 } label: {
-                    Label("投げ銭で応援する", systemImage: "heart.fill")
+                    Label("support.tip", systemImage: "heart.fill")
                         .font(.body)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 4)
@@ -501,7 +501,7 @@ struct SettingView: View {
                     showAdMobSheet = true
                     AppAnalytics.logSupportAdTapped()
                 } label: {
-                    Label("広告を見て応援する", systemImage: "play.rectangle.fill")
+                    Label("support.ad", systemImage: "play.rectangle.fill")
                         .font(.body)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 4)
@@ -526,7 +526,7 @@ struct SettingView: View {
                     AppAnalytics.logInfoLinkOpened(kind: "manual")
                     openSafari(for: "info.url")
                 } label: {
-                    Label("アプリの紹介・取扱説明", systemImage: "book")
+                    Label("settings.userGuide", systemImage: "book")
                         .font(.body)
                         .padding(.vertical, 4)
                         .padding(.horizontal, 8)
@@ -582,7 +582,7 @@ private struct TipSheetView: View {
                     .foregroundStyle(.pink)
                     .symbolEffect(.breathe.pulse.byLayer, options: .repeat(.periodic(delay: 0.0)))
 
-                Text("このアプリの開発を応援していただけると励みになります。")
+                Text("support.tip.message")
                     .font(.callout)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
@@ -591,7 +591,7 @@ private struct TipSheetView: View {
                 if store.isLoadingProducts {
                     ProgressView()
                 } else if store.products.isEmpty {
-                    Text("現在ご利用いただけません。")
+                    Text("support.unavailable")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 } else {
@@ -618,7 +618,7 @@ private struct TipSheetView: View {
                 Spacer()
             }
             .padding(.top, 32)
-            .navigationTitle(Text("投げ銭で応援する"))
+            .navigationTitle(Text("support.tip"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -632,12 +632,12 @@ private struct TipSheetView: View {
                 }
             }
             .alert(
-                "ありがとうございます！",
+                "support.thanks.title",
                 isPresented: $showThankYou
             ) {
-                Button("OK") { dismiss() }
+                Button("common.ok") { dismiss() }
             } message: {
-                Text("応援いただきありがとうございます。これからも改善を続けてまいります！")
+                Text("support.thanks.message")
             }
         }
         .task { await store.loadProducts() }

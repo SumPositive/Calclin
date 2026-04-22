@@ -115,7 +115,7 @@ struct KeyboardView: View {
 
                 if setting.playMode == .beginner {
                     // 初心者モードでは操作ヒントを補足
-                    Text("左右にスワイプすればキーボードが切り替わります\nキーを長押しすればキー定義を変更できます")
+                    Text("keyboard.switchHint")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -578,7 +578,7 @@ struct KeyDefListView: View {
                 .contentShape(Rectangle())
                 
                 Spacer()
-                Text("キー定義を変更")
+                Text("keyboard.changeDefinition")
                     .padding(.vertical, 4)
                 Spacer()
                 
@@ -592,16 +592,16 @@ struct KeyDefListView: View {
             if setting.playMode == .beginner {
                 // 初心者モードではボタンの役割を明示
                 HStack {
-                    Text(String(localized: "キーが空欄・未定義に置き換わります"))
+                    Text(String(localized: "keyboard.replaceUndefined"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 12)
                     Spacer()
-                    Text(String(localized: "タップしたキーに置き換わります\n【達人限定】さらに長押しで定義の編集ができます"))
+                    Text(String(localized: "keyboard.replaceTapped"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text(String(localized: "閉じる"))
+                    Text(String(localized: "common.close"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 12)
@@ -696,12 +696,12 @@ struct EditKeyDefView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            Text("キー定義編集\n　（危険！Hacker Zone）\n　壊れたら再インストールしてね")
+            Text("keyboard.editor.title")
                 .font(.headline)
                 .foregroundColor(COLOR_WARN)
 
             HStack {
-                Text("コード")
+                Text("keyboard.code")
                     .font(.headline)
                     .foregroundColor(COLOR_TITLE)
                     .frame(width: TITLE_WIDTH, alignment: .center)
@@ -711,13 +711,13 @@ struct EditKeyDefView: View {
             }
 
             HStack(alignment: .top) {
-                Text("キートップ")
+                Text("keyboard.keyTop")
                     .font(.headline)
                     .foregroundColor(COLOR_TITLE)
                     .frame(width: TITLE_WIDTH)
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("キーボード上に表示される文字や記号")
+                    Text("keyboard.keyTopHelp")
                         .font(.caption2)
                         .foregroundColor(COLOR_TITLE)
                         .padding(.bottom, 2)
@@ -731,13 +731,13 @@ struct EditKeyDefView: View {
             //DEBUG//.background(Color.blue.opacity(0.4))
 
             HStack(alignment: .top) {
-                Text("記号")
+                Text("keyboard.symbol")
                     .font(.headline)
                     .foregroundColor(COLOR_TITLE)
                     .frame(width: TITLE_WIDTH)
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("Apple SF Symbols name")
+                    Text("keyboard.symbolHelp")
                         .font(.caption2)
                         .foregroundColor(COLOR_TITLE)
                         .padding(.bottom, 2)
@@ -750,13 +750,13 @@ struct EditKeyDefView: View {
             }
 
             HStack(alignment: .top) {
-                Text("数式")
+                Text("keyboard.formula")
                     .font(.headline)
                     .foregroundColor(COLOR_TITLE)
                     .frame(width: TITLE_WIDTH, alignment: .center)
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("計算式に使われる文字や記号")
+                    Text("keyboard.formulaHelp")
                         .font(.caption2)
                         .foregroundColor(COLOR_TITLE)
                         .padding(.bottom, 2)
@@ -769,13 +769,13 @@ struct EditKeyDefView: View {
             }
 
             HStack(alignment: .top) {
-                Text("基準単位")
+                Text("keyboard.baseUnit")
                     .font(.headline)
                     .foregroundColor(COLOR_TITLE)
                     .frame(width: TITLE_WIDTH, alignment: .center)
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("基準単位のcodeを記入。基準単位が同じ単位の範囲で加減算や変換が可能")
+                    Text("keyboard.baseUnitHelp")
                         .font(.caption2)
                         .foregroundColor(COLOR_TITLE)
                         .padding(.bottom, 2)
@@ -788,13 +788,13 @@ struct EditKeyDefView: View {
             }
 
             HStack(alignment: .top) {
-                Text("変換倍率")
+                Text("keyboard.conversionRate")
                     .font(.headline)
                     .foregroundColor(COLOR_TITLE)
                     .frame(width: TITLE_WIDTH, alignment: .center)
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("基準単位にするための倍率。自身が基準単位ならば空白")
+                    Text("keyboard.conversionRateHelp")
                         .font(.caption2)
                         .foregroundColor(COLOR_TITLE)
                         .padding(.bottom, 2)
@@ -807,7 +807,7 @@ struct EditKeyDefView: View {
             }
 
             //Spacer()
-            Button("保存") {
+            Button("common.save") {
                 onSave()
             }
             .padding(.top, 4)

@@ -363,7 +363,7 @@ final class KeyboardViewModel: ObservableObject {
         //
         guard let fileURL = Bundle.main.url(forResource: "initKeyboard", withExtension: "json") else {
             log(.fatal, "initKeyboard.json がバンドル内に存在しない")
-            if isToast { Manager.shared.toast(String(localized: "初期化に失敗しました"), wait: 2.0) }
+            if isToast { Manager.shared.toast(String(localized: "keyboard.resetFailure"), wait: 2.0) }
             return false
         }
         do {
@@ -373,14 +373,14 @@ final class KeyboardViewModel: ObservableObject {
                let kb = decoded.keyboard_1 {
                 keyboard = kb
                 saveKeyboardJson()  // 不揮発保存
-                if isToast { Manager.shared.toast(String(localized: "初期の配置に戻しました"), wait: 3.0) }
+                if isToast { Manager.shared.toast(String(localized: "keyboard.resetSuccess"), wait: 3.0) }
                 return true
             }
-            if isToast { Manager.shared.toast(String(localized: "初期化に失敗しました"), wait: 2.0) }
+            if isToast { Manager.shared.toast(String(localized: "keyboard.resetFailure"), wait: 2.0) }
             return false
         } catch {
             log(.error, "読み込み失敗: \(error)")
-            if isToast { Manager.shared.toast(String(localized: "初期化に失敗しました"), wait: 2.0) }
+            if isToast { Manager.shared.toast(String(localized: "keyboard.resetFailure"), wait: 2.0) }
             return false
         }
     }

@@ -60,7 +60,7 @@ struct HistoryView: View {
                                     // 式コピペ　row.tokenからformulaTextを再現する
                                     viewModel.formulaFromHistoryToken(row)
                                 } label: {
-                                    Text("↑=") // 上下逆に表示される
+                                    Text("history.copy.expression") // 上下逆に表示される
                                     //.font(.system(size: 24.0, weight: .bold))
                                 }
                                 .tint(COLOR_OPERATOR) // スワイプ背景色
@@ -69,7 +69,7 @@ struct HistoryView: View {
                                     // 答えコピペ  row.answerからformulaTextを再現する
                                     viewModel.formulaFromHistoryAnswer(row)
                                 } label: {
-                                    Text("=↑") // 上下逆に表示される
+                                    Text("history.copy.answer") // 上下逆に表示される
                                 }
                                 .tint(COLOR_ANSWER) // スワイプ背景色
                             }
@@ -393,7 +393,7 @@ struct HistoryMemoView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("メモ")
+            Text("common.memo")
                 .font(.headline)
                 .foregroundColor(COLOR_TITLE)
 
@@ -407,7 +407,7 @@ struct HistoryMemoView: View {
                     }
                 }
             
-            Button("保存") {
+            Button("common.save") {
                 onSave()
             }
             .padding(.top, 4)

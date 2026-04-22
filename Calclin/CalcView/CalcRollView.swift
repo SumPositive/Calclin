@@ -66,8 +66,8 @@ struct CalcRollView: View {
                 // 要望どおり、CalcViewの内側ではなく「CalcRollHeaderViewとCalcViewの間」に配置する
                 let isCalcMode = calcViewModels[selectedPage].calcMode == .calculator
                 Text(isCalcMode
-                     ? String(localized: "明細行をタップすれば編集できます。=行はメモ入力できます")
-                     : String(localized: "数式の行をスワイプすればメモしたり、式をコピーできます"))
+                     ? String(localized: "history.rollHint")
+                     : String(localized: "history.formulaHint"))
                     .font(.system(size: 13.0, weight: .regular))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -241,7 +241,7 @@ struct CalcRollHeaderView: View {
 
                 if isBeginner {
                     // 初心者モードではボタンの意味を明記
-                    Text(String(localized: "計算機(枠)の表示を減らす"))
+                    Text(String(localized: "calcFrame.decrease"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -319,7 +319,7 @@ struct CalcRollHeaderView: View {
 
                     if isBeginner {
                         // 初心者モードではインジケータの操作方法を補足
-                        Text(String(localized: "左右にスワイプまたは\n枠内をタップして切り替え\nダブルタップも有効です"))
+                        Text(String(localized: "calcFrame.switchHint"))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -349,7 +349,7 @@ struct CalcRollHeaderView: View {
 
                 if isBeginner {
                     // 初心者モードではボタンの意味を明記
-                    Text(String(localized: "計算機(枠)の表示を増やす"))
+                    Text(String(localized: "calcFrame.increase"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)

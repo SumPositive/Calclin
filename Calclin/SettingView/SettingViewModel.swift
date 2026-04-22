@@ -71,8 +71,8 @@ final class SettingViewModel: ObservableObject {
         /// ローカライズ済みラベル
         var localized: String {
             switch self {
-                case .beginner: return String(localized: "初心者")
-                case .master:   return String(localized: "達人")
+                case .beginner: return String(localized: "settings.displayMode.beginner")
+                case .master:   return String(localized: "settings.displayMode.expert")
             }
         }
     }
@@ -92,9 +92,9 @@ final class SettingViewModel: ObservableObject {
 
         var localized: String {
             switch self {
-            case .automatic: return String(localized: "自動")
-            case .light:     return String(localized: "ライト")
-            case .dark:      return String(localized: "ダーク")
+            case .automatic: return String(localized: "settings.appearance.auto")
+            case .light:     return String(localized: "settings.appearance.light")
+            case .dark:      return String(localized: "settings.appearance.dark")
             }
         }
 
@@ -140,13 +140,13 @@ final class SettingViewModel: ObservableObject {
         // PickerやText表示用のlocalized文字列
         var localized: String {
             switch self {
-                case .Rup:    return String(localized: "切り上げ")
-                case .Rplus:  return String(localized: "正方向丸め")
-                case .R54:    return String(localized: "四捨五入")
-                case .R55:    return String(localized: "五捨五超入 偶数丸め")
-                case .R65:    return String(localized: "五捨六入")
-                case .Rminus: return String(localized: "負方向丸め")
-                case .Rdown:  return String(localized: "切り捨て")
+                case .Rup:    return String(localized: "settings.round.up")
+                case .Rplus:  return String(localized: "settings.round.plus")
+                case .R54:    return String(localized: "settings.round.halfUp")
+                case .R55:    return String(localized: "settings.round.halfEven")
+                case .R65:    return String(localized: "settings.round.halfDown")
+                case .Rminus: return String(localized: "settings.round.minus")
+                case .Rdown:  return String(localized: "settings.round.down")
             }
         }
     }
@@ -209,10 +209,10 @@ final class SettingViewModel: ObservableObject {
         // PickerやText表示用のlocalized文字列
         var localized: String {
             switch self {
-                case .none: return String(localized: "区切りなし   123456789.0")
-                case .G3:   return String(localized: "３桁区切り 123,456,789.0")
-                case .G23:  return String(localized: "インド式　12,34,56,789.0")
-                case .G4:   return String(localized: "４桁区切り 1,2345,6789.0")
+                case .none: return String(localized: "settings.grouping.none")
+                case .G3:   return String(localized: "settings.grouping.three")
+                case .G23:  return String(localized: "settings.grouping.indian")
+                case .G4:   return String(localized: "settings.grouping.four")
             }
         }
     }
@@ -262,9 +262,9 @@ final class SettingViewModel: ObservableObject {
         var id: String { rawValue }
         var localized: String {
             switch self {
-            case .never:    return String(localized: "しない")
-            case .onInput:  return String(localized: "入力時")
-            case .onEquals: return String(localized: "＝合計時")
+            case .never:    return String(localized: "settings.autoScroll.off")
+            case .onInput:  return String(localized: "settings.autoScroll.onInput")
+            case .onEquals: return String(localized: "settings.autoScroll.onTotal")
             }
         }
     }
