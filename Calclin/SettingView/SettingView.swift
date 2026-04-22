@@ -70,6 +70,8 @@ struct SettingView: View {
                     .padding(.top, 8)
                     .padding(.bottom)
                 }
+                // 設定カードの表示を優先し、縦スクロールインジケータは出さない
+                .scrollIndicators(.hidden)
                 .navigationTitle(Text("settings.title"))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
