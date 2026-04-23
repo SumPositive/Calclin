@@ -29,6 +29,11 @@ final class SettingViewModel: ObservableObject {
         static let groupSeparator = "groupSeparator"
         static let numberFontScale = "numberFontScale"
         static let autoScroll = "autoScroll"
+        static let keyShapeMode = "keyShapeMode"
+        static let keyShapeAmount = "keyShapeAmount"
+        static let keyDepthAmount = "keyDepthAmount"
+        static let keyShadowAmount = "keyShadowAmount"
+        static let keyHighlightAmount = "keyHighlightAmount"
     }
     
     /// 初期化
@@ -274,6 +279,51 @@ final class SettingViewModel: ObservableObject {
         }
     }
 
+    /// キー形状モード（デフォルト画像／カスタム形状）
+    enum KeyShapeMode: String, CaseIterable, Identifiable {
+        case standard
+        case custom
+
+        var id: String { rawValue }
+
+        var localized: String {
+            switch self {
+            case .standard: return String(localized: "settings.keyShape.default")
+            case .custom:   return String(localized: "settings.keyShape.custom")
+            }
+        }
+    }
+    @Published var keyShapeMode: KeyShapeMode = .standard {
+        didSet {
+            save(keyShapeMode.rawValue, forKey: StorageKey.keyShapeMode)
+        }
+    }
+
+    /// キー形状の丸み（0.0=四角、1.0=円寄り）
+    @Published var keyShapeAmount: Double = 0.5 {
+        didSet {
+            save(keyShapeAmount, forKey: StorageKey.keyShapeAmount)
+        }
+    }
+    /// キーの立体感
+    @Published var keyDepthAmount: Double = 0.5 {
+        didSet {
+            save(keyDepthAmount, forKey: StorageKey.keyDepthAmount)
+        }
+    }
+    /// キーの影
+    @Published var keyShadowAmount: Double = 0.35 {
+        didSet {
+            save(keyShadowAmount, forKey: StorageKey.keyShadowAmount)
+        }
+    }
+    /// キー上面のハイライト
+    @Published var keyHighlightAmount: Double = 0.5 {
+        didSet {
+            save(keyHighlightAmount, forKey: StorageKey.keyHighlightAmount)
+        }
+    }
+
     // HistoryMemoViewをPopupで表示する
     @Published var popupHistoryMemoInfo: (maxLength: Int, index: Int, calcIndex: Int)? = nil
 
@@ -287,12 +337,25 @@ final class SettingViewModel: ObservableObject {
         groupType = storedEnum(forKey: StorageKey.groupType, default: groupType)
         groupSeparator = storedGroupSeparator(default: groupSeparator)
         autoScroll = storedEnum(forKey: StorageKey.autoScroll, default: autoScroll)
+        keyShapeMode = storedEnum(forKey: StorageKey.keyShapeMode, default: keyShapeMode)
 
         if defaults.object(forKey: StorageKey.decimalDigits) != nil {
             decimalDigits = min(max(defaults.double(forKey: StorageKey.decimalDigits), 0), SETTING_decimalDigits_MAX)
         }
         if defaults.object(forKey: StorageKey.numberFontScale) != nil {
             numberFontScale = min(max(defaults.double(forKey: StorageKey.numberFontScale), 0.5), 3.0)
+        }
+        if defaults.object(forKey: StorageKey.keyShapeAmount) != nil {
+            keyShapeAmount = min(max(defaults.double(forKey: StorageKey.keyShapeAmount), 0.0), 1.0)
+        }
+        if defaults.object(forKey: StorageKey.keyDepthAmount) != nil {
+            keyDepthAmount = min(max(defaults.double(forKey: StorageKey.keyDepthAmount), 0.0), 1.0)
+        }
+        if defaults.object(forKey: StorageKey.keyShadowAmount) != nil {
+            keyShadowAmount = min(max(defaults.double(forKey: StorageKey.keyShadowAmount), 0.0), 1.0)
+        }
+        if defaults.object(forKey: StorageKey.keyHighlightAmount) != nil {
+            keyHighlightAmount = min(max(defaults.double(forKey: StorageKey.keyHighlightAmount), 0.0), 1.0)
         }
     }
 

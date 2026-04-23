@@ -421,6 +421,8 @@ struct KeyView: View {
     @State private var isLongTapped = false
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
+    // キー形状設定を取得する
+    @EnvironmentObject var setting: SettingViewModel
 
     
     var body: some View {
@@ -446,10 +448,23 @@ struct KeyView: View {
                 ZStack {
                     // 活性キーは少し暗く、非活性キーは通常の明るさ（透過なし）
                     let isDisabled = calcViewModel.isKeyDisabled(keyDef?.code ?? "")
-                    Image(isTapped ? "keyDown" : "keyUp")
-                        .resizable()
-                        .opacity(colorScheme == .dark ? 0.40 : 1.0)
-                        .colorMultiply(isDisabled ? Color(white: 0.92) : .white)
+                    if setting.keyShapeMode == .standard {
+                        Image(isTapped ? "keyDown" : "keyUp")
+                            .resizable()
+                            .opacity(colorScheme == .dark ? 0.40 : 1.0)
+                            .colorMultiply(isDisabled ? Color(white: 0.92) : .white)
+                    } else {
+                        CustomKeyBackground(
+                            amount: setting.keyShapeAmount,
+                            depth: setting.keyDepthAmount,
+                            shadow: setting.keyShadowAmount,
+                            highlight: setting.keyHighlightAmount,
+                            isTapped: isTapped,
+                            isDisabled: isDisabled,
+                            colorScheme: colorScheme,
+                            size: geo.size
+                        )
+                    }
 
                     // ダークモードはキートップを黒で表示
                     let keyTextColor: Color = colorScheme == .dark
@@ -492,6 +507,68 @@ struct KeyView: View {
                     }
             )
         }
+    }
+}
+
+/// カスタム形状キーの背景。amountは0.0で四角、1.0で円寄りにする
+private struct CustomKeyBackground: View {
+    let amount: Double
+    let depth: Double
+    let shadow: Double
+    let highlight: Double
+    let isTapped: Bool
+    let isDisabled: Bool
+    let colorScheme: ColorScheme
+    let size: CGSize
+
+    private var cornerRadius: CGFloat {
+        let clamped = min(max(amount, 0.0), 1.0)
+        return min(size.width, size.height) * 0.5 * clamped
+    }
+
+    var body: some View {
+        let depthValue = min(max(depth, 0.0), 1.0)
+        let shadowValue = min(max(shadow, 0.0), 1.0)
+        let highlightValue = min(max(highlight, 0.0), 1.0)
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        let topWhite = colorScheme == .dark ? 0.62 + 0.22 * depthValue : 0.90 + 0.10 * depthValue
+        let bottomWhite = colorScheme == .dark ? 0.46 - 0.22 * depthValue : 0.82 - 0.22 * depthValue
+        let pressedTopWhite = colorScheme == .dark ? 0.46 + 0.12 * depthValue : 0.72 + 0.08 * depthValue
+        let pressedBottomWhite = colorScheme == .dark ? 0.26 - 0.10 * depthValue : 0.88 - 0.16 * depthValue
+        let topColor = Color(white: topWhite)
+        let bottomColor = Color(white: bottomWhite)
+        let pressedTopColor = Color(white: pressedTopWhite)
+        let pressedBottomColor = Color(white: pressedBottomWhite)
+
+        shape
+            .fill(
+                LinearGradient(
+                    colors: isTapped
+                        ? [pressedTopColor, pressedBottomColor]
+                        : [topColor, bottomColor],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .clipShape(shape)
+            .overlay {
+                shape
+                    .strokeBorder(Color.black.opacity((colorScheme == .dark ? 0.20 : 0.12) + 0.18 * shadowValue), lineWidth: 1)
+            }
+            .overlay(alignment: .top) {
+                // 上面の反射で、既存キーに近い立体感を出す
+                shape
+                    .fill(Color.white.opacity(isTapped ? 0.03 + 0.10 * highlightValue : 0.04 + 0.34 * highlightValue))
+                    .frame(height: max(size.height * 0.42, 1))
+                    .clipShape(shape)
+                    .allowsHitTesting(false)
+            }
+            .compositingGroup()
+            .shadow(color: Color.black.opacity(0.22 * shadowValue),
+                    radius: 1.0 + 3.0 * shadowValue,
+                    x: 0,
+                    y: 1.0 + 2.0 * shadowValue)
+            .opacity(isDisabled ? 0.70 : 1.0)
     }
 }
 

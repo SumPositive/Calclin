@@ -386,87 +386,139 @@ struct SettingView: View {
             iconName: "keyboard",
             tint: Color(.systemBlue)
         ) {
-            HStack(spacing: 4) {
-                VStack(spacing: 4) {
-                    Button {
-                        isPreparingExport = true
-                        Task {
-                            // makeExportData は MainActor 上で実行、エンコード後に共有
-                            let data = keyboardViewModel.makeExportData()
-                            isPreparingExport = false
-                            if let data {
-                                exportShareData = data
-                                AppAnalytics.logKeyboardSaved()
-                            } else {
-                                Manager.shared.toast(String(localized: "keyboard.exportFailure"), wait: 2.0)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 4) {
+                    Label("settings.keyShape", systemImage: "slider.horizontal.3")
+                        .labelStyle(.titleAndIcon)
+                        .font(.subheadline)
+                    Picker("settings.keyShape", selection: $viewModel.keyShapeMode) {
+                        ForEach(SettingViewModel.KeyShapeMode.allCases) { mode in
+                            Text(mode.localized).tag(mode)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                }
+
+                KeyboardShapePreview(
+                    mode: viewModel.keyShapeMode,
+                    amount: viewModel.keyShapeAmount,
+                    depth: viewModel.keyDepthAmount,
+                    shadow: viewModel.keyShadowAmount,
+                    highlight: viewModel.keyHighlightAmount
+                )
+
+                if viewModel.keyShapeMode == .custom {
+                    VStack(spacing: 6) {
+                        HStack(spacing: 8) {
+                            RoundedRectangle(cornerRadius: 2, style: .continuous)
+                                .strokeBorder(.secondary, lineWidth: 1.4)
+                                .frame(width: 18, height: 18)
+                                .accessibilityLabel(Text("settings.keyShape.square"))
+                            Slider(value: $viewModel.keyShapeAmount, in: (0.0)...(1.0), step: 0.01)
+                            Circle()
+                                .strokeBorder(.secondary, lineWidth: 1.4)
+                                .frame(width: 18, height: 18)
+                                .accessibilityLabel(Text("settings.keyShape.circle"))
+                        }
+                        KeyboardShapeSlider(
+                            title: "settings.keyDepth",
+                            systemImage: "cube",
+                            value: $viewModel.keyDepthAmount
+                        )
+                        KeyboardShapeSlider(
+                            title: "settings.keyShadow",
+                            systemImage: "circle.bottomhalf.filled",
+                            value: $viewModel.keyShadowAmount
+                        )
+                        KeyboardShapeSlider(
+                            title: "settings.keyHighlight",
+                            systemImage: "sparkles",
+                            value: $viewModel.keyHighlightAmount
+                        )
+                    }
+                }
+
+                HStack(spacing: 4) {
+                    VStack(spacing: 4) {
+                        Button {
+                            isPreparingExport = true
+                            Task {
+                                // makeExportData は MainActor 上で実行、エンコード後に共有
+                                let data = keyboardViewModel.makeExportData()
+                                isPreparingExport = false
+                                if let data {
+                                    exportShareData = data
+                                    AppAnalytics.logKeyboardSaved()
+                                } else {
+                                    Manager.shared.toast(String(localized: "keyboard.exportFailure"), wait: 2.0)
+                                }
                             }
+                        } label: {
+                            Label("keyboard.export", systemImage: "square.and.arrow.up")
+                                .font(.footnote)
+                                .fixedSize()
+                                .padding(.horizontal, 8)
+                                .frame(height: 34)
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .strokeBorder(.blue, lineWidth: 1)
+                                )
                         }
-                    } label: {
-                        Label("keyboard.export", systemImage: "square.and.arrow.up")
-                            .font(.footnote)
-                            .fixedSize()
-                            .padding(.horizontal, 8)
-                            .frame(height: 34)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(.blue, lineWidth: 1)
-                            )
+                        Text("keyboard.exportHelp")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
-                    Text("keyboard.exportHelp")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
 
-                VStack(spacing: 4) {
-                    Button {
-                        isImporting = true
-                    } label: {
-                        Label("keyboard.import", systemImage: "square.and.arrow.down")
-                            .font(.footnote)
-                            .fixedSize()
-                            .padding(.horizontal, 8)
-                            .frame(height: 34)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(.green, lineWidth: 1)
-                            )
-                    }
-                    Text("keyboard.importHelp")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                
-                Spacer()
-
-                VStack(spacing: 4) {
-                    Button {
-                        // 初期化処理の成否に応じて、完了可否をトースト表示する
-                        let isSuccess = keyboardViewModel.initKeyboardJson(isToast: false)
-                        if isSuccess {
-                            Manager.shared.toast(String(localized: "keyboard.resetSuccess"), wait: 3.0)
-                        } else {
-                            Manager.shared.toast(String(localized: "keyboard.resetFailure"), wait: 2.0)
+                    VStack(spacing: 4) {
+                        Button {
+                            isImporting = true
+                        } label: {
+                            Label("keyboard.import", systemImage: "square.and.arrow.down")
+                                .font(.footnote)
+                                .fixedSize()
+                                .padding(.horizontal, 8)
+                                .frame(height: 34)
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .strokeBorder(.green, lineWidth: 1)
+                                )
                         }
-                        // 初期化はインパクトが大きいので、誤タップ防止策の検討材料にする
-                        AppAnalytics.logKeyboardReset()
-                    } label: {
-                        Text("keyboard.reset")
-                            .font(.subheadline)
-                            .fixedSize()
-                            .padding(.horizontal, 8)
-                            .frame(height: 24)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(.red, lineWidth: 1)
-                            )
+                        Text("keyboard.importHelp")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
-                    Text("keyboard.resetHelp")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    VStack(spacing: 4) {
+                        Button {
+                            // 初期化処理の成否に応じて、完了可否をトースト表示する
+                            let isSuccess = keyboardViewModel.initKeyboardJson(isToast: false)
+                            if isSuccess {
+                                Manager.shared.toast(String(localized: "keyboard.resetSuccess"), wait: 3.0)
+                            } else {
+                                Manager.shared.toast(String(localized: "keyboard.resetFailure"), wait: 2.0)
+                            }
+                            // 初期化はインパクトが大きいので、誤タップ防止策の検討材料にする
+                            AppAnalytics.logKeyboardReset()
+                        } label: {
+                            Text("keyboard.reset")
+                                .font(.subheadline)
+                                .fixedSize()
+                                .padding(.horizontal, 8)
+                                .frame(height: 24)
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .strokeBorder(.red, lineWidth: 1)
+                                )
+                        }
+                        Text("keyboard.resetHelp")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .padding(.top, -8)
@@ -647,6 +699,137 @@ private struct TipSheetView: View {
 }
 
 // MARK: - 共通UIコンポーネント
+
+/// キー形状の設定値をその場で確認するプレビュー
+private struct KeyboardShapePreview: View {
+    let mode: SettingViewModel.KeyShapeMode
+    let amount: Double
+    let depth: Double
+    let shadow: Double
+    let highlight: Double
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(spacing: 6) {
+            KeyboardShapePreviewKey(title: "7", mode: mode, amount: amount, depth: depth, shadow: shadow, highlight: highlight)
+            KeyboardShapePreviewKey(title: "8", mode: mode, amount: amount, depth: depth, shadow: shadow, highlight: highlight)
+            KeyboardShapePreviewKey(title: "+", mode: mode, amount: amount, depth: depth, shadow: shadow, highlight: highlight, tint: COLOR_OPERATOR)
+            KeyboardShapePreviewKey(title: "=", mode: mode, amount: amount, depth: depth, shadow: shadow, highlight: highlight, width: 62, tint: COLOR_ANSWER)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.primary.opacity(colorScheme == .dark ? 0.08 : 0.04))
+        )
+    }
+}
+
+/// プレビュー用の単独キー
+private struct KeyboardShapePreviewKey: View {
+    let title: String
+    let mode: SettingViewModel.KeyShapeMode
+    let amount: Double
+    let depth: Double
+    let shadow: Double
+    let highlight: Double
+    var width: CGFloat = 42
+    var tint: Color = COLOR_NUMBER
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        ZStack {
+            if mode == .standard {
+                // デフォルトは現在のキー画像をそのまま縮小表示する
+                Image("keyUp")
+                    .resizable()
+                    .opacity(colorScheme == .dark ? 0.40 : 1.0)
+            } else {
+                KeyboardShapePreviewBackground(
+                    amount: amount,
+                    depth: depth,
+                    shadow: shadow,
+                    highlight: highlight,
+                    colorScheme: colorScheme
+                )
+            }
+
+            Text(title)
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(colorScheme == .dark ? .black : tint)
+        }
+        .frame(width: width, height: 34)
+    }
+}
+
+/// プレビュー用のカスタムキー背景
+private struct KeyboardShapePreviewBackground: View {
+    let amount: Double
+    let depth: Double
+    let shadow: Double
+    let highlight: Double
+    let colorScheme: ColorScheme
+
+    private var cornerRadius: CGFloat {
+        min(max(amount, 0.0), 1.0) * 17.0
+    }
+
+    var body: some View {
+        let depthValue = min(max(depth, 0.0), 1.0)
+        let shadowValue = min(max(shadow, 0.0), 1.0)
+        let highlightValue = min(max(highlight, 0.0), 1.0)
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        let topWhite = colorScheme == .dark ? 0.62 + 0.22 * depthValue : 0.90 + 0.10 * depthValue
+        let bottomWhite = colorScheme == .dark ? 0.46 - 0.22 * depthValue : 0.82 - 0.22 * depthValue
+        let topColor = Color(white: topWhite)
+        let bottomColor = Color(white: bottomWhite)
+
+        shape
+            .fill(
+                LinearGradient(
+                    colors: [topColor, bottomColor],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .clipShape(shape)
+            .overlay {
+                shape
+                    .strokeBorder(Color.black.opacity((colorScheme == .dark ? 0.20 : 0.12) + 0.18 * shadowValue), lineWidth: 1)
+            }
+            .overlay(alignment: .top) {
+                // 実キーと同じ方向の反射で形状変化を見やすくする
+                shape
+                    .fill(Color.white.opacity(0.04 + 0.34 * highlightValue))
+                    .frame(height: 14)
+                    .clipShape(shape)
+            }
+            .compositingGroup()
+            .shadow(color: Color.black.opacity(0.20 * shadowValue),
+                    radius: 1.0 + 3.0 * shadowValue,
+                    x: 0,
+                    y: 1.0 + 2.0 * shadowValue)
+    }
+}
+
+/// キー形状用のコンパクトな調整スライダー
+private struct KeyboardShapeSlider: View {
+    let title: LocalizedStringResource
+    let systemImage: String
+    @Binding var value: Double
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Label(title, systemImage: systemImage)
+                .labelStyle(.titleAndIcon)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 92, alignment: .leading)
+            Slider(value: $value, in: (0.0)...(1.0), step: 0.01)
+        }
+    }
+}
 
 /// カード感をSwiftUIで再現する共通コンポーネント
 private struct SettingSectionCard<Content: View>: View {
