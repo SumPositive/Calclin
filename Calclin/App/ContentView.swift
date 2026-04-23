@@ -117,6 +117,13 @@ struct ContentView: View {
         min(max(height, APP_KB_HEIGHT_MIN), APP_KB_HEIGHT_MAX)
     }
 
+    private func keyStylePopupY(screenHeight: CGFloat) -> CGFloat {
+        // キーボードを見ながら調整できるよう、ポップアップはキーボード上のCalcView側へ寄せる
+        let keyboardTop = screenHeight - normalizedKeyboardHeight
+        let upperY = max(190, keyboardTop - 120)
+        return min(max(keyboardTop / 2 + 42, 190), upperY)
+    }
+
     
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
@@ -293,6 +300,38 @@ struct ContentView: View {
                     }
                 }
                 .zIndex(2) // これが無いとSettingViewの下になる
+            }
+
+            //(ZStack 2) Popupでキースタイル設定表示
+            if setting.isKeyStylePopupPresented {
+                GeometryReader { geo in
+                    let popupWidth = min(340, geo.size.width - 32)
+                    ZStack {
+                        Color.black.opacity(0.001)
+                            .ignoresSafeArea()
+                            .onTapGesture {
+                                setting.isKeyStylePopupPresented = false
+                            }
+
+                        KeyboardStylePopupView {
+                            setting.isKeyStylePopupPresented = false
+                        }
+                        .environmentObject(setting)
+                        .frame(width: popupWidth)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(COLOR_BACK_SETTING)
+                                .shadow(radius: 5)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Color.gray.opacity(0.3))
+                        )
+                        .position(x: geo.size.width / 2,
+                                  y: keyStylePopupY(screenHeight: geo.size.height))
+                    }
+                }
+                .zIndex(2) // キーボードの上に出す
             }
 
             //(ZStack 3) ToastView表示

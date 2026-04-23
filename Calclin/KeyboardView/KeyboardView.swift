@@ -200,10 +200,91 @@ struct CubeRotationModifier: ViewModifier {
     }
 }
 
+/// キーボードを見ながらキー形状を調整するポップアップ
+struct KeyboardStylePopupView: View {
+    @EnvironmentObject var setting: SettingViewModel
+    let onClose: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("settings.keyShape", systemImage: "slider.horizontal.3")
+                    .font(.headline)
+                Spacer()
+                Button(action: onClose) {
+                    Image(systemName: "xmark.circle.fill")
+                        .imageScale(.large)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            Picker("settings.keyShape", selection: $setting.keyShapeMode) {
+                ForEach(SettingViewModel.KeyShapeMode.allCases) { mode in
+                    Text(mode.localized).tag(mode)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle())
+
+            if setting.keyShapeMode == .custom {
+                VStack(spacing: 8) {
+                    HStack(spacing: 8) {
+                        RoundedRectangle(cornerRadius: 2, style: .continuous)
+                            .strokeBorder(.secondary, lineWidth: 1.4)
+                            .frame(width: 18, height: 18)
+                            .accessibilityLabel(Text("settings.keyShape.square"))
+                        Slider(value: $setting.keyShapeAmount, in: (0.0)...(1.0), step: 0.01)
+                        Circle()
+                            .strokeBorder(.secondary, lineWidth: 1.4)
+                            .frame(width: 18, height: 18)
+                            .accessibilityLabel(Text("settings.keyShape.circle"))
+                    }
+
+                    KeyboardStyleSlider(
+                        title: "settings.keyDepth",
+                        systemImage: "cube",
+                        value: $setting.keyDepthAmount
+                    )
+                    KeyboardStyleSlider(
+                        title: "settings.keyShadow",
+                        systemImage: "circle.bottomhalf.filled",
+                        value: $setting.keyShadowAmount
+                    )
+                    KeyboardStyleSlider(
+                        title: "settings.keyHighlight",
+                        systemImage: "sparkles",
+                        value: $setting.keyHighlightAmount
+                    )
+                }
+            }
+        }
+        .padding(14)
+    }
+}
+
+/// キースタイル用のコンパクトな調整スライダー
+private struct KeyboardStyleSlider: View {
+    let title: LocalizedStringResource
+    let systemImage: String
+    @Binding var value: Double
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Label(title, systemImage: systemImage)
+                .labelStyle(.titleAndIcon)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 92, alignment: .leading)
+            Slider(value: $value, in: (0.0)...(1.0), step: 0.01)
+        }
+    }
+}
+
 // 下部メニュー
 struct KeyboardFooterView: View {
     @Binding var selectedPage: Int
     let pageCount: Int
+    @EnvironmentObject var setting: SettingViewModel
 
     var body: some View {
         // 下部メニュー関係の固定値
@@ -213,42 +294,59 @@ struct KeyboardFooterView: View {
         GeometryReader { geo in
             let viewWidth = geo.size.width
 
-            HStack {
-                Spacer()
-                // インジケータ部（タップ・スワイプ切り替え含む）
-                ForEach(0..<pageCount, id: \.self) { index in
-                    Circle()
-                        .fill(index == selectedPage ? Color.primary : Color.secondary.opacity(0.4))
-                        .frame(width: IND_CIRCLE_SIZE, height: IND_CIRCLE_SIZE)
-                        .animation(.easeOut(duration: 0.2), value: selectedPage)
-                        .padding(.horizontal, 0)
-                }
-                Spacer()
-            }
-            // iPhone同様にインジケータ自体でページ切り替えできるように、広いタッチ領域を確保
-            .contentShape(Rectangle())
-            // スワイプ操作をインジケータでも受け付ける
-            .gesture(
-                DragGesture()
-                    .onEnded { value in
-                        if IND_SWIPE_RANGE < value.translation.width {
-                            // 右スワイプで前ページ（巡回）
-                            selectedPage = (selectedPage - 1 + pageCount) % pageCount
-                        }
-                        else if value.translation.width < -IND_SWIPE_RANGE {
-                            // 左スワイプで次ページ（巡回）
-                            selectedPage = (selectedPage + 1) % pageCount
-                        }
+            ZStack {
+                HStack {
+                    Spacer()
+                    // インジケータ部（タップ・スワイプ切り替え含む）
+                    ForEach(0..<pageCount, id: \.self) { index in
+                        Circle()
+                            .fill(index == selectedPage ? Color.primary : Color.secondary.opacity(0.4))
+                            .frame(width: IND_CIRCLE_SIZE, height: IND_CIRCLE_SIZE)
+                            .animation(.easeOut(duration: 0.2), value: selectedPage)
+                            .padding(.horizontal, 0)
                     }
-            )
-            // タップ位置で前後ページへ移動させる（iPadでもiPhoneと同じ見え方・操作感にする）
-            .onTapGesture { location in
-                let midX = viewWidth / 2
-                if location.x < midX {
-                    selectedPage = (selectedPage - 1 + pageCount) % pageCount
+                    Spacer()
                 }
-                else {
-                    selectedPage = (selectedPage + 1) % pageCount
+                // iPhone同様にインジケータ自体でページ切り替えできるように、広いタッチ領域を確保
+                .contentShape(Rectangle())
+                // スワイプ操作をインジケータでも受け付ける
+                .gesture(
+                    DragGesture()
+                        .onEnded { value in
+                            if IND_SWIPE_RANGE < value.translation.width {
+                                // 右スワイプで前ページ（巡回）
+                                selectedPage = (selectedPage - 1 + pageCount) % pageCount
+                            }
+                            else if value.translation.width < -IND_SWIPE_RANGE {
+                                // 左スワイプで次ページ（巡回）
+                                selectedPage = (selectedPage + 1) % pageCount
+                            }
+                        }
+                )
+                // タップ位置で前後ページへ移動させる（iPadでもiPhoneと同じ見え方・操作感にする）
+                .onTapGesture { location in
+                    let midX = viewWidth / 2
+                    if location.x < midX {
+                        selectedPage = (selectedPage - 1 + pageCount) % pageCount
+                    }
+                    else {
+                        selectedPage = (selectedPage + 1) % pageCount
+                    }
+                }
+
+                HStack {
+                    Spacer()
+                    Button {
+                        setting.isKeyStylePopupPresented = true
+                    } label: {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 15, weight: .semibold))
+                            .frame(width: 34, height: 24)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .padding(.trailing, 10)
                 }
             }
         }
@@ -530,6 +628,13 @@ private struct CustomKeyBackground: View {
         let depthValue = min(max(depth, 0.0), 1.0)
         let shadowValue = min(max(shadow, 0.0), 1.0)
         let highlightValue = min(max(highlight, 0.0), 1.0)
+        let highlightOpacity = colorScheme == .dark
+            ? (isTapped ? 0.04 + 0.16 * highlightValue : 0.08 + 0.48 * highlightValue)
+            : (isTapped ? 0.04 + 0.14 * highlightValue : 0.06 + 0.44 * highlightValue)
+        let highlightFadeLocation = colorScheme == .dark ? 0.18 : 0.32
+        let innerShadowOpacity = colorScheme == .dark
+            ? 0.10 + 0.34 * shadowValue
+            : 0.06 + 0.24 * shadowValue
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         let topWhite = colorScheme == .dark ? 0.62 + 0.22 * depthValue : 0.90 + 0.10 * depthValue
         let bottomWhite = colorScheme == .dark ? 0.46 - 0.22 * depthValue : 0.82 - 0.22 * depthValue
@@ -556,18 +661,44 @@ private struct CustomKeyBackground: View {
                     .strokeBorder(Color.black.opacity((colorScheme == .dark ? 0.20 : 0.12) + 0.18 * shadowValue), lineWidth: 1)
             }
             .overlay(alignment: .top) {
-                // 上面の反射で、既存キーに近い立体感を出す
+                // 帯状にせず、形状内で自然に消える反射にする
                 shape
-                    .fill(Color.white.opacity(isTapped ? 0.03 + 0.10 * highlightValue : 0.04 + 0.34 * highlightValue))
-                    .frame(height: max(size.height * 0.42, 1))
+                    .fill(
+                        LinearGradient(
+                            stops: [
+                                .init(color: Color.white.opacity(highlightOpacity), location: 0.0),
+                                .init(color: Color.white.opacity(highlightOpacity * 0.18), location: highlightFadeLocation),
+                                .init(color: Color.white.opacity(0.0), location: 1.0),
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .clipShape(shape)
+                    .allowsHitTesting(false)
+            }
+            .overlay(alignment: .bottom) {
+                // 黒背景でも影量の変化が分かるよう、キー内側の下部にも陰影を入れる
+                shape
+                    .fill(
+                        LinearGradient(
+                            stops: [
+                                .init(color: Color.black.opacity(0.0), location: 0.0),
+                                .init(color: Color.black.opacity(innerShadowOpacity * 0.28), location: 0.48),
+                                .init(color: Color.black.opacity(innerShadowOpacity), location: 1.0),
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
                     .clipShape(shape)
                     .allowsHitTesting(false)
             }
             .compositingGroup()
-            .shadow(color: Color.black.opacity(0.22 * shadowValue),
-                    radius: 1.0 + 3.0 * shadowValue,
+            .shadow(color: Color.black.opacity((colorScheme == .dark ? 0.34 : 0.24) * shadowValue),
+                    radius: 1.0 + 5.0 * shadowValue,
                     x: 0,
-                    y: 1.0 + 2.0 * shadowValue)
+                    y: 1.0 + 3.5 * shadowValue)
             .opacity(isDisabled ? 0.70 : 1.0)
     }
 }

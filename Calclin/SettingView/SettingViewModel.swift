@@ -326,6 +326,8 @@ final class SettingViewModel: ObservableObject {
 
     // HistoryMemoViewをPopupで表示する
     @Published var popupHistoryMemoInfo: (maxLength: Int, index: Int, calcIndex: Int)? = nil
+    // キーボードを見ながらキー形状を調整するPopup表示
+    @Published var isKeyStylePopupPresented: Bool = false
 
     private func loadPersistentSettings() {
         let defaults = UserDefaults.standard
