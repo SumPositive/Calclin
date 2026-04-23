@@ -788,6 +788,22 @@
         }
       }
     },
+    "settings.keyBrightness" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brightness"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "明るさ"
+          }
+        }
+      }
+    },
     "settings.keyDepth" : {
       "localizations" : {
         "en" : {

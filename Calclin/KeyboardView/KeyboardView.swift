@@ -241,6 +241,11 @@ struct KeyboardStylePopupView: View {
                     }
 
                     KeyboardStyleSlider(
+                        title: "settings.keyBrightness",
+                        systemImage: "sun.max",
+                        value: $setting.keyBrightnessAmount
+                    )
+                    KeyboardStyleSlider(
                         title: "settings.keyDepth",
                         systemImage: "cube",
                         value: $setting.keyDepthAmount
@@ -564,6 +569,7 @@ struct KeyView: View {
                     } else {
                         CustomKeyBackground(
                             amount: setting.keyShapeAmount,
+                            brightness: setting.keyBrightnessAmount,
                             depth: setting.keyDepthAmount,
                             shadow: setting.keyShadowAmount,
                             highlight: setting.keyHighlightAmount,
@@ -579,18 +585,25 @@ struct KeyView: View {
                         ? .black
                         : (keyDef?.unitBase == nil ? COLOR_NUMBER : COLOR_UNIT)
                     let keyUnitColor: Color = colorScheme == .dark ? .black : COLOR_UNIT
+                    // 非活性キーはキー面を変えず、文字・記号だけを控えめにして押下感を避ける
+                    let disabledTextColor: Color = colorScheme == .dark
+                        ? Color.black.opacity(0.45)
+                        : Color.secondary.opacity(0.55)
+                    let displayTextColor: Color = isDisabled
+                        ? disabledTextColor
+                        : (keyDef?.unitBase == nil ? keyTextColor : keyUnitColor)
 
                     if isEditReturn {
                         Image(systemName: "return")
                             .font(.system(size: 24, weight: .heavy))
-                            .foregroundColor(colorScheme == .dark ? .black : COLOR_OPERATOR)
+                            .foregroundColor(isDisabled ? disabledTextColor : (colorScheme == .dark ? .black : COLOR_OPERATOR))
                     } else if symbol != "" {
                         Image(systemName: symbol)
                             .imageScale(.large)
-                            .foregroundColor(keyDef?.unitBase == nil ? keyTextColor : keyUnitColor)
+                            .foregroundColor(displayTextColor)
                     } else {
                         Text(keyTop)
-                            .foregroundColor(keyDef?.unitBase == nil ? keyTextColor : keyUnitColor)
+                            .foregroundColor(displayTextColor)
                             .font(.system(size: 24,
                                           weight: (keyDef?.unitBase == nil ||
                                                    keyDef?.unitBase == keyDef?.code) ? .bold : .light))
@@ -621,6 +634,7 @@ struct KeyView: View {
 /// カスタム形状キーの背景。amountは0.0で四角、1.0で円寄りにする
 private struct CustomKeyBackground: View {
     let amount: Double
+    let brightness: Double
     let depth: Double
     let shadow: Double
     let highlight: Double
@@ -635,21 +649,31 @@ private struct CustomKeyBackground: View {
     }
 
     var body: some View {
+        let brightnessValue = min(max(brightness, 0.0), 1.0)
         let depthValue = min(max(depth, 0.0), 1.0)
         let shadowValue = min(max(shadow, 0.0), 1.0)
         let highlightValue = min(max(highlight, 0.0), 1.0)
         let highlightOpacity = colorScheme == .dark
-            ? (isTapped ? 0.04 + 0.16 * highlightValue : 0.08 + 0.48 * highlightValue)
+            ? (isTapped ? 0.03 + 0.10 * highlightValue : 0.04 + 0.28 * highlightValue)
             : (isTapped ? 0.04 + 0.14 * highlightValue : 0.06 + 0.44 * highlightValue)
         let highlightFadeLocation = colorScheme == .dark ? 0.18 : 0.32
         let innerShadowOpacity = colorScheme == .dark
             ? 0.10 + 0.34 * shadowValue
             : 0.06 + 0.24 * shadowValue
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        let topWhite = colorScheme == .dark ? 0.62 + 0.22 * depthValue : 0.90 + 0.10 * depthValue
-        let bottomWhite = colorScheme == .dark ? 0.46 - 0.22 * depthValue : 0.82 - 0.22 * depthValue
-        let pressedTopWhite = colorScheme == .dark ? 0.46 + 0.12 * depthValue : 0.72 + 0.08 * depthValue
-        let pressedBottomWhite = colorScheme == .dark ? 0.26 - 0.10 * depthValue : 0.88 - 0.16 * depthValue
+        let baseWhite = colorScheme == .dark ? 0.16 + 0.34 * brightnessValue : 0.62 + 0.30 * brightnessValue
+        let topWhite = colorScheme == .dark
+            ? baseWhite + 0.12 + 0.14 * depthValue
+            : baseWhite + 0.10 + 0.08 * depthValue
+        let bottomWhite = colorScheme == .dark
+            ? baseWhite - 0.04 - 0.12 * depthValue
+            : baseWhite - 0.02 - 0.18 * depthValue
+        let pressedTopWhite = colorScheme == .dark
+            ? baseWhite + 0.04 + 0.08 * depthValue
+            : baseWhite - 0.10 + 0.06 * depthValue
+        let pressedBottomWhite = colorScheme == .dark
+            ? baseWhite - 0.10 - 0.08 * depthValue
+            : baseWhite + 0.02 - 0.14 * depthValue
         let topColor = Color(white: topWhite)
         let bottomColor = Color(white: bottomWhite)
         let pressedTopColor = Color(white: pressedTopWhite)

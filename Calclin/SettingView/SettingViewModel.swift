@@ -31,6 +31,7 @@ final class SettingViewModel: ObservableObject {
         static let autoScroll = "autoScroll"
         static let keyShapeMode = "keyShapeMode"
         static let keyShapeAmount = "keyShapeAmount"
+        static let keyBrightnessAmount = "keyBrightnessAmount"
         static let keyDepthAmount = "keyDepthAmount"
         static let keyShadowAmount = "keyShadowAmount"
         static let keyHighlightAmount = "keyHighlightAmount"
@@ -305,6 +306,12 @@ final class SettingViewModel: ObservableObject {
             save(keyShapeAmount, forKey: StorageKey.keyShapeAmount)
         }
     }
+    /// キー全体の明るさ
+    @Published var keyBrightnessAmount: Double = 0.5 {
+        didSet {
+            save(keyBrightnessAmount, forKey: StorageKey.keyBrightnessAmount)
+        }
+    }
     /// キーの立体感
     @Published var keyDepthAmount: Double = 0.5 {
         didSet {
@@ -349,6 +356,9 @@ final class SettingViewModel: ObservableObject {
         }
         if defaults.object(forKey: StorageKey.keyShapeAmount) != nil {
             keyShapeAmount = min(max(defaults.double(forKey: StorageKey.keyShapeAmount), 0.0), 1.0)
+        }
+        if defaults.object(forKey: StorageKey.keyBrightnessAmount) != nil {
+            keyBrightnessAmount = min(max(defaults.double(forKey: StorageKey.keyBrightnessAmount), 0.0), 1.0)
         }
         if defaults.object(forKey: StorageKey.keyDepthAmount) != nil {
             keyDepthAmount = min(max(defaults.double(forKey: StorageKey.keyDepthAmount), 0.0), 1.0)
