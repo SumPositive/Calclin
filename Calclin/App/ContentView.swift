@@ -10,9 +10,48 @@ import SwiftUI
 
 private struct KeyboardResizeHandle: View {
     let isActive: Bool
+    let isHinting: Bool
     let onLongPressChanged: (Bool) -> Void
     let onDragChanged: (CGFloat) -> Void
     let onEnded: () -> Void
+
+    @State private var hintIconOffset: CGFloat = 0
+    @State private var hintAnimationTask: Task<Void, Never>?
+
+    private var handleOpacity: Double {
+        guard isActive else { return 0.0 }
+        return isHinting ? 0.95 : 0.92
+    }
+
+    private var accentOpacity: Double {
+        guard isActive else { return 0.0 }
+        return isHinting ? 0.80 : 0.72
+    }
+
+    private var hintOffset: CGFloat {
+        isHinting ? hintIconOffset : 0
+    }
+
+    private func startHintAnimationIfNeeded() {
+        guard isHinting else {
+            hintAnimationTask?.cancel()
+            hintIconOffset = 0
+            return
+        }
+        hintAnimationTask?.cancel()
+        hintIconOffset = 0
+        hintAnimationTask = Task { @MainActor in
+            // 中央から上へ0.6秒、その後大きく下へ1.4秒でリサイズ方向を示す
+            withAnimation(.easeInOut(duration: 0.6)) {
+                hintIconOffset = -14
+            }
+            try? await Task.sleep(for: .seconds(0.6))
+            guard Task.isCancelled == false else { return }
+            withAnimation(.easeInOut(duration: 1.4)) {
+                hintIconOffset = 28
+            }
+        }
+    }
 
     var body: some View {
         // 入力行中央に重ね、通常時は見せずに長押し成立後だけ表示する
@@ -22,14 +61,24 @@ private struct KeyboardResizeHandle: View {
             .contentShape(Rectangle())
             .overlay {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(.regularMaterial.opacity(isActive ? 0.92 : 0.0))
+                    .fill(.regularMaterial.opacity(handleOpacity))
                     .overlay {
                         Capsule()
-                            .fill(Color.accentColor.opacity(isActive ? 0.72 : 0.0))
+                            .fill(Color.accentColor.opacity(accentOpacity))
                             .frame(width: 132, height: 5)
                     }
                     .frame(width: 168, height: 24)
                     .animation(.easeOut(duration: 0.12), value: isActive)
+                    .overlay {
+                        if isHinting {
+                            // ハンドルは固定し、指アイコンだけ上下に動かして操作方向を示す
+                            Image(systemName: "hand.point.up.left.fill")
+                                .font(.system(size: 22, weight: .semibold))
+                                .foregroundStyle(Color.accentColor)
+                                .shadow(color: Color.black.opacity(0.25), radius: 2, x: 0, y: 1)
+                                .offset(x: 4, y: hintOffset)
+                        }
+                    }
             }
             .gesture(
                 LongPressGesture(minimumDuration: 0.5)
@@ -56,6 +105,15 @@ private struct KeyboardResizeHandle: View {
                         onEnded()
                     }
             )
+            .onChange(of: isHinting) { _, _ in
+                startHintAnimationIfNeeded()
+            }
+            .onAppear {
+                startHintAnimationIfNeeded()
+            }
+            .onDisappear {
+                hintAnimationTask?.cancel()
+            }
     }
 }
 
@@ -84,6 +142,8 @@ struct ContentView: View {
     // @State 変化あればViewが更新される
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
+    // フォアグラウンド復帰時にハンドル案内を出すため、Scene状態を監視する
+    @Environment(\.scenePhase) private var scenePhase
     // 設定シートの表示状態
     @State private var isSettingSheetPresented = false
     // @State 変化あればViewが更新される
@@ -94,6 +154,12 @@ struct ContentView: View {
     @State private var keyboardResizeStartHeight: CGFloat = 360.0
     // 長押しリサイズ中だけ境界を薄く表示する
     @State private var isKeyboardResizing = false
+    // フォアグラウンド復帰時だけ、リサイズハンドルの存在を短く見せる
+    @State private var isKeyboardResizeHintVisible = false
+    // 連続復帰時に古い非表示予約が残らないよう、Taskを保持する
+    @State private var keyboardResizeHintTask: Task<Void, Never>?
+    // 一度でもユーザがリサイズ機能を使ったら、以後は案内表示しない
+    @AppStorage("hasUsedKeyboardResizeHandle") private var hasUsedKeyboardResizeHandle = false
 
     // Popup関連の一時編集データ
     @State private var editingMemo: String = ""
@@ -122,6 +188,16 @@ struct ContentView: View {
         let keyboardTop = screenHeight - normalizedKeyboardHeight
         let upperY = max(190, keyboardTop - 120)
         return min(max(keyboardTop / 2 + 42, 190), upperY)
+    }
+
+    private func showKeyboardResizeHintIfNeeded() {
+        guard hasUsedKeyboardResizeHandle == false else { return }
+        keyboardResizeHintTask?.cancel()
+        isKeyboardResizeHintVisible = true
+        keyboardResizeHintTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2.0))
+            isKeyboardResizeHintVisible = false
+        }
     }
 
     
@@ -185,9 +261,13 @@ struct ContentView: View {
                        minHeight: APP_CALC_HEIGHT_MIN, maxHeight: APP_CALC_HEIGHT_MAX)
                 .overlay(alignment: .bottom) {
                     KeyboardResizeHandle(
-                        isActive: isKeyboardResizing,
+                        isActive: isKeyboardResizing || isKeyboardResizeHintVisible,
+                        isHinting: isKeyboardResizeHintVisible,
                         onLongPressChanged: { isPressing in
                             if isPressing {
+                                hasUsedKeyboardResizeHandle = true
+                                isKeyboardResizeHintVisible = false
+                                keyboardResizeHintTask?.cancel()
                                 keyboardResizeStartHeight = normalizedKeyboardHeight
                                 isKeyboardResizing = true
                             }
@@ -348,6 +428,14 @@ struct ContentView: View {
         }
         .ignoresSafeArea(.keyboard) // システムキーボードに押し上げられない
         .preferredColorScheme(setting.appearanceMode.colorScheme)
+        .task {
+            showKeyboardResizeHintIfNeeded()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                showKeyboardResizeHintIfNeeded()
+            }
+        }
         .sheet(isPresented: $isSettingSheetPresented) {
             // PackList同様にシート表示で設定を開く
             SettingView()
