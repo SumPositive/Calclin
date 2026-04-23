@@ -336,21 +336,31 @@ struct KeyboardFooterView: View {
 
                 HStack {
                     Spacer()
-                    Button {
-                        setting.isKeyStylePopupPresented = true
-                    } label: {
-                        Image(systemName: "slider.horizontal.3")
-                            .font(.system(size: 15, weight: .semibold))
-                            .frame(width: 34, height: 24)
-                            .contentShape(Rectangle())
+                    VStack(spacing: 0) {
+                        Button {
+                            setting.isKeyStylePopupPresented = true
+                        } label: {
+                            Image(systemName: "slider.horizontal.3")
+                                .font(.system(size: 17, weight: .semibold))
+                                .frame(width: 44, height: 24)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+
+                        if setting.playMode == .beginner {
+                            Text("settings.keyShape")
+                                .font(.caption)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .foregroundStyle(.secondary)
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
                     .padding(.trailing, 10)
                 }
             }
         }
-        .frame(height: 20)
+        .frame(height: setting.playMode == .beginner ? 40 : 20)
         .padding(.top, 8)
         //debug// .border(Color.red)
     }
