@@ -1653,6 +1653,9 @@ final class CalcViewModel: ObservableObject {
         case .failure(.negativeSqrt):
             log(.error, "負の数の平方根")
             return String(localized: "calc.result.error", defaultValue: "Error")
+        case .failure(.zeroDivision):
+            log(.error, "ゼロ除算: \(formula)")
+            return String(localized: "calc.error.divideByZero")
         case .failure(.invalidExpression):
             log(.error, "無効な式: \(formula)")
             return String(localized: "calc.result.error", defaultValue: "Error")
