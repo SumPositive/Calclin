@@ -38,6 +38,40 @@ struct SettingView: View {
     @State private var exportShareData: Data?     // 共有シートに渡す JSON データ
     @State private var isImporting = false        // キーボードインポートシート
 
+    // 文字サイズに追随するボタン高さ（Dynamic Type で自動スケール）
+    @ScaledMetric(relativeTo: .footnote) private var actionButtonHeight: CGFloat = 34
+    @ScaledMetric(relativeTo: .subheadline) private var smallButtonHeight: CGFloat = 24
+
+    // 現在の Dynamic Type サイズ（特大時に左右余白を最小化して内容欠けを防ぐ）
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    /// ScrollView 外側の左右パディング（特大時も最低限の余白を残して画面端の欠けを防ぐ）
+    private var outerHorizontalPadding: CGFloat {
+        if dynamicTypeSize.isAccessibilitySize {
+            return 4
+        } else if dynamicTypeSize >= .xxLarge {
+            return 8
+        } else {
+            return 16
+        }
+    }
+
+    /// セクション内側の左寄せパディング（特大時は 0 にしてセグメント幅を確保）
+    private var sectionLeadingPadding: CGFloat {
+        if dynamicTypeSize.isAccessibilitySize {
+            return 0
+        } else if dynamicTypeSize >= .xxLarge {
+            return 4
+        } else {
+            return 12
+        }
+    }
+
+    /// 特大以上は横並びを避け、縦積みへ切り替える
+    private var usesVerticalSectionLayout: Bool {
+        dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxLarge
+    }
+
     /// アプリのVersion/Build番号をまとめて返す
     private var appVersionText: String {
         // Info.plistから安全に値を拾う。Xcodeのビルド設定で設定されている想定
@@ -66,7 +100,7 @@ struct SettingView: View {
                         infoSection
                         footerSection
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, outerHorizontalPadding)
                     .padding(.top, 8)
                     .padding(.bottom)
                 }
@@ -125,6 +159,7 @@ struct SettingView: View {
         .sheet(isPresented: $showAdMobSheet) {
             // PackList同様に広告をシート表示する
             AdMobAdSheetView()
+                .appFontScale(viewModel.fontScale)
                 .presentationDetents([.large])
                 //.presentationDragIndicator(.visible)
         }
@@ -166,7 +201,7 @@ struct SettingView: View {
             tint: .accentColor
         ) {
             VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 4) {
+                AdaptiveLabelRow {
                     Label("settings.displayMode", systemImage: viewModel.playMode == .beginner
                                                     ? "tortoise" : "hare")
                         .labelStyle(.titleAndIcon)
@@ -184,7 +219,7 @@ struct SettingView: View {
                         AppAnalytics.logPlayModeChanged(from: oldValue, to: newValue)
                     }
                 }
-                HStack(spacing: 4) {
+                AdaptiveLabelRow {
                     Label("settings.appearanceMode", systemImage: viewModel.appearanceMode == .dark
                                                     ? "moon" : "sun.max")
                         .labelStyle(.titleAndIcon)
@@ -199,7 +234,7 @@ struct SettingView: View {
                         log(.info, "AppearanceMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
                     }
                 }
-                HStack(spacing: 4) {
+                AdaptiveLabelRow {
                     Label("settings.autoScroll", systemImage: "arrow.down.to.line")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
@@ -210,28 +245,32 @@ struct SettingView: View {
                     }
                     .pickerStyle(SegmentedPickerStyle())
                 }
-                HStack(spacing: 4) {
-                    Label("settings.zoomLevel", systemImage: "plus.magnifyingglass")
-                        .labelStyle(.titleAndIcon)
-                        .font(.subheadline)
-                    Text(String(format: " %.1f ", viewModel.numberFontScale))
-                        .monospacedDigit()
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
-                        .background(Color(.systemGray5))
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                    Slider(value: $viewModel.numberFontScale, in: (0.5)...(3.0), step: 0.1)
-                        .onChange(of: viewModel.numberFontScale, { oldValue, newValue in
-                            log(.info, ".onChange numberFontScale")
-                            // SettingViewModel
-                            viewModel.numberFontScale = newValue // Double型
+                VStack(alignment: .leading, spacing: 4) {
+                    AdaptiveLabelRow {
+                        Label("settings.fontScale", systemImage: "textformat.size")
+                            .labelStyle(.titleAndIcon)
+                            .font(.subheadline)
+                        Picker("settings.fontScale", selection: $viewModel.fontScale) {
+                            ForEach(SettingViewModel.FontScale.allCases) { scale in
+                                Text(LocalizedStringKey(scale.localizedKey)).tag(scale)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .onChange(of: viewModel.fontScale) { _, _ in
                             // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                             NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
-                        })
+                        }
+                    }
+                    if viewModel.playMode == .beginner {
+                        Text("settings.help.fontScale")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
             .padding(.top, -12)
-            .padding(.leading, 12)
+            .padding(.leading, sectionLeadingPadding)
         }
     }
 
@@ -243,7 +282,7 @@ struct SettingView: View {
             tint: Color(.systemTeal)
         ) {
             VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top, spacing: 4) {
+                AdaptiveLabelRow(alignment: .top) {
                     // 桁区切りタイプ
                     Text("settings.groupingStyle")
                         .font(.subheadline)
@@ -270,7 +309,7 @@ struct SettingView: View {
                 }
 
                 // 桁区切り記号
-                HStack(spacing: 4) {
+                AdaptiveLabelRow {
                     Text("settings.groupingSymbol")
                         .font(.subheadline)
                     Picker("settings.groupingSymbol", selection: $viewModel.groupSeparator) {
@@ -293,7 +332,7 @@ struct SettingView: View {
                 }
             }
             .padding(.top, -12)
-            .padding(.leading, 12)
+            .padding(.leading, sectionLeadingPadding)
         }
     }
 
@@ -305,7 +344,7 @@ struct SettingView: View {
             tint: Color(.systemIndigo)
         ) {
             VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 4) {
+                AdaptiveLabelRow {
                     Text("settings.decimalDigits")
                         .font(.subheadline)
                     Text(" \(Int(viewModel.decimalDigits)) ")
@@ -332,7 +371,7 @@ struct SettingView: View {
                     })
                 }
                 
-                HStack(spacing: 4) {
+                AdaptiveLabelRow {
                     Text("settings.rounding")
                         .font(.subheadline)
                     Picker("settings.rounding", selection: $viewModel.roundType) {
@@ -353,7 +392,7 @@ struct SettingView: View {
                 }
 
                 // 小数点
-                HStack(spacing: 4) {
+                AdaptiveLabelRow {
                     Text("settings.decimalPoint")
                         .font(.subheadline)
                     Picker("settings.decimalPoint", selection: $viewModel.decimalSeparator) {
@@ -375,7 +414,7 @@ struct SettingView: View {
                 }
             }
             .padding(.top, -12)
-            .padding(.leading, 12)
+            .padding(.leading, sectionLeadingPadding)
         }
     }
 
@@ -386,90 +425,24 @@ struct SettingView: View {
             iconName: "keyboard",
             tint: Color(.systemBlue)
         ) {
-            HStack(spacing: 4) {
-                VStack(spacing: 4) {
-                    Button {
-                        isPreparingExport = true
-                        Task {
-                            // makeExportData は MainActor 上で実行、エンコード後に共有
-                            let data = keyboardViewModel.makeExportData()
-                            isPreparingExport = false
-                            if let data {
-                                exportShareData = data
-                                AppAnalytics.logKeyboardSaved()
-                            } else {
-                                Manager.shared.toast(String(localized: "keyboard.exportFailure"), wait: 2.0)
-                            }
-                        }
-                    } label: {
-                        Label("keyboard.export", systemImage: "square.and.arrow.up")
-                            .font(.footnote)
-                            .fixedSize()
-                            .padding(.horizontal, 8)
-                            .frame(height: 34)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(.blue, lineWidth: 1)
-                            )
+            Group {
+                if usesVerticalSectionLayout {
+                    VStack(alignment: .leading, spacing: 12) {
+                        exportButtonBlock
+                        importButtonBlock
+                        resetButtonBlock
                     }
-                    Text("keyboard.exportHelp")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                VStack(spacing: 4) {
-                    Button {
-                        isImporting = true
-                    } label: {
-                        Label("keyboard.import", systemImage: "square.and.arrow.down")
-                            .font(.footnote)
-                            .fixedSize()
-                            .padding(.horizontal, 8)
-                            .frame(height: 34)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(.green, lineWidth: 1)
-                            )
+                } else {
+                    HStack(spacing: 4) {
+                        exportButtonBlock
+                        importButtonBlock
+                        Spacer()
+                        resetButtonBlock
                     }
-                    Text("keyboard.importHelp")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                VStack(spacing: 4) {
-                    Button {
-                        // 初期化処理の成否に応じて、完了可否をトースト表示する
-                        let isSuccess = keyboardViewModel.initKeyboardJson(isToast: false)
-                        if isSuccess {
-                            Manager.shared.toast(String(localized: "keyboard.resetSuccess"), wait: 3.0)
-                        } else {
-                            Manager.shared.toast(String(localized: "keyboard.resetFailure"), wait: 2.0)
-                        }
-                        // 初期化はインパクトが大きいので、誤タップ防止策の検討材料にする
-                        AppAnalytics.logKeyboardReset()
-                    } label: {
-                        Text("keyboard.reset")
-                            .font(.subheadline)
-                            .fixedSize()
-                            .padding(.horizontal, 8)
-                            .frame(height: 24)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(.red, lineWidth: 1)
-                            )
-                    }
-                    Text("keyboard.resetHelp")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
             }
             .padding(.top, -8)
-            .padding(.leading, 12)
+            .padding(.leading, sectionLeadingPadding)
         }
     }
 
@@ -480,37 +453,146 @@ struct SettingView: View {
             iconName: "heart.fill",
             tint: .pink
         ) {
-            HStack(spacing: 12) {
-                // 投げ銭
-                Button {
-                    showTipSheet = true
-                    AppAnalytics.logSupportTipTapped()
-                } label: {
-                    Label("support.tip", systemImage: "heart.fill")
-                        .font(.body)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
+            Group {
+                if usesVerticalSectionLayout {
+                    VStack(spacing: 12) {
+                        supportTipButton
+                        supportAdButton
+                    }
+                } else {
+                    HStack(spacing: 12) {
+                        supportTipButton
+                        supportAdButton
+                    }
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.pink)
-                .sheet(isPresented: $showTipSheet) {
-                    TipSheetView()
-                }
-
-                // 広告
-                Button {
-                    showAdMobSheet = true
-                    AppAnalytics.logSupportAdTapped()
-                } label: {
-                    Label("support.ad", systemImage: "play.rectangle.fill")
-                        .font(.body)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.brown)
             }
         }
+    }
+
+    private var exportButtonBlock: some View {
+        VStack(alignment: usesVerticalSectionLayout ? .leading : .center, spacing: 4) {
+            Button {
+                isPreparingExport = true
+                Task {
+                    // makeExportData は MainActor 上で実行、エンコード後に共有
+                    let data = keyboardViewModel.makeExportData()
+                    isPreparingExport = false
+                    if let data {
+                        exportShareData = data
+                        AppAnalytics.logKeyboardSaved()
+                    } else {
+                        Manager.shared.toast(String(localized: "keyboard.exportFailure"), wait: 2.0)
+                    }
+                }
+            } label: {
+                Label("keyboard.export", systemImage: "square.and.arrow.up")
+                    .font(.footnote)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 8)
+                    .frame(maxWidth: usesVerticalSectionLayout ? .infinity : nil)
+                    .frame(height: actionButtonHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(.blue, lineWidth: 1)
+                    )
+            }
+            Text("keyboard.exportHelp")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var importButtonBlock: some View {
+        VStack(alignment: usesVerticalSectionLayout ? .leading : .center, spacing: 4) {
+            Button {
+                isImporting = true
+            } label: {
+                Label("keyboard.import", systemImage: "square.and.arrow.down")
+                    .font(.footnote)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 8)
+                    .frame(maxWidth: usesVerticalSectionLayout ? .infinity : nil)
+                    .frame(height: actionButtonHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(.green, lineWidth: 1)
+                    )
+            }
+            Text("keyboard.importHelp")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var resetButtonBlock: some View {
+        VStack(alignment: usesVerticalSectionLayout ? .leading : .center, spacing: 4) {
+            Button {
+                // 初期化処理の成否に応じて、完了可否をトースト表示する
+                let isSuccess = keyboardViewModel.initKeyboardJson(isToast: false)
+                if isSuccess {
+                    Manager.shared.toast(String(localized: "keyboard.resetSuccess"), wait: 3.0)
+                } else {
+                    Manager.shared.toast(String(localized: "keyboard.resetFailure"), wait: 2.0)
+                }
+                // 初期化はインパクトが大きいので、誤タップ防止策の検討材料にする
+                AppAnalytics.logKeyboardReset()
+            } label: {
+                Text("keyboard.reset")
+                    .font(.subheadline)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 8)
+                    .frame(maxWidth: usesVerticalSectionLayout ? .infinity : nil)
+                    .frame(height: smallButtonHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(.red, lineWidth: 1)
+                    )
+            }
+            Text("keyboard.resetHelp")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var supportTipButton: some View {
+        Button {
+            showTipSheet = true
+            AppAnalytics.logSupportTipTapped()
+        } label: {
+            Label("support.tip", systemImage: "heart.fill")
+                .font(.body)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(.pink)
+        .sheet(isPresented: $showTipSheet) {
+            TipSheetView()
+                .appFontScale(viewModel.fontScale)
+        }
+    }
+
+    private var supportAdButton: some View {
+        Button {
+            showAdMobSheet = true
+            AppAnalytics.logSupportAdTapped()
+        } label: {
+            Label("support.ad", systemImage: "play.rectangle.fill")
+                .font(.body)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(.brown)
     }
 
     /// アプリの情報リンクをまとめるカード
@@ -647,6 +729,31 @@ private struct TipSheetView: View {
 
 // MARK: - 共通UIコンポーネント
 
+/// アクセシビリティサイズ時は縦並び、それ以外は横並びにする適応レイアウト
+/// - 設定行のラベル＋ピッカーが横幅に収まらない時の対応
+private struct AdaptiveLabelRow<Content: View>: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    let alignment: VerticalAlignment
+    @ViewBuilder let content: () -> Content
+
+    init(alignment: VerticalAlignment = .center, @ViewBuilder content: @escaping () -> Content) {
+        self.alignment = alignment
+        self.content = content
+    }
+
+    var body: some View {
+        if dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxxLarge {
+            VStack(alignment: .leading, spacing: 4) {
+                content()
+            }
+        } else {
+            HStack(alignment: alignment, spacing: 4) {
+                content()
+            }
+        }
+    }
+}
+
 /// カード感をSwiftUIで再現する共通コンポーネント
 private struct SettingSectionCard<Content: View>: View {
     let title: LocalizedStringResource?
@@ -669,36 +776,41 @@ private struct SettingSectionCard<Content: View>: View {
         self.content = content()
     }
 
+    // 特大時はカード内余白も縮めて内容欠けを防ぐ
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var innerPadding: CGFloat {
+        if dynamicTypeSize.isAccessibilitySize {
+            return 10
+        } else if dynamicTypeSize >= .xxLarge {
+            return 12
+        } else {
+            return 14
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let title {
-                HStack(spacing: 10) {
-                    // 左側のシンボルを角丸のバッジとして描画
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(tint.opacity(0.18))
-                        .frame(width: 30, height: 30)
-                        .overlay(
-                            Image(systemName: iconName)
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(tint)
-                        )
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(title)
-                            .font(.headline)
-                        if let description {
-                            Text(description)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                Group {
+                    if dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxxLarge {
+                        VStack(alignment: .leading, spacing: 8) {
+                            headerBadge
+                            headerText(title: title, description: description)
+                        }
+                    } else {
+                        HStack(spacing: 10) {
+                            headerBadge
+                            headerText(title: title, description: description)
+                            Spacer()
                         }
                     }
-                    Spacer()
                 }
             }
 
             content
         }
-        .padding(14)
+        .padding(innerPadding)
         .background(.thinMaterial)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -706,6 +818,32 @@ private struct SettingSectionCard<Content: View>: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
+    }
+
+    private var headerBadge: some View {
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(tint.opacity(0.18))
+            .frame(width: 30, height: 30)
+            .overlay(
+                Image(systemName: iconName)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(tint)
+            )
+    }
+
+    @ViewBuilder
+    private func headerText(title: LocalizedStringResource, description: LocalizedStringResource?) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.headline)
+                .fixedSize(horizontal: false, vertical: true)
+            if let description {
+                Text(description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 }
 

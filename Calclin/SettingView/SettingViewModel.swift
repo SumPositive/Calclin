@@ -27,6 +27,8 @@ final class SettingViewModel: ObservableObject {
         static let decimalSeparator = "decimalSeparator"
         static let groupType = "groupType"
         static let groupSeparator = "groupSeparator"
+        static let fontScale = "fontScale"
+        // 旧キー（slider 0.5〜3.0 の Double）。マイグレーション用に残す
         static let numberFontScale = "numberFontScale"
         static let autoScroll = "autoScroll"
         static let keyShapeMode = "keyShapeMode"
@@ -253,11 +255,59 @@ final class SettingViewModel: ObservableObject {
         }
     }
 
-    // フォント倍率
-    @Published var numberFontScale: Double = 1.5 {
-        didSet {
-            save(numberFontScale, forKey: StorageKey.numberFontScale)
+    /// 文字サイズ（自動／標準／大／特大）
+    /// - `system` のときは Dynamic Type に従う（ContentView ルートで適用）
+    /// - 固定サイズ指定が必要な計算表示は `numberFontScale`（uiScale）で乗算する
+    enum FontScale: String, CaseIterable, Identifiable {
+        case system   // 自動：システムの Dynamic Type に従う
+        case standard // 標準
+        case large    // 大
+        case xLarge   // 特大
+
+        var id: String { rawValue }
+
+        var localizedKey: String {
+            switch self {
+            case .system:   return "settings.fontScale.system"
+            case .standard: return "settings.fontScale.standard"
+            case .large:    return "settings.fontScale.large"
+            case .xLarge:   return "settings.fontScale.xLarge"
+            }
         }
+
+        var followsSystem: Bool { self == .system }
+
+        /// SwiftUI 相対フォント向け
+        var dynamicTypeSize: DynamicTypeSize {
+            switch self {
+            case .system:   return .large
+            case .standard: return .large
+            case .large:    return .xxxLarge
+            case .xLarge:   return .accessibility2
+            }
+        }
+
+        /// 固定サイズ指定が必要な UI（計算表示など）向けの補正倍率
+        var uiScale: CGFloat {
+            switch self {
+            case .system:   return 1.0
+            case .standard: return 1.0
+            case .large:    return 1.5
+            case .xLarge:   return 2.0
+            }
+        }
+    }
+
+    /// 設定値本体
+    @Published var fontScale: FontScale = .system {
+        didSet {
+            save(fontScale.rawValue, forKey: StorageKey.fontScale)
+        }
+    }
+
+    /// 既存コード互換用（計算表示などで `setting.numberFontScale` を読んでいる箇所向け）
+    var numberFontScale: CGFloat {
+        fontScale.uiScale
     }
 
     /// 自動スクロールタイミング
@@ -351,8 +401,20 @@ final class SettingViewModel: ObservableObject {
         if defaults.object(forKey: StorageKey.decimalDigits) != nil {
             decimalDigits = min(max(defaults.double(forKey: StorageKey.decimalDigits), 0), SETTING_decimalDigits_MAX)
         }
-        if defaults.object(forKey: StorageKey.numberFontScale) != nil {
-            numberFontScale = min(max(defaults.double(forKey: StorageKey.numberFontScale), 0.5), 3.0)
+        // 新キー（fontScale）優先で読み込み
+        if let raw = defaults.string(forKey: StorageKey.fontScale),
+           let scale = FontScale(rawValue: raw) {
+            fontScale = scale
+        } else if defaults.object(forKey: StorageKey.numberFontScale) != nil {
+            // 旧 Slider 値 (0.5〜3.0) を新 enum に変換するマイグレーション
+            let legacy = defaults.double(forKey: StorageKey.numberFontScale)
+            switch legacy {
+            case ..<1.1:  fontScale = .standard
+            case ..<1.75: fontScale = .large
+            default:      fontScale = .xLarge
+            }
+            // 旧キーは以後不要
+            defaults.removeObject(forKey: StorageKey.numberFontScale)
         }
         if defaults.object(forKey: StorageKey.keyShapeAmount) != nil {
             keyShapeAmount = min(max(defaults.double(forKey: StorageKey.keyShapeAmount), 0.0), 1.0)

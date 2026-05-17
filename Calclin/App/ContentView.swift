@@ -144,6 +144,8 @@ struct ContentView: View {
     @Environment(\.colorScheme) var colorScheme
     // フォアグラウンド復帰時にハンドル案内を出すため、Scene状態を監視する
     @Environment(\.scenePhase) private var scenePhase
+    // 自動文字サイズの時に、システム側の実サイズからキーボード下限を決める
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // 設定シートの表示状態
     @State private var isSettingSheetPresented = false
     // @State 変化あればViewが更新される
@@ -175,12 +177,46 @@ struct ContentView: View {
         setting.appearanceMode.colorScheme ?? colorScheme
     }
 
+    /// 設定シートの detents は、文字サイズ「大」「特大」では .large 固定にしてスクロール領域を確保する
+    private var settingSheetDetents: Set<PresentationDetent> {
+        switch setting.fontScale {
+        case .system, .standard:
+            return [.height(SettingView_HEIGHT), .large]
+        case .large, .xLarge:
+            return [.large]
+        }
+    }
+
     private var normalizedKeyboardHeight: CGFloat {
         clampedKeyboardHeight(CGFloat(keyboardAreaHeight))
     }
 
+    private var minimumKeyboardHeight: CGFloat {
+        switch setting.fontScale {
+        case .system:
+            return minimumKeyboardHeightForSystemFont
+        case .standard:
+            return APP_KB_HEIGHT_MIN
+        case .large:
+            return 380
+        case .xLarge:
+            return 440
+        }
+    }
+
+    private var minimumKeyboardHeightForSystemFont: CGFloat {
+        // 文字がキー内で欠けないよう、システム文字サイズが大きい時だけ下限を上げる
+        if dynamicTypeSize.isAccessibilitySize {
+            return 440
+        }
+        if DynamicTypeSize.xxxLarge <= dynamicTypeSize {
+            return 380
+        }
+        return APP_KB_HEIGHT_MIN
+    }
+
     private func clampedKeyboardHeight(_ height: CGFloat) -> CGFloat {
-        min(max(height, APP_KB_HEIGHT_MIN), APP_KB_HEIGHT_MAX)
+        min(max(height, minimumKeyboardHeight), APP_KB_HEIGHT_MAX)
     }
 
     private func keyStylePopupY(screenHeight: CGFloat) -> CGFloat {
@@ -293,7 +329,7 @@ struct ContentView: View {
                 .environmentObject(setting)
                 .padding(.horizontal, 4.0)
                 .frame(minWidth: APP_KB_WIDTH_MIN, maxWidth: APP_KB_WIDTH_MAX,
-                       minHeight: APP_KB_HEIGHT_MIN, maxHeight: APP_KB_HEIGHT_MAX)
+                       minHeight: minimumKeyboardHeight, maxHeight: APP_KB_HEIGHT_MAX)
                 .frame(height: normalizedKeyboardHeight)
             }
             .background(Color.primary.opacity(0.05)) // 控えめな背景
@@ -428,6 +464,9 @@ struct ContentView: View {
         }
         .ignoresSafeArea(.keyboard) // システムキーボードに押し上げられない
         .preferredColorScheme(setting.appearanceMode.colorScheme)
+        // 文字サイズ：自動以外は固定の DynamicTypeSize を適用
+        // 設定シートを含む全画面・全シートに反映される
+        .modifier(FontScaleModifier(fontScale: setting.fontScale))
         .task {
             showKeyboardResizeHintIfNeeded()
         }
@@ -442,6 +481,8 @@ struct ContentView: View {
                 .environmentObject(setting)
                 .environmentObject(keyboardViewModel)
                 .preferredColorScheme(settingSheetColorScheme)
+                // シート内側でも明示的に文字サイズ設定を適用（環境が完全には伝播しないため）
+                .appFontScale(setting.fontScale)
                 // シートが実際に表示されたタイミングで記録する（タップだけで終わる誤検知を防ぐ）
                 .onAppear {
                     AppAnalytics.logSettingSheetOpened(currentMode: setting.playMode)
@@ -450,7 +491,7 @@ struct ContentView: View {
                 .onDisappear {
                     AppAnalytics.logSettingSheetClosed()
                 }
-                .presentationDetents([.height(SettingView_HEIGHT), .large])
+                .presentationDetents(settingSheetDetents)
                 .presentationDragIndicator(.visible)
         }
     }
@@ -460,4 +501,27 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+}
+
+/// 設定の文字サイズに応じて Dynamic Type を切り替える共通モディファイア
+/// - `system` のときは何も適用せず、システム設定（アクセシビリティ）に従う
+/// - それ以外は固定の DynamicTypeSize を強制する
+/// - シートは presenter の environment を完全には継承しないため、各シート内側でも明示適用する
+struct FontScaleModifier: ViewModifier {
+    let fontScale: SettingViewModel.FontScale
+
+    func body(content: Content) -> some View {
+        if fontScale.followsSystem {
+            content
+        } else {
+            content.dynamicTypeSize(fontScale.dynamicTypeSize)
+        }
+    }
+}
+
+extension View {
+    /// 設定の文字サイズを適用する。シート内側でも明示的に呼ぶこと
+    func appFontScale(_ fontScale: SettingViewModel.FontScale) -> some View {
+        modifier(FontScaleModifier(fontScale: fontScale))
+    }
 }
