@@ -1760,6 +1760,23 @@
         }
       }
     },
+    "settings.help.autoScroll" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose when the roll jumps to the latest row."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ロールの最下行を自動的に表示するタイミングを設定できます"
+          }
+        }
+      }
+    },
     "settings.help.fontScale" : {
       "extractionState" : "manual",
       "localizations" : {

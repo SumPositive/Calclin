@@ -235,16 +235,24 @@ struct SettingView: View {
                         log(.info, "AppearanceMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
                     }
                 }
-                AdaptiveLabelRow {
-                    Label("settings.autoScroll", systemImage: "arrow.down.to.line")
-                        .labelStyle(.titleAndIcon)
-                        .font(.subheadline)
-                    Picker("settings.autoScroll", selection: $viewModel.autoScroll) {
-                        ForEach(SettingViewModel.AutoScroll.allCases) { mode in
-                            Text(mode.localized).tag(mode)
+                VStack(alignment: .leading, spacing: 4) {
+                    AdaptiveLabelRow {
+                        Label("settings.autoScroll", systemImage: "arrow.down.to.line")
+                            .labelStyle(.titleAndIcon)
+                            .font(.subheadline)
+                        Picker("settings.autoScroll", selection: $viewModel.autoScroll) {
+                            ForEach(SettingViewModel.AutoScroll.allCases) { mode in
+                                Text(mode.localized).tag(mode)
+                            }
                         }
+                        .pickerStyle(SegmentedPickerStyle())
                     }
-                    .pickerStyle(SegmentedPickerStyle())
+                    if viewModel.playMode == .beginner {
+                        Text("settings.help.autoScroll")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     AdaptiveLabelRow {
