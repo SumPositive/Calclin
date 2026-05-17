@@ -264,6 +264,7 @@ struct SettingView: View {
                         Text("settings.help.autoScroll")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .padding(.top, 2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -288,6 +289,7 @@ struct SettingView: View {
                         Text("settings.help.fontScale")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .padding(.top, 2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -833,13 +835,14 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
             .frame(minWidth: minWidth, alignment: .center)
             .background(
                 Capsule(style: .continuous)
-                    .fill(Color(.systemBackground))
+                    .fill(Color(.systemBackground).opacity(0.96))
             )
             .overlay(
                 Capsule(style: .continuous)
-                    .strokeBorder(Color.accentColor.opacity(0.35), lineWidth: 1)
+                    .strokeBorder(isExpanded ? Color.accentColor.opacity(0.55) : Color.secondary.opacity(0.20),
+                                  lineWidth: isExpanded ? 1.2 : 1)
             )
-            .shadow(color: Color.black.opacity(0.10), radius: 2, x: 0, y: 1)
+            .shadow(color: Color.black.opacity(0.06), radius: 1.5, x: 0, y: 1)
         }
         .buttonStyle(.plain)
     }
@@ -847,7 +850,7 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
     private var selectedLabel: some View {
         label(selection)
             .font(.subheadline.weight(.semibold))
-            .foregroundStyle(Color.accentColor)
+            .foregroundStyle(Color.primary)
             .lineLimit(nil)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
@@ -870,10 +873,10 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
         )
         .overlay(
             RoundedRectangle(cornerRadius: 3, style: .continuous)
-                .strokeBorder(Color.secondary.opacity(0.20), lineWidth: 1)
+                .strokeBorder(Color.secondary.opacity(0.18), lineWidth: 1)
         )
         // 背面の文字や枠線が透けないよう、候補パネルは不透過にする
-        .shadow(color: Color.black.opacity(0.14), radius: 6, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.10), radius: 5, x: 0, y: 2)
     }
 
     private func optionButton(_ option: Option) -> some View {
@@ -905,8 +908,8 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
             )
             .overlay(
                 Capsule(style: .continuous)
-                    .strokeBorder(isSelected ? Color.accentColor.opacity(0.55) : Color.secondary.opacity(0.12),
-                                  lineWidth: isSelected ? 1.3 : 1)
+                    .strokeBorder(isSelected ? Color.accentColor.opacity(0.62) : Color.secondary.opacity(0.10),
+                                  lineWidth: isSelected ? 1.2 : 1)
             )
     }
 }
@@ -928,13 +931,13 @@ private struct SettingRadioGroup<Option: Hashable & Identifiable, Label: View>: 
         .padding(groupPadding)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color(.systemGray6).opacity(0.58))
+                .fill(Color(.systemGray6).opacity(0.48))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(Color.secondary.opacity(0.22), lineWidth: 1)
+                .strokeBorder(Color.secondary.opacity(0.16), lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+        .shadow(color: Color.black.opacity(0.035), radius: 2, x: 0, y: 1)
         .frame(maxWidth: wrapsOptions ? .infinity : nil, alignment: .trailing)
     }
 
@@ -978,27 +981,24 @@ private struct SettingRadioGroup<Option: Hashable & Identifiable, Label: View>: 
                    alignment: .center)
             .background(
                 Capsule(style: .continuous)
-                    .fill(isSelected ? Color.accentColor.opacity(0.16) : Color(.systemBackground).opacity(0.92))
+                    .fill(isSelected ? Color.accentColor.opacity(0.16) : Color(.systemBackground).opacity(0.96))
             )
             .overlay(
                 Capsule(style: .continuous)
-                    .strokeBorder(isSelected ? Color.accentColor.opacity(0.70) : Color.secondary.opacity(0.14),
-                                  lineWidth: isSelected ? 1.4 : 1)
+                    .strokeBorder(isSelected ? Color.accentColor.opacity(0.66) : Color.secondary.opacity(0.10),
+                                  lineWidth: isSelected ? 1.25 : 1)
             )
-            .shadow(color: Color.black.opacity(isSelected ? 0.03 : 0.12),
-                    radius: isSelected ? 0.5 : 2.0,
+            .shadow(color: Color.black.opacity(isSelected ? 0.02 : 0.055),
+                    radius: isSelected ? 0.4 : 1.2,
                     x: 0,
-                    y: isSelected ? 0 : 1.5)
+                    y: isSelected ? 0 : 0.8)
             .overlay(alignment: .top) {
                 if isSelected {
-                    // 選択中は上側を少し暗くして、押し込まれた印象にする
+                    // 選択中は薄い内側線で押し込まれた印象を弱めに出す
                     Capsule(style: .continuous)
-                        .fill(Color.black.opacity(0.06))
-                        .frame(height: 2)
-                        .padding(.horizontal, 2)
+                        .strokeBorder(Color.black.opacity(0.04), lineWidth: 1)
                 }
             }
-            .offset(y: isSelected ? 1 : 0)
         }
         .buttonStyle(.plain)
     }
@@ -1024,7 +1024,7 @@ private struct AdaptiveControlRow<Title: View, Control: View>: View {
                     .fixedSize(horizontal: true, vertical: false)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 title()
                 control()
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -1053,13 +1053,13 @@ private struct AdaptiveRadioRow<Option: Hashable & Identifiable, Title: View, La
                 radioGroup(wrapsOptions: false)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 title()
                 radioGroup(wrapsOptions: false)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 title()
                 radioGroup(wrapsOptions: true)
                     .frame(maxWidth: .infinity, alignment: .trailing)
