@@ -765,10 +765,20 @@ struct KeyDefListView: View {
     @State private var selectedKeyCode: String = ""
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
+    // キー定義一覧の文字と行高を文字サイズに合わせる
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
     // 定数は body の外に
     private let keyWidth: CGFloat = 70
     private let keyHeight: CGFloat = 34
+
+    private var keyListScale: CGFloat {
+        setting.calcViewFontScale(for: dynamicTypeSize)
+    }
+
+    private var scaledKeyHeight: CGFloat {
+        max(keyHeight, keyHeight * keyListScale)
+    }
     
     private var backColor: Color {
         colorScheme == .dark ? Color(.systemGray5) : .white
@@ -885,7 +895,7 @@ struct KeyDefListView: View {
                     )
             } else {
                 Text(keyDef.keyTop)
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 20 * keyListScale, weight: .bold))
                     .minimumScaleFactor(0.2)
                     .lineLimit(1)
                     .padding(.horizontal, 4)
@@ -900,7 +910,7 @@ struct KeyDefListView: View {
                     )
             }
         }
-        .frame(height: keyHeight)
+        .frame(height: scaledKeyHeight)
         .frame(maxWidth: .infinity)
         .padding(2)
         .background(
@@ -918,6 +928,10 @@ struct EditKeyDefView: View {
     var onSave: () -> Void
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
+    // 特大文字では入力行を縦積みに切り替えて欠けを防ぐ
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ScaledMetric(relativeTo: .headline) private var titleWidth: CGFloat = 75
+    @ScaledMetric(relativeTo: .headline) private var editorHeight: CGFloat = 35
 
     // EditKeyDefView内に補助Bindingを用意
     private var symbolNonOptBinding: Binding<String> {
@@ -951,128 +965,102 @@ struct EditKeyDefView: View {
         )
     }
     
-    private let TITLE_WIDTH: CGFloat = 75.0
-    private let TITLE_HEIGHT: CGFloat = 35.0
+    private var usesVerticalRows: Bool {
+        dynamicTypeSize.isAccessibilitySize || DynamicTypeSize.xxxLarge <= dynamicTypeSize
+    }
 
     var body: some View {
-        VStack(spacing: 8) {
-            Text("keyboard.editor.title")
+        ScrollView {
+            VStack(spacing: 10) {
+                Text("keyboard.editor.title")
+                    .font(.headline)
+                    .foregroundColor(COLOR_WARN)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                codeRow
+
+                editRow(title: "keyboard.keyTop",
+                        help: "keyboard.keyTopHelp",
+                        text: $editingKeyDef.keyTop)
+
+                editRow(title: "keyboard.symbol",
+                        help: "keyboard.symbolHelp",
+                        text: symbolNonOptBinding)
+
+                editRow(title: "keyboard.formula",
+                        help: "keyboard.formulaHelp",
+                        text: $editingKeyDef.formula)
+
+                editRow(title: "keyboard.baseUnit",
+                        help: "keyboard.baseUnitHelp",
+                        text: unitBaseNonOptBinding)
+
+                editRow(title: "keyboard.conversionRate",
+                        help: "keyboard.conversionRateHelp",
+                        text: unitConvNonOptBinding)
+
+                Button("common.save") {
+                    onSave()
+                }
                 .font(.headline)
-                .foregroundColor(COLOR_WARN)
-
-            HStack {
-                Text("keyboard.code")
-                    .font(.headline)
-                    .foregroundColor(COLOR_TITLE)
-                    .frame(width: TITLE_WIDTH, alignment: .center)
-                Text(editingKeyDef.code)
-                    .font(.headline)
-                Spacer()
+                .padding(.top, 4)
+                .frame(maxWidth: .infinity, alignment: .center)
             }
-
-            HStack(alignment: .top) {
-                Text("keyboard.keyTop")
-                    .font(.headline)
-                    .foregroundColor(COLOR_TITLE)
-                    .frame(width: TITLE_WIDTH)
-
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("keyboard.keyTopHelp")
-                        .font(.caption2)
-                        .foregroundColor(COLOR_TITLE)
-                        .padding(.bottom, 2)
-
-                    TextEditor(text: $editingKeyDef.keyTop)
-                        .font(.headline)
-                        .lineLimit(1)
-                        .frame(height: TITLE_HEIGHT)
-                }
-            }
-            //DEBUG//.background(Color.blue.opacity(0.4))
-
-            HStack(alignment: .top) {
-                Text("keyboard.symbol")
-                    .font(.headline)
-                    .foregroundColor(COLOR_TITLE)
-                    .frame(width: TITLE_WIDTH)
-                
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("keyboard.symbolHelp")
-                        .font(.caption2)
-                        .foregroundColor(COLOR_TITLE)
-                        .padding(.bottom, 2)
-                    
-                    TextEditor(text: symbolNonOptBinding)
-                        .font(.headline)
-                        .lineLimit(1)
-                        .frame(height: TITLE_HEIGHT)
-                }
-            }
-
-            HStack(alignment: .top) {
-                Text("keyboard.formula")
-                    .font(.headline)
-                    .foregroundColor(COLOR_TITLE)
-                    .frame(width: TITLE_WIDTH, alignment: .center)
-
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("keyboard.formulaHelp")
-                        .font(.caption2)
-                        .foregroundColor(COLOR_TITLE)
-                        .padding(.bottom, 2)
-
-                    TextEditor(text: $editingKeyDef.formula)
-                        .font(.headline)
-                        .lineLimit(1)
-                        .frame(height: TITLE_HEIGHT)
-                }
-            }
-
-            HStack(alignment: .top) {
-                Text("keyboard.baseUnit")
-                    .font(.headline)
-                    .foregroundColor(COLOR_TITLE)
-                    .frame(width: TITLE_WIDTH, alignment: .center)
-
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("keyboard.baseUnitHelp")
-                        .font(.caption2)
-                        .foregroundColor(COLOR_TITLE)
-                        .padding(.bottom, 2)
-
-                    TextEditor(text: unitBaseNonOptBinding)
-                        .font(.headline)
-                        .lineLimit(1)
-                        .frame(height: TITLE_HEIGHT)
-                }
-            }
-
-            HStack(alignment: .top) {
-                Text("keyboard.conversionRate")
-                    .font(.headline)
-                    .foregroundColor(COLOR_TITLE)
-                    .frame(width: TITLE_WIDTH, alignment: .center)
-
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("keyboard.conversionRateHelp")
-                        .font(.caption2)
-                        .foregroundColor(COLOR_TITLE)
-                        .padding(.bottom, 2)
-
-                    TextEditor(text: unitConvNonOptBinding)
-                        .font(.headline)
-                        .lineLimit(1)
-                        .frame(height: TITLE_HEIGHT)
-                }
-            }
-
-            //Spacer()
-            Button("common.save") {
-                onSave()
-            }
-            .padding(.top, 4)
-            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(8)
         }
-        .padding(4)
+        .scrollIndicators(.hidden)
+    }
+
+    private var codeRow: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text("keyboard.code")
+                .font(.headline)
+                .foregroundColor(COLOR_TITLE)
+                .frame(width: usesVerticalRows ? nil : titleWidth, alignment: .leading)
+            Text(editingKeyDef.code)
+                .font(.headline)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+    }
+
+    @ViewBuilder
+    private func editRow(title: LocalizedStringResource,
+                         help: LocalizedStringResource,
+                         text: Binding<String>) -> some View {
+        if usesVerticalRows {
+            VStack(alignment: .leading, spacing: 4) {
+                editLabel(title)
+                editField(help: help, text: text)
+            }
+        } else {
+            HStack(alignment: .top, spacing: 8) {
+                editLabel(title)
+                    .frame(width: titleWidth, alignment: .leading)
+                editField(help: help, text: text)
+            }
+        }
+    }
+
+    private func editLabel(_ title: LocalizedStringResource) -> some View {
+        Text(title)
+            .font(.headline)
+            .foregroundColor(COLOR_TITLE)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func editField(help: LocalizedStringResource, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(help)
+                .font(.caption2)
+                .foregroundColor(COLOR_TITLE)
+                .fixedSize(horizontal: false, vertical: true)
+
+            TextEditor(text: text)
+                .font(.headline)
+                .lineLimit(1)
+                .frame(minHeight: editorHeight)
+        }
     }
 }

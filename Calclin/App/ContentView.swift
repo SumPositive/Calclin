@@ -193,6 +193,14 @@ struct ContentView: View {
         return max(baseHeight, scaledHeight)
     }
 
+    private var editKeyDefPopupSize: CGSize {
+        let scale = setting.calcViewFontScale(for: dynamicTypeSize)
+        // 文字サイズが大きい時は編集欄を広げ、フォーム内スクロール量を減らす
+        let width = min(360, 300 * scale)
+        let height = min(680, 510 * scale)
+        return CGSize(width: width, height: height)
+    }
+
     private var normalizedKeyboardHeight: CGFloat {
         clampedKeyboardHeight(CGFloat(keyboardAreaHeight))
     }
@@ -416,7 +424,8 @@ struct ContentView: View {
                         // Dismiss
                         keyboardViewModel.popupEditKeyDef = nil
                     })
-                    .frame(width: 300, height: 510)
+                    .frame(width: editKeyDefPopupSize.width,
+                           height: editKeyDefPopupSize.height)
                     .onAppear {
                         editingKeyDef = info
                     }
