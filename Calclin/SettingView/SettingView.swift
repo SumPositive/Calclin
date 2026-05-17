@@ -37,6 +37,7 @@ struct SettingView: View {
     @State private var isPreparingExport = false  // エクスポート準備中（プログレス表示）
     @State private var exportShareData: Data?     // 共有シートに渡す JSON データ
     @State private var isImporting = false        // キーボードインポートシート
+    @State private var expandedDropdown: SettingDropdownKind? = nil  // 独自プルダウンの開閉状態
 
     // 文字サイズに追随するボタン高さ（Dynamic Type で自動スケール）
     @ScaledMetric(relativeTo: .footnote) private var actionButtonHeight: CGFloat = 34
@@ -70,6 +71,20 @@ struct SettingView: View {
     /// 特大以上は横並びを避け、縦積みへ切り替える
     private var usesVerticalSectionLayout: Bool {
         dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxLarge
+    }
+
+    private func dropdownBinding(_ kind: SettingDropdownKind) -> Binding<Bool> {
+        Binding(
+            get: { expandedDropdown == kind },
+            set: { isExpanded in
+                // 同時に開くプルダウンは1つだけにする
+                if isExpanded {
+                    expandedDropdown = kind
+                } else if expandedDropdown == kind {
+                    expandedDropdown = nil
+                }
+            }
+        )
     }
 
     /// アプリのVersion/Build番号をまとめて返す
@@ -294,12 +309,12 @@ struct SettingView: View {
                     Text("settings.groupingStyle")
                         .font(.subheadline)
                         .padding(.top, 6)
-                    Picker("settings.groupingStyle", selection: $viewModel.groupType) {
-                        ForEach(SettingViewModel.GroupType.allCases) { type in
-                            Text(type.localized).tag(type)
-                        }
+                    SettingDropdown(options: SettingViewModel.GroupType.allCases,
+                                    selection: $viewModel.groupType,
+                                    isExpanded: dropdownBinding(.groupType),
+                                    minWidth: 210) { type in
+                        Text(type.localized)
                     }
-                    .pickerStyle(MenuPickerStyle())
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .onChange(of: viewModel.groupType) { oldValue, newValue in
                         log(.info, ".onChange groupType")
@@ -312,6 +327,8 @@ struct SettingView: View {
                         AppAnalytics.logGroupTypeChanged(to: newValue)
                     }
                 }
+                // 開いた候補を同じカード内の後続行より前面に出す
+                .zIndex(expandedDropdown == .groupType ? 60 : 0)
 
                 // 桁区切り記号
                 AdaptiveLabelRow {
@@ -337,6 +354,8 @@ struct SettingView: View {
             .padding(.top, -12)
             .padding(.leading, sectionLeadingPadding)
         }
+        // 候補ポップアップが下のカードに隠れないよう前面に出す
+        .zIndex(expandedDropdown == .groupType ? 50 : 0)
     }
 
     /// 小数部の見え方をまとめるカード
@@ -377,12 +396,12 @@ struct SettingView: View {
                 AdaptiveLabelRow {
                     Text("settings.rounding")
                         .font(.subheadline)
-                    Picker("settings.rounding", selection: $viewModel.roundType) {
-                        ForEach(SettingViewModel.RoundType.allCases) { type in
-                            Text(type.localized).tag(type)
-                        }
+                    SettingDropdown(options: SettingViewModel.RoundType.allCases,
+                                    selection: $viewModel.roundType,
+                                    isExpanded: dropdownBinding(.roundType),
+                                    minWidth: 210) { type in
+                        Text(type.localized)
                     }
-                    .pickerStyle(MenuPickerStyle())
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .onChange(of: viewModel.roundType) { oldValue, newValue in
                         log(.info, ".onChange roundType")
@@ -393,6 +412,8 @@ struct SettingView: View {
                         AppAnalytics.logRoundTypeChanged(to: newValue)
                     }
                 }
+                // 開いた候補を同じカード内の後続行より前面に出す
+                .zIndex(expandedDropdown == .roundType ? 60 : 0)
 
                 // 小数点
                 AdaptiveLabelRow {
@@ -418,6 +439,8 @@ struct SettingView: View {
             .padding(.top, -12)
             .padding(.leading, sectionLeadingPadding)
         }
+        // 候補ポップアップが下のカードに隠れないよう前面に出す
+        .zIndex(expandedDropdown == .roundType ? 50 : 0)
     }
 
     /// キーボード設定の保存・読込カード
@@ -731,6 +754,128 @@ private struct TipSheetView: View {
 
 // MARK: - 共通UIコンポーネント
 
+private enum SettingDropdownKind {
+    case groupType
+    case roundType
+}
+
+/// Dynamic Typeで欠けない独自プルダウン
+private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: View {
+    @EnvironmentObject var viewModel: SettingViewModel
+    let options: [Option]
+    @Binding var selection: Option
+    @Binding var isExpanded: Bool
+    var minWidth: CGFloat = 180
+    var opensUpward: Bool = true
+    @ViewBuilder let label: (Option) -> Label
+
+    var body: some View {
+        collapsedButton
+            .popover(isPresented: $isExpanded,
+                     attachmentAnchor: .rect(.bounds),
+                     arrowEdge: opensUpward ? .bottom : .top) {
+                // 外側タップで閉じられる標準ポップアップとして表示する
+                expandedOptions
+                    .appFontScale(viewModel.fontScale)
+                    .presentationCompactAdaptation(.popover)
+                    .presentationBackground(Color(.systemBackground))
+                    .padding(2)
+            }
+            .zIndex(isExpanded ? 100 : 0)
+    }
+
+    private var collapsedButton: some View {
+        Button {
+            withAnimation(.easeOut(duration: 0.16)) {
+                isExpanded.toggle()
+            }
+        } label: {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                selectedLabel
+
+                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.accentColor)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .frame(minWidth: minWidth, alignment: .center)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(Color(.systemBackground))
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .strokeBorder(Color.accentColor.opacity(0.35), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.10), radius: 2, x: 0, y: 1)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var selectedLabel: some View {
+        label(selection)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(Color.accentColor)
+            .lineLimit(nil)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var expandedOptions: some View {
+        VStack(alignment: .trailing, spacing: 4) {
+            ForEach(options) { option in
+                optionButton(option)
+            }
+        }
+        .padding(6)
+        .background(
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(Color(.systemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .strokeBorder(Color.secondary.opacity(0.20), lineWidth: 1)
+        )
+        // 背面の文字や枠線が透けないよう、候補パネルは不透過にする
+        .shadow(color: Color.black.opacity(0.14), radius: 6, x: 0, y: 2)
+    }
+
+    private func optionButton(_ option: Option) -> some View {
+        let isSelected = selection == option
+        return Button {
+            selection = option
+            withAnimation(.easeOut(duration: 0.12)) {
+                isExpanded = false
+            }
+        } label: {
+            optionLabel(option, isSelected: isSelected)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func optionLabel(_ option: Option, isSelected: Bool) -> some View {
+        label(option)
+            .font(.subheadline.weight(isSelected ? .semibold : .regular))
+            .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
+            .lineLimit(nil)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .frame(minWidth: minWidth, alignment: .center)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(isSelected ? Color.accentColor.opacity(0.16) : Color(.systemBackground))
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .strokeBorder(isSelected ? Color.accentColor.opacity(0.55) : Color.secondary.opacity(0.12),
+                                  lineWidth: isSelected ? 1.3 : 1)
+            )
+    }
+}
+
 /// Dynamic Typeで欠けないラジオボタン型の選択UI
 private struct SettingRadioGroup<Option: Hashable & Identifiable, Label: View>: View {
     let options: [Option]
@@ -893,7 +1038,8 @@ private struct AdaptiveLabelRow<Content: View>: View {
     }
 
     var body: some View {
-        if DynamicTypeSize.accessibility3 <= dynamicTypeSize {
+        if DynamicTypeSize.accessibility2 <= dynamicTypeSize {
+            // 特大では操作部に横幅を渡し、選択肢の折り返しを減らす
             VStack(alignment: .leading, spacing: 4) {
                 content()
             }
@@ -962,12 +1108,15 @@ private struct SettingSectionCard<Content: View>: View {
             content
         }
         .padding(innerPadding)
-        .background(.thinMaterial)
         .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(.thinMaterial)
+        )
+        .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(tint.opacity(0.2), lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        // プルダウン候補がカード外へ出ても欠けないよう、背景だけを角丸にする
         .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
     }
 
