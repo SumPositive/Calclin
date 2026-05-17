@@ -41,7 +41,6 @@ struct SettingView: View {
     // 文字サイズに追随するボタン高さ（Dynamic Type で自動スケール）
     @ScaledMetric(relativeTo: .footnote) private var actionButtonHeight: CGFloat = 34
     @ScaledMetric(relativeTo: .subheadline) private var smallButtonHeight: CGFloat = 24
-    @ScaledMetric(relativeTo: .subheadline) private var menuPickerMinHeight: CGFloat = 40
 
     // 現在の Dynamic Type サイズ（特大時に左右余白を最小化して内容欠けを防ぐ）
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -207,12 +206,11 @@ struct SettingView: View {
                                                     ? "tortoise" : "hare")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
-                    Picker("settings.displayMode", selection: $viewModel.playMode) {
-                        ForEach(SettingViewModel.PlayMode.allCases) { mode in
-                            Text(mode.localized).tag(mode)
-                        }
+                    SettingRadioGroup(options: SettingViewModel.PlayMode.allCases,
+                                      selection: $viewModel.playMode,
+                                      minOptionWidth: 72) { mode in
+                        Text(mode.localized)
                     }
-                    .pickerStyle(SegmentedPickerStyle())
                     .onChange(of: viewModel.playMode) { oldValue, newValue in
                         // モード切替のログを残すだけでも利用者に優しい
                         log(.info, "PlayMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
@@ -225,12 +223,11 @@ struct SettingView: View {
                                                     ? "moon" : "sun.max")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
-                    Picker("settings.appearanceMode", selection: $viewModel.appearanceMode) {
-                        ForEach(SettingViewModel.AppearanceMode.allCases) { mode in
-                            Text(mode.localized).tag(mode)
-                        }
+                    SettingRadioGroup(options: SettingViewModel.AppearanceMode.allCases,
+                                      selection: $viewModel.appearanceMode,
+                                      minOptionWidth: 72) { mode in
+                        Text(mode.localized)
                     }
-                    .pickerStyle(SegmentedPickerStyle())
                     .onChange(of: viewModel.appearanceMode) { oldValue, newValue in
                         log(.info, "AppearanceMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
                     }
@@ -240,12 +237,11 @@ struct SettingView: View {
                         Label("settings.autoScroll", systemImage: "arrow.down.to.line")
                             .labelStyle(.titleAndIcon)
                             .font(.subheadline)
-                        Picker("settings.autoScroll", selection: $viewModel.autoScroll) {
-                            ForEach(SettingViewModel.AutoScroll.allCases) { mode in
-                                Text(mode.localized).tag(mode)
-                            }
+                        SettingRadioGroup(options: SettingViewModel.AutoScroll.allCases,
+                                          selection: $viewModel.autoScroll,
+                                          minOptionWidth: 76) { mode in
+                            Text(mode.localized)
                         }
-                        .pickerStyle(SegmentedPickerStyle())
                     }
                     if viewModel.playMode == .beginner {
                         Text("settings.help.autoScroll")
@@ -259,12 +255,14 @@ struct SettingView: View {
                         Label("settings.fontScale", systemImage: "textformat.size")
                             .labelStyle(.titleAndIcon)
                             .font(.subheadline)
-                        Picker("settings.fontScale", selection: $viewModel.fontScale) {
-                            ForEach(SettingViewModel.FontScale.allCases) { scale in
-                                Text(LocalizedStringKey(scale.localizedKey)).tag(scale)
-                            }
+                        SettingRadioGroup(options: SettingViewModel.FontScale.allCases,
+                                          selection: $viewModel.fontScale,
+                                          minOptionWidth: 54,
+                                          horizontalPadding: 8,
+                                          optionSpacing: 4,
+                                          groupPadding: 4) { scale in
+                            Text(LocalizedStringKey(scale.localizedKey))
                         }
-                        .pickerStyle(.segmented)
                         .onChange(of: viewModel.fontScale) { _, _ in
                             // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
                             NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
@@ -302,11 +300,7 @@ struct SettingView: View {
                         }
                     }
                     .pickerStyle(MenuPickerStyle())
-                    // 特大文字でも現在値の2行表示が欠けないよう高さを確保する
-                    .frame(minHeight: menuPickerMinHeight, alignment: .center)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                    //.tint(.accentColor)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                     .onChange(of: viewModel.groupType) { oldValue, newValue in
                         log(.info, ".onChange groupType")
                         // 選択されたときに呼ばれる処理
@@ -323,13 +317,11 @@ struct SettingView: View {
                 AdaptiveLabelRow {
                     Text("settings.groupingSymbol")
                         .font(.subheadline)
-                    Picker("settings.groupingSymbol", selection: $viewModel.groupSeparator) {
-                        ForEach(SettingViewModel.GroupSeparator.allCases) { type in
-                            Text(type.rawValue).tag(type)
-                                //.font(.title) 指定できない
-                        }
+                    SettingRadioGroup(options: SettingViewModel.GroupSeparator.allCases,
+                                      selection: $viewModel.groupSeparator,
+                                      minOptionWidth: 60) { type in
+                        Text(type.rawValue)
                     }
-                    .pickerStyle(SegmentedPickerStyle())
                     .onChange(of: viewModel.groupSeparator) { oldValue, newValue in
                         log(.info, ".onChange groupSeparator")
                         // 選択されたときに呼ばれる処理
@@ -391,7 +383,7 @@ struct SettingView: View {
                         }
                     }
                     .pickerStyle(MenuPickerStyle())
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                     .onChange(of: viewModel.roundType) { oldValue, newValue in
                         log(.info, ".onChange roundType")
                         calcConfig.roundType = newValue.azRoundType
@@ -406,12 +398,11 @@ struct SettingView: View {
                 AdaptiveLabelRow {
                     Text("settings.decimalPoint")
                         .font(.subheadline)
-                    Picker("settings.decimalPoint", selection: $viewModel.decimalSeparator) {
-                        ForEach(SettingViewModel.DecimalSeparator.allCases) { type in
-                            Text(type.rawValue).tag(type)
-                        }
+                    SettingRadioGroup(options: SettingViewModel.DecimalSeparator.allCases,
+                                      selection: $viewModel.decimalSeparator,
+                                      minOptionWidth: 72) { type in
+                        Text(type.rawValue)
                     }
-                    .pickerStyle(SegmentedPickerStyle())
                     .onChange(of: viewModel.decimalSeparator) { oldValue, newValue in
                         log(.info, ".onChange decimalSeparator")
                         // 選択されたときに呼ばれる処理
@@ -740,6 +731,155 @@ private struct TipSheetView: View {
 
 // MARK: - 共通UIコンポーネント
 
+/// Dynamic Typeで欠けないラジオボタン型の選択UI
+private struct SettingRadioGroup<Option: Hashable & Identifiable, Label: View>: View {
+    let options: [Option]
+    @Binding var selection: Option
+    var minOptionWidth: CGFloat = 96
+    var maxOptionWidth: CGFloat = 240
+    var horizontalPadding: CGFloat = 10
+    var optionSpacing: CGFloat = 6
+    var groupPadding: CGFloat = 6
+    @ViewBuilder let label: (Option) -> Label
+
+    var body: some View {
+        SettingFlowLayout(spacing: optionSpacing, rowSpacing: optionSpacing) {
+            ForEach(options) { option in
+                let isSelected = selection == option
+                Button {
+                    selection = option
+                } label: {
+                    ZStack {
+                        label(option)
+                            .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                            .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
+                            .lineLimit(nil)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.vertical, 8)
+                    .frame(minWidth: minOptionWidth,
+                           maxWidth: maxOptionWidth,
+                           alignment: .center)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(isSelected ? Color.accentColor.opacity(0.16) : Color(.systemBackground).opacity(0.92))
+                    )
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .strokeBorder(isSelected ? Color.accentColor.opacity(0.70) : Color.secondary.opacity(0.14),
+                                          lineWidth: isSelected ? 1.4 : 1)
+                    )
+                    .shadow(color: Color.black.opacity(isSelected ? 0.03 : 0.12),
+                            radius: isSelected ? 0.5 : 2.0,
+                            x: 0,
+                            y: isSelected ? 0 : 1.5)
+                    .overlay(alignment: .top) {
+                        if isSelected {
+                            // 選択中は上側を少し暗くして、押し込まれた印象にする
+                            Capsule(style: .continuous)
+                                .fill(Color.black.opacity(0.06))
+                                .frame(height: 2)
+                                .padding(.horizontal, 2)
+                        }
+                    }
+                    .offset(y: isSelected ? 1 : 0)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(groupPadding)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color(.systemGray6).opacity(0.58))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(Color.secondary.opacity(0.22), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+        .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+}
+
+/// 選択肢を自然幅で並べ、入らない時だけ次の行へ送る
+private struct SettingFlowLayout: Layout {
+    var spacing: CGFloat
+    var rowSpacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize,
+                      subviews: Subviews,
+                      cache: inout ()) -> CGSize {
+        let availableWidth = proposal.width ?? subviews.reduce(CGFloat.zero) { partial, subview in
+            partial + subview.sizeThatFits(.unspecified).width + spacing
+        }
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        var usedWidth: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            let nextX = x == 0 ? size.width : x + spacing + size.width
+            if availableWidth < nextX && 0 < x {
+                usedWidth = max(usedWidth, x)
+                x = 0
+                y += rowHeight + rowSpacing
+                rowHeight = 0
+            }
+            x = x == 0 ? size.width : x + spacing + size.width
+            rowHeight = max(rowHeight, size.height)
+        }
+        usedWidth = max(usedWidth, x)
+
+        return CGSize(width: min(usedWidth, availableWidth), height: y + rowHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect,
+                       proposal: ProposedViewSize,
+                       subviews: Subviews,
+                       cache: inout ()) {
+        var rows: [[(index: Int, size: CGSize)]] = []
+        var currentRow: [(index: Int, size: CGSize)] = []
+        var currentWidth: CGFloat = 0
+        var y = bounds.minY
+
+        for index in subviews.indices {
+            let subview = subviews[index]
+            let size = subview.sizeThatFits(.unspecified)
+            let nextWidth = currentRow.isEmpty ? size.width : currentWidth + spacing + size.width
+            if bounds.width < nextWidth && currentRow.isEmpty == false {
+                rows.append(currentRow)
+                currentRow = []
+                currentWidth = 0
+            }
+            currentRow.append((index, size))
+            currentWidth = currentRow.count == 1 ? size.width : currentWidth + spacing + size.width
+        }
+        if currentRow.isEmpty == false {
+            rows.append(currentRow)
+        }
+
+        for row in rows {
+            let rowWidth = row.reduce(CGFloat.zero) { partial, item in
+                partial + item.size.width
+            } + spacing * CGFloat(max(row.count - 1, 0))
+            let rowHeight = row.reduce(CGFloat.zero) { partial, item in
+                max(partial, item.size.height)
+            }
+            var x = bounds.maxX - rowWidth
+            for item in row {
+                let subview = subviews[item.index]
+                subview.place(at: CGPoint(x: x, y: y),
+                              proposal: ProposedViewSize(item.size))
+                x += item.size.width + spacing
+            }
+            y += rowHeight + rowSpacing
+        }
+    }
+}
+
 /// アクセシビリティサイズ時は縦並び、それ以外は横並びにする適応レイアウト
 /// - 設定行のラベル＋ピッカーが横幅に収まらない時の対応
 private struct AdaptiveLabelRow<Content: View>: View {
@@ -753,7 +893,7 @@ private struct AdaptiveLabelRow<Content: View>: View {
     }
 
     var body: some View {
-        if dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxxLarge {
+        if DynamicTypeSize.accessibility3 <= dynamicTypeSize {
             VStack(alignment: .leading, spacing: 4) {
                 content()
             }
