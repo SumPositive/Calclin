@@ -290,6 +290,17 @@ struct KeyboardFooterView: View {
     @Binding var selectedPage: Int
     let pageCount: Int
     @EnvironmentObject var setting: SettingViewModel
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var iconScale: CGFloat {
+        setting.calcViewFontScale(for: dynamicTypeSize)
+    }
+
+    private var footerHeight: CGFloat {
+        let baseHeight: CGFloat = setting.playMode == .beginner ? 40 : 20
+        let scaledHeight: CGFloat = setting.playMode == .beginner ? 40 * iconScale : 28 * iconScale
+        return max(baseHeight, scaledHeight)
+    }
 
     var body: some View {
         // 下部メニュー関係の固定値
@@ -346,8 +357,9 @@ struct KeyboardFooterView: View {
                             setting.isKeyStylePopupPresented = true
                         } label: {
                             Image(systemName: "slider.horizontal.3")
-                                .font(.system(size: 17, weight: .semibold))
-                                .frame(width: 44, height: 24)
+                                // キー形状アイコンはアプリの文字サイズに合わせて拡大する
+                                .font(.system(size: 17 * iconScale, weight: .semibold))
+                                .frame(width: 44 * iconScale, height: 24 * iconScale)
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
@@ -365,7 +377,7 @@ struct KeyboardFooterView: View {
                 }
             }
         }
-        .frame(height: setting.playMode == .beginner ? 40 : 20)
+        .frame(height: footerHeight)
         .padding(.top, 8)
         //debug// .border(Color.red)
     }
@@ -534,8 +546,14 @@ struct KeyView: View {
     @State private var isLongTapped = false
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
+    // 文字サイズに合わせてキートップ文字を拡大する
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // キー形状設定を取得する
     @EnvironmentObject var setting: SettingViewModel
+
+    private var keyTopScale: CGFloat {
+        setting.calcViewFontScale(for: dynamicTypeSize)
+    }
 
     
     var body: some View {
@@ -604,7 +622,7 @@ struct KeyView: View {
                     } else {
                         Text(keyTop)
                             .foregroundColor(displayTextColor)
-                            .font(.system(size: 24,
+                            .font(.system(size: 24 * keyTopScale,
                                           weight: (keyDef?.unitBase == nil ||
                                                    keyDef?.unitBase == keyDef?.code) ? .bold : .light))
                             .minimumScaleFactor(0.5)

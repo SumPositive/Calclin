@@ -296,6 +296,25 @@ final class SettingViewModel: ObservableObject {
             case .xLarge:   return 2.0
             }
         }
+
+        func calcViewScale(for dynamicTypeSize: DynamicTypeSize) -> CGFloat {
+            switch self {
+            case .system:
+                // 自動ではシステム文字サイズを CalcView 用の段階的な倍率に変換する
+                if dynamicTypeSize.isAccessibilitySize {
+                    return 2.0
+                }
+                if DynamicTypeSize.xxxLarge <= dynamicTypeSize {
+                    return 1.5
+                }
+                if DynamicTypeSize.xxLarge <= dynamicTypeSize {
+                    return 1.25
+                }
+                return 1.0
+            case .standard, .large, .xLarge:
+                return uiScale
+            }
+        }
     }
 
     /// 設定値本体
@@ -308,6 +327,10 @@ final class SettingViewModel: ObservableObject {
     /// 既存コード互換用（計算表示などで `setting.numberFontScale` を読んでいる箇所向け）
     var numberFontScale: CGFloat {
         fontScale.uiScale
+    }
+
+    func calcViewFontScale(for dynamicTypeSize: DynamicTypeSize) -> CGFloat {
+        fontScale.calcViewScale(for: dynamicTypeSize)
     }
 
     /// 自動スクロールタイミング

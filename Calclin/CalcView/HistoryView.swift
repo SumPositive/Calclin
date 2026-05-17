@@ -127,6 +127,12 @@ struct CustomCell: View {
     private let zeroWidthSpace = AttributedString("\u{200B}") // 改行させるための「幅ゼロのスペース」
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
+    // 文字サイズ「自動」ではシステム Dynamic Type から CalcView 用倍率を決める
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var calcFontScale: CGFloat {
+        setting.calcViewFontScale(for: dynamicTypeSize)
+    }
 
     
     var body: some View {
@@ -158,13 +164,13 @@ struct CustomCell: View {
                 if let memo = row.memo {
                     var memoAt = AttributedString("\n" + memo)
                     memoAt.foregroundColor = (colorScheme == .dark ? Color.cyan : COLOR_MEMO.opacity(0.7))
-                    memoAt.font = .system(size: fontSize * 0.8 * setting.numberFontScale, weight: .light)
+                    memoAt.font = .system(size: fontSize * 0.8 * calcFontScale, weight: .light)
                     attrStr += memoAt
                 }
                 return attrStr
             }())
             .scaleEffect(y: -1.0) // List の反転を打ち消す
-            .font(.system(size: fontSize * setting.numberFontScale, weight: .regular))
+            .font(.system(size: fontSize * calcFontScale, weight: .regular))
             .opacity(colorScheme == .dark ? 0.55 : 1.0)
             .multilineTextAlignment(.trailing) // 複数行で右寄せ
             .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
@@ -281,8 +287,14 @@ struct RollCell: View {
     var editingLineIndex: Int = 0
     var onTapLine: ((Int) -> Void)? = nil
     @Environment(\.colorScheme) var colorScheme
+    // 文字サイズ「自動」ではシステム Dynamic Type から CalcView 用倍率を決める
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private let fontSize: CGFloat = 15.0
+
+    private var calcFontScale: CGFloat {
+        setting.calcViewFontScale(for: dynamicTypeSize)
+    }
 
     private func isEditingLine(_ lineIdx: Int) -> Bool {
         editingHistoryIndex == historyIndex && editingLineIndex == lineIdx
@@ -302,11 +314,11 @@ struct RollCell: View {
         HStack(spacing: 0) {
             if !opStr.isEmpty {
                 Text(opStr + " ")
-                    .font(.system(size: fontSize * setting.numberFontScale, weight: .regular))
+                    .font(.system(size: fontSize * calcFontScale, weight: .regular))
                     .foregroundStyle(isFinal ? COLOR_ANSWER : COLOR_OPERATOR)
             }
             Text(value)
-                .font(.system(size: fontSize * setting.numberFontScale,
+                .font(.system(size: fontSize * calcFontScale,
                               weight: isFinal ? .bold : .regular)
                     .monospacedDigit())
                 .foregroundStyle(isFinal ? COLOR_ANSWER : COLOR_NUMBER)
@@ -334,7 +346,7 @@ struct RollCell: View {
                         // 候補1: 中間結果あり（左）＋ op+value（右）
                         if let rt, !rt.isEmpty {
                             HStack(spacing: 0) {
-                                rtText(rt, size: fontSize * 0.65 * setting.numberFontScale)
+                                rtText(rt, size: fontSize * 0.65 * calcFontScale)
                                     .fixedSize(horizontal: true, vertical: false)
                                 Spacer(minLength: 8)
                                 valueText(opStr: opStr, value: line.value, isFinal: line.isFinal)
@@ -366,7 +378,7 @@ struct RollCell: View {
             // メモ
             if let memo = row.memo, !memo.isEmpty {
                 Text(memo)
-                    .font(.system(size: fontSize * 0.8 * setting.numberFontScale, weight: .light))
+                    .font(.system(size: fontSize * 0.8 * calcFontScale, weight: .light))
                     .foregroundStyle(colorScheme == .dark ? Color.cyan : COLOR_MEMO.opacity(0.7))
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.top, 2)

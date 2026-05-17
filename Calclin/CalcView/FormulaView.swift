@@ -17,6 +17,12 @@ struct FormulaView: View {
     let hSpace: CGFloat = 20.0
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
+    // 文字サイズ「自動」ではシステム Dynamic Type から CalcView 用倍率を決める
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var calcFontScale: CGFloat {
+        setting.calcViewFontScale(for: dynamicTypeSize)
+    }
 
     
     var body: some View {
@@ -24,7 +30,7 @@ struct FormulaView: View {
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
                     Text( viewModel.formulaAttr )
-                        .font(.system(size: 24.0 * setting.numberFontScale,
+                        .font(.system(size: 24.0 * calcFontScale,
                                       weight: .bold))
                         .foregroundStyle(viewModel.isAnswerMode ?  COLOR_ANSWER : COLOR_NUMBER)
                         .opacity(colorScheme == .dark ? 0.60 : 1.0)
@@ -40,10 +46,13 @@ struct FormulaView: View {
                         .frame(minWidth: geo.size.width, // - hSpace*2, // GeometryReaderで取得した現在の幅
                                maxWidth: .infinity,     // ScrollView最大幅まで拡張
                                alignment: .trailing)    // 右寄せ
+                        // 入力行の高さ全体を使い、文字を上下中央へ配置する
+                        .frame(height: geo.size.height, alignment: .center)
                         .padding(.horizontal, 0)
                         .id(scrollId) // このViewにIDを付与する
                    //     .textSelection(.enabled)
                 }
+                .frame(height: geo.size.height)
                 .onPreferenceChange(FormulaTextWidthPreferenceKey.self) { width in
                     onTextWidthChange?(width)
                 }

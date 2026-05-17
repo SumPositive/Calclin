@@ -187,6 +187,12 @@ struct ContentView: View {
         }
     }
 
+    private var settingsButtonFrameHeight: CGFloat {
+        let baseHeight: CGFloat = setting.playMode == .beginner ? 40 : 30
+        let scaledHeight = (setting.playMode == .beginner ? 42 : 32) * setting.calcViewFontScale(for: dynamicTypeSize)
+        return max(baseHeight, scaledHeight)
+    }
+
     private var normalizedKeyboardHeight: CGFloat {
         clampedKeyboardHeight(CGFloat(keyboardAreaHeight))
     }
@@ -277,7 +283,7 @@ struct ContentView: View {
                         }
                     }
                     .opacity(colorScheme == .dark ? 0.50 : 1.0)
-                    .frame(height: setting.playMode == .beginner ? 40 : 30)
+                    .frame(height: settingsButtonFrameHeight)
                     .padding(.horizontal)
                 }
                 // 複数Calc横スクロールView

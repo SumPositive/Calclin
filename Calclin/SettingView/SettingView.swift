@@ -41,6 +41,7 @@ struct SettingView: View {
     // 文字サイズに追随するボタン高さ（Dynamic Type で自動スケール）
     @ScaledMetric(relativeTo: .footnote) private var actionButtonHeight: CGFloat = 34
     @ScaledMetric(relativeTo: .subheadline) private var smallButtonHeight: CGFloat = 24
+    @ScaledMetric(relativeTo: .subheadline) private var menuPickerMinHeight: CGFloat = 40
 
     // 現在の Dynamic Type サイズ（特大時に左右余白を最小化して内容欠けを防ぐ）
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -293,6 +294,8 @@ struct SettingView: View {
                         }
                     }
                     .pickerStyle(MenuPickerStyle())
+                    // 特大文字でも現在値の2行表示が欠けないよう高さを確保する
+                    .frame(minHeight: menuPickerMinHeight, alignment: .center)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
                     //.tint(.accentColor)

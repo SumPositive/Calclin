@@ -16,12 +16,29 @@ struct CalcView: View {
 
 
     private let narrowWidth: CGFloat = 320
+    // 文字サイズ「自動」ではシステム Dynamic Type から CalcView 用倍率を決める
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @State private var shareURL: URL?
     @State private var isSharing = false
     @State private var isGeneratingPDF = false
     @State private var formulaTextWidth: CGFloat = 0
     @State private var inputToolsWidth: CGFloat = 0
+
+    private var calcFontScale: CGFloat {
+        setting.calcViewFontScale(for: dynamicTypeSize)
+    }
+
+    private var inputLineHeight: CGFloat {
+        // 標準文字サイズでも上の区切り線に被らない範囲で、入力行の余白を控えめにする
+        max(36, 24.0 * calcFontScale * 1.2)
+    }
+
+    private func syncCalcFontScale() {
+        // CalcViewModel が生成する AttributedString も同じ倍率で更新する
+        viewModel.numberFontScale = calcFontScale
+        viewModel.formulaUpdate()
+    }
 
     var body: some View {
 
@@ -66,7 +83,7 @@ struct CalcView: View {
                 }
                     .environmentObject(setting)
                     .frame(minHeight: 44)
-                    .frame(height: 24.0 * setting.numberFontScale * 1.2)
+                    .frame(height: inputLineHeight)
                     .padding(.horizontal, 8)
                     .background(PaperPlaneBackground())
                     .overlay(alignment: .leading) {
@@ -109,11 +126,13 @@ struct CalcView: View {
                 }
             }
             .onAppear {
-                viewModel.numberFontScale = setting.numberFontScale
+                syncCalcFontScale()
             }
-            .onChange(of: setting.numberFontScale) { _, newScale in
-                viewModel.numberFontScale = newScale
-                viewModel.formulaUpdate()
+            .onChange(of: setting.fontScale) { _, _ in
+                syncCalcFontScale()
+            }
+            .onChange(of: dynamicTypeSize) { _, _ in
+                syncCalcFontScale()
             }
         }
     }
@@ -136,7 +155,7 @@ struct CalcView: View {
                 isGeneratingPDF = true
                 Task { @MainActor in
                     try? await Task.sleep(nanoseconds: 80_000_000)
-                    let url = makeCalcPDF(viewModel: viewModel, fontScale: setting.numberFontScale)
+                    let url = makeCalcPDF(viewModel: viewModel, fontScale: calcFontScale)
                     isGeneratingPDF = false
                     if let url {
                         shareURL = url
@@ -172,14 +191,22 @@ private struct PaperPlaneBackground: View {
 }
 
 private struct PaperToolButtonLabel: View {
+    @EnvironmentObject var setting: SettingViewModel
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let systemName: String
     let title: String
     let showsTitle: Bool
 
+    private var iconScale: CGFloat {
+        setting.calcViewFontScale(for: dynamicTypeSize)
+    }
+
     var body: some View {
         HStack(spacing: showsTitle ? 5 : 0) {
             Image(systemName: systemName)
-                .font(.system(size: 17, weight: .semibold))
+                // 入力行ツールのアイコンは CalcView の文字サイズに合わせる
+                .font(.system(size: 17 * iconScale, weight: .semibold))
                 .foregroundStyle(COLOR_CALC_ACTIVE.opacity(0.62))
 
             if showsTitle {
@@ -188,7 +215,8 @@ private struct PaperToolButtonLabel: View {
                     .foregroundStyle(.secondary.opacity(0.70))
             }
         }
-        .frame(minWidth: showsTitle ? 0 : 36, minHeight: 36)
+        .frame(minWidth: showsTitle ? 0 : 36 * iconScale,
+               minHeight: 36 * iconScale)
         .contentShape(Rectangle())
     }
 }
