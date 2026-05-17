@@ -216,47 +216,49 @@ struct SettingView: View {
             tint: .accentColor
         ) {
             VStack(alignment: .leading, spacing: 8) {
-                AdaptiveLabelRow {
+                AdaptiveRadioRow(options: SettingViewModel.PlayMode.allCases,
+                                 selection: $viewModel.playMode,
+                                 minOptionWidth: 72) {
                     Label("settings.displayMode", systemImage: viewModel.playMode == .beginner
                                                     ? "tortoise" : "hare")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
-                    SettingRadioGroup(options: SettingViewModel.PlayMode.allCases,
-                                      selection: $viewModel.playMode,
-                                      minOptionWidth: 72) { mode in
-                        Text(mode.localized)
-                    }
-                    .onChange(of: viewModel.playMode) { oldValue, newValue in
-                        // モード切替のログを残すだけでも利用者に優しい
-                        log(.info, "PlayMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
-                        // Analyticsでも切り替え状況を計測して、利用傾向を可視化する
-                        AppAnalytics.logPlayModeChanged(from: oldValue, to: newValue)
-                    }
+                } label: { mode in
+                    Text(mode.localized)
                 }
-                AdaptiveLabelRow {
+                .onChange(of: viewModel.playMode) { oldValue, newValue in
+                    // モード切替のログを残すだけでも利用者に優しい
+                    log(.info, "PlayMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
+                    // Analyticsでも切り替え状況を計測して、利用傾向を可視化する
+                    AppAnalytics.logPlayModeChanged(from: oldValue, to: newValue)
+                }
+
+                AdaptiveRadioRow(options: SettingViewModel.AppearanceMode.allCases,
+                                 selection: $viewModel.appearanceMode,
+                                 minOptionWidth: 72) {
                     Label("settings.appearanceMode", systemImage: viewModel.appearanceMode == .dark
                                                     ? "moon" : "sun.max")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
-                    SettingRadioGroup(options: SettingViewModel.AppearanceMode.allCases,
-                                      selection: $viewModel.appearanceMode,
-                                      minOptionWidth: 72) { mode in
-                        Text(mode.localized)
-                    }
-                    .onChange(of: viewModel.appearanceMode) { oldValue, newValue in
-                        log(.info, "AppearanceMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
-                    }
+                } label: { mode in
+                    Text(mode.localized)
                 }
+                .onChange(of: viewModel.appearanceMode) { oldValue, newValue in
+                    log(.info, "AppearanceMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
+                }
+
                 VStack(alignment: .leading, spacing: 4) {
-                    AdaptiveLabelRow {
+                    AdaptiveRadioRow(options: SettingViewModel.AutoScroll.allCases,
+                                     selection: $viewModel.autoScroll,
+                                     minOptionWidth: 70,
+                                     horizontalPadding: 8,
+                                     optionSpacing: 4,
+                                     groupPadding: 4) {
                         Label("settings.autoScroll", systemImage: "arrow.down.to.line")
                             .labelStyle(.titleAndIcon)
                             .font(.subheadline)
-                        SettingRadioGroup(options: SettingViewModel.AutoScroll.allCases,
-                                          selection: $viewModel.autoScroll,
-                                          minOptionWidth: 76) { mode in
-                            Text(mode.localized)
-                        }
+                    } label: { mode in
+                        Text(mode.localized)
                     }
                     if viewModel.playMode == .beginner {
                         Text("settings.help.autoScroll")
@@ -266,22 +268,21 @@ struct SettingView: View {
                     }
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    AdaptiveLabelRow {
+                    AdaptiveRadioRow(options: SettingViewModel.FontScale.allCases,
+                                     selection: $viewModel.fontScale,
+                                     minOptionWidth: 54,
+                                     horizontalPadding: 8,
+                                     optionSpacing: 4,
+                                     groupPadding: 4) {
                         Label("settings.fontScale", systemImage: "textformat.size")
                             .labelStyle(.titleAndIcon)
                             .font(.subheadline)
-                        SettingRadioGroup(options: SettingViewModel.FontScale.allCases,
-                                          selection: $viewModel.fontScale,
-                                          minOptionWidth: 54,
-                                          horizontalPadding: 8,
-                                          optionSpacing: 4,
-                                          groupPadding: 4) { scale in
-                            Text(LocalizedStringKey(scale.localizedKey))
-                        }
-                        .onChange(of: viewModel.fontScale) { _, _ in
-                            // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
-                            NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
-                        }
+                    } label: { scale in
+                        Text(LocalizedStringKey(scale.localizedKey))
+                    }
+                    .onChange(of: viewModel.fontScale) { _, _ in
+                        // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
+                        NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
                     }
                     if viewModel.playMode == .beginner {
                         Text("settings.help.fontScale")
@@ -304,11 +305,11 @@ struct SettingView: View {
             tint: Color(.systemTeal)
         ) {
             VStack(alignment: .leading, spacing: 8) {
-                AdaptiveLabelRow(alignment: .top) {
+                AdaptiveControlRow {
                     // 桁区切りタイプ
                     Text("settings.groupingStyle")
                         .font(.subheadline)
-                        .padding(.top, 6)
+                } control: {
                     SettingDropdown(options: SettingViewModel.GroupType.allCases,
                                     selection: $viewModel.groupType,
                                     isExpanded: dropdownBinding(.groupType),
@@ -331,24 +332,23 @@ struct SettingView: View {
                 .zIndex(expandedDropdown == .groupType ? 60 : 0)
 
                 // 桁区切り記号
-                AdaptiveLabelRow {
+                AdaptiveRadioRow(options: SettingViewModel.GroupSeparator.allCases,
+                                 selection: $viewModel.groupSeparator,
+                                 minOptionWidth: 60) {
                     Text("settings.groupingSymbol")
                         .font(.subheadline)
-                    SettingRadioGroup(options: SettingViewModel.GroupSeparator.allCases,
-                                      selection: $viewModel.groupSeparator,
-                                      minOptionWidth: 60) { type in
-                        Text(type.rawValue)
-                    }
-                    .onChange(of: viewModel.groupSeparator) { oldValue, newValue in
-                        log(.info, ".onChange groupSeparator")
-                        // 選択されたときに呼ばれる処理
-                        viewModel.groupSeparator = newValue
-                        calcConfig.groupSeparator = newValue.symbol
-                        // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
-                        NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
-                        // 利用者が好む記号を記録して、次期UI改善の参考にする
-                        AppAnalytics.logGroupSeparatorChanged(to: newValue)
-                    }
+                } label: { type in
+                    Text(type.rawValue)
+                }
+                .onChange(of: viewModel.groupSeparator) { oldValue, newValue in
+                    log(.info, ".onChange groupSeparator")
+                    // 選択されたときに呼ばれる処理
+                    viewModel.groupSeparator = newValue
+                    calcConfig.groupSeparator = newValue.symbol
+                    // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
+                    NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                    // 利用者が好む記号を記録して、次期UI改善の参考にする
+                    AppAnalytics.logGroupSeparatorChanged(to: newValue)
                 }
             }
             .padding(.top, -12)
@@ -393,9 +393,10 @@ struct SettingView: View {
                     })
                 }
                 
-                AdaptiveLabelRow {
+                AdaptiveControlRow {
                     Text("settings.rounding")
                         .font(.subheadline)
+                } control: {
                     SettingDropdown(options: SettingViewModel.RoundType.allCases,
                                     selection: $viewModel.roundType,
                                     isExpanded: dropdownBinding(.roundType),
@@ -416,24 +417,23 @@ struct SettingView: View {
                 .zIndex(expandedDropdown == .roundType ? 60 : 0)
 
                 // 小数点
-                AdaptiveLabelRow {
+                AdaptiveRadioRow(options: SettingViewModel.DecimalSeparator.allCases,
+                                 selection: $viewModel.decimalSeparator,
+                                 minOptionWidth: 72) {
                     Text("settings.decimalPoint")
                         .font(.subheadline)
-                    SettingRadioGroup(options: SettingViewModel.DecimalSeparator.allCases,
-                                      selection: $viewModel.decimalSeparator,
-                                      minOptionWidth: 72) { type in
-                        Text(type.rawValue)
-                    }
-                    .onChange(of: viewModel.decimalSeparator) { oldValue, newValue in
-                        log(.info, ".onChange decimalSeparator")
-                        // 選択されたときに呼ばれる処理
-                        viewModel.decimalSeparator = newValue
-                        calcConfig.decimalSeparator = newValue.symbol
-                        // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
-                        NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
-                        // ロケール毎の好みを把握してUI文言改善に反映する
-                        AppAnalytics.logDecimalSeparatorChanged(to: newValue)
-                    }
+                } label: { type in
+                    Text(type.rawValue)
+                }
+                .onChange(of: viewModel.decimalSeparator) { oldValue, newValue in
+                    log(.info, ".onChange decimalSeparator")
+                    // 選択されたときに呼ばれる処理
+                    viewModel.decimalSeparator = newValue
+                    calcConfig.decimalSeparator = newValue.symbol
+                    // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
+                    NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                    // ロケール毎の好みを把握してUI文言改善に反映する
+                    AppAnalytics.logDecimalSeparatorChanged(to: newValue)
                 }
             }
             .padding(.top, -12)
@@ -762,6 +762,7 @@ private enum SettingDropdownKind {
 /// Dynamic Typeで欠けない独自プルダウン
 private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: View {
     @EnvironmentObject var viewModel: SettingViewModel
+    @State private var buttonFrame: CGRect = .zero  // 吹き出し方向を決めるためのボタン位置
     let options: [Option]
     @Binding var selection: Option
     @Binding var isExpanded: Bool
@@ -773,7 +774,7 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
         collapsedButton
             .popover(isPresented: $isExpanded,
                      attachmentAnchor: .rect(.bounds),
-                     arrowEdge: opensUpward ? .bottom : .top) {
+                     arrowEdge: popupOpensUpward ? .bottom : .top) {
                 // 外側タップで閉じられる標準ポップアップとして表示する
                 expandedOptions
                     .appFontScale(viewModel.fontScale)
@@ -781,7 +782,37 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
                     .presentationBackground(Color(.systemBackground))
                     .padding(2)
             }
+            .background {
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear {
+                            // 表示位置を測って、上下の広い側へ吹き出す
+                            buttonFrame = proxy.frame(in: .global)
+                        }
+                        .onChange(of: proxy.frame(in: .global)) { _, newValue in
+                            buttonFrame = newValue
+                        }
+                }
+            }
             .zIndex(isExpanded ? 100 : 0)
+    }
+
+    private var popupOpensUpward: Bool {
+        if buttonFrame == .zero {
+            return opensUpward
+        }
+
+        let upperSpace = buttonFrame.minY
+        let lowerSpace = UIScreen.main.bounds.height - buttonFrame.maxY
+        return lowerSpace < upperSpace
+    }
+
+    private var popupMaxHeight: CGFloat {
+        let margin: CGFloat = 20
+        let minimumHeight: CGFloat = 120
+        let upperSpace = max(minimumHeight, buttonFrame.minY - margin)
+        let lowerSpace = max(minimumHeight, UIScreen.main.bounds.height - buttonFrame.maxY - margin)
+        return popupOpensUpward ? upperSpace : lowerSpace
     }
 
     private var collapsedButton: some View {
@@ -823,11 +854,15 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
     }
 
     private var expandedOptions: some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            ForEach(options) { option in
-                optionButton(option)
+        ScrollView {
+            VStack(alignment: .trailing, spacing: 4) {
+                ForEach(options) { option in
+                    optionButton(option)
+                }
             }
         }
+        .scrollIndicators(.hidden)
+        .frame(maxHeight: popupMaxHeight)
         .padding(6)
         .background(
             RoundedRectangle(cornerRadius: 3, style: .continuous)
@@ -885,55 +920,11 @@ private struct SettingRadioGroup<Option: Hashable & Identifiable, Label: View>: 
     var horizontalPadding: CGFloat = 10
     var optionSpacing: CGFloat = 6
     var groupPadding: CGFloat = 6
+    var wrapsOptions: Bool = true
     @ViewBuilder let label: (Option) -> Label
 
     var body: some View {
-        SettingFlowLayout(spacing: optionSpacing, rowSpacing: optionSpacing) {
-            ForEach(options) { option in
-                let isSelected = selection == option
-                Button {
-                    selection = option
-                } label: {
-                    ZStack {
-                        label(option)
-                            .font(.subheadline.weight(isSelected ? .semibold : .regular))
-                            .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
-                            .lineLimit(nil)
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(.horizontal, horizontalPadding)
-                    .padding(.vertical, 8)
-                    .frame(minWidth: minOptionWidth,
-                           maxWidth: maxOptionWidth,
-                           alignment: .center)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(isSelected ? Color.accentColor.opacity(0.16) : Color(.systemBackground).opacity(0.92))
-                    )
-                    .overlay(
-                        Capsule(style: .continuous)
-                            .strokeBorder(isSelected ? Color.accentColor.opacity(0.70) : Color.secondary.opacity(0.14),
-                                          lineWidth: isSelected ? 1.4 : 1)
-                    )
-                    .shadow(color: Color.black.opacity(isSelected ? 0.03 : 0.12),
-                            radius: isSelected ? 0.5 : 2.0,
-                            x: 0,
-                            y: isSelected ? 0 : 1.5)
-                    .overlay(alignment: .top) {
-                        if isSelected {
-                            // 選択中は上側を少し暗くして、押し込まれた印象にする
-                            Capsule(style: .continuous)
-                                .fill(Color.black.opacity(0.06))
-                                .frame(height: 2)
-                                .padding(.horizontal, 2)
-                        }
-                    }
-                    .offset(y: isSelected ? 1 : 0)
-                }
-                .buttonStyle(.plain)
-            }
-        }
+        optionLayout
         .padding(groupPadding)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -944,7 +935,149 @@ private struct SettingRadioGroup<Option: Hashable & Identifiable, Label: View>: 
                 .strokeBorder(Color.secondary.opacity(0.22), lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
-        .frame(maxWidth: .infinity, alignment: .trailing)
+        .frame(maxWidth: wrapsOptions ? .infinity : nil, alignment: .trailing)
+    }
+
+    @ViewBuilder
+    private var optionLayout: some View {
+        if wrapsOptions {
+            SettingFlowLayout(spacing: optionSpacing, rowSpacing: optionSpacing) {
+                optionButtons
+            }
+        } else {
+            HStack(spacing: optionSpacing) {
+                optionButtons
+            }
+            .fixedSize(horizontal: true, vertical: false)
+        }
+    }
+
+    private var optionButtons: some View {
+        ForEach(options) { option in
+            optionButton(option)
+        }
+    }
+
+    private func optionButton(_ option: Option) -> some View {
+        let isSelected = selection == option
+        return Button {
+            selection = option
+        } label: {
+            ZStack {
+                label(option)
+                    .font(.subheadline.weight(isSelected ? .semibold : .regular))
+                    .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
+                    .lineLimit(nil)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, 8)
+            .frame(minWidth: minOptionWidth,
+                   maxWidth: maxOptionWidth,
+                   alignment: .center)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(isSelected ? Color.accentColor.opacity(0.16) : Color(.systemBackground).opacity(0.92))
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .strokeBorder(isSelected ? Color.accentColor.opacity(0.70) : Color.secondary.opacity(0.14),
+                                  lineWidth: isSelected ? 1.4 : 1)
+            )
+            .shadow(color: Color.black.opacity(isSelected ? 0.03 : 0.12),
+                    radius: isSelected ? 0.5 : 2.0,
+                    x: 0,
+                    y: isSelected ? 0 : 1.5)
+            .overlay(alignment: .top) {
+                if isSelected {
+                    // 選択中は上側を少し暗くして、押し込まれた印象にする
+                    Capsule(style: .continuous)
+                        .fill(Color.black.opacity(0.06))
+                        .frame(height: 2)
+                        .padding(.horizontal, 2)
+                }
+            }
+            .offset(y: isSelected ? 1 : 0)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// コントロール行を「見出し込み1行」「見出し＋操作部2段」の順に選ぶ
+private struct AdaptiveControlRow<Title: View, Control: View>: View {
+    @ViewBuilder let title: () -> Title
+    @ViewBuilder let control: () -> Control
+
+    init(@ViewBuilder title: @escaping () -> Title,
+         @ViewBuilder control: @escaping () -> Control) {
+        self.title = title
+        self.control = control
+    }
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 8) {
+                title()
+                Spacer(minLength: 8)
+                control()
+                    .fixedSize(horizontal: true, vertical: false)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                title()
+                control()
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        }
+    }
+}
+
+/// ラジオ行を「見出し込み1行」「2段で選択肢1行」「選択肢折り返し」の順に選ぶ
+private struct AdaptiveRadioRow<Option: Hashable & Identifiable, Title: View, Label: View>: View {
+    let options: [Option]
+    @Binding var selection: Option
+    var minOptionWidth: CGFloat = 96
+    var maxOptionWidth: CGFloat = 240
+    var horizontalPadding: CGFloat = 10
+    var optionSpacing: CGFloat = 6
+    var groupPadding: CGFloat = 6
+    @ViewBuilder let title: () -> Title
+    @ViewBuilder let label: (Option) -> Label
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 8) {
+                title()
+                Spacer(minLength: 8)
+                radioGroup(wrapsOptions: false)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                title()
+                radioGroup(wrapsOptions: false)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                title()
+                radioGroup(wrapsOptions: true)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        }
+    }
+
+    private func radioGroup(wrapsOptions: Bool) -> some View {
+        SettingRadioGroup(options: options,
+                          selection: $selection,
+                          minOptionWidth: minOptionWidth,
+                          maxOptionWidth: maxOptionWidth,
+                          horizontalPadding: horizontalPadding,
+                          optionSpacing: optionSpacing,
+                          groupPadding: groupPadding,
+                          wrapsOptions: wrapsOptions) { option in
+            label(option)
+        }
     }
 }
 
@@ -1038,8 +1171,8 @@ private struct AdaptiveLabelRow<Content: View>: View {
     }
 
     var body: some View {
-        if DynamicTypeSize.accessibility2 <= dynamicTypeSize {
-            // 特大では操作部に横幅を渡し、選択肢の折り返しを減らす
+        if DynamicTypeSize.xxxLarge <= dynamicTypeSize {
+            // 大以上では操作部に横幅を渡し、選択肢の折り返しを減らす
             VStack(alignment: .leading, spacing: 4) {
                 content()
             }
