@@ -99,12 +99,18 @@ struct CalcRollView: View {
                                 if isActive == false {
                                     Color.clear
                                         .contentShape(Rectangle())
+                                        .simultaneousGesture(
+                                            DragGesture(minimumDistance: 0)
+                                                .onChanged { _ in
+                                                    // 枠線と入力先を触れた瞬間に同時へ切り替える
+                                                    if index != selectedPage {
+                                                        selectedPage = index
+                                                        onCalcChange(index)
+                                                    }
+                                                }
+                                        )
                                         .onTapGesture {
-                                            // タップでページを切り替える（親だけが処理）
-                                            if index != selectedPage {
-                                                selectedPage = index
-                                                onCalcChange(index)
-                                            }
+                                            // 即時切り替え済みなので、タップ確定時の追加処理は不要
                                         }
                                 }
                             }
