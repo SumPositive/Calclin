@@ -24,20 +24,49 @@ struct CalcView: View {
     @State private var isGeneratingPDF = false
     @State private var formulaTextWidth: CGFloat = 0
     @State private var inputToolsWidth: CGFloat = 0
+    // 入力行右側を長押ししたときのフォント選択ポップオーバー表示状態
+    @State private var isNumberFontPickerPresented = false
 
     private var calcFontScale: CGFloat {
         setting.calcViewFontScale(for: dynamicTypeSize)
     }
 
+    /// 入力行用のフォント倍率（特大は「大」相当にキャップして画面に収める）
+    private var inputRowFontScale: CGFloat {
+        setting.inputRowFontScale(for: dynamicTypeSize)
+    }
+
     private var inputLineHeight: CGFloat {
+        // 入力行は視認性を優先して基準サイズを 1.4 倍 (24 → 33.6) に合わせる
         // 標準文字サイズでも上の区切り線に被らない範囲で、入力行の余白を控えめにする
-        max(36, 24.0 * calcFontScale * 1.2)
+        max(50, 33.6 * inputRowFontScale * 1.2)
     }
 
     private func syncCalcFontScale() {
-        // CalcViewModel が生成する AttributedString も同じ倍率で更新する
-        viewModel.numberFontScale = calcFontScale
+        // CalcViewModel が生成する AttributedString（累計プレフィックス）は入力行に表示されるため、
+        // キャップ済みの inputRowFontScale を渡して画面溢れを防ぐ
+        viewModel.numberFontScale = inputRowFontScale
+        viewModel.numberFont = setting.numberFont
         viewModel.formulaUpdate()
+    }
+
+    /// フォント選択ポップオーバーのプレビュー用文字列
+    /// - 入力行に有意な値があればそれを使う（同じ文字でフォントの違いを比較できる）
+    /// - 空・初期値の場合は汎用サンプル "−(1234567890)+" にフォールバック
+    private var numberFontPreviewText: String {
+        let plain = String(viewModel.formulaAttr.characters)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        // 初期表示や "0" だけのときは違いが分かりにくいのでサンプルへ切替
+        if plain.isEmpty || plain == "0" || plain == "0." {
+            return SettingViewModel.NumberFont.sample
+        }
+        return plain
+    }
+
+    /// フォント選択ポップオーバーで使うサンプルのフォントサイズ
+    /// - 実際の入力行と同じサイズで描画して見え方を一致させる（入力行はキャップ済み）
+    private var numberFontPreviewSize: CGFloat {
+        33.6 * inputRowFontScale
     }
 
     var body: some View {
@@ -99,6 +128,34 @@ struct CalcView: View {
                                 }
                             }
                     }
+                    // 入力行の右側 1/3 を長押しでフォント選択ポップオーバーを開く
+                    // FormulaView の水平スクロールを邪魔しないよう minimumDuration を長めに設定
+                    .overlay(alignment: .trailing) {
+                        GeometryReader { rowGeo in
+                            Color.clear
+                                .frame(width: rowGeo.size.width / 3, height: rowGeo.size.height)
+                                .contentShape(Rectangle())
+                                .onLongPressGesture(minimumDuration: 0.6) {
+                                    isNumberFontPickerPresented = true
+                                }
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .popover(isPresented: $isNumberFontPickerPresented,
+                                         // メニュー位置は維持しつつ、吹き出し先だけ右寄りにする
+                                         attachmentAnchor: .point(UnitPoint(x: 0.78, y: 0.18)),
+                                         arrowEdge: .bottom) {
+                                    NumberFontQuickPickPopover(
+                                        selection: $setting.numberFont,
+                                        previewText: numberFontPreviewText,
+                                        previewSize: numberFontPreviewSize
+                                    ) {
+                                        isNumberFontPickerPresented = false
+                                    }
+                                    .appFontScale(setting.fontScale)
+                                    .presentationCompactAdaptation(.popover)
+                                }
+                        }
+                    }
+                    .sensoryFeedback(.success, trigger: isNumberFontPickerPresented)
                     .onPreferenceChange(InputToolsWidthPreferenceKey.self) { width in
                         inputToolsWidth = width
                     }
@@ -129,6 +186,9 @@ struct CalcView: View {
                 syncCalcFontScale()
             }
             .onChange(of: setting.fontScale) { _, _ in
+                syncCalcFontScale()
+            }
+            .onChange(of: setting.numberFont) { _, _ in
                 syncCalcFontScale()
             }
             .onChange(of: dynamicTypeSize) { _, _ in
@@ -170,6 +230,62 @@ struct CalcView: View {
                 )
             }
         }
+    }
+}
+
+/// 入力行右側を長押ししたときに開く数字フォント選択ポップオーバー
+/// - 各候補をそのフォント自身でプレビュー描画する
+/// - プレビュー文字列とサイズは呼び出し側から指定し、入力行と同じ見た目で比較できる
+private struct NumberFontQuickPickPopover: View {
+    @Binding var selection: SettingViewModel.NumberFont
+    let previewText: String
+    let previewSize: CGFloat
+    let onDismiss: () -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(SettingViewModel.NumberFont.allCases) { numberFont in
+                    Button {
+                        selection = numberFont
+                        onDismiss()
+                    } label: {
+                        HStack(spacing: 10) {
+                            // 入力行と同じ文字列・同じサイズで描画してフォントの違いを見せる
+                            Text(previewText)
+                                .font(numberFont.font(size: previewSize, weight: .bold))
+                                // 入力行と同じく Dynamic Type の二重拡大を抑止する
+                                .dynamicTypeSize(.large)
+                                .foregroundStyle(numberFont == selection
+                                                 ? Color.accentColor : Color.primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                            if numberFont == selection {
+                                Image(systemName: "checkmark")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .contentShape(Rectangle())
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(numberFont == selection
+                                      ? Color.accentColor.opacity(0.12)
+                                      : Color.clear)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(8)
+        }
+        .scrollIndicators(.hidden)
+        // プレビュー文字数や入力行サイズに合わせて余裕を持たせる
+        .frame(minWidth: max(260, previewSize * 6), maxHeight: 480)
+        .background(Color(.systemBackground))
     }
 }
 

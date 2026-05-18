@@ -55,6 +55,8 @@ final class CalcViewModel: ObservableObject {
     @Published var isAnswerMode = false
     // フォントスケール（SettingViewModelから同期）
     var numberFontScale: CGFloat = 1.5
+    /// 入力行のフォント（accumulator の prefix 表示に使う）
+    var numberFont: SettingViewModel.NumberFont = .sfProRounded
     // 自動スクロール用トリガー：= 直後の最初のキー入力で +1 する
     @Published var inputStartTrigger: Int = 0
 
@@ -840,7 +842,8 @@ final class CalcViewModel: ObservableObject {
                 : editingAccDisplay
             var accAttr = AttributedString(accStr)
             accAttr.foregroundColor = COLOR_NUMBER.opacity(0.4)
-            accAttr.font = Font.system(size: 15.0 * numberFontScale, weight: .bold).monospacedDigit()
+            // 入力行のフォント設定に合わせる（基準サイズは小さめの 15.0）
+            accAttr.font = numberFont.font(size: 15.0 * numberFontScale, weight: .bold)
             formulaAttr = accAttr
             formulaAttr += AttributedString(" ")
             var opAttr = AttributedString(op)

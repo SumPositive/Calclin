@@ -164,13 +164,13 @@ struct CustomCell: View {
                 if let memo = row.memo {
                     var memoAt = AttributedString("\n" + memo)
                     memoAt.foregroundColor = (colorScheme == .dark ? Color.cyan : COLOR_MEMO.opacity(0.7))
-                    memoAt.font = .system(size: fontSize * 0.8 * calcFontScale, weight: .light)
+                    memoAt.font = .system(size: fontSize * 0.8 * calcFontScale, weight: .light, design: .rounded)
                     attrStr += memoAt
                 }
                 return attrStr
             }())
             .scaleEffect(y: -1.0) // List の反転を打ち消す
-            .font(.system(size: fontSize * calcFontScale, weight: .regular))
+            .font(.system(size: fontSize * calcFontScale, weight: .regular, design: .rounded).monospacedDigit())
             .opacity(colorScheme == .dark ? 0.55 : 1.0)
             .multilineTextAlignment(.trailing) // 複数行で右寄せ
             .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
@@ -303,7 +303,7 @@ struct RollCell: View {
     @ViewBuilder
     private func rtText(_ value: String, size: CGFloat) -> some View {
         Text(value)
-            .font(.system(size: size, weight: .light).monospacedDigit())
+            .font(.system(size: size, weight: .light, design: .rounded).monospacedDigit())
             .lineLimit(1)
             .fixedSize(horizontal: true, vertical: false)
             .foregroundStyle(Color.secondary.opacity(0.7))
@@ -314,12 +314,13 @@ struct RollCell: View {
         HStack(spacing: 0) {
             if !opStr.isEmpty {
                 Text(opStr + " ")
-                    .font(.system(size: fontSize * calcFontScale, weight: .regular))
+                    .font(.system(size: fontSize * calcFontScale, weight: .regular, design: .rounded))
                     .foregroundStyle(isFinal ? COLOR_ANSWER : COLOR_OPERATOR)
             }
             Text(value)
                 .font(.system(size: fontSize * calcFontScale,
-                              weight: isFinal ? .bold : .regular)
+                              weight: isFinal ? .bold : .regular,
+                              design: .rounded)
                     .monospacedDigit())
                 .foregroundStyle(isFinal ? COLOR_ANSWER : COLOR_NUMBER)
         }
@@ -378,7 +379,7 @@ struct RollCell: View {
             // メモ
             if let memo = row.memo, !memo.isEmpty {
                 Text(memo)
-                    .font(.system(size: fontSize * 0.8 * calcFontScale, weight: .light))
+                    .font(.system(size: fontSize * 0.8 * calcFontScale, weight: .light, design: .rounded))
                     .foregroundStyle(colorScheme == .dark ? Color.cyan : COLOR_MEMO.opacity(0.7))
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.top, 2)

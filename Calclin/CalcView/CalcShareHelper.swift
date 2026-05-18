@@ -73,11 +73,11 @@ private struct CalcPDFContent: View {
                                         .fontWeight(line.isFinal ? .bold : .regular)
                                         .foregroundStyle(line.isFinal ? COLOR_ANSWER : COLOR_NUMBER)
                                 }
-                                .font(.system(size: base * fontScale).monospacedDigit())
+                                .font(.system(size: base * fontScale, design: .rounded).monospacedDigit())
                             }
                             if let memo = row.memo, !memo.isEmpty {
                                 Text(verbatim: memo)
-                                    .font(.system(size: base * 0.85 * fontScale))
+                                    .font(.system(size: base * 0.85 * fontScale, design: .rounded))
                                     .foregroundStyle(COLOR_MEMO)
                                     .frame(maxWidth: .infinity, alignment: .trailing)
                             }
@@ -93,15 +93,15 @@ private struct CalcPDFContent: View {
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(row.formula)
-                            .font(.system(size: base * fontScale))
+                            .font(.system(size: base * fontScale, design: .rounded).monospacedDigit())
                         if !row.answer.isEmpty {
                             Text(verbatim: row.answer)
-                                .font(.system(size: base * fontScale, weight: .bold).monospacedDigit())
+                                .font(.system(size: base * fontScale, weight: .bold, design: .rounded).monospacedDigit())
                                 .foregroundStyle(COLOR_ANSWER)
                         }
                         if let memo = row.memo, !memo.isEmpty {
                             Text(verbatim: memo)
-                                .font(.system(size: base * 0.85 * fontScale))
+                                .font(.system(size: base * 0.85 * fontScale, design: .rounded))
                                 .foregroundStyle(COLOR_MEMO)
                         }
                     }

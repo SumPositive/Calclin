@@ -73,6 +73,11 @@ struct SettingView: View {
         dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxLarge
     }
 
+    /// 数字フォント候補は入力行と同じ倍率を使い、書体比較のサイズを揃える
+    private var numberFontMenuPreviewSize: CGFloat {
+        17 * viewModel.inputRowFontScale(for: dynamicTypeSize)
+    }
+
     private func dropdownBinding(_ kind: SettingDropdownKind) -> Binding<Bool> {
         Binding(
             get: { expandedDropdown == kind },
@@ -293,6 +298,38 @@ struct SettingView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+
+                // 数字フォント（入力行のみに適用）
+                // 桁区切り方式と同じ独自 dropdown を使い、各候補をそのフォント自身で描画する
+                VStack(alignment: .leading, spacing: 4) {
+                    AdaptiveControlRow {
+                        Label("settings.numberFont", systemImage: "textformat.123")
+                            .labelStyle(.titleAndIcon)
+                            .font(.subheadline)
+                    } control: {
+                        SettingDropdown(options: SettingViewModel.NumberFont.allCases,
+                                        selection: $viewModel.numberFont,
+                                        isExpanded: dropdownBinding(.numberFont),
+                                        minWidth: 220,
+                                        labelStylesOwnFont: true) { numberFont in
+                            Text(SettingViewModel.NumberFont.sample)
+                                .font(numberFont.font(size: numberFontMenuPreviewSize, weight: .bold))
+                                // 数字フォント候補は inputRowFontScale で拡大率を制御する
+                                .dynamicTypeSize(.large)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                    // 開いた候補を同じカード内の後続行より前面に出す
+                    .zIndex(expandedDropdown == .numberFont ? 60 : 0)
+                    if viewModel.playMode == .beginner {
+                        Text("settings.help.numberFont")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .zIndex(expandedDropdown == .numberFont ? 50 : 0)
             }
             .padding(.top, -12)
             .padding(.leading, sectionLeadingPadding)
@@ -759,6 +796,7 @@ private struct TipSheetView: View {
 private enum SettingDropdownKind {
     case groupType
     case roundType
+    case numberFont
 }
 
 /// Dynamic Typeで欠けない独自プルダウン
@@ -770,6 +808,8 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
     @Binding var isExpanded: Bool
     var minWidth: CGFloat = 180
     var opensUpward: Bool = true
+    /// true のとき label closure 内のフォント指定をそのまま尊重する（数字フォント選択など）
+    var labelStylesOwnFont: Bool = false
     @ViewBuilder let label: (Option) -> Label
 
     var body: some View {
@@ -778,8 +818,7 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
                      attachmentAnchor: .rect(.bounds),
                      arrowEdge: popupOpensUpward ? .bottom : .top) {
                 // 外側タップで閉じられる標準ポップアップとして表示する
-                expandedOptions
-                    .appFontScale(viewModel.fontScale)
+                popoverContent
                     .presentationCompactAdaptation(.popover)
                     .presentationBackground(Color(.systemBackground))
                     .padding(2)
@@ -797,6 +836,18 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
                 }
             }
             .zIndex(isExpanded ? 100 : 0)
+    }
+
+    @ViewBuilder
+    private var popoverContent: some View {
+        if labelStylesOwnFont {
+            // 数字フォント候補は各Text側で倍率を指定し、環境の二重拡大を避ける
+            expandedOptions
+                .dynamicTypeSize(.large)
+        } else {
+            expandedOptions
+                .appFontScale(viewModel.fontScale)
+        }
     }
 
     private var popupOpensUpward: Bool {
@@ -847,13 +898,18 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
         .buttonStyle(.plain)
     }
 
+    @ViewBuilder
     private var selectedLabel: some View {
-        label(selection)
-            .font(.subheadline.weight(.semibold))
+        let base = label(selection)
             .foregroundStyle(Color.primary)
             .lineLimit(nil)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
+        if labelStylesOwnFont {
+            base
+        } else {
+            base.font(.subheadline.weight(.semibold))
+        }
     }
 
     private var expandedOptions: some View {
@@ -892,13 +948,17 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
         .buttonStyle(.plain)
     }
 
+    @ViewBuilder
     private func optionLabel(_ option: Option, isSelected: Bool) -> some View {
-        label(option)
-            .font(.subheadline.weight(isSelected ? .semibold : .regular))
+        let styled = label(option)
             .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
             .lineLimit(nil)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
+        let body = (labelStylesOwnFont
+                    ? AnyView(styled)
+                    : AnyView(styled.font(.subheadline.weight(isSelected ? .semibold : .regular))))
+        body
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
             .frame(minWidth: minWidth, alignment: .center)

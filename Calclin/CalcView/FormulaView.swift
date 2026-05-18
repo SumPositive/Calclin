@@ -21,7 +21,8 @@ struct FormulaView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var calcFontScale: CGFloat {
-        setting.calcViewFontScale(for: dynamicTypeSize)
+        // 入力行は特大時に画面溢れを起こさないよう「大」相当（1.5）にキャップする
+        setting.inputRowFontScale(for: dynamicTypeSize)
     }
 
     
@@ -30,8 +31,13 @@ struct FormulaView: View {
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
                     Text( viewModel.formulaAttr )
-                        .font(.system(size: 24.0 * calcFontScale,
-                                      weight: .bold))
+                        // 入力行は視認性を優先して基準サイズを 1.4 倍 (24 → 33.6) に設定
+                        // フォントは設定（numberFont）でユーザーが選択
+                        .font(setting.numberFont.font(size: 33.6 * calcFontScale,
+                                                      weight: .bold))
+                        // Dynamic Type による更なる拡大を抑止する（入力行のスケールは
+                        // inputRowFontScale で完全制御するため、二重拡大を避ける）
+                        .dynamicTypeSize(.large)
                         .foregroundStyle(viewModel.isAnswerMode ?  COLOR_ANSWER : COLOR_NUMBER)
                         .opacity(colorScheme == .dark ? 0.60 : 1.0)
                         .lineLimit(1)

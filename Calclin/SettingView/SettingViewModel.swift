@@ -28,6 +28,7 @@ final class SettingViewModel: ObservableObject {
         static let groupType = "groupType"
         static let groupSeparator = "groupSeparator"
         static let fontScale = "fontScale"
+        static let numberFont = "numberFont"
         // 旧キー（slider 0.5〜3.0 の Double）。マイグレーション用に残す
         static let numberFontScale = "numberFontScale"
         static let autoScroll = "autoScroll"
@@ -333,6 +334,62 @@ final class SettingViewModel: ObservableObject {
         fontScale.calcViewScale(for: dynamicTypeSize)
     }
 
+    /// 入力行用のフォント倍率
+    /// - 特大では字幅の広いフォント（Avenir / DIN など）が画面に収まらないため 1.7 にキャップする
+    /// - 履歴・累計・PDF は影響しない（calcViewFontScale をそのまま使う）
+    func inputRowFontScale(for dynamicTypeSize: DynamicTypeSize) -> CGFloat {
+        min(calcViewFontScale(for: dynamicTypeSize), 1.7)
+    }
+
+    /// 入力行の数字・演算子フォント
+    /// - 単位の漢字は SwiftUI のフォント代替により Hiragino 系へ自動フォールバックされる
+    /// - 入力行（FormulaView）以外は SF Pro Rounded + 等幅数字に統一
+    enum NumberFont: String, CaseIterable, Identifiable {
+        case sfPro              // SF Pro + 等幅数字
+        case sfProRounded       // SF Pro Rounded + 等幅数字 (デフォルト)
+        case sfMono             // SF Mono (全等幅)
+        case menlo              // Menlo Bold
+        case avenirNext         // Avenir Next Bold
+        case avenirNextCondensed // Avenir Next Condensed Bold
+        case dinAlternate       // DIN Alternate Bold
+        case dinCondensed       // DIN Condensed Bold
+
+        var id: String { rawValue }
+
+        /// プルダウンで各フォントのプレビューに使うサンプル文字列
+        static let sample = "1234567890"
+
+        /// 指定サイズで SwiftUI Font を返す
+        /// - カスタムフォント（Menlo / Avenir / DIN）は書体側で太さが決まるため weight 引数は無視される
+        func font(size: CGFloat, weight: Font.Weight = .bold) -> Font {
+            switch self {
+            case .sfPro:
+                return .system(size: size, weight: weight).monospacedDigit()
+            case .sfProRounded:
+                return .system(size: size, weight: weight, design: .rounded).monospacedDigit()
+            case .sfMono:
+                return .system(size: size, weight: weight, design: .monospaced)
+            case .menlo:
+                return .custom("Menlo-Bold", size: size)
+            case .avenirNext:
+                return .custom("AvenirNext-Bold", size: size)
+            case .avenirNextCondensed:
+                return .custom("AvenirNextCondensed-Bold", size: size)
+            case .dinAlternate:
+                return .custom("DINAlternate-Bold", size: size)
+            case .dinCondensed:
+                return .custom("DINCondensed-Bold", size: size)
+            }
+        }
+    }
+
+    /// 入力行のフォント（デフォルト: SF Pro Rounded + 等幅数字）
+    @Published var numberFont: NumberFont = .sfProRounded {
+        didSet {
+            save(numberFont.rawValue, forKey: StorageKey.numberFont)
+        }
+    }
+
     /// 自動スクロールタイミング
     enum AutoScroll: String, CaseIterable, Identifiable {
         case never    // しない
@@ -420,6 +477,7 @@ final class SettingViewModel: ObservableObject {
         groupSeparator = storedGroupSeparator(default: groupSeparator)
         autoScroll = storedEnum(forKey: StorageKey.autoScroll, default: autoScroll)
         keyShapeMode = storedEnum(forKey: StorageKey.keyShapeMode, default: keyShapeMode)
+        numberFont = storedEnum(forKey: StorageKey.numberFont, default: numberFont)
 
         if defaults.object(forKey: StorageKey.decimalDigits) != nil {
             decimalDigits = min(max(defaults.double(forKey: StorageKey.decimalDigits), 0), SETTING_decimalDigits_MAX)

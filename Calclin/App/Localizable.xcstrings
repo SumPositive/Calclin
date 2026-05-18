@@ -1692,6 +1692,40 @@
         }
       }
     },
+    "settings.numberFont" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Number Font"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数字フォント"
+          }
+        }
+      }
+    },
+    "settings.help.numberFont" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Applies to the input row. You can also change it by long-pressing the right side of the input row."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "入力行に適用されます。入力行の右側を長押しでも変更できます"
+          }
+        }
+      }
+    },
     "settings.fontScale.system" : {
       "extractionState" : "manual",
       "localizations" : {
