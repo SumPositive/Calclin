@@ -67,7 +67,7 @@ private struct CalcPDFContent: View {
                                 HStack(spacing: 4) {
                                     if !op.isEmpty {
                                         Text(verbatim: op)
-                                            .foregroundStyle(line.isFinal ? COLOR_ANSWER : COLOR_OPERATOR)
+                                            .foregroundStyle(COLOR_OPERATOR)
                                     }
                                     Text(verbatim: line.value)
                                         .fontWeight(line.isFinal ? .bold : .regular)

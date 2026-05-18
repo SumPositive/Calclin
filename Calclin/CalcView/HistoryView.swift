@@ -315,7 +315,7 @@ struct RollCell: View {
             if !opStr.isEmpty {
                 Text(opStr + " ")
                     .font(.system(size: fontSize * calcFontScale, weight: .regular, design: .rounded))
-                    .foregroundStyle(isFinal ? COLOR_ANSWER : COLOR_OPERATOR)
+                    .foregroundStyle(COLOR_OPERATOR)
             }
             Text(value)
                 .font(.system(size: fontSize * calcFontScale,

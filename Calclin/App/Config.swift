@@ -46,7 +46,7 @@ let COLOR_TITLE: Color = .secondary         // App Name
 let COLOR_CALC_ACTIVE: Color = .accentColor // Calc活性枠
 let COLOR_CALC_INACTIVE: Color = .secondary // Calc非活性枠
 let COLOR_NUMBER: Color = .primary          // 数値
-let COLOR_ANSWER: Color = .accentColor      // 答え
+let COLOR_ANSWER: Color = COLOR_NUMBER      // 答え
 let COLOR_OPERATOR: Color = .cyan           // 演算子
 let COLOR_OPERATOR_WAIT: Color = .gray      // 待機演算子　右端の[.]や[)]
 let COLOR_UNIT: Color = .secondary          // 単位
@@ -117,4 +117,3 @@ let CALC_DISABLED_IN_CALCULATOR: Set<String> = [
     "Paren",   // 括弧
     // 単位キーは電卓モードでも使用可能（isKeyDisabled で unitBase を持つものを除外しない）
 ]
-
