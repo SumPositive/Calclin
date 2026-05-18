@@ -31,7 +31,7 @@ struct HistoryView: View {
                         CustomCell(viewModel: viewModel, row: row)
                             .id(index)
                             .listRowInsets(EdgeInsets()) // ← これが肝
-                            .listRowSeparator(.visible, edges: .all)
+                            .listRowSeparator(.hidden, edges: .all)
                             .padding(.bottom, 8.0)  // 下の余白
                             .padding(.horizontal, 12.0) // 左右の余白
                             .background(COLOR_BACK_FORMULA)
@@ -208,7 +208,7 @@ struct RollView: View {
                              })
                         .id("live")
                         .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.visible, edges: .all)
+                        .listRowSeparator(.hidden, edges: .all)
                         .padding(.bottom, 6)
                         .padding(.horizontal, 12)
                         .background(COLOR_BACK_FORMULA)
@@ -225,7 +225,7 @@ struct RollView: View {
                              })
                         .id(index)
                         .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.visible, edges: .all)
+                        .listRowSeparator(.hidden, edges: .all)
                         .padding(.bottom, 6)
                         .padding(.horizontal, 12)
                         .background(COLOR_BACK_FORMULA)
