@@ -63,6 +63,13 @@ struct CalcView: View {
         return plain
     }
 
+    /// 入力行ツールは入力値が空の時だけ表示する
+    private var isFormulaInputEmpty: Bool {
+        let plain = String(viewModel.formulaAttr.characters)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return plain.isEmpty
+    }
+
     /// フォント選択ポップオーバーで使うサンプルのフォントサイズ
     /// - 実際の入力行と同じサイズで描画して見え方を一致させる（入力行はキャップ済み）
     private var numberFontPreviewSize: CGFloat {
@@ -73,7 +80,10 @@ struct CalcView: View {
 
         GeometryReader { geo in
             let isNarrow = geo.size.width < narrowWidth
-            let showsInputTools = geo.size.width > 300
+            let showsInputTools = isFormulaInputEmpty
+            let showsInputToolTitles = isFormulaInputEmpty
+                && setting.playMode == .beginner
+                && geo.size.width > 300
                 && formulaTextWidth + inputToolsWidth + 28 < geo.size.width
 
             VStack(spacing: 0) {
@@ -116,16 +126,21 @@ struct CalcView: View {
                     .padding(.horizontal, 8)
                     .background(PaperPlaneBackground())
                     .overlay(alignment: .leading) {
-                        inputLineTools
+                        inputLineTools(showsTitle: showsInputToolTitles)
                             .padding(.leading, 6)
                             .opacity(showsInputTools ? 1 : 0)
                             .allowsHitTesting(showsInputTools)
                             .background {
-                                GeometryReader { toolsGeo in
-                                    Color.clear
-                                        .preference(key: InputToolsWidthPreferenceKey.self,
-                                                    value: toolsGeo.size.width)
-                                }
+                                // タイトル付きの最大幅を常に測り、幅判定の揺れを避ける
+                                inputLineTools(showsTitle: true)
+                                    .hidden()
+                                    .background {
+                                        GeometryReader { toolsGeo in
+                                            Color.clear
+                                                .preference(key: InputToolsWidthPreferenceKey.self,
+                                                            value: toolsGeo.size.width)
+                                        }
+                                    }
                             }
                     }
                     // 入力行の右側 1/3 を長押しでフォント選択ポップオーバーを開く
@@ -197,7 +212,7 @@ struct CalcView: View {
         }
     }
 
-    private var inputLineTools: some View {
+    private func inputLineTools(showsTitle: Bool) -> some View {
         HStack(spacing: 12) {
             Button {
                 viewModel.calcMode = (viewModel.calcMode == .calculator) ? .formula : .calculator
@@ -207,7 +222,7 @@ struct CalcView: View {
                     title: viewModel.calcMode == .calculator
                         ? String(localized: "calc.mode.calculator")
                         : String(localized: "calc.mode.formula"),
-                    showsTitle: setting.playMode == .beginner
+                    showsTitle: showsTitle
                 )
             }
 
@@ -226,7 +241,7 @@ struct CalcView: View {
                 PaperToolButtonLabel(
                     systemName: "square.and.arrow.up",
                     title: String(localized: "common.pdf"),
-                    showsTitle: setting.playMode == .beginner
+                    showsTitle: showsTitle
                 )
             }
         }
