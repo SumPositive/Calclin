@@ -92,6 +92,7 @@ struct CalcView: View {
             VStack(spacing: 0) {
 
                 // 履歴 / ロール（左上にモード切替アイコンボタンをオーバーレイ）
+                // 左右に 2pt の余白を取り、長い数値が隣の枠線に被らないようクリップする
                 Group {
                     if viewModel.calcMode == .formula {
                         HistoryView(viewModel: viewModel, calcIndex: calcIndex)
@@ -119,6 +120,10 @@ struct CalcView: View {
                         .frame(height: 54)
                         .allowsHitTesting(false)
                 }
+                // 履歴 / ロールの左右に 2pt の余白を確保し、はみ出した数値をクリップ
+                // - .padding で内側に詰め、.clipShape でその境界まで描画を強制
+                .padding(.horizontal, 2)
+                .clipShape(Rectangle())
 
                 FormulaView(viewModel: viewModel,
                             isActive: isActive) { width in
@@ -127,7 +132,6 @@ struct CalcView: View {
                     .environmentObject(setting)
                     .frame(minHeight: 44)
                     .frame(height: inputLineHeight)
-                    .padding(.horizontal, 8)
                     .background(PaperPlaneBackground())
                     .overlay(alignment: .leading) {
                         inputLineTools(showsTitle: showsInputToolTitles)

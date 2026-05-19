@@ -51,6 +51,11 @@ struct FormulaView: View {
 
     var body: some View {
         GeometryReader { geo in
+            // 枠線 3pt + 見える余白 2pt の分だけ内側へ寄せる
+            // 内側コンテンツは innerWidth に制限し、はみ出した分は clipped で確実にカット
+            let edgeInset: CGFloat = 5
+            let innerWidth = max(0, geo.size.width - edgeInset * 2)
+
             ViewThatFits(in: .horizontal) {
                 // Stage 0: フルサイズ 1 行（全モード）
                 stage0FullLine
@@ -69,10 +74,13 @@ struct FormulaView: View {
                 // Stage 3: スクロール（最後の手段）
                 // - 累計があれば上段に固定表示し、下段だけ横スクロール
                 // - 累計がなければ 1 行スクロール
-                stage3ScrollingLine(width: geo.size.width)
+                stage3ScrollingLine(width: innerWidth)
             }
-            .frame(width: geo.size.width, height: geo.size.height, alignment: .trailing)
+            // 内側枠：innerWidth に制限して clipped → 余白の手前で確実に切れる
+            .frame(width: innerWidth, height: geo.size.height, alignment: .trailing)
             .clipped()
+            // 外側枠：geo 全幅、枠線の内側に見える余白が残る
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
         }
         .frame(maxWidth: .infinity)
     }
