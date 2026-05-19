@@ -6,6 +6,138 @@
 //
 
 import SwiftUI
+import UIKit
+
+/// タップは下のViewへ通し、長押しだけ検出するUIKitブリッジ
+private struct PassthroughLongPressArea: UIViewRepresentable {
+    let minimumDuration: TimeInterval
+    let onLongPressChanged: (Bool) -> Void
+    let onDragChanged: (CGFloat) -> Void
+    let onEnded: () -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onLongPressChanged: onLongPressChanged,
+                    onDragChanged: onDragChanged,
+                    onEnded: onEnded)
+    }
+
+    func makeUIView(context: Context) -> PassthroughLongPressUIView {
+        let view = PassthroughLongPressUIView()
+        view.coordinator = context.coordinator
+        context.coordinator.minimumDuration = minimumDuration
+        return view
+    }
+
+    func updateUIView(_ uiView: PassthroughLongPressUIView, context: Context) {
+        uiView.coordinator = context.coordinator
+        context.coordinator.minimumDuration = minimumDuration
+        context.coordinator.updateCallbacks(onLongPressChanged: onLongPressChanged,
+                                            onDragChanged: onDragChanged,
+                                            onEnded: onEnded)
+        context.coordinator.targetView = uiView
+    }
+
+    static func dismantleUIView(_ uiView: PassthroughLongPressUIView, coordinator: Coordinator) {
+        coordinator.uninstall()
+    }
+
+    final class PassthroughLongPressUIView: UIView {
+        weak var coordinator: Coordinator? {
+            didSet {
+                coordinator?.targetView = self
+                coordinator?.installIfNeeded()
+            }
+        }
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            coordinator?.targetView = self
+            coordinator?.installIfNeeded()
+        }
+
+        override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+            nil
+        }
+    }
+
+    // UIKitのジェスチャはメインスレッドで扱うため、SwiftのSendable判定は手動で保証する
+    final class Coordinator: NSObject, @unchecked Sendable {
+        var minimumDuration: TimeInterval = 0.5
+        weak var targetView: UIView?
+        private weak var installedView: UIView?
+        private var recognizer: UILongPressGestureRecognizer?
+        private var isTracking = false
+        private var startY: CGFloat = 0
+        private var onLongPressChanged: (Bool) -> Void
+        private var onDragChanged: (CGFloat) -> Void
+        private var onEnded: () -> Void
+
+        init(onLongPressChanged: @escaping (Bool) -> Void,
+             onDragChanged: @escaping (CGFloat) -> Void,
+             onEnded: @escaping () -> Void) {
+            self.onLongPressChanged = onLongPressChanged
+            self.onDragChanged = onDragChanged
+            self.onEnded = onEnded
+        }
+
+        func updateCallbacks(onLongPressChanged: @escaping (Bool) -> Void,
+                             onDragChanged: @escaping (CGFloat) -> Void,
+                             onEnded: @escaping () -> Void) {
+            self.onLongPressChanged = onLongPressChanged
+            self.onDragChanged = onDragChanged
+            self.onEnded = onEnded
+            recognizer?.minimumPressDuration = minimumDuration
+        }
+
+        func installIfNeeded() {
+            guard let targetView,
+                  let window = targetView.window,
+                  installedView !== window else { return }
+            uninstall()
+
+            let recognizer = UILongPressGestureRecognizer(target: self,
+                                                          action: #selector(handleLongPress(_:)))
+            recognizer.minimumPressDuration = minimumDuration
+            recognizer.cancelsTouchesInView = false
+            recognizer.delaysTouchesBegan = false
+            recognizer.delaysTouchesEnded = false
+            window.addGestureRecognizer(recognizer)
+            self.recognizer = recognizer
+            installedView = window
+        }
+
+        func uninstall() {
+            if let recognizer, let installedView {
+                installedView.removeGestureRecognizer(recognizer)
+            }
+            recognizer = nil
+            installedView = nil
+            isTracking = false
+        }
+
+        @objc private func handleLongPress(_ recognizer: UILongPressGestureRecognizer) {
+            guard let targetView, let installedView else { return }
+            let point = targetView.convert(recognizer.location(in: installedView), from: installedView)
+
+            switch recognizer.state {
+            case .began:
+                guard targetView.bounds.contains(point) else { return }
+                isTracking = true
+                startY = point.y
+                onLongPressChanged(true)
+            case .changed:
+                guard isTracking else { return }
+                onDragChanged(point.y - startY)
+            case .ended, .cancelled, .failed:
+                guard isTracking else { return }
+                isTracking = false
+                onEnded()
+            default:
+                break
+            }
+        }
+    }
+}
 
 
 private struct KeyboardResizeHandle: View {
@@ -80,31 +212,15 @@ private struct KeyboardResizeHandle: View {
                         }
                     }
             }
-            .gesture(
-                LongPressGesture(minimumDuration: 0.5)
-                    .sequenced(before: DragGesture(minimumDistance: 0))
-                    .onChanged { value in
-                        switch value {
-                        case .second(true, _):
-                            onLongPressChanged(true)
-                            if case .second(true, let drag) = value, let drag {
-                                onDragChanged(drag.translation.height)
-                            }
-                        default:
-                            break
-                        }
-                    }
-                    .onEnded { _ in
-                        onEnded()
-                    }
-            )
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onEnded { _ in
-                        // 長押し未成立のタップ終了でも、表示状態を確実に解除する
-                        onEnded()
-                    }
-            )
+            .overlay {
+                PassthroughLongPressArea(
+                    minimumDuration: 0.5,
+                    onLongPressChanged: onLongPressChanged,
+                    onDragChanged: onDragChanged,
+                    onEnded: onEnded
+                )
+                .frame(width: 180, height: 44)
+            }
             .onChange(of: isHinting) { _, _ in
                 startHintAnimationIfNeeded()
             }
