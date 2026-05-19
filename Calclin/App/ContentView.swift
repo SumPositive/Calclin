@@ -9,7 +9,9 @@ import SwiftUI
 import UIKit
 
 /// タップは下のViewへ通し、長押しだけ検出するUIKitブリッジ
-private struct PassthroughLongPressArea: UIViewRepresentable {
+/// - hitTest を nil にして自身は touch を受け取らず、UILongPressGestureRecognizer を window に取り付ける
+/// - FormulaView の水平スクロールなど、下層のジェスチャを邪魔せずに長押しだけ拾える
+struct PassthroughLongPressArea: UIViewRepresentable {
     let minimumDuration: TimeInterval
     let onLongPressChanged: (Bool) -> Void
     let onDragChanged: (CGFloat) -> Void
@@ -60,8 +62,10 @@ private struct PassthroughLongPressArea: UIViewRepresentable {
         }
     }
 
-    // UIKitのジェスチャはメインスレッドで扱うため、SwiftのSendable判定は手動で保証する
-    final class Coordinator: NSObject, @unchecked Sendable {
+    // UIKitのジェスチャは常にメインスレッドで呼ばれるため @MainActor を明示し、
+    // Swift 6 の main actor 分離違反を一括解消する（@MainActor クラスは暗黙的に Sendable）
+    @MainActor
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
         var minimumDuration: TimeInterval = 0.5
         weak var targetView: UIView?
         private weak var installedView: UIView?
@@ -101,9 +105,31 @@ private struct PassthroughLongPressArea: UIViewRepresentable {
             recognizer.cancelsTouchesInView = false
             recognizer.delaysTouchesBegan = false
             recognizer.delaysTouchesEnded = false
+            // 複数の PassthroughLongPressArea が同じ window に取り付けられる場合、
+            // 互いの認識を妨げないよう delegate で領域フィルタ＋同時認識を許可する
+            recognizer.delegate = self
             window.addGestureRecognizer(recognizer)
             self.recognizer = recognizer
             installedView = window
+        }
+
+        // MARK: - UIGestureRecognizerDelegate
+
+        /// タッチ開始位置が自分の targetView の bounds 内のときだけこの recognizer を関与させる
+        /// → 別領域に置かれた他の PassthroughLongPressArea と競合しなくなる
+        nonisolated func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                                           shouldReceive touch: UITouch) -> Bool {
+            MainActor.assumeIsolated {
+                guard let targetView, targetView.window != nil else { return false }
+                let location = touch.location(in: targetView)
+                return targetView.bounds.contains(location)
+            }
+        }
+
+        /// 同一 window 上の他のジェスチャと同時に認識可能にする（スクロール等を妨げない）
+        nonisolated func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                                           shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
+            true
         }
 
         func uninstall() {
@@ -187,10 +213,13 @@ private struct KeyboardResizeHandle: View {
 
     var body: some View {
         // 入力行中央に重ね、通常時は見せずに長押し成立後だけ表示する
+        // - contentShape は付けない：これがあると 180×44 領域でタッチを掴んでしまい、
+        //   FormulaView の水平スクロールが阻害される。
+        //   長押し検出は下の PassthroughLongPressArea（window レベルの gesture recognizer）が担当する。
         Rectangle()
             .fill(Color.clear)
             .frame(width: 180, height: 44)
-            .contentShape(Rectangle())
+            .allowsHitTesting(false)
             .overlay {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(.regularMaterial.opacity(handleOpacity))

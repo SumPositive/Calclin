@@ -38,8 +38,10 @@ struct CalcView: View {
 
     private var inputLineHeight: CGFloat {
         // 入力行は視認性を優先して基準サイズを 1.4 倍 (24 → 33.6) に合わせる
-        // 標準文字サイズでも上の区切り線に被らない範囲で、入力行の余白を控えめにする
-        max(50, 33.6 * inputRowFontScale * 1.2)
+        // - 累計プレフィックスがある（電卓モードで保留演算子あり）時は 2 段表示の余地を確保
+        // - それ以外（数式モード、回答表示中、初期状態）は 1 段で十分なので余白を抑える
+        let multiplier: CGFloat = viewModel.accumulatorPart != nil ? 1.5 : 1.2
+        return max(50, 33.6 * inputRowFontScale * multiplier)
     }
 
     private func syncCalcFontScale() {
@@ -146,30 +148,38 @@ struct CalcView: View {
                             }
                     }
                     // 入力行の右側 1/3 を長押しでフォント選択ポップオーバーを開く
-                    // FormulaView の水平スクロールを邪魔しないよう minimumDuration を長めに設定
+                    // SwiftUI の .onLongPressGesture は Color.clear 上でもタッチを掴んでしまい、
+                    // FormulaView の水平スクロールを阻害する。代わりに PassthroughLongPressArea を使い、
+                    // window レベルの UILongPressGestureRecognizer + hitTest=nil で
+                    // 下層のスクロール等を一切邪魔せずに長押しだけ拾う。
                     .overlay(alignment: .trailing) {
                         GeometryReader { rowGeo in
-                            Color.clear
-                                .frame(width: rowGeo.size.width / 3, height: rowGeo.size.height)
-                                .contentShape(Rectangle())
-                                .onLongPressGesture(minimumDuration: 0.6) {
-                                    isNumberFontPickerPresented = true
-                                }
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                                .popover(isPresented: $isNumberFontPickerPresented,
-                                         // メニュー位置は維持しつつ、吹き出し先だけ右寄りにする
-                                         attachmentAnchor: .point(UnitPoint(x: 0.78, y: 0.18)),
-                                         arrowEdge: .bottom) {
-                                    NumberFontQuickPickPopover(
-                                        selection: $setting.numberFont,
-                                        previewText: numberFontPreviewText,
-                                        previewSize: numberFontPreviewSize
-                                    ) {
-                                        isNumberFontPickerPresented = false
+                            PassthroughLongPressArea(
+                                minimumDuration: 0.6,
+                                onLongPressChanged: { isPressing in
+                                    if isPressing {
+                                        isNumberFontPickerPresented = true
                                     }
-                                    .appFontScale(setting.fontScale)
-                                    .presentationCompactAdaptation(.popover)
+                                },
+                                onDragChanged: { _ in },
+                                onEnded: { }
+                            )
+                            .frame(width: rowGeo.size.width / 3, height: rowGeo.size.height)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .popover(isPresented: $isNumberFontPickerPresented,
+                                     // メニュー位置は維持しつつ、吹き出し先だけ右寄りにする
+                                     attachmentAnchor: .point(UnitPoint(x: 0.78, y: 0.18)),
+                                     arrowEdge: .bottom) {
+                                NumberFontQuickPickPopover(
+                                    selection: $setting.numberFont,
+                                    previewText: numberFontPreviewText,
+                                    previewSize: numberFontPreviewSize
+                                ) {
+                                    isNumberFontPickerPresented = false
                                 }
+                                .appFontScale(setting.fontScale)
+                                .presentationCompactAdaptation(.popover)
+                            }
                         }
                     }
                     .sensoryFeedback(.success, trigger: isNumberFontPickerPresented)

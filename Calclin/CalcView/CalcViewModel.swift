@@ -49,8 +49,14 @@ final class CalcViewModel: ObservableObject {
     //let TOKEN_FUNC_PREFIX = "F"
     // 無名数（bare number）単位表示の無い1を表す [%]などの.unitBaseになる「単位処理しない」
     let UNIT_CODE_BARE = "Bare"
-    // 計算式を表示するための装飾文字列
+    // 計算式を表示するための装飾文字列（インライン版：累計プレフィックス + 演算子 + 現在値）
     @Published var formulaAttr: AttributedString = ""
+    // 累計プレフィックス部分（電卓モードで保留演算子がある時のみ、それ以外は nil）
+    // - 2 段レイアウト時の上段に表示する
+    @Published var accumulatorPart: AttributedString? = nil
+    // 現在入力部分（演算子 + 数値）。formulaAttr から累計プレフィックスを除いたもの
+    // - 2 段レイアウト時は下段、縮小/スクロール時はこの部分のみを表示する
+    @Published var currentPart: AttributedString = ""
     // [Ans]直後の答えが表示されて単位変換が行われている間(true)である
     @Published var isAnswerMode = false
     // フォントスケール（SettingViewModelから同期）
@@ -440,6 +446,9 @@ final class CalcViewModel: ObservableObject {
             attr.foregroundColor = COLOR_OPERATOR_WAIT.opacity(0.5)
             self.formulaAttr += attr // 予定[)]表示
         }
+        // 数式モードは累計プレフィックスを持たないため、currentPart = formulaAttr とする
+        self.accumulatorPart = nil
+        self.currentPart = self.formulaAttr
         log(.info, "End")
         save()
     }
@@ -826,15 +835,23 @@ final class CalcViewModel: ObservableObject {
     // MARK: - Calculator Mode Private Methods
 
     /// 電卓モード専用 formulaAttr 更新
+    /// - 累計プレフィックスは `accumulatorPart`、それ以降（演算子＋現在値）は `currentPart` に分けて構築する
+    /// - 1 行用の `formulaAttr` は両者を結合して生成する
     private func formulaUpdateCalc() {
-        formulaAttr = ""
-        // 答え表示中（= 後）
+        var accPart: AttributedString? = nil
+        var curPart = AttributedString()
+
+        // 答え表示中（= 後）：累計なし、答えのみを current として表示
         if isAnswerMode {
             if let numStr = tokens.last, Double(numStr) != nil {
-                formulaAttr = AttributedString(AZDecimal(numStr).formatted(calcConfig))
+                curPart = AttributedString(AZDecimal(numStr).formatted(calcConfig))
             }
+            self.formulaAttr = curPart
+            self.accumulatorPart = nil
+            self.currentPart = curPart
             return
         }
+
         // 保留演算子プレフィックス（accumulator を先頭に小さく薄く表示）
         if let op = pendingOp {
             let accStr = editingAccDisplay.isEmpty
@@ -844,51 +861,63 @@ final class CalcViewModel: ObservableObject {
             accAttr.foregroundColor = COLOR_NUMBER.opacity(0.4)
             // 入力行のフォント設定に合わせる（基準サイズは小さめの 15.0）
             accAttr.font = numberFont.font(size: 15.0 * numberFontScale, weight: .bold)
-            formulaAttr = accAttr
-            formulaAttr += AttributedString(" ")
+            accPart = accAttr
+
+            // 演算子は current 側へ
             var opAttr = AttributedString(op)
             opAttr.foregroundColor = COLOR_OPERATOR
-            formulaAttr += opAttr
+            curPart += opAttr
             if !tokens.isEmpty {
-                formulaAttr += AttributedString(" ")
+                curPart += AttributedString(" ")
             }
         }
+
         // 現在の数値（単位付きの場合 tokens = ["5", "UKg"] ）
         let numToken  = tokens.count >= 2 && tokens.last?.hasPrefix(TOKEN_UNIT_PREFIX) == true
                       ? tokens[tokens.count - 2] : tokens.last
         let unitToken = tokens.last?.hasPrefix(TOKEN_UNIT_PREFIX) == true ? tokens.last : nil
-        guard let numStr = numToken, !numStr.isEmpty else { return }
-        if Double(numStr) != nil {
-            // √/∛ 直後は設定上限桁数(10)で表示
-            let displayStr = isCalcRootResult
-                ? AZDecimal(numStr).formatted(calcMaxConfig)
-                : AZDecimal(numStr).formatted(calcConfig)
-            formulaAttr += AttributedString(displayStr)
-            if isPercMode {
-                var percAttr = AttributedString(percSymbol)
-                percAttr.foregroundColor = COLOR_OPERATOR
-                formulaAttr += percAttr
-            } else if let ut = unitToken {
-                let code = String(ut.dropFirst())
-                if let def = keyboardViewModel.keyDef(code: code) {
-                    var unitAttr = AttributedString(def.formula)
-                    unitAttr.foregroundColor = COLOR_UNIT
-                    formulaAttr += unitAttr
+        if let numStr = numToken, !numStr.isEmpty {
+            if Double(numStr) != nil {
+                // √/∛ 直後は設定上限桁数(10)で表示
+                let displayStr = isCalcRootResult
+                    ? AZDecimal(numStr).formatted(calcMaxConfig)
+                    : AZDecimal(numStr).formatted(calcConfig)
+                curPart += AttributedString(displayStr)
+                if isPercMode {
+                    var percAttr = AttributedString(percSymbol)
+                    percAttr.foregroundColor = COLOR_OPERATOR
+                    curPart += percAttr
+                } else if let ut = unitToken {
+                    let code = String(ut.dropFirst())
+                    if let def = keyboardViewModel.keyDef(code: code) {
+                        var unitAttr = AttributedString(def.formula)
+                        unitAttr.foregroundColor = COLOR_UNIT
+                        curPart += unitAttr
+                    }
+                } else {
+                    let zero = extractTrailingZerosAfterDecimal(numStr)
+                    if zero != "" {
+                        curPart += AttributedString(zero)
+                    } else if !numStr.contains(FM_DECIMAL) {
+                        var dotAttr = AttributedString(FM_DECIMAL)
+                        dotAttr.foregroundColor = COLOR_OPERATOR_WAIT.opacity(0.5)
+                        curPart += dotAttr
+                    }
                 }
             } else {
-                let zero = extractTrailingZerosAfterDecimal(numStr)
-                if zero != "" {
-                    formulaAttr += AttributedString(zero)
-                } else if !numStr.contains(FM_DECIMAL) {
-                    var dotAttr = AttributedString(FM_DECIMAL)
-                    dotAttr.foregroundColor = COLOR_OPERATOR_WAIT.opacity(0.5)
-                    formulaAttr += dotAttr
-                }
+                // マイナス符号のみ("-") や "-0" など
+                curPart += AttributedString(numStr)
             }
-        } else {
-            // マイナス符号のみ("-") や "-0" など
-            formulaAttr += AttributedString(numStr)
         }
+
+        // 1 行版 formulaAttr は accumulator + " " + current で組み立てる
+        if let acc = accPart {
+            self.formulaAttr = acc + AttributedString(" ") + curPart
+        } else {
+            self.formulaAttr = curPart
+        }
+        self.accumulatorPart = accPart
+        self.currentPart = curPart
         save()
     }
 
