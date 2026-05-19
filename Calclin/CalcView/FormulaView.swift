@@ -11,6 +11,7 @@ import SwiftUI
 struct FormulaView: View {
     @EnvironmentObject var setting: SettingViewModel
     @ObservedObject var viewModel: CalcViewModel
+    var isActive: Bool = true
     var onTextWidthChange: ((CGFloat) -> Void)? = nil
     
     @State private var scrollId = UUID()
@@ -25,21 +26,14 @@ struct FormulaView: View {
         setting.inputRowFontScale(for: dynamicTypeSize)
     }
 
+    private let inputBaseFontSize: CGFloat = 33.6
+
     
     var body: some View {
         GeometryReader { geo in
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
-                    Text( viewModel.formulaAttr )
-                        // 入力行は視認性を優先して基準サイズを 1.4 倍 (24 → 33.6) に設定
-                        // フォントは設定（numberFont）でユーザーが選択
-                        .font(setting.numberFont.font(size: 33.6 * calcFontScale,
-                                                      weight: .bold))
-                        // Dynamic Type による更なる拡大を抑止する（入力行のスケールは
-                        // inputRowFontScale で完全制御するため、二重拡大を避ける）
-                        .dynamicTypeSize(.large)
-                        .foregroundStyle(viewModel.isAnswerMode ?  COLOR_ANSWER : COLOR_NUMBER)
-                        .opacity(colorScheme == .dark ? 0.60 : 1.0)
+                    formulaText(fontScale: calcFontScale)
                         .lineLimit(1)
                         .fixedSize() // 高さと幅を最小限にする
                         .background {
@@ -49,16 +43,16 @@ struct FormulaView: View {
                                                 value: textGeo.size.width)
                             }
                         }
-                        .frame(minWidth: geo.size.width, // - hSpace*2, // GeometryReaderで取得した現在の幅
+                        .frame(minWidth: geo.size.width, // GeometryReaderで取得した現在の幅
                                maxWidth: .infinity,     // ScrollView最大幅まで拡張
                                alignment: .trailing)    // 右寄せ
                         // 入力行の高さ全体を使い、文字を上下中央へ配置する
                         .frame(height: geo.size.height, alignment: .center)
                         .padding(.horizontal, 0)
                         .id(scrollId) // このViewにIDを付与する
-                   //     .textSelection(.enabled)
                 }
-                .frame(height: geo.size.height)
+                .frame(width: geo.size.width, height: geo.size.height)
+                .clipped()
                 .onPreferenceChange(FormulaTextWidthPreferenceKey.self) { width in
                     onTextWidthChange?(width)
                 }
@@ -80,6 +74,26 @@ struct FormulaView: View {
             }
         }
         .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
+    }
+
+    private var inputTextOpacity: Double {
+        if isActive == false {
+            return colorScheme == .dark ? 0.28 : 0.42
+        }
+        return colorScheme == .dark ? 0.60 : 1.0
+    }
+
+    private func formulaText(fontScale: CGFloat) -> some View {
+        Text(viewModel.formulaAttr)
+            // 入力行は視認性を優先して基準サイズを 1.4 倍 (24 → 33.6) に設定
+            // フォントは設定（numberFont）でユーザーが選択
+            .font(setting.numberFont.font(size: inputBaseFontSize * fontScale,
+                                          weight: .bold))
+            // Dynamic Type による更なる拡大を抑止する（入力行のスケールは
+            // inputRowFontScale で完全制御するため、二重拡大を避ける）
+            .dynamicTypeSize(.large)
+            .foregroundStyle(viewModel.isAnswerMode ?  COLOR_ANSWER : COLOR_NUMBER)
+            .opacity(inputTextOpacity)
     }
 }
 

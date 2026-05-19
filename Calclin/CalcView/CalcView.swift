@@ -80,8 +80,9 @@ struct CalcView: View {
 
         GeometryReader { geo in
             let isNarrow = geo.size.width < narrowWidth
-            let showsInputTools = isFormulaInputEmpty
-            let showsInputToolTitles = isFormulaInputEmpty
+            let showsInputTools = isActive && isFormulaInputEmpty
+            let showsInputToolTitles = isActive
+                && isFormulaInputEmpty
                 && setting.playMode == .beginner
                 && geo.size.width > 300
                 && formulaTextWidth + inputToolsWidth + 28 < geo.size.width
@@ -117,7 +118,8 @@ struct CalcView: View {
                         .allowsHitTesting(false)
                 }
 
-                FormulaView(viewModel: viewModel) { width in
+                FormulaView(viewModel: viewModel,
+                            isActive: isActive) { width in
                     formulaTextWidth = width
                 }
                     .environmentObject(setting)
