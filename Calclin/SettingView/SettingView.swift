@@ -32,7 +32,6 @@ struct SettingView: View {
     @Environment(\.dismiss) private var dismiss  // シートを閉じるための環境値
     @State private var showSafari = false  // Safariシート表示有無
     @State private var safariURL: URL?  // 開く予定のURLを保持
-    @State private var showAdMobSheet = false  // 広告表示シートの有無
     @State private var showTipSheet = false    // 投げ銭シートの有無
     @State private var isPreparingExport = false  // エクスポート準備中（プログレス表示）
     @State private var exportShareData: Data?     // 共有シートに渡す JSON データ
@@ -122,8 +121,8 @@ struct SettingView: View {
                         integerSection
                         decimalSection
                         keyboardSection
-                        supportSection
                         infoSection
+                        supportSection
                         footerSection
                     }
                     .padding(.horizontal, outerHorizontalPadding)
@@ -181,13 +180,6 @@ struct SettingView: View {
             if let safariURL {
                 SafariView(url: safariURL)
             }
-        }
-        .sheet(isPresented: $showAdMobSheet) {
-            // PackList同様に広告をシート表示する
-            AdMobAdSheetView()
-                .appFontScale(viewModel.fontScale)
-                .presentationDetents([.large])
-                //.presentationDragIndicator(.visible)
         }
         .sheet(isPresented: Binding(
             get: { exportShareData != nil },
@@ -549,19 +541,7 @@ struct SettingView: View {
             iconName: "heart.fill",
             tint: .pink
         ) {
-            Group {
-                if usesVerticalSectionLayout {
-                    VStack(spacing: 12) {
-                        supportTipButton
-                        supportAdButton
-                    }
-                } else {
-                    HStack(spacing: 12) {
-                        supportTipButton
-                        supportAdButton
-                    }
-                }
-            }
+            supportTipButton
         }
     }
 
@@ -677,27 +657,13 @@ struct SettingView: View {
         }
     }
 
-    private var supportAdButton: some View {
-        Button {
-            showAdMobSheet = true
-            AppAnalytics.logSupportAdTapped()
-        } label: {
-            Label("support.ad", systemImage: "play.rectangle.fill")
-                .font(.body)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 4)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(.brown)
-    }
-
     /// アプリの情報リンクをまとめるカード
     private var infoSection: some View {
         SettingSectionCard(
             iconName: "info.circle",
             tint: Color(.systemPurple)
         ) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 12) {
                 // 取扱説明
                 Button {
                     // 使い方ページをSafariシートで表示する
@@ -705,7 +671,7 @@ struct SettingView: View {
                     AppAnalytics.logInfoLinkOpened(kind: "manual")
                     openSafari(for: "info.url")
                 } label: {
-                    Label("settings.userGuide", systemImage: "book")
+                    Text("settings.userGuide")
                         .font(.body)
                         .padding(.vertical, 4)
                         .padding(.horizontal, 8)
@@ -716,9 +682,41 @@ struct SettingView: View {
                         )
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
+
+                // アプリを評価する（App Store のレビュー入力欄を直接開く）
+                Button {
+                    // requestReview は表示可否をOSが決めるため、押しても何も起きないことがある。
+                    // ボタンからは App Store を直接開く
+                    AppAnalytics.logInfoLinkOpened(kind: "review")
+                    if let url = Self.appStoreReviewURL {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("settings.rateApp")
+                            .font(.body)
+                        // 要望や提案もレビューへ記入できることを案内する
+                        Text("settings.rateApp.description")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(.blue, lineWidth: 1)
+                    )
+                }
             }
         }
     }
+
+    /// App Store のレビュー入力欄を直接開くURL
+    private static let appStoreReviewURL = URL(string: "itms-apps://apps.apple.com/app/id385216637?action=write-review")
 
     /// SafariをSheetで開く共通関数
     private func openSafari(for key: LocalizedStringResource) {

@@ -1670,7 +1670,39 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "アプリの紹介・取扱説明"
+            "value" : "取扱説明"
+          }
+        }
+      }
+    },
+    "settings.rateApp" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rate This App"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリを評価する"
+          }
+        }
+      }
+    },
+    "settings.rateApp.description" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We\u2019d love to hear your requests and suggestions. They help us decide which new features and improvements to work on next."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ご要望やご提案もぜひお聞かせください。今後の新機能や改善を検討する際の参考にさせていただきます"
           }
         }
       }
