@@ -112,6 +112,11 @@ final class CalcViewModel: ObservableObject {
     private var percSymbol: String = FM_PERC               // 表示記号: "%", "割", "分", "厘"
     private var isCalcNewEntryAfterUnit: Bool = false // 単位キー直後フラグ（次の数値入力で数値のみ置き換え）
     private var calcUnitDef: KeyDefinition? = nil  // 電卓モードの計算単位（= 結果表示単位）
+    /// 直前に単位を差し替えた履歴（同じ単位キーの2度押しで換算するために保持する）
+    /// - fromCode: 差し替える前の単位code（換算元）
+    /// - toCode: 差し替えた後の単位code（この単位キーをもう一度押すと換算する）
+    /// - number: 差し替え時の数値文字列（換算元の数値）
+    private var lastUnitSwap: (fromCode: String, toCode: String, number: String)? = nil
     private var isCalcRootResult = false           // √/∛ 直後フラグ（表示を最大精度にする）
     private var isAccRootResult  = false           // accumulator がルート結果フラグ（演算子後も継続）
     @Published private(set) var rollLinesBuilding: [RollLine] = []
@@ -153,6 +158,10 @@ final class CalcViewModel: ObservableObject {
             } else if calcMode != .calculator && isAnswerMode {
                 inputStartTrigger += 1
             }
+        }
+        // 単位キー以外を押したら、単位2度押し（換算）の待ち受けは解除する
+        if keyDef.unitBase == nil || keyDef.unitBase?.isEmpty == true {
+            lastUnitSwap = nil
         }
         if calcMode == .calculator {
             inputCalcMode(keyDef)
@@ -636,30 +645,29 @@ final class CalcViewModel: ObservableObject {
                 }
             }
             else if tokens.count == 2,
-                    last.hasPrefix(TOKEN_UNIT_PREFIX) {
-                // [数値][単位]だけの場合、単位変換する
+                    last.hasPrefix(TOKEN_UNIT_PREFIX),
+                    let num = tokens.first {
                 let code = String(last.dropFirst())
-                if let def = keyboardViewModel.keyDef(code: code),
-                   let ub = def.unitBase,
-                   ub == keyDef.unitBase { //<==Baseが共通であることが変換の必要条件
-                    // 単位換算
-                    if let form = tokens.first {
-                        // 単位変換
-                        if let ans = unitConv( num: form, unit: def, toUnit: keyDef) {
-                            // New Formula
-                            tokens = []
-                            tokens.append(ans)
-                            // 変換後の単位
-                            let uc = TOKEN_UNIT_PREFIX + keyDef.code
-                            tokens.append(uc)
-                            formulaUpdate()
-                        }
-                    }
-                }else{
-                    // Baseが異なる場合、数値はそのまま単位だけ変える
+                // 同じ単位キーの2度押しなら、差し替え前の単位から換算する
+                // （60㎡ →[坪]→ 60坪 →[坪]→ 18.15坪）
+                if let ans = unitSwapConverted(keyDef: keyDef,
+                                               currentCode: code,
+                                               currentNumber: num) {
+                    // 換算後は数値が変わるので、2度押し履歴は破棄する
+                    tokens = [ans, TOKEN_UNIT_PREFIX + keyDef.code]
+                    lastUnitSwap = nil
+                    formulaUpdate()
+                } else {
+                    // [数値][単位]だけの場合、数値は変えず単位だけ差し替える
+                    // （例：60㎡ で[坪]を押すと 18.15坪 ではなく 60坪 になる）
                     let uc = TOKEN_UNIT_PREFIX + keyDef.code
                     // last 置換
                     tokens[tokens.count - 1] = uc
+                    // 同じ単位キーをもう一度押したときに換算できるよう、換算元を覚えておく
+                    // 同じ単位の押し直し（換算元＝換算先）は履歴を更新しない
+                    if code != keyDef.code {
+                        lastUnitSwap = (fromCode: code, toCode: keyDef.code, number: num)
+                    }
                     formulaUpdate()
                 }
             }
@@ -667,6 +675,31 @@ final class CalcViewModel: ObservableObject {
     }
     
     
+    /// 単位2度押しによる換算が成立するか判定し、成立するなら換算後の数値を返す
+    /// - Parameters:
+    ///   - keyDef: 今押された単位キー
+    ///   - currentCode: 現在末尾に付いている単位code
+    ///   - currentNumber: 現在の数値文字列
+    /// - Returns: 換算後の数値文字列（換算しない場合は nil）
+    private func unitSwapConverted(keyDef: KeyDefinition,
+                                   currentCode: String,
+                                   currentNumber: String) -> String? {
+        // 直前に同じ単位キーで差し替えた直後であること
+        guard let swap = lastUnitSwap,
+              swap.toCode == keyDef.code,
+              swap.toCode == currentCode else { return nil }
+        // 差し替え後にトークンが編集されていないこと（数値が変わっていたら換算元が不正）
+        guard swap.number == currentNumber else { return nil }
+        // Baseが共通であることが変換の必要条件
+        guard let fromDef = keyboardViewModel.keyDef(code: swap.fromCode),
+              fromDef.unitBase == keyDef.unitBase else {
+            // 換算しようとしたが基準単位が異なる（㎡→kg など）。無反応だと理由が分からないので知らせる
+            Manager.shared.toast(String(localized: "calc.unit.cannotConvert"), wait: 2.0)
+            return nil
+        }
+        return unitConv(num: swap.number, unit: fromDef, toUnit: keyDef)
+    }
+
     /// 単位変換
     /// - Parameters:
     ///   - num: 数値文字列
@@ -929,6 +962,7 @@ final class CalcViewModel: ObservableObject {
         resetPercMode()
         isCalcNewEntryAfterUnit = false
         calcUnitDef = nil
+        lastUnitSwap = nil
         isCalcRootResult = false
         isAccRootResult  = false
         rollLinesBuilding = []
@@ -1266,26 +1300,39 @@ final class CalcViewModel: ObservableObject {
             // 数値なしに単位だけ押した: 何もしない
             return
         }
-        // 計算が進行中（calcUnitDef 設定済み）なら同じ unitBase の単位のみ許可
-        if let baseUnit = calcUnitDef?.unitBase, baseUnit != keyDef.unitBase {
-            return
-        }
         if tokens.count >= 2, let ut = tokens.last, ut.hasPrefix(TOKEN_UNIT_PREFIX) {
-            // すでに単位が付いている → 単位変換
             let code = String(ut.dropFirst())
-            if let existing = keyboardViewModel.keyDef(code: code),
-               existing.unitBase == keyDef.unitBase {
-                // 同じ unitBase → 変換
-                let numStr = tokens[tokens.count - 2]
-                if let converted = unitConv(num: numStr, unit: existing, toUnit: keyDef) {
-                    tokens[tokens.count - 2] = converted
-                    tokens[tokens.count - 1] = TOKEN_UNIT_PREFIX + keyDef.code
-                    calcUnitDef = keyDef  // 変換後の単位を記録
-                    formulaUpdateCalc()
+            let numStr = tokens[tokens.count - 2]
+            // 同じ単位キーの2度押しなら、差し替え前の単位から換算する
+            // （60㎡ →[坪]→ 60坪 →[坪]→ 18.15坪）
+            if let converted = unitSwapConverted(keyDef: keyDef,
+                                                 currentCode: code,
+                                                 currentNumber: numStr) {
+                // 換算後は数値が変わるので、2度押し履歴は破棄する
+                tokens[tokens.count - 2] = converted
+                tokens[tokens.count - 1] = TOKEN_UNIT_PREFIX + keyDef.code
+                calcUnitDef = keyDef  // 換算後の単位を記録
+                lastUnitSwap = nil
+                formulaUpdateCalc()
+            } else {
+                // すでに単位が付いている → 数値は変えず単位だけ差し替える
+                // （例：60㎡ で[坪]を押すと 18.15坪 ではなく 60坪 になる）
+                // 換算しないので unitBase が異なる単位（㎡→kg など）にも置き換えられる
+                tokens[tokens.count - 1] = TOKEN_UNIT_PREFIX + keyDef.code
+                calcUnitDef = keyDef  // 差し替え後の単位を記録
+                // 同じ単位キーをもう一度押したときに換算できるよう、換算元を覚えておく
+                // 同じ単位の押し直し（換算元＝換算先）は履歴を更新しない
+                if code != keyDef.code {
+                    lastUnitSwap = (fromCode: code, toCode: keyDef.code, number: numStr)
                 }
+                formulaUpdateCalc()
             }
-            // 異なる unitBase の場合は無視
         } else {
+            // 計算が進行中（calcUnitDef 設定済み）なら同じ unitBase の単位のみ許可
+            // ※単位の差し替えは上で処理済みなので、ここは新規に単位を付ける場合だけ
+            if let baseUnit = calcUnitDef?.unitBase, baseUnit != keyDef.unitBase {
+                return
+            }
             // 数値だけ → 単位を付加
             guard let existing = keyboardViewModel.keyDef(code: keyDef.code),
                   existing.unitBase == keyDef.unitBase else { return }
