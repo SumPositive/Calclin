@@ -26,6 +26,10 @@ struct CalcView: View {
     @State private var inputToolsWidth: CGFloat = 0
     // 入力行右側を長押ししたときのフォント選択ポップオーバー表示状態
     @State private var isNumberFontPickerPresented = false
+    // 入力行末尾の単位をタップしたときの換算ポップオーバー表示状態
+    @State private var isUnitConvertPickerPresented = false
+    // 換算ポップオーバーに表示する候補（開いた時点で確定し、表示中は再計算しない）
+    @State private var unitConvertCandidates: [CalcViewModel.UnitConvertCandidate] = []
 
     private var calcFontScale: CGFloat {
         setting.calcViewFontScale(for: dynamicTypeSize)
@@ -50,6 +54,20 @@ struct CalcView: View {
         viewModel.numberFontScale = inputRowFontScale
         viewModel.numberFont = setting.numberFont
         viewModel.formulaUpdate()
+    }
+
+    /// 入力行末尾の単位のタップ領域幅
+    /// - 入力行のフォントで単位文字列を実測し、指で押しやすいよう左右に少し余裕を持たせる
+    /// - 入力行は縮小・スクロールで実フォントが変わるため、最小サイズ側（標準サイズ）で測る。
+    ///   実際の描画が拡大されている場合はタップ領域が単位より狭くなるだけで、誤爆はしない
+    private func unitTapWidth(_ formula: String) -> CGFloat {
+        // 書体ごとの実フォントではなく同サイズのシステム太字で概算する。
+        // タップ領域の目安が分かれば十分で、書体差による誤差は下の下限・上限で吸収される
+        let uiFont = UIFont.systemFont(ofSize: 33.6, weight: .bold)
+        let width = (formula as NSString)
+            .size(withAttributes: [.font: uiFont]).width
+        // 最低 32pt（Apple の推奨タップ領域 44pt に近づける）を確保しつつ、広げ過ぎない
+        return min(max(width + 8, 32), 120)
     }
 
     /// フォント選択ポップオーバーのプレビュー用文字列
@@ -188,6 +206,38 @@ struct CalcView: View {
                             }
                         }
                     }
+                    // 入力行末尾の単位をタップして換算ポップオーバーを開く
+                    // 入力行は常に右寄せ・単位は必ず末尾に描画されるため、
+                    // 右端から「単位の描画幅」だけの領域を単位のタップ領域とみなせる
+                    .overlay(alignment: .trailing) {
+                        if let unit = viewModel.displayUnit {
+                            Color.clear
+                                .frame(width: unitTapWidth(unit.formula))
+                                .frame(maxHeight: .infinity)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    // 換算は開いた瞬間に一度だけ行い、結果を保持して再計算を避ける
+                                    let candidates = viewModel.unitConvertCandidates()
+                                    // 換算先が無い単位（基準単位が同じ仲間が居ない）ならメニューを出さない
+                                    guard !candidates.isEmpty else { return }
+                                    unitConvertCandidates = candidates
+                                    AppAnalytics.logUnitConvertPickerOpened(calcMode: viewModel.calcMode)
+                                    isUnitConvertPickerPresented = true
+                                }
+                                .popover(isPresented: $isUnitConvertPickerPresented,
+                                         arrowEdge: .bottom) {
+                                    UnitConvertPickPopover(
+                                        candidates: unitConvertCandidates
+                                    ) { toDef in
+                                        viewModel.convertDisplayUnit(to: toDef)
+                                        isUnitConvertPickerPresented = false
+                                    }
+                                    .appFontScale(setting.fontScale)
+                                    .presentationCompactAdaptation(.popover)
+                                }
+                        }
+                    }
+                    .sensoryFeedback(.success, trigger: isUnitConvertPickerPresented)
                     .sensoryFeedback(.success, trigger: isNumberFontPickerPresented)
                     .onPreferenceChange(InputToolsWidthPreferenceKey.self) { width in
                         inputToolsWidth = width
@@ -323,6 +373,94 @@ private struct NumberFontQuickPickPopover: View {
         // プレビュー文字数や入力行サイズに合わせて余裕を持たせる
         .frame(minWidth: max(260, previewSize * 6), maxHeight: 480)
         .background(Color(.systemBackground))
+    }
+}
+
+/// 入力行末尾の単位をタップしたときに出す換算先の選択ポップオーバー
+/// - 基準単位が同じ単位だけを並べ、選ぶと数値を換算する
+private struct UnitConvertPickPopover: View {
+    let candidates: [CalcViewModel.UnitConvertCandidate]
+    let onSelect: (KeyDefinition) -> Void
+
+    /// 換算元（＝いま表示中の単位）の行のid
+    private var currentCode: String? {
+        candidates.first(where: { $0.isCurrent })?.id
+    }
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text("calc.unit.convertList")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.horizontal, 12)
+                .padding(.top, 6)
+
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 3) {
+                        ForEach(candidates) { candidate in
+                            Button {
+                                onSelect(candidate.def)
+                            } label: {
+                                row(candidate)
+                            }
+                            .buttonStyle(.plain)
+                            // 換算元の行へスクロールするために id を付ける
+                            .id(candidate.id)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                }
+                .scrollIndicators(.hidden)
+                // 換算元が中央に来るよう、開いた直後にスクロールする
+                .onAppear {
+                    guard let currentCode else { return }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        proxy.scrollTo(currentCode, anchor: .center)
+                    }
+                }
+            }
+        }
+        .frame(minWidth: 200, maxHeight: maxPopoverHeight)
+        .background(Color(.systemBackground))
+    }
+
+    /// ポップオーバーの高さ上限
+    /// - 画面の 3/4 までは使い、候補が多いときに見える行数を増やす
+    /// - 画面外へはみ出さないよう、実画面高から算出する
+    private var maxPopoverHeight: CGFloat {
+        let screenHeight = UIScreen.main.bounds.height
+        return max(320, screenHeight * 0.75)
+    }
+
+    /// 1行ぶんの表示。入力行と同じく右寄せで、換算後の数値＋単位を並べる
+    private func row(_ candidate: CalcViewModel.UnitConvertCandidate) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 2) {
+            Text(candidate.previewValue)
+                // 単位より控えめにして、単位名が拾いやすいようにする
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+            Text(candidate.def.formula)
+                .font(.title3.weight(.semibold))
+                // 換算元はアクセント色にして、一覧内の現在位置が分かるようにする
+                .foregroundStyle(candidate.isCurrent ? Color.accentColor : Color.primary)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 5)
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .contentShape(Rectangle())
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(candidate.isCurrent
+                      ? Color.accentColor.opacity(0.12)
+                      : Color(.secondarySystemBackground))
+        )
     }
 }
 

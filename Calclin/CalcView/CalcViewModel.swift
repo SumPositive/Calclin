@@ -57,6 +57,10 @@ final class CalcViewModel: ObservableObject {
     // 現在入力部分（演算子 + 数値）。formulaAttr から累計プレフィックスを除いたもの
     // - 2 段レイアウト時は下段、縮小/スクロール時はこの部分のみを表示する
     @Published var currentPart: AttributedString = ""
+    // 入力行の末尾に表示中の単位（単位タップで換算メニューを出すために公開する）
+    // - formula: 表示文字列（"㎡" など）。タップ領域の幅測定に使う
+    // - code: 単位code。換算候補の絞り込みに使う
+    @Published var displayUnit: (formula: String, code: String)? = nil
     // [Ans]直後の答えが表示されて単位変換が行われている間(true)である
     @Published var isAnswerMode = false
     // フォントスケール（SettingViewModelから同期）
@@ -428,6 +432,8 @@ final class CalcViewModel: ObservableObject {
         if isAns {
             log(.info, "End Answer")
             self.isAnswerMode = true
+            // 答えも [数値][単位] の形なので、単位タップで換算リストを出せる
+            self.displayUnit = trailingDisplayUnit()
             save()
             return
         }
@@ -458,6 +464,7 @@ final class CalcViewModel: ObservableObject {
         // 数式モードは累計プレフィックスを持たないため、currentPart = formulaAttr とする
         self.accumulatorPart = nil
         self.currentPart = self.formulaAttr
+        self.displayUnit = trailingDisplayUnit()
         log(.info, "End")
         save()
     }
@@ -675,6 +682,93 @@ final class CalcViewModel: ObservableObject {
     }
     
     
+    /// 入力行末尾に表示中の単位（単位タップ領域を出す条件つき）を返す
+    /// - [数値][単位]だけのときに限る。途中式（3㎡+5坪 など）で末尾だけ換算すると
+    ///   式の意味が変わってしまうため、単位キーの差し替えが許される形と条件を揃える
+    /// - 答え（[=]後）も [数値][単位] になるので、そのまま換算リストを出せる
+    private func trailingDisplayUnit() -> (formula: String, code: String)? {
+        guard tokens.count == 2,
+              let last = tokens.last, last.hasPrefix(TOKEN_UNIT_PREFIX),
+              let num = tokens.first, Double(num) != nil,
+              let def = keyboardViewModel.keyDef(code: String(last.dropFirst())),
+              def.unitBase != nil, def.unitBase != UNIT_CODE_BARE else { return nil }
+        return (formula: def.formula, code: def.code)
+    }
+
+    /// 単位タップの換算メニューに並べる1件分
+    struct UnitConvertCandidate: Identifiable {
+        let def: KeyDefinition
+        /// 換算後の数値（表示用にフォーマット済み）
+        let previewValue: String
+        /// 換算元＝現在表示中の単位（一覧内での現在位置を示すために含める）
+        let isCurrent: Bool
+        var id: String { def.code }
+    }
+
+    /// 単位タップで出す換算候補（表示中の単位と基準単位が同じもの。表示中の単位自身は除く）
+    /// - 換算後の数値もあわせて求める。候補は最大10件程度で1件あたりの換算は軽いため、
+    ///   ポップオーバーを開くときに一度だけまとめて計算する
+    /// - Returns: 換算リストの各行。換算元自身も含む。換算先が無い場合は空配列
+    func unitConvertCandidates() -> [UnitConvertCandidate] {
+        guard let shown = displayUnit,
+              let currentDef = keyboardViewModel.keyDef(code: shown.code),
+              let base = currentDef.unitBase,
+              base != UNIT_CODE_BARE else { return [] }
+        // 換算元の数値（[数値][単位]の数値部分）
+        guard tokens.count >= 2,
+              let last = tokens.last, last.hasPrefix(TOKEN_UNIT_PREFIX) else { return [] }
+        let numStr = tokens[tokens.count - 2]
+        guard Double(numStr) != nil else { return [] }
+
+        // 同じcodeが複数枚のキーボードに登録されていることがあるので、codeで重複を除く
+        var seen = Set<String>()
+        let rows: [UnitConvertCandidate] = keyboardViewModel.keyDefs.compactMap { def in
+            guard def.unitBase == base,
+                  def.hidden != true,
+                  seen.insert(def.code).inserted else { return nil }
+            let isCurrent = def.code == currentDef.code
+            let value: String
+            if isCurrent {
+                // 換算元の行は換算せず、いま表示している数値をそのまま出す
+                value = AZDecimal(numStr).formatted(calcConfig)
+            } else {
+                guard let converted = unitConv(num: numStr, unit: currentDef, toUnit: def) else { return nil }
+                value = AZDecimal(converted).formatted(calcConfig)
+            }
+            return UnitConvertCandidate(def: def, previewValue: value, isCurrent: isCurrent)
+        }
+        // 換算元しか無い＝換算先が無いのでメニューを出す意味がない
+        return rows.contains(where: { !$0.isCurrent }) ? rows : []
+    }
+
+    /// 単位タップの換算メニューから単位を選んだときに、実際に換算する
+    /// - Parameter toDef: 換算先の単位
+    @MainActor
+    func convertDisplayUnit(to toDef: KeyDefinition) {
+        guard let shown = displayUnit,
+              let fromDef = keyboardViewModel.keyDef(code: shown.code),
+              fromDef.unitBase == toDef.unitBase else { return }
+        // 換算元の行を選んだ場合は変化しないので何もしない
+        guard fromDef.code != toDef.code else { return }
+        // 末尾が[数値][単位]であること（差し替え・換算ができる形）
+        guard tokens.count >= 2,
+              let last = tokens.last, last.hasPrefix(TOKEN_UNIT_PREFIX) else { return }
+        let numStr = tokens[tokens.count - 2]
+        guard Double(numStr) != nil,
+              let converted = unitConv(num: numStr, unit: fromDef, toUnit: toDef) else { return }
+        tokens[tokens.count - 2] = converted
+        tokens[tokens.count - 1] = TOKEN_UNIT_PREFIX + toDef.code
+        // 換算で数値が変わるので、単位2度押しの待ち受けは解除する
+        lastUnitSwap = nil
+        if calcMode == .calculator {
+            calcUnitDef = toDef  // 換算後の単位を記録
+            formulaUpdateCalc()
+        } else {
+            // 答え表示中に換算した場合は、答えの見た目（予定[.]を出さない）を保つ
+            formulaUpdate(isAnswerMode)
+        }
+    }
+
     /// 単位2度押しによる換算が成立するか判定し、成立するなら換算後の数値を返す
     /// - Parameters:
     ///   - keyDef: 今押された単位キー
@@ -882,6 +976,8 @@ final class CalcViewModel: ObservableObject {
             self.formulaAttr = curPart
             self.accumulatorPart = nil
             self.currentPart = curPart
+            // 答え表示中は単位を出していないので、単位タップ領域も消す
+            self.displayUnit = nil
             return
         }
 
@@ -951,6 +1047,15 @@ final class CalcViewModel: ObservableObject {
         }
         self.accumulatorPart = accPart
         self.currentPart = curPart
+        // 末尾に単位を描画した時だけ、単位タップ領域を有効にする
+        // （%表示中は単位ではなく記号を出しているので対象外）
+        if !isPercMode,
+           let ut = unitToken,
+           let def = keyboardViewModel.keyDef(code: String(ut.dropFirst())) {
+            self.displayUnit = (formula: def.formula, code: def.code)
+        } else {
+            self.displayUnit = nil
+        }
         save()
     }
 

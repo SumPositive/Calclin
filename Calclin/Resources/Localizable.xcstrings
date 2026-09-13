@@ -36,6 +36,22 @@
         }
       }
     },
+    "calc.unit.convertList" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conversions"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\u63db\u7b97\u30ea\u30b9\u30c8"
+          }
+        }
+      }
+    },
     "calc.unit.cannotConvert" : {
       "localizations" : {
         "en" : {

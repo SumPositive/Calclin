@@ -176,6 +176,13 @@ struct AppAnalytics {
         ])
     }
 
+    /// 入力行の単位をタップして換算ピッカーを開いた
+    static func logUnitConvertPickerOpened(calcMode: CalcMode) {
+        Analytics.logEvent("unit_convert_picker_opened", parameters: [
+            "calc_mode": calcMode.rawValue
+        ])
+    }
+
     /// キー形状ポップアップを開いた
     static func logKeyStylePopupOpened() {
         Analytics.logEvent("key_style_popup_opened", parameters: nil)
