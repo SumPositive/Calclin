@@ -92,6 +92,12 @@ struct SettingView: View {
         )
     }
 
+    /// 指定したプルダウンのいずれかが開いているか（カード単位のzIndex判定用）
+    private func isDropdownExpanded(in kinds: [SettingDropdownKind]) -> Bool {
+        guard let expandedDropdown else { return false }
+        return kinds.contains(expandedDropdown)
+    }
+
     /// アプリのVersion/Build番号をまとめて返す
     private var appVersionText: String {
         // Info.plistから安全に値を拾う。Xcodeのビルド設定で設定されている想定
@@ -221,76 +227,67 @@ struct SettingView: View {
             tint: .accentColor
         ) {
             VStack(alignment: .leading, spacing: 8) {
-                AdaptiveRadioRow(options: SettingViewModel.PlayMode.allCases,
-                                 selection: $viewModel.playMode,
-                                 minOptionWidth: 72) {
+                AdaptiveControlRow {
                     Label("settings.displayMode", systemImage: viewModel.playMode == .beginner
                                                     ? "tortoise" : "hare")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
-                } label: { mode in
-                    Text(mode.localized)
+                } control: {
+                    SettingDropdown(options: SettingViewModel.PlayMode.allCases,
+                                    selection: $viewModel.playMode,
+                                    isExpanded: dropdownBinding(.playMode),
+                                    minWidth: 140) { mode in
+                        Text(mode.localized)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .onChange(of: viewModel.playMode) { oldValue, newValue in
+                        // モード切替のログを残すだけでも利用者に優しい
+                        log(.info, "PlayMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
+                        // Analyticsでも切り替え状況を計測して、利用傾向を可視化する
+                        AppAnalytics.logPlayModeChanged(from: oldValue, to: newValue)
+                    }
                 }
-                .onChange(of: viewModel.playMode) { oldValue, newValue in
-                    // モード切替のログを残すだけでも利用者に優しい
-                    log(.info, "PlayMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
-                    // Analyticsでも切り替え状況を計測して、利用傾向を可視化する
-                    AppAnalytics.logPlayModeChanged(from: oldValue, to: newValue)
-                }
+                // 開いた候補を同じカード内の後続行より前面に出す
+                .zIndex(expandedDropdown == .playMode ? 60 : 0)
 
-                AdaptiveRadioRow(options: SettingViewModel.AppearanceMode.allCases,
-                                 selection: $viewModel.appearanceMode,
-                                 minOptionWidth: 72) {
+                AdaptiveControlRow {
                     Label("settings.appearanceMode", systemImage: viewModel.appearanceMode == .dark
                                                     ? "moon" : "sun.max")
                         .labelStyle(.titleAndIcon)
                         .font(.subheadline)
-                } label: { mode in
-                    Text(mode.localized)
-                }
-                .onChange(of: viewModel.appearanceMode) { oldValue, newValue in
-                    log(.info, "AppearanceMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    AdaptiveRadioRow(options: SettingViewModel.AutoScroll.allCases,
-                                     selection: $viewModel.autoScroll,
-                                     minOptionWidth: 70,
-                                     horizontalPadding: 8,
-                                     optionSpacing: 4,
-                                     groupPadding: 4) {
-                        Label("settings.autoScroll", systemImage: "arrow.down.to.line")
-                            .labelStyle(.titleAndIcon)
-                            .font(.subheadline)
-                    } label: { mode in
+                } control: {
+                    SettingDropdown(options: SettingViewModel.AppearanceMode.allCases,
+                                    selection: $viewModel.appearanceMode,
+                                    isExpanded: dropdownBinding(.appearanceMode),
+                                    minWidth: 140) { mode in
                         Text(mode.localized)
                     }
-                    if viewModel.playMode == .beginner {
-                        Text("settings.help.autoScroll")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 2)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .cappedAtLargeTypeSize()
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .onChange(of: viewModel.appearanceMode) { oldValue, newValue in
+                        log(.info, "AppearanceMode changed: \(oldValue.rawValue) -> \(newValue.rawValue)")
                     }
                 }
+                .zIndex(expandedDropdown == .appearanceMode ? 60 : 0)
+
                 VStack(alignment: .leading, spacing: 4) {
-                    AdaptiveRadioRow(options: SettingViewModel.FontScale.allCases,
-                                     selection: $viewModel.fontScale,
-                                     minOptionWidth: 54,
-                                     horizontalPadding: 8,
-                                     optionSpacing: 4,
-                                     groupPadding: 4) {
+                    AdaptiveControlRow {
                         Label("settings.fontScale", systemImage: "textformat.size")
                             .labelStyle(.titleAndIcon)
                             .font(.subheadline)
-                    } label: { scale in
-                        Text(LocalizedStringKey(scale.localizedKey))
+                    } control: {
+                        SettingDropdown(options: SettingViewModel.FontScale.allCases,
+                                        selection: $viewModel.fontScale,
+                                        isExpanded: dropdownBinding(.fontScale),
+                                        minWidth: 140) { scale in
+                            Text(LocalizedStringKey(scale.localizedKey))
+                        }
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .onChange(of: viewModel.fontScale) { _, _ in
+                            // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
+                            NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                        }
                     }
-                    .onChange(of: viewModel.fontScale) { _, _ in
-                        // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
-                        NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
-                    }
+                    .zIndex(expandedDropdown == .fontScale ? 60 : 0)
                     if viewModel.playMode == .beginner {
                         Text("settings.help.fontScale")
                             .font(.caption)
@@ -300,6 +297,32 @@ struct SettingView: View {
                             .cappedAtLargeTypeSize()
                     }
                 }
+                .zIndex(expandedDropdown == .fontScale ? 50 : 0)
+                VStack(alignment: .leading, spacing: 4) {
+                    AdaptiveControlRow {
+                        Label("settings.autoScroll", systemImage: "arrow.down.to.line")
+                            .labelStyle(.titleAndIcon)
+                            .font(.subheadline)
+                    } control: {
+                        SettingDropdown(options: SettingViewModel.AutoScroll.allCases,
+                                        selection: $viewModel.autoScroll,
+                                        isExpanded: dropdownBinding(.autoScroll),
+                                        minWidth: 140) { mode in
+                            Text(mode.localized)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                    .zIndex(expandedDropdown == .autoScroll ? 60 : 0)
+                    if viewModel.playMode == .beginner {
+                        Text("settings.help.autoScroll")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 2)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .cappedAtLargeTypeSize()
+                    }
+                }
+                .zIndex(expandedDropdown == .autoScroll ? 50 : 0)
 
                 // 数字フォント（入力行のみに適用）
                 // 桁区切り方式と同じ独自 dropdown を使い、各候補をそのフォント自身で描画する
@@ -339,6 +362,8 @@ struct SettingView: View {
             .padding(.top, -12)
             .padding(.leading, sectionLeadingPadding)
         }
+        // 候補ポップアップが下のカードに隠れないよう前面に出す
+        .zIndex(isDropdownExpanded(in: [.playMode, .appearanceMode, .autoScroll, .fontScale, .numberFont]) ? 50 : 0)
     }
 
     /// 整数部の見え方をまとめるカード
@@ -801,9 +826,13 @@ private struct TipSheetView: View {
 // MARK: - 共通UIコンポーネント
 
 private enum SettingDropdownKind {
+    case playMode
+    case appearanceMode
+    case fontScale
+    case autoScroll
+    case numberFont
     case groupType
     case roundType
-    case numberFont
 }
 
 /// Dynamic Typeで欠けない独自プルダウン
@@ -882,34 +911,29 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
                 isExpanded.toggle()
             }
         } label: {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                selectedLabel
-
-                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.accentColor)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .frame(minWidth: minWidth, alignment: .center)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(Color(.systemBackground).opacity(0.96))
-            )
-            .overlay(
-                Capsule(style: .continuous)
-                    .strokeBorder(isExpanded ? Color.accentColor.opacity(0.55) : Color.secondary.opacity(0.20),
-                                  lineWidth: isExpanded ? 1.2 : 1)
-            )
-            .shadow(color: Color.black.opacity(0.06), radius: 1.5, x: 0, y: 1)
+            selectedLabel
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .frame(minWidth: minWidth, alignment: .center)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(Color(.systemBackground).opacity(0.96))
+                )
+                .overlay(
+                    Capsule(style: .continuous)
+                        .strokeBorder(isExpanded ? Color.accentColor.opacity(0.55) : Color.secondary.opacity(0.20),
+                                      lineWidth: isExpanded ? 1.2 : 1)
+                )
+                .shadow(color: Color.black.opacity(0.06), radius: 1.5, x: 0, y: 1)
         }
         .buttonStyle(.plain)
     }
 
     @ViewBuilder
     private var selectedLabel: some View {
+        // 折りたたみ時の選択値は、候補一覧の選択中項目と同じアクセント色にして現在値を一目で分かるようにする
         let base = label(selection)
-            .foregroundStyle(Color.primary)
+            .foregroundStyle(Color.accentColor)
             .lineLimit(nil)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
@@ -980,6 +1004,35 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
                     .strokeBorder(isSelected ? Color.accentColor.opacity(0.62) : Color.secondary.opacity(0.10),
                                   lineWidth: isSelected ? 1.2 : 1)
             )
+    }
+}
+
+/// コントロール行を「見出し込み1行」「見出し＋操作部2段」の順に選ぶ
+private struct AdaptiveControlRow<Title: View, Control: View>: View {
+    @ViewBuilder let title: () -> Title
+    @ViewBuilder let control: () -> Control
+
+    init(@ViewBuilder title: @escaping () -> Title,
+         @ViewBuilder control: @escaping () -> Control) {
+        self.title = title
+        self.control = control
+    }
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 8) {
+                title()
+                Spacer(minLength: 8)
+                control()
+                    .fixedSize(horizontal: true, vertical: false)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                title()
+                control()
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        }
     }
 }
 
@@ -1070,35 +1123,6 @@ private struct SettingRadioGroup<Option: Hashable & Identifiable, Label: View>: 
             }
         }
         .buttonStyle(.plain)
-    }
-}
-
-/// コントロール行を「見出し込み1行」「見出し＋操作部2段」の順に選ぶ
-private struct AdaptiveControlRow<Title: View, Control: View>: View {
-    @ViewBuilder let title: () -> Title
-    @ViewBuilder let control: () -> Control
-
-    init(@ViewBuilder title: @escaping () -> Title,
-         @ViewBuilder control: @escaping () -> Control) {
-        self.title = title
-        self.control = control
-    }
-
-    var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .center, spacing: 8) {
-                title()
-                Spacer(minLength: 8)
-                control()
-                    .fixedSize(horizontal: true, vertical: false)
-            }
-
-            VStack(alignment: .leading, spacing: 3) {
-                title()
-                control()
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-        }
     }
 }
 
