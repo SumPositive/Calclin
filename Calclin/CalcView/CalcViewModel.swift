@@ -439,6 +439,11 @@ final class CalcViewModel: ObservableObject {
         if isAns {
             log(.info, "End Answer")
             self.isAnswerMode = true
+            // 答え表示も縮小・スクロール段（currentPart を描画する）で使われるので、
+            // formulaAttr と必ず揃えておく。これを忘れると桁数が多いときだけ
+            // 入力行に直前の式が残り続ける
+            self.accumulatorPart = nil
+            self.currentPart = self.formulaAttr
             // 答えも [数値][単位] の形なので、単位タップで換算リストを出せる
             self.displayUnit = trailingDisplayUnit()
             save()

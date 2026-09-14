@@ -116,6 +116,38 @@
         }
       }
     },
+    "calc.mode.calculator.hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calc: adds up in the order you enter. 5+5\u00d72 = 20"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\u96fb\u5353\uff1a\u5165\u529b\u3057\u305f\u9806\u306b\u8a08\u7b97\u3057\u307e\u3059\u30005\uff0b5\u00d72\uff1d20"
+          }
+        }
+      }
+    },
+    "calc.mode.formula.hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formula: \u00d7 and \u00f7 come first. 5+5\u00d72 = 15"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\u6570\u5f0f\uff1a\u00d7\u3068\u00f7\u3092\u5148\u306b\u8a08\u7b97\u3057\u307e\u3059\u30005\uff0b5\u00d72\uff1d15"
+          }
+        }
+      }
+    },
     "calc.mode.calculator" : {
       "localizations" : {
         "en" : {

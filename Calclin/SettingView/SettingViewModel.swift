@@ -114,8 +114,13 @@ final class SettingViewModel: ObservableObject {
         static let unitSwapHint = "hasSeenUnitSwapHint"
         /// キーボード高さ変更ハンドルの案内（ContentView）
         static let keyboardResizeHandle = "hasUsedKeyboardResizeHandle"
+        /// 数式モードへ切り替えたときの計算方式の説明（CalcView）
+        static let calcModeFormula = "hasSeenFormulaModeHint"
+        /// 電卓モードへ切り替えたときの計算方式の説明（CalcView）
+        static let calcModeCalculator = "hasSeenCalculatorModeHint"
 
-        static let all: [String] = [unitSwapHint, keyboardResizeHandle]
+        static let all: [String] = [unitSwapHint, keyboardResizeHandle,
+                                    calcModeFormula, calcModeCalculator]
     }
 
     /// 外観モード（自動／ライト／ダーク）
