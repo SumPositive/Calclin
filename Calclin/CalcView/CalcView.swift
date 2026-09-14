@@ -247,17 +247,22 @@ struct CalcView: View {
                                 .transition(.opacity)
                         }
                     }
+                    // モード切替は左端
                     .overlay(alignment: .leading) {
-                        inputLineTools(showsTitle: showsInputToolTitles,
-                                       showsModeTitle: showsModeTitles,
+                        inputLineTools(showsModeTitle: showsModeTitles,
                                        isCompact: usesCompactTools)
                             .padding(.leading, 6)
                             .opacity(showsInputTools ? 1 : 0)
                             .allowsHitTesting(showsInputTools)
                             .background {
                                 // タイトル付きの最大幅を常に測り、幅判定の揺れを避ける
-                                inputLineTools(showsTitle: true, showsModeTitle: true,
-                                               isCompact: usesCompactTools)
+                                // 左右に分けて置いているので、両方を合わせた幅を測る
+                                HStack(spacing: usesCompactTools ? 6 : 12) {
+                                    inputLineTools(showsModeTitle: true,
+                                                   isCompact: usesCompactTools)
+                                    inputLinePDFButton(showsTitle: true,
+                                                       isCompact: usesCompactTools)
+                                }
                                     .hidden()
                                     .background {
                                         GeometryReader { toolsGeo in
@@ -267,6 +272,14 @@ struct CalcView: View {
                                         }
                                     }
                             }
+                    }
+                    // PDF 出力は右端
+                    .overlay(alignment: .trailing) {
+                        inputLinePDFButton(showsTitle: showsInputToolTitles,
+                                           isCompact: usesCompactTools)
+                            .padding(.trailing, 6)
+                            .opacity(showsInputTools ? 1 : 0)
+                            .allowsHitTesting(showsInputTools)
                     }
                     // 入力行の右側 1/3 を長押しでフォント選択ポップオーバーを開く
                     // SwiftUI の .onLongPressGesture は Color.clear 上でもタッチを掴んでしまい、
@@ -395,39 +408,43 @@ struct CalcView: View {
     /// 入力行の左に出すツール
     /// - モード切替はトグルではなくセグメンテッドにして、「今どちらか」と「押すとどうなるか」を同時に示す
     /// - 入力が始まると（値が入ると）呼び出し側で非表示になるため、式を消してしまう誤タップは起きない
-    private func inputLineTools(showsTitle: Bool, showsModeTitle: Bool,
+    /// 入力行の左に出すモード切替
+    private func inputLineTools(showsModeTitle: Bool,
                                 isCompact: Bool = false) -> some View {
-        HStack(spacing: isCompact ? 6 : 12) {
-            CalcModeSegmentedControl(
-                mode: $viewModel.calcMode,
-                showsTitle: showsModeTitle,
-                isCompact: isCompact
-            ) { oldMode, newMode in
-                AppAnalytics.logCalcModeToggled(from: oldMode, to: newMode)
-                showCalcModeHintIfNeeded(for: newMode)
-            }
-            .environmentObject(setting)
+        CalcModeSegmentedControl(
+            mode: $viewModel.calcMode,
+            showsTitle: showsModeTitle,
+            isCompact: isCompact
+        ) { oldMode, newMode in
+            AppAnalytics.logCalcModeToggled(from: oldMode, to: newMode)
+            showCalcModeHintIfNeeded(for: newMode)
+        }
+        .environmentObject(setting)
+    }
 
-            Button {
-                AppAnalytics.logPDFExportStarted(calcMode: viewModel.calcMode)
-                isGeneratingPDF = true
-                Task { @MainActor in
-                    try? await Task.sleep(nanoseconds: 80_000_000)
-                    let url = makeCalcPDF(viewModel: viewModel, fontScale: calcFontScale)
-                    isGeneratingPDF = false
-                    if let url {
-                        shareURL = url
-                        isSharing = true
-                    }
+    /// 入力行の右に出す PDF 出力ボタン
+    /// - モード切替と役割が違う（設定ではなく書き出し）ので、左右に分けて置く
+    private func inputLinePDFButton(showsTitle: Bool, isCompact: Bool = false) -> some View {
+        Button {
+            AppAnalytics.logPDFExportStarted(calcMode: viewModel.calcMode)
+            isGeneratingPDF = true
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 80_000_000)
+                let url = makeCalcPDF(viewModel: viewModel, fontScale: calcFontScale)
+                isGeneratingPDF = false
+                if let url {
+                    shareURL = url
+                    isSharing = true
                 }
-            } label: {
-                PaperToolButtonLabel(
-                    systemName: "square.and.arrow.up",
-                    title: String(localized: "common.pdf"),
-                    showsTitle: showsTitle,
-                    isCompact: isCompact
-                )
             }
+        } label: {
+            PaperToolButtonLabel(
+                // 「書類を書き出す」を1つの絵で示す。押した先は共有シート
+                systemName: "arrow.up.doc",
+                title: String(localized: "common.pdf"),
+                showsTitle: showsTitle,
+                isCompact: isCompact
+            )
         }
     }
 }

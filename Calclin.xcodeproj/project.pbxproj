@@ -45,7 +45,7 @@
 		C30A78B02E10EE8700212729 /* CalclinTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CalclinTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C30A78BA2E10EE8700212729 /* CalclinUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CalclinUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C3563286300529A500539096 /* CalclinSnapshotUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CalclinSnapshotUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		C35633413005C5C300539096 /* Calclin.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = file; path = Calclin.xctestplan; sourceTree = "<group>"; };
+		C35633413005C5C300539096 /* Calclin.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = Calclin.xctestplan; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -549,7 +549,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5C2UYK6F45;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -568,7 +568,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.1;
+				MARKETING_VERSION = 2.3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.azukid.AzukiSoft.AzCalc;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -589,7 +589,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5C2UYK6F45;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -608,7 +608,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.1;
+				MARKETING_VERSION = 2.3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.azukid.AzukiSoft.AzCalc;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
