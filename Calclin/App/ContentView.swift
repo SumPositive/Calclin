@@ -313,7 +313,18 @@ struct ContentView: View {
     // 連続復帰時に古い非表示予約が残らないよう、Taskを保持する
     @State private var keyboardResizeHintTask: Task<Void, Never>?
     // 一度でもユーザがリサイズ機能を使ったら、以後は案内表示しない
-    @AppStorage("hasUsedKeyboardResizeHandle") private var hasUsedKeyboardResizeHandle = false
+    @AppStorage(SettingViewModel.OneTimeHintKey.keyboardResizeHandle)
+    private var hasUsedKeyboardResizeHandle = false
+    // 単位キーで「換算せずに単位だけ差し替えた」ときの操作ヒント表示状態
+    // - 2.4.0 の挙動変更を説明する。次のキータップまで出したままにする
+    @State private var isUnitSwapHintVisible = false
+    // 一度案内したら以後は出さない
+    @AppStorage(SettingViewModel.OneTimeHintKey.unitSwapHint)
+    private var hasSeenUnitSwapHint = false
+    // 単位差し替えヒントの余白・行間も文字サイズに合わせて広げる
+    @ScaledMetric(relativeTo: .footnote) private var hintSpacing: CGFloat = 6
+    @ScaledMetric(relativeTo: .footnote) private var hintPaddingH: CGFloat = 10
+    @ScaledMetric(relativeTo: .footnote) private var hintPaddingV: CGFloat = 6
 
     // Popup関連の一時編集データ
     @State private var editingMemo: String = ""
@@ -393,6 +404,57 @@ struct ContentView: View {
         let keyboardTop = screenHeight - normalizedKeyboardHeight
         let upperY = max(190, keyboardTop - 120)
         return min(max(keyboardTop / 2 + 42, 190), upperY)
+    }
+
+    /// 単位キーで「換算せずに単位だけ差し替えた」直後に出す操作ヒント
+    /// - 2.4.0 で「違う単位＝差し替え／同じ単位＝換算」に変わったため、初回だけ意味を説明する
+    /// - 入力行とキーボードの間に置き、次のキータップまで表示したままにする
+    private var unitSwapHintBanner: some View {
+        // 文字サイズ対応：
+        // - .font(.system(size:)) は固定サイズで Dynamic Type に追従しない。
+        //   設定の文字サイズは FontScaleModifier が dynamicTypeSize として全体に掛けているので、
+        //   それに追従する「意味付きフォント（.footnote）」を使う（設定画面のヘルプと同じ書き方）
+        // - 余白とアイコンは @ScaledMetric で文字と一緒に大きくする
+        // - 挙動変更を説明する本文なので cappedAtLargeTypeSize は付けず、特大まで伸ばす
+        HStack(alignment: .top, spacing: hintSpacing) {
+            Image(systemName: "info.circle")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Color.accentColor)
+            Text("calc.unit.swapHint")
+                .font(.footnote)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, hintPaddingH)
+        .padding(.vertical, hintPaddingV)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.accentColor.opacity(0.10))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(Color.accentColor.opacity(0.45), lineWidth: 1)
+                }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .allowsHitTesting(false)
+        .transition(.opacity)
+    }
+
+    /// キータップのたびに、単位差し替えヒントを出す／消すを決める
+    /// - 表示条件：まだ一度も案内しておらず、今のキー入力が「換算せずに単位だけ差し替え」だった
+    /// - 非表示条件：それ以外のキーを押した（＝次のキータップで消える）
+    private func updateUnitSwapHint() {
+        if selectedViewModel.didSwapUnitWithoutConvert, hasSeenUnitSwapHint == false {
+            hasSeenUnitSwapHint = true
+            withAnimation(.easeOut(duration: 0.20)) {
+                isUnitSwapHintVisible = true
+            }
+        } else if isUnitSwapHintVisible {
+            withAnimation(.easeIn(duration: 0.20)) {
+                isUnitSwapHintVisible = false
+            }
+        }
     }
 
     private func showKeyboardResizeHintIfNeeded() {
@@ -498,6 +560,14 @@ struct ContentView: View {
                     .zIndex(2)
                 }
                 
+                // 単位差し替えヒント（入力行とキーボードの間）
+                // - 表示・非表示で高さが変わるとキーボードが動くため、常に領域は確保しない。
+                //   出ている間だけ隙間が開く分かりやすさを優先する
+                if isUnitSwapHintVisible {
+                    unitSwapHintBanner
+                        .zIndex(1)
+                }
+
                 // キーボードView
                 KeyboardView(viewModel: keyboardViewModel,
                              activeCalcViewModel: selectedViewModel,
@@ -506,6 +576,9 @@ struct ContentView: View {
                     AppAnalytics.logKeyTapped(keyDef, calcMode: selectedViewModel.calcMode)
                     // 選択中のCalcViewへkeyDefを送る
                     selectedViewModel.input(keyDef)
+                    // 単位差し替えヒントは「次のキータップまで」表示する。
+                    // input() 内で毎回 false に戻るので、今回の入力が単位差し替えの時だけ true になる
+                    updateUnitSwapHint()
                 })
                 .environmentObject(setting)
                 .padding(.horizontal, 4.0)

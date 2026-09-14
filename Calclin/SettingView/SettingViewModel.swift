@@ -88,7 +88,34 @@ final class SettingViewModel: ObservableObject {
     @Published var playMode: PlayMode = .beginner {
         didSet {
             save(playMode.rawValue, forKey: StorageKey.playMode)
+            // 初心者／達人を切り替えたら、初回限りの操作ヒントをもう一度出せるように戻す
+            // - 起動時の復元（isInitializing 中）では戻さない
+            // - 同じモードを選び直したときは戻さない
+            guard !isInitializing, oldValue != playMode else { return }
+            SettingViewModel.resetOneTimeHints()
         }
+    }
+
+    /// 初回限りの操作ヒントの「見た」フラグをすべて戻す
+    /// - 操作モード（初心者／達人）を切り替えたときに呼ぶ。モードが変わると画面の見え方も変わるため、
+    ///   もう一度ヒントを見せる
+    /// - 新しい一度きりのヒントを足したら、ここにもキーを追加すること
+    static func resetOneTimeHints() {
+        let defaults = UserDefaults.standard
+        for key in OneTimeHintKey.all {
+            defaults.removeObject(forKey: key)
+        }
+    }
+
+    /// 初回限りの操作ヒントに使う @AppStorage のキー
+    /// - @AppStorage を使う View 側と、ここでのリセットで同じ文字列を参照するために一元管理する
+    enum OneTimeHintKey {
+        /// 単位キーで「換算せずに単位だけ差し替えた」ときのヒント（ContentView）
+        static let unitSwapHint = "hasSeenUnitSwapHint"
+        /// キーボード高さ変更ハンドルの案内（ContentView）
+        static let keyboardResizeHandle = "hasUsedKeyboardResizeHandle"
+
+        static let all: [String] = [unitSwapHint, keyboardResizeHandle]
     }
 
     /// 外観モード（自動／ライト／ダーク）

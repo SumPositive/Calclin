@@ -50,6 +50,8 @@ let COLOR_ANSWER: Color = COLOR_NUMBER      // 答え
 let COLOR_OPERATOR: Color = .cyan           // 演算子
 let COLOR_OPERATOR_WAIT: Color = .gray      // 待機演算子　右端の[.]や[)]
 let COLOR_UNIT: Color = .secondary          // 単位
+// 単位の下線色（タップで換算リストを出せる印）
+let COLOR_UNIT_UNDERLINE: Color = .accentColor
 let COLOR_MEMO: Color = .purple             // メモ
 let COLOR_WARN: Color = .red                // 危険！警告色
 // 背景色

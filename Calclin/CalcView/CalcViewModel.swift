@@ -121,6 +121,10 @@ final class CalcViewModel: ObservableObject {
     /// - toCode: 差し替えた後の単位code（この単位キーをもう一度押すと換算する）
     /// - number: 差し替え時の数値文字列（換算元の数値）
     private var lastUnitSwap: (fromCode: String, toCode: String, number: String)? = nil
+    /// 直前のキー入力で「換算せずに単位だけ差し替えた」かどうか
+    /// - 2.4.0 で挙動が変わった箇所なので、ContentView が初回だけ操作ヒントを出すために読む
+    /// - 次のキー入力のたびに false に戻る（input の先頭で落とす）
+    private(set) var didSwapUnitWithoutConvert = false
     private var isCalcRootResult = false           // √/∛ 直後フラグ（表示を最大精度にする）
     private var isAccRootResult  = false           // accumulator がルート結果フラグ（演算子後も継続）
     @Published private(set) var rollLinesBuilding: [RollLine] = []
@@ -155,6 +159,9 @@ final class CalcViewModel: ObservableObject {
     func input(_ keyDef: KeyDefinition)
     {
         log(.info, "input \(keyDef)")
+        // 単位差し替えヒントは「次のキータップまで」表示するので、毎入力の先頭で落とす
+        // （このキー入力自体が単位差し替えなら、下の inputUnit で改めて true になる）
+        didSwapUnitWithoutConvert = false
         // 入力開始トリガー：= 直後の最初のキー入力（自動スクロール用）
         if !historyRows.isEmpty {
             if calcMode == .calculator && isAfterEquals {
@@ -417,9 +424,9 @@ final class CalcViewModel: ObservableObject {
                 if let def = keyboardViewModel.keyDef(code: code),
                    let _ = def.unitBase {
                     // UNIT.formula を計算式に表示する
-                    var attr = AttributedString(def.formula)
-                    attr.foregroundColor = COLOR_UNIT //.opacity(0.5)
-                    self.formulaAttr += attr
+                    // 末尾の単位がタップできる形（[数値][単位]だけ）なら下線を付ける
+                    let isTappable = trailingDisplayUnit()?.code == def.code
+                    self.formulaAttr += unitAttrString(def.formula, isTappable: isTappable)
                 }
             }
             else{
@@ -674,6 +681,8 @@ final class CalcViewModel: ObservableObject {
                     // 同じ単位の押し直し（換算元＝換算先）は履歴を更新しない
                     if code != keyDef.code {
                         lastUnitSwap = (fromCode: code, toCode: keyDef.code, number: num)
+                        // 「換算されずに単位だけ変わった」瞬間を記録し、初回だけヒントを出す
+                        didSwapUnitWithoutConvert = true
                     }
                     formulaUpdate()
                 }
@@ -693,6 +702,23 @@ final class CalcViewModel: ObservableObject {
               let def = keyboardViewModel.keyDef(code: String(last.dropFirst())),
               def.unitBase != nil, def.unitBase != UNIT_CODE_BARE else { return nil }
         return (formula: def.formula, code: def.code)
+    }
+
+    /// 入力行に描画する単位の装飾文字列を作る
+    /// - タップして換算リストを出せる単位だけ、下線をアクセント色にして「押せる」ことを示す
+    ///   （文字色は COLOR_UNIT のままにして、数値・演算子の色分けを崩さない）
+    /// - 履歴行など、タップできない場所では下線を付けない（押せそうで押せない見た目を避ける）
+    /// - Parameter isTappable: 換算リストを開ける単位かどうか
+    private func unitAttrString(_ formula: String, isTappable: Bool) -> AttributedString {
+        var attr = AttributedString(formula)
+        attr.foregroundColor = COLOR_UNIT
+        if isTappable {
+            // 色は Text.LineStyle の中に入れる。
+            // attr.underlineColor は UIKit スコープに入るのに対し underlineStyle は SwiftUI スコープへ入り、
+            // SwiftUI の Text は自分のスコープしか見ないため、別々に指定すると下線が文字色のままになる
+            attr.underlineStyle = Text.LineStyle(pattern: .solid, color: COLOR_UNIT_UNDERLINE)
+        }
+        return attr
     }
 
     /// 単位タップの換算メニューに並べる1件分
@@ -1019,9 +1045,8 @@ final class CalcViewModel: ObservableObject {
                 } else if let ut = unitToken {
                     let code = String(ut.dropFirst())
                     if let def = keyboardViewModel.keyDef(code: code) {
-                        var unitAttr = AttributedString(def.formula)
-                        unitAttr.foregroundColor = COLOR_UNIT
-                        curPart += unitAttr
+                        // 下の displayUnit と同じ条件でタップ領域が出るので、下線もそれに揃える
+                        curPart += unitAttrString(def.formula, isTappable: !isPercMode)
                     }
                 } else {
                     let zero = extractTrailingZerosAfterDecimal(numStr)

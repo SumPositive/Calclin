@@ -52,6 +52,22 @@
         }
       }
     },
+    "calc.unit.swapHint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only the unit changed. Tap the same unit key again to convert the value. Tap the unit in the input row to see the conversion list."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\u5358\u4f4d\u3060\u3051\u3092\u5909\u3048\u307e\u3057\u305f\u3002\u540c\u3058\u5358\u4f4d\u30ad\u30fc\u3092\u3082\u3046\u4e00\u5ea6\u62bc\u3059\u3068\u63db\u7b97\u3057\u307e\u3059\u3002\u5165\u529b\u884c\u306e\u5358\u4f4d\u3092\u62bc\u3059\u3068\u63db\u7b97\u30ea\u30b9\u30c8\u3092\u8868\u793a\u3057\u307e\u3059"
+          }
+        }
+      }
+    },
     "calc.unit.cannotConvert" : {
       "localizations" : {
         "en" : {
