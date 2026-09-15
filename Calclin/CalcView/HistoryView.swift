@@ -58,8 +58,10 @@ struct HistoryView: View {
                                          viewModel: viewModel)
                             } else {
                                 CustomCell(viewModel: viewModel, row: row, rowIndex: index,
-                                           // 直近の結果だけ強調する（次の入力を始めるまで）
+                                           // 拡大するのは [=] を押した直後だけ。
+                                           // 次の入力を始めるか、[CA]・モード切替で解除される
                                            isLatest: index == viewModel.historyRows.count - 1
+                                                     && viewModel.isAfterEquals
                                                      && isFormulaInputEmpty)
                             }
                         }
@@ -224,7 +226,14 @@ struct CustomCell: View {
 
             // 最新行だけ、答えの単位を別 Text にして横に並べる。
             // 1つの AttributedString に混ぜると単位の位置が特定できずタップできないため
-            HStack(alignment: .firstTextBaseline, spacing: 0) {
+            // 本文と単位を横に並べる。
+            // - 本文側に maxWidth を与えると単位が右端へ押し出され、
+            //   折り返したとき最終行と離れて見えるので、HStack 側で右寄せする
+            // - 中の Text は scaleEffect(y: -1) で反転しているため、
+            //   ベースライン揃えは反転の影響で意図と逆になるため使わない。
+            //   .top なら反転後も答えの行に単位が並ぶ
+            HStack(alignment: .top, spacing: 0) {
+                Spacer(minLength: 0)
             // 計算式 = 答え
             Text({
                 var equal = AttributedString(FM_ANS)
@@ -280,7 +289,7 @@ struct CustomCell: View {
             .font(.system(size: fontSize * calcFontScale, weight: .regular, design: .rounded).monospacedDigit())
             .opacity(colorScheme == .dark ? 0.55 : 1.0)
             .multilineTextAlignment(.trailing) // 複数行で右寄せ
-            .frame(maxWidth: .infinity, alignment: .trailing) // 右寄せ
+            .layoutPriority(1)   // 単位より先に幅を取り、折り返しは本文側で吸収する
 
                 if let unit = latestUnitText {
                     Text(unit)

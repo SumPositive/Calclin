@@ -466,6 +466,9 @@ final class CalcViewModel: ObservableObject {
                 self.accumulatorPart = nil
                 self.currentPart = ""
                 self.displayUnit = nil
+                // [=] 直後であることを電卓モードと同じ形で持つ。
+                // 履歴の最新行を強調するかの判定に使う
+                self.isAfterEquals = true
             } else {
                 // 計算前に括弧を閉じるための呼び出し。表示だけ整えて tokens は残す
                 self.isAnswerMode = true
@@ -878,23 +881,23 @@ final class CalcViewModel: ObservableObject {
         save()
     }
 
-    /// 履歴の行をタップして、答えを入力行に引用する（数式モード）
-    /// - 電卓モードの [=] 行タップと揃える。連続タップで合計を積み上げられる
-    /// - すでに値があって演算子が無ければ [+] を挟んでから続ける
+    /// 取り出した値（数値＋単位）を、いまのモードの入力行へ引用する
+    /// - 引用元が数式の行かロールの [=] 行かに関わらず、同じ入口を通す
     /// - Returns: 引用できたら true。単位の基準が合わず足せない場合は false
     @MainActor
     @discardableResult
-    func quoteHistoryAnswer(_ row: HistoryRow) -> Bool {
-        guard calcMode == .formula else { return false }
+    private func quoteValue(_ numStr: String, unitDef: KeyDefinition?) -> Bool {
+        calcMode == .calculator
+            ? quoteValueIntoCalc(numStr, unitDef: unitDef)
+            : quoteValueIntoFormula(numStr, unitDef: unitDef)
+    }
 
-        // 答えの数値と単位を取り出す（answer は "2,586" のような整形済み文字列）
-        let parsed = parseRollValue(row.answer + (row.unitFormula ?? ""))
-        guard let quotedNum = parsed.num else { return false }
-        let quotedDef = parsed.def
-
+    /// 数式モードの入力行へ引用する
+    @MainActor
+    private func quoteValueIntoFormula(_ numStr: String, unitDef: KeyDefinition?) -> Bool {
         // すでに単位付きの式が組み立て中なら、基準単位が揃っているかを確かめる
         // （単位なし＝無名数はどちらの側でも許す）
-        if let quotedBase = quotedDef?.unitBase {
+        if let quotedBase = unitDef?.unitBase {
             for token in tokens where token.hasPrefix(TOKEN_UNIT_PREFIX) {
                 let code = String(token.dropFirst())
                 if let def = keyboardViewModel.keyDef(code: code),
@@ -918,12 +921,63 @@ final class CalcViewModel: ObservableObject {
             tokens.append(FM_ADD)
         }
 
-        tokens.append(quotedNum)
-        if let def = quotedDef {
+        tokens.append(numStr)
+        if let def = unitDef {
             tokens.append(TOKEN_UNIT_PREFIX + def.code)
         }
         formulaUpdate()
         return true
+    }
+
+    /// 電卓モードの入力行へ引用する
+    @MainActor
+    private func quoteValueIntoCalc(_ numStr: String, unitDef: KeyDefinition?) -> Bool {
+        // 入力途中の数値があるか（ユーザーが打ちかけている値）
+        let hasPendingEntry = !isCalcNewEntry && currentCalcValue() != nil
+
+        // すでに単位付きの式が続いているなら、基準単位が揃っているかを確かめる
+        if pendingOp != nil || !rollLinesBuilding.isEmpty || hasPendingEntry {
+            let currentBase = (hasPendingEntry ? currentCalcValue()?.unitDef : nil)?.unitBase
+                ?? calcUnitDef?.unitBase
+            if let currentBase, let quotedBase = unitDef?.unitBase,
+               currentBase != quotedBase {
+                return false
+            }
+        }
+
+        // すでに値があるなら [+] で確定してから続ける（打ちかけの数字を捨てない）
+        if hasPendingEntry {
+            inputOperatorCalc(FM_ADD)
+        }
+
+        tokens = [numStr]
+        if let def = unitDef {
+            tokens.append(TOKEN_UNIT_PREFIX + def.code)
+            calcUnitDef = def
+        }
+        isCalcNewEntry = false
+        isCalcNewEntryAfterUnit = false
+        isAnswerMode = false
+        isAfterEquals = false
+        isCalcRootResult = false
+        resetPercMode()
+        lastUnitSwap = nil
+        formulaUpdateCalc()
+        return true
+    }
+
+    /// 履歴の行をタップして、答えを入力行に引用する（数式モード）
+    /// - 電卓モードの [=] 行タップと揃える。連続タップで合計を積み上げられる
+    /// - すでに値があって演算子が無ければ [+] を挟んでから続ける
+    /// - Returns: 引用できたら true。単位の基準が合わず足せない場合は false
+    @MainActor
+    @discardableResult
+    func quoteHistoryAnswer(_ row: HistoryRow) -> Bool {
+        // 答えの数値と単位を取り出す（answer は "2,586" のような整形済み文字列）
+        let parsed = parseRollValue(row.answer + (row.unitFormula ?? ""))
+        guard let quotedNum = parsed.num else { return false }
+        // 入力先は「いまのモード」。数式・電卓のどちらからでも引用できる
+        return quoteValue(quotedNum, unitDef: parsed.def)
     }
 
     /// ロールの [=] 行をタップして、答えを入力行に引用する（電卓モード）
@@ -952,44 +1006,8 @@ final class CalcViewModel: ObservableObject {
             quotedNum = num
             quotedDef = parsed.def
         }
-
-        // 入力途中の数値があるか（ユーザーが打ちかけている値）
-        let hasPendingEntry = !isCalcNewEntry && currentCalcValue() != nil
-
-        // すでに単位付きの式が続いているなら、基準単位が揃っているかを確かめる
-        // - ㎡ と kg のように基準が違うものは足せないので、引用せず呼び出し側へ知らせる
-        // - 単位なし（無名数）はどちらの側でも許す。60㎡×3 のような使い方ができる
-        if pendingOp != nil || !rollLinesBuilding.isEmpty || hasPendingEntry {
-            // 入力途中の値に付いている単位も見る（まだ accumulator に入っていないため）
-            let currentBase = (hasPendingEntry ? currentCalcValue()?.unitDef : nil)?.unitBase
-                ?? calcUnitDef?.unitBase
-            let quotedBase = quotedDef?.unitBase
-            if let currentBase, let quotedBase, currentBase != quotedBase {
-                return false
-            }
-        }
-
-        // すでに値がある（手入力の途中、または前回の引用）なら [+] で確定してから続ける
-        // - 打ちかけの数字を捨てない
-        // - 連続してタップすれば 90 + 12 + … と積み上がる
-        if hasPendingEntry {
-            inputOperatorCalc(FM_ADD)
-        }
-
-        tokens = [quotedNum]
-        if let def = quotedDef {
-            tokens.append(TOKEN_UNIT_PREFIX + def.code)
-            calcUnitDef = def
-        }
-        isCalcNewEntry = false
-        isCalcNewEntryAfterUnit = false
-        isAnswerMode = false
-        isAfterEquals = false
-        isCalcRootResult = false
-        resetPercMode()
-        lastUnitSwap = nil
-        formulaUpdateCalc()
-        return true
+        // 入力先は「いまのモード」。数式・電卓のどちらからでも引用できる
+        return quoteValue(quotedNum, unitDef: quotedDef)
     }
 
     /// 入力行末尾に表示中の単位（単位タップ領域を出す条件つき）を返す
@@ -2219,14 +2237,20 @@ final class CalcViewModel: ObservableObject {
             if lines[idx].isFinal {
                 // 最終行: 結果を再計算
                 let resultDisplayStr: String
+                let resultNumStr: String
                 if let def = calcUnitDef {
-                    let resultNumStr = fromBaseValue(acc, toUnitDef: def)
+                    resultNumStr = fromBaseValue(acc, toUnitDef: def)
                     resultDisplayStr = AZDecimal(resultNumStr).formatted(calcConfig) + def.formula
                 } else {
+                    resultNumStr = acc.rounded(calcConfig).value
                     resultDisplayStr = acc.formatted(calcConfig)
                 }
                 lines[idx].value = resultDisplayStr
                 lines[idx].accBase = acc.value
+                // 引用（= 行タップ）はこの rawBase を読むので、必ず更新する。
+                // 表示だけ直して rawBase を残すと、編集前の答えが引用されてしまう
+                lines[idx].rawBase = resultNumStr
+                lines[idx].unitCode = calcUnitDef?.code
                 break
             } else {
                 // 中間行: accBase と runningTotal を更新
