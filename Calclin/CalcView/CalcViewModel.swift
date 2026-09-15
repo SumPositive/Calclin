@@ -120,6 +120,7 @@ final class CalcViewModel: ObservableObject {
             // ユーザーが自分でモードを切り替えたら、編集のための復帰先は捨てる
             // （残すと次の編集終了時に意図しないモードへ戻る）
             modeBeforeRollEdit = nil
+            modeBeforeFormulaCopy = nil
             resetCalculatorState()
             formulaUpdate()
         }
@@ -322,6 +323,8 @@ final class CalcViewModel: ObservableObject {
                     tokens = [] //.removeAll()
                     isAnswerMode = false
                     formulaUpdate()
+                    // 式コピペのための一時的な数式モードなら、消したので電卓へ戻す
+                    endTemporaryFormulaModeIfNeeded()
 
                 case "CS": // [SC] Clear Section：Token単位のクリア
                     if let last = tokens.last {
@@ -1337,6 +1340,8 @@ final class CalcViewModel: ObservableObject {
                 }
                 // Answer用フォーマット（確定なので入力行は空にする）
                 formulaUpdate(true, clearsInput: true)
+                // 式コピペのための一時的な数式モードなら、計算が終わったので電卓へ戻す
+                endTemporaryFormulaModeIfNeeded()
             }
             else if 3 < tokens.count {
                 // lastが演算子の場合
@@ -2030,6 +2035,40 @@ final class CalcViewModel: ObservableObject {
         isSwitchingModeForRollEdit = true
         calcMode = mode
         isSwitchingModeForRollEdit = false
+    }
+
+    /// 式コピペのために数式モードへ切り替えたときの、元のモード
+    /// - [=] で計算を終えるか [CA] で消したら戻す。nil = 切り替えていない
+    /// - ロール行編集の `modeBeforeRollEdit` とは用途が別なので分けて持つ
+    ///   （編集中に式コピペをしても互いの復帰先を壊さない）
+    private var modeBeforeFormulaCopy: CalcMode? = nil
+
+    /// 電卓モードから数式履歴の式をコピーするために、一時的に数式モードへ切り替える
+    /// - 数式モードのときは何もしない（そのままコピーするだけ）
+    func beginTemporaryFormulaMode() {
+        guard calcMode != .formula else { return }
+        modeBeforeFormulaCopy = calcMode
+        // calcMode の didSet は入力中の式を消すので、直接書き換えて副作用を避ける
+        setCalcModeForRollEdit(.formula)
+    }
+
+    /// 式コピペのために切り替えていたら、元のモードへ戻す
+    /// - [=] の確定後と [CA] のクリア後に呼ぶ
+    private func endTemporaryFormulaModeIfNeeded() {
+        guard let previous = modeBeforeFormulaCopy else { return }
+        modeBeforeFormulaCopy = nil
+        // [=] 直後の「最新行を強調」は電卓へ戻っても残したいので、
+        // isAfterEquals を落とす resetCalculatorState() は呼ばない
+        let keepsAfterEquals = isAfterEquals
+        setCalcModeForRollEdit(previous)
+        // 数式側で使った入力状態は持ち越さない。
+        // 電卓側の計算途中（accumulator / pendingOp / ロール）は
+        // 式コピペの前後で触っていないので、そのまま復帰する
+        tokens = []
+        isAnswerMode = false
+        isAfterEquals = keepsAfterEquals
+        // 一時切替では didSet を抑止しているので、戻った先の入力行をここで描き直す
+        formulaUpdateCalc()
     }
 
     func startRollEdit(historyIndex: Int, lineIndex: Int) {

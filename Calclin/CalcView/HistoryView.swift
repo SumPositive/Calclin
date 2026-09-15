@@ -92,18 +92,30 @@ struct HistoryView: View {
                                 }
                                 .tint(COLOR_MEMO) // スワイプ背景色
 
-                                Button() {
-                                    // 式コピペ　row.tokenからformulaTextを再現する
-                                    viewModel.formulaFromHistoryToken(row)
-                                } label: {
-                                    Text("history.copy.expression") // 上下逆に表示される
-                                    //.font(.system(size: 24.0, weight: .bold))
+                                // 式コピペは「式＝答え」の行だけ。
+                                // 電卓で作ったロール行は式を持たないので出さない
+                                if row.rollLines == nil {
+                                    Button() {
+                                        // 式コピペ　row.tokenからformulaTextを再現する
+                                        // 通常この画面は数式モードだが、ロール行編集中は
+                                        // 一時的に電卓モードなので、電卓側と同じ処置をする
+                                        // （数式モードのときは何もしない）
+                                        viewModel.beginTemporaryFormulaMode()
+                                        viewModel.formulaFromHistoryToken(row)
+                                    } label: {
+                                        Text("history.copy.expression") // 上下逆に表示される
+                                        //.font(.system(size: 24.0, weight: .bold))
+                                    }
+                                    .tint(COLOR_OPERATOR) // スワイプ背景色
                                 }
-                                .tint(COLOR_OPERATOR) // スワイプ背景色
 
                                 Button() {
-                                    // 答えコピペ  row.answerからformulaTextを再現する
-                                    viewModel.formulaFromHistoryAnswer(row)
+                                    // 答えコピペ。formulaFromHistoryAnswer() は数式モード用の
+                                    // 描画しかしないので、モードを見て引用する方を使う
+                                    // （ロール行編集で一時的に電卓モードのことがある）
+                                    if viewModel.quoteHistoryAnswer(row) == false {
+                                        Manager.shared.toast(String(localized: "calc.quote.unitMismatch"))
+                                    }
                                 } label: {
                                     Text("history.copy.answer") // 上下逆に表示される
                                 }
@@ -427,6 +439,44 @@ struct RollView: View {
                                 Image("trash.fill_rev").imageScale(.large)
                             }
                         }
+                        // 右スワイプ（数式モードの履歴行と揃える）
+                        // （false:全スワイプ即メモを避ける）
+                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                            Button() {
+                                // メモする
+                                setting.popupHistoryMemoInfo = (maxLength: 0,
+                                                                index: index,
+                                                                calcIndex: calcIndex)
+                            } label: {
+                                Image("edit_rev").imageScale(.large)
+                            }
+                            .tint(COLOR_MEMO) // スワイプ背景色
+
+                            // 式コピペは「式＝答え」の行だけ。
+                            // 電卓で作ったロール行は式を持たないので出さない
+                            if row.rollLines == nil {
+                                Button() {
+                                    // 式は数式モードでしか編集・計算できないので、
+                                    // 一時的に数式モードへ切り替えてから復元する
+                                    viewModel.beginTemporaryFormulaMode()
+                                    viewModel.formulaFromHistoryToken(row)
+                                } label: {
+                                    Text("history.copy.expression") // 上下逆に表示される
+                                }
+                                .tint(COLOR_OPERATOR) // スワイプ背景色
+                            }
+
+                            Button() {
+                                // 答えコピペ。formulaFromHistoryAnswer() は数式モード用の
+                                // 描画しかしないので、モードを見て引用する方を使う
+                                if viewModel.quoteHistoryAnswer(row) == false {
+                                    Manager.shared.toast(String(localized: "calc.quote.unitMismatch"))
+                                }
+                            } label: {
+                                Text("history.copy.answer") // 上下逆に表示される
+                            }
+                            .tint(COLOR_ANSWER) // スワイプ背景色
+                        }
                         // 「式＝答え」の行はここでタップを受ける。
                         // ロール明細の行はセル内で行ごとに受けるので対象外
                         .onTapGesture {
@@ -551,7 +601,8 @@ struct RollCell: View {
             .foregroundStyle(Color.secondary.opacity(0.7))
     }
 
-    @ViewBuilder
+    // 本体は単一の HStack を return するだけなので @ViewBuilder は付けない
+    // （明示 return と併用すると builder が無効化されエラーになる）
     private func valueText(opStr: String, value: String, isFinal: Bool,
                            unitCode: String? = nil) -> some View {
         // 単位は常に別 Text に分ける（数値と色・太さを変えるため）。
@@ -668,18 +719,20 @@ struct RollCell: View {
                     .contentShape(Rectangle())
                     // [=] 行：タップで答えを引用、長押しでメモ入力
                     // （連続タップで合計を積み上げられるよう、タップ側を引用にしている）
+                    // 長押しを先に宣言する。逆順だとタップ側が先に成立して
+                    // 長押しがほとんど発火しない
+                    .onLongPressGesture {
+                        guard line.isFinal, historyIndex >= 0 else { return }
+                        setting.popupHistoryMemoInfo = (maxLength: 0,
+                                                        index: historyIndex,
+                                                        calcIndex: calcIndex)
+                    }
                     .onTapGesture {
                         if line.isFinal {
                             onTapAnswer?(line)
                         } else {
                             onTapLine?(lineIdx)
                         }
-                    }
-                    .onLongPressGesture {
-                        guard line.isFinal, historyIndex >= 0 else { return }
-                        setting.popupHistoryMemoInfo = (maxLength: 0,
-                                                        index: historyIndex,
-                                                        calcIndex: calcIndex)
                     }
                 }
             }
