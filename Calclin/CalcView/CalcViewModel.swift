@@ -77,6 +77,8 @@ final class CalcViewModel: ObservableObject {
         var isFinal: Bool           // true = この計算の最終結果
         var runningTotal: String?   // 中間結果（幅が広いとき左端に小さく表示）
         // 編集・再計算用（isFinal == false の行のみ有効）
+        // - rawBase は通常行では Base単位。ただし = 行（isFinal）だけは
+        //   タップ引用のために「表示単位の答え」を入れている（編集系は !isFinal でガード済み）
         var rawBase: String = ""        // 入力値（Base単位、%解決済み）
         var accBase: String = "0"       // 演算前 accumulator（Base単位）
         var unitCode: String? = nil     // 表示単位コード（nil = 単位なし）
@@ -110,7 +112,10 @@ final class CalcViewModel: ObservableObject {
     private var accumulator: AZDecimal = .zero
     private var pendingOp: String? = nil        // 保留中の演算子
     private var isCalcNewEntry: Bool = true     // 次の数字入力で現在値をクリア
-    private var isAfterEquals: Bool = false     // = 直後フラグ（演算子続けで合計引き継ぎ）
+    // = 直後フラグ（演算子続けで合計引き継ぎ）
+    // - ロールの最新 [=] 行を強調するかの判定にも使うので View から読めるようにする
+    //   （[CA] でクリアすると false になり、強調が解ける）
+    @Published private(set) var isAfterEquals: Bool = false
     private var isPercMode: Bool = false        // % / 割 / 分 / 厘 入力済みフラグ
     private var percDivisor: AZDecimal = AZDecimal("100")  // 除数: %=100, 割=10, 分=100, 厘=1000
     private var percSymbol: String = FM_PERC               // 表示記号: "%", "割", "分", "厘"
@@ -696,6 +701,100 @@ final class CalcViewModel: ObservableObject {
     }
     
     
+    /// ロール行の表示文字列（"2,586kg" など）から数値と単位を取り出す
+    /// - この機能より前に保存された履歴には rawBase / unitCode が無いため、その補完に使う
+    /// - Returns: 数値文字列（桁区切りを除いた素の値）と単位定義。解釈できなければ num は nil
+    private func parseRollValue(_ text: String) -> (num: String?, def: KeyDefinition?) {
+        var body = text.trimmingCharacters(in: .whitespaces)
+        guard !body.isEmpty else { return (nil, nil) }
+
+        // 末尾の単位表記を探す。長い表記から順に見て、"m" が "mm" を食わないようにする
+        var matched: KeyDefinition? = nil
+        let unitDefs = keyboardViewModel.keyDefs
+            .filter { ($0.unitBase != nil) && $0.unitBase != UNIT_CODE_BARE && !$0.formula.isEmpty }
+            .sorted { $0.formula.count > $1.formula.count }
+        for def in unitDefs where body.hasSuffix(def.formula) {
+            matched = def
+            body = String(body.dropLast(def.formula.count))
+            break
+        }
+
+        // 桁区切りを取り除き、小数点を内部表記（"."）へ戻す
+        body = body.replacingOccurrences(of: calcConfig.groupSeparator, with: "")
+        if calcConfig.decimalSeparator != FM_DECIMAL {
+            body = body.replacingOccurrences(of: calcConfig.decimalSeparator, with: FM_DECIMAL)
+        }
+        body = body.trimmingCharacters(in: .whitespaces)
+        guard Double(body) != nil else { return (nil, matched) }
+        return (body, matched)
+    }
+
+    /// ロールの [=] 行をタップして、答えを入力行に引用する（電卓モード）
+    /// - 数値と単位をそのまま引用し、続けて演算子（既定は [+]）を置く
+    /// - 連続してタップすれば合計を積み上げられる
+    /// - 入力途中の値があっても引用値で置き換える
+    /// - Parameters:
+    ///   - line: タップされた [=] 行
+    /// - Returns: 引用できたら true。単位の基準が合わず加算できない場合は false
+    @MainActor
+    @discardableResult
+    func quoteRollAnswer(_ line: RollLine) -> Bool {
+        guard line.isFinal else { return false }
+
+        // 引用する数値。
+        // この機能より前に保存された履歴は rawBase / unitCode を持たないので、
+        // 表示文字列（"2,586kg" など）から数値と単位を取り出して補う
+        let quotedNum: String
+        let quotedDef: KeyDefinition?
+        if !line.rawBase.isEmpty {
+            quotedNum = line.rawBase
+            quotedDef = line.unitCode.flatMap { keyboardViewModel.keyDef(code: $0) }
+        } else {
+            let parsed = parseRollValue(line.value)
+            guard let num = parsed.num else { return false }
+            quotedNum = num
+            quotedDef = parsed.def
+        }
+
+        // 入力途中の数値があるか（ユーザーが打ちかけている値）
+        let hasPendingEntry = !isCalcNewEntry && currentCalcValue() != nil
+
+        // すでに単位付きの式が続いているなら、基準単位が揃っているかを確かめる
+        // - ㎡ と kg のように基準が違うものは足せないので、引用せず呼び出し側へ知らせる
+        // - 単位なし（無名数）はどちらの側でも許す。60㎡×3 のような使い方ができる
+        if pendingOp != nil || !rollLinesBuilding.isEmpty || hasPendingEntry {
+            // 入力途中の値に付いている単位も見る（まだ accumulator に入っていないため）
+            let currentBase = (hasPendingEntry ? currentCalcValue()?.unitDef : nil)?.unitBase
+                ?? calcUnitDef?.unitBase
+            let quotedBase = quotedDef?.unitBase
+            if let currentBase, let quotedBase, currentBase != quotedBase {
+                return false
+            }
+        }
+
+        // すでに値がある（手入力の途中、または前回の引用）なら [+] で確定してから続ける
+        // - 打ちかけの数字を捨てない
+        // - 連続してタップすれば 90 + 12 + … と積み上がる
+        if hasPendingEntry {
+            inputOperatorCalc(FM_ADD)
+        }
+
+        tokens = [quotedNum]
+        if let def = quotedDef {
+            tokens.append(TOKEN_UNIT_PREFIX + def.code)
+            calcUnitDef = def
+        }
+        isCalcNewEntry = false
+        isCalcNewEntryAfterUnit = false
+        isAnswerMode = false
+        isAfterEquals = false
+        isCalcRootResult = false
+        resetPercMode()
+        lastUnitSwap = nil
+        formulaUpdateCalc()
+        return true
+    }
+
     /// 入力行末尾に表示中の単位（単位タップ領域を出す条件つき）を返す
     /// - [数値][単位]だけのときに限る。途中式（3㎡+5坪 など）で末尾だけ換算すると
     ///   式の意味が変わってしまうため、単位キーの差し替えが許される形と条件を揃える
@@ -1092,6 +1191,9 @@ final class CalcViewModel: ObservableObject {
     private func resetCalculatorState() {
         accumulator = .zero
         pendingOp = nil
+        // 編集中の累計表示は accumulator より優先して表示されるので、必ず一緒に消す
+        // （消し忘れると [CA] 後も前の累計値が入力行に残り続ける）
+        editingAccDisplay = ""
         isCalcNewEntry = true
         isAfterEquals = false
         resetPercMode()
@@ -1567,7 +1669,10 @@ final class CalcViewModel: ObservableObject {
             resultDisplayStr = resultBase.formatted(calcConfig)
         }
 
-        rollLinesBuilding.append(RollLine(op: FM_ANS, value: resultDisplayStr, isFinal: true))
+        // = 行タップで引用できるよう、答えの生値と表示単位を持たせる
+        rollLinesBuilding.append(RollLine(op: FM_ANS, value: resultDisplayStr, isFinal: true,
+                                          rawBase: resultNumStr,
+                                          unitCode: displayUnit?.code))
 
         // 履歴へ記録
         let row = HistoryRow(tokens: [], formula: AttributedString(""),
@@ -1583,11 +1688,14 @@ final class CalcViewModel: ObservableObject {
         isCalcNewEntry = true
         isAfterEquals = true
         resetPercMode()
-        // tokens に結果を表示単位で格納（単位変換キーで変換できるように）
-        tokens = [resultNumStr]
-        if let def = displayUnit {
-            tokens.append(TOKEN_UNIT_PREFIX + def.code)
-        }
+        // 入力行は空にする。
+        // - 答えは accumulator に入っているので、[+] などで続けて計算できる
+        // - 答えを使い直したいときはロールの [=] 行をタップして引用する
+        //   （単位の換算もそちらで行う）
+        // - 以前は答えを tokens に残していたが、入力待ちなのか答えなのか
+        //   見分けがつかず紛らわしかった
+        tokens = []
+        // calcUnitDef はそのまま維持する（= 後に [+] で続けたとき結果の単位を保つため）
         isAnswerMode = false
         formulaUpdateCalc()
     }

@@ -193,6 +193,21 @@ struct RollView: View {
         Array(viewModel.historyRows.enumerated().reversed())
     }
 
+    /// 入力行が空か（= の直後で、まだ次の入力を始めていない）
+    private var isFormulaInputEmpty: Bool {
+        String(viewModel.formulaAttr.characters)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty
+    }
+
+    /// [=] 行をタップして答えを入力行へ引用する
+    /// - 基準単位が違って足せない場合は引用せず、理由を知らせる
+    private func quoteAnswer(_ line: CalcViewModel.RollLine) {
+        if viewModel.quoteRollAnswer(line) == false {
+            Manager.shared.toast(String(localized: "calc.quote.unitMismatch"))
+        }
+    }
+
     var body: some View {
         ScrollViewReader { proxy in
             List {
@@ -205,6 +220,9 @@ struct RollView: View {
                              editingLineIndex: viewModel.editingLineIndex,
                              onTapLine: { lineIdx in
                                  viewModel.startRollEdit(historyIndex: -1, lineIndex: lineIdx)
+                             },
+                             onTapAnswer: { line in
+                                 quoteAnswer(line)
                              })
                         .id("live")
                         .listRowInsets(EdgeInsets())
@@ -222,7 +240,16 @@ struct RollView: View {
                              editingLineIndex: viewModel.editingLineIndex,
                              onTapLine: { lineIdx in
                                  viewModel.startRollEdit(historyIndex: index, lineIndex: lineIdx)
-                             })
+                             },
+                             onTapAnswer: { line in
+                                 quoteAnswer(line)
+                             },
+                             // 直近の計算結果だけ入力行と同じ書体にする
+                             // 直近の結果を強調するのは [=] の直後だけ。
+                             // 次の入力を始めるか [CA] でクリアすると解除される
+                             isLatest: index == viewModel.historyRows.count - 1
+                                       && viewModel.isAfterEquals
+                                       && isFormulaInputEmpty)
                         .id(index)
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden, edges: .all)
@@ -286,6 +313,10 @@ struct RollCell: View {
     var editingHistoryIndex: Int? = nil
     var editingLineIndex: Int = 0
     var onTapLine: ((Int) -> Void)? = nil
+    /// [=] 行をタップしたとき（答えを入力行へ引用する）
+    var onTapAnswer: ((CalcViewModel.RollLine) -> Void)? = nil
+    /// 履歴の最新行かどうか（最新の [=] だけ入力行と同じ書体で見せる）
+    var isLatest: Bool = false
     @Environment(\.colorScheme) var colorScheme
     // 文字サイズ「自動」ではシステム Dynamic Type から CalcView 用倍率を決める
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -294,6 +325,14 @@ struct RollCell: View {
 
     private var calcFontScale: CGFloat {
         setting.calcViewFontScale(for: dynamicTypeSize)
+    }
+
+    /// 最新の [=] 行の文字サイズ。入力行（FormulaView）の見た目に合わせる
+    /// - 入力行は 33.6pt 基準（特大は 1.7 倍で頭打ち）だが、
+    ///   高さ 33.6*scale*1.2 の枠に収めているぶん実際は一回り小さく見える。
+    ///   ロールは枠が無く同じ指定だと大きく見えるため、実測に合わせて 0.8 を掛ける
+    private var latestAnswerFontSize: CGFloat {
+        33.6 * setting.inputRowFontScale(for: dynamicTypeSize) * 0.8
     }
 
     private func isEditingLine(_ lineIdx: Int) -> Bool {
@@ -318,13 +357,24 @@ struct RollCell: View {
                     .foregroundStyle(COLOR_OPERATOR)
             }
             Text(value)
-                .font(.system(size: fontSize * calcFontScale,
-                              weight: isFinal ? .bold : .regular,
-                              design: .rounded)
-                    .monospacedDigit())
+                // 最新の [=] だけは入力行と同じ書体・サイズにして、直前の答えを見つけやすくする
+                .font(isLatest && isFinal
+                      ? setting.numberFont.font(size: latestAnswerFontSize, weight: .bold)
+                      : .system(size: fontSize * calcFontScale,
+                                weight: isFinal ? .bold : .regular,
+                                design: .rounded)
+                          .monospacedDigit())
                 .foregroundStyle(isFinal ? COLOR_ANSWER : COLOR_NUMBER)
+                // 大きくしたぶん桁数が多いと幅を超えるので、狭いパネルでは縮めて収める
+                // （従来サイズまで縮み、それ以上は小さくしない）
+                .minimumScaleFactor(isLatest && isFinal
+                                    ? (fontSize * calcFontScale) / latestAnswerFontSize
+                                    : 1.0)
+                .lineLimit(1)
         }
-        .fixedSize(horizontal: true, vertical: false)
+        // 拡大した最新行は縮小して収めたいので fixedSize を外す
+        // （付けたままだと intrinsic 幅が優先され minimumScaleFactor が効かない）
+        .fixedSize(horizontal: !(isLatest && isFinal), vertical: false)
     }
 
     var body: some View {
@@ -363,16 +413,20 @@ struct RollCell: View {
                     .background(editing ? Color.accentColor.opacity(0.18) : Color.clear,
                                 in: RoundedRectangle(cornerRadius: 4))
                     .contentShape(Rectangle())
+                    // [=] 行：タップで答えを引用、長押しでメモ入力
+                    // （連続タップで合計を積み上げられるよう、タップ側を引用にしている）
                     .onTapGesture {
                         if line.isFinal {
-                            if historyIndex >= 0 {
-                                setting.popupHistoryMemoInfo = (maxLength: 0,
-                                                                index: historyIndex,
-                                                                calcIndex: calcIndex)
-                            }
+                            onTapAnswer?(line)
                         } else {
                             onTapLine?(lineIdx)
                         }
+                    }
+                    .onLongPressGesture {
+                        guard line.isFinal, historyIndex >= 0 else { return }
+                        setting.popupHistoryMemoInfo = (maxLength: 0,
+                                                        index: historyIndex,
+                                                        calcIndex: calcIndex)
                     }
                 }
             }

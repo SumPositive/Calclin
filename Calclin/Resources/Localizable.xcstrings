@@ -68,6 +68,22 @@
         }
       }
     },
+    "calc.quote.unitMismatch" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Different base unit, can\u2019t add"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\u57fa\u6e96\u5358\u4f4d\u304c\u9055\u3046\u305f\u3081\u5f15\u7528\u3067\u304d\u307e\u305b\u3093"
+          }
+        }
+      }
+    },
     "calc.unit.cannotConvert" : {
       "localizations" : {
         "en" : {

@@ -247,21 +247,25 @@ struct CalcView: View {
                                 .transition(.opacity)
                         }
                     }
-                    // モード切替は左端
+                    // ツールは左端にまとめる（PDF 出力 → モード切替 の順）
+                    // セグメンテッド側がカプセルの内側余白を持っているので、間隔は詰めてよい
                     .overlay(alignment: .leading) {
-                        inputLineTools(showsModeTitle: showsModeTitles,
-                                       isCompact: usesCompactTools)
+                        HStack(spacing: usesCompactTools ? 2 : 4) {
+                            inputLinePDFButton(showsTitle: showsInputToolTitles,
+                                               isCompact: usesCompactTools)
+                            inputLineTools(showsModeTitle: showsModeTitles,
+                                           isCompact: usesCompactTools)
+                        }
                             .padding(.leading, 6)
                             .opacity(showsInputTools ? 1 : 0)
                             .allowsHitTesting(showsInputTools)
                             .background {
                                 // タイトル付きの最大幅を常に測り、幅判定の揺れを避ける
-                                // 左右に分けて置いているので、両方を合わせた幅を測る
-                                HStack(spacing: usesCompactTools ? 6 : 12) {
-                                    inputLineTools(showsModeTitle: true,
-                                                   isCompact: usesCompactTools)
+                                HStack(spacing: usesCompactTools ? 2 : 4) {
                                     inputLinePDFButton(showsTitle: true,
                                                        isCompact: usesCompactTools)
+                                    inputLineTools(showsModeTitle: true,
+                                                   isCompact: usesCompactTools)
                                 }
                                     .hidden()
                                     .background {
@@ -272,14 +276,6 @@ struct CalcView: View {
                                         }
                                     }
                             }
-                    }
-                    // PDF 出力は右端
-                    .overlay(alignment: .trailing) {
-                        inputLinePDFButton(showsTitle: showsInputToolTitles,
-                                           isCompact: usesCompactTools)
-                            .padding(.trailing, 6)
-                            .opacity(showsInputTools ? 1 : 0)
-                            .allowsHitTesting(showsInputTools)
                     }
                     // 入力行の右側 1/3 を長押しでフォント選択ポップオーバーを開く
                     // SwiftUI の .onLongPressGesture は Color.clear 上でもタッチを掴んでしまい、
@@ -443,7 +439,8 @@ struct CalcView: View {
                 systemName: "arrow.up.doc",
                 title: String(localized: "common.pdf"),
                 showsTitle: showsTitle,
-                isCompact: isCompact
+                isCompact: isCompact,
+                isTightWidth: true
             )
         }
     }
@@ -682,6 +679,9 @@ private struct PaperToolButtonLabel: View {
     let showsTitle: Bool
     /// 狭いパネルでツールを収めるための縮小表示
     var isCompact: Bool = false
+    /// 左右の余白を詰める（アイコン幅ぎりぎりまで寄せる）
+    /// - 縦のタップ範囲は minHeight で確保したままにする
+    var isTightWidth: Bool = false
 
     private var iconScale: CGFloat {
         setting.calcViewFontScale(for: dynamicTypeSize)
@@ -709,7 +709,8 @@ private struct PaperToolButtonLabel: View {
                     .cappedAtLargeTypeSize()
             }
         }
-        .frame(minWidth: showsTitle ? 0 : minSide,
+        // 幅を詰めるときはアイコン＋わずかな余白だけにする（高さはタップしやすさのため据え置き）
+        .frame(minWidth: showsTitle ? 0 : (isTightWidth ? iconSize + 4 : minSide),
                minHeight: minSide)
         .contentShape(Rectangle())
     }
