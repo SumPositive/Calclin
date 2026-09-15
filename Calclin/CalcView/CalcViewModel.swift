@@ -104,10 +104,15 @@ final class CalcViewModel: ObservableObject {
     @Published var calcMode: CalcMode = .calculator {
         didSet {
             guard oldValue != calcMode else { return }
+            // ロール行編集のための一時切り替えでは、入力中の状態を壊さない
+            guard !isSwitchingModeForRollEdit else { return }
             tokens = []
             isAnswerMode = false
             editingHistoryIndex = nil
             editingLineIndex = 0
+            // ユーザーが自分でモードを切り替えたら、編集のための復帰先は捨てる
+            // （残すと次の編集終了時に意図しないモードへ戻る）
+            modeBeforeRollEdit = nil
             resetCalculatorState()
             formulaUpdate()
         }
@@ -1984,8 +1989,29 @@ final class CalcViewModel: ObservableObject {
     private var savedAccumulator: AZDecimal = .zero
     private var savedPendingOp: String? = nil
     private var savedCalcUnitDef: KeyDefinition? = nil
+    /// ロール行編集のために電卓モードへ切り替えたときの、元のモード
+    /// - 編集が終わったら戻す。nil = 切り替えていない
+    private var modeBeforeRollEdit: CalcMode? = nil
+    /// 上記の切り替え中だけ true。calcMode の didSet（入力クリア）を抑止する
+    private var isSwitchingModeForRollEdit = false
+
+    /// ロール行編集のためだけにモードを変える（入力中の状態は消さない）
+    private func setCalcModeForRollEdit(_ mode: CalcMode) {
+        isSwitchingModeForRollEdit = true
+        calcMode = mode
+        isSwitchingModeForRollEdit = false
+    }
 
     func startRollEdit(historyIndex: Int, lineIndex: Int) {
+        // ロール行の編集は電卓モードの仕組み。
+        // 数式モードから始めた場合は一時的に電卓モードへ切り替え、
+        // 編集が終わったら（確定・取消のどちらでも）元のモードへ戻す
+        if calcMode != .calculator {
+            modeBeforeRollEdit = calcMode
+            // calcMode の didSet は入力中の式を消すので、直接書き換えて副作用を避ける
+            setCalcModeForRollEdit(.calculator)
+        }
+
         // historyIndex == -1 は進行中ロールの編集
         let lines: [RollLine]
         if historyIndex == -1 {
@@ -2055,6 +2081,12 @@ final class CalcViewModel: ObservableObject {
         editingAccDisplay = ""
         tokens = []
         formulaUpdateCalc()
+
+        // 編集のために切り替えていたら元のモードへ戻す
+        if let previous = modeBeforeRollEdit {
+            modeBeforeRollEdit = nil
+            setCalcModeForRollEdit(previous)
+        }
     }
 
     /// 進行中ロールの編集確定・再計算

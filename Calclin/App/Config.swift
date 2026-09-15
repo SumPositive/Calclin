@@ -64,6 +64,11 @@ let UNIT_FONT_RATIO: CGFloat = 0.62
 //   （実測：数値の中心 +9.5pt に対し 坪 は +5.9pt）
 // - その差を埋めて、数値と単位の高さの中心を合わせる
 let UNIT_BASELINE_RATIO: CGFloat = 0.09
+
+// 履歴の計算どうしを仕切る線の、上下の余白
+// - 線自身に上下対称で付けるので、リストの上下反転を考えずに済む
+// - 数式・電卓のどちらの表示でも同じ間隔になる
+let SEPARATOR_GAP: CGFloat = 5.0
 let COLOR_MEMO: Color = .purple             // メモ
 let COLOR_WARN: Color = .red                // 危険！警告色
 // 背景色

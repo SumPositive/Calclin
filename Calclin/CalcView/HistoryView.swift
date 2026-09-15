@@ -45,6 +45,11 @@ struct HistoryView: View {
                                          calcIndex: calcIndex,
                                          editingHistoryIndex: viewModel.editingHistoryIndex,
                                          editingLineIndex: viewModel.editingLineIndex,
+                                         onTapLine: { lineIdx in
+                                             // 編集の間だけ電卓モードになり、終われば数式モードへ戻る
+                                             viewModel.startRollEdit(historyIndex: index,
+                                                                     lineIndex: lineIdx)
+                                         },
                                          onTapAnswer: { line in
                                              if viewModel.quoteRollAnswer(line) == false {
                                                  Manager.shared.toast(String(localized: "calc.quote.unitMismatch"))
@@ -61,7 +66,7 @@ struct HistoryView: View {
                             .id(index)
                             .listRowInsets(EdgeInsets()) // ← これが肝
                             .listRowSeparator(.hidden, edges: .all)
-                            .padding(.bottom, 4.0)  // 下の余白
+                            // 計算どうしの間隔は区切り線の余白で作るので、ここでは取らない
                             .padding(.horizontal, 12.0) // 左右の余白
                             .background(COLOR_BACK_FORMULA)
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -206,6 +211,17 @@ struct CustomCell: View {
 
     var body: some View {
         VStack(spacing: 0.0) {
+            // 計算のまとまりを示す区切り線（ロール表示と揃える）。
+            // この VStack は List の上下反転（scaleEffect(y: -1)）をそのまま受けるため、
+            // 先頭に置くと画面では計算の「下」に描かれる
+            Rectangle()
+                .fill(Color.secondary.opacity(0.3))
+                .frame(maxWidth: .infinity)
+                .frame(height: 0.5)
+                // 上下対称に余白を取る。こうすれば List の上下反転を考えずに済み、
+                // ロール表示と同じ見た目になる
+                .padding(.vertical, SEPARATOR_GAP)
+
             // 最新行だけ、答えの単位を別 Text にして横に並べる。
             // 1つの AttributedString に混ぜると単位の位置が特定できずタップできないため
             HStack(alignment: .firstTextBaseline, spacing: 0) {
@@ -294,7 +310,6 @@ struct CustomCell: View {
                         }
                 }
             }
-            .padding(.top, 4.0)
         }
         .frame(maxWidth: .infinity) // 親View内側一杯に広げる
     }
@@ -347,7 +362,7 @@ struct RollView: View {
                         .id("live")
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden, edges: .all)
-                        .padding(.bottom, 6)
+                        // 計算どうしの間隔は区切り線の余白で作るので、ここでは取らない
                         .padding(.horizontal, 12)
                         .background(COLOR_BACK_FORMULA)
                 }
@@ -384,7 +399,7 @@ struct RollView: View {
                         .id(index)
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden, edges: .all)
-                        .padding(.bottom, 6)
+                        // 計算どうしの間隔は区切り線の余白で作るので、ここでは取らない
                         .padding(.horizontal, 12)
                         .background(COLOR_BACK_FORMULA)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -486,10 +501,10 @@ struct RollCell: View {
     @ViewBuilder
     private func valueText(opStr: String, value: String, isFinal: Bool,
                            unitCode: String? = nil) -> some View {
-        // 最新の [=] 行だけ、単位を別 Text にしてタップで換算リストを出せるようにする
-        let showsTappableUnit = isLatest && isFinal && unitCode != nil
-        let unitFormula = showsTappableUnit
-            ? viewModel?.unitFormula(for: unitCode) ?? nil : nil
+        // 単位は常に別 Text に分ける（数値と色・太さを変えるため）。
+        // タップで換算リストを出せるのは最新の [=] 行だけ
+        let unitFormula = viewModel?.unitFormula(for: unitCode) ?? nil
+        let showsTappableUnit = isLatest && isFinal && unitFormula != nil
         // 単位を別に描くぶん、数値側からは単位を取り除く
         let numberPart = (unitFormula.map { value.hasSuffix($0)
             ? String(value.dropLast($0.count)) : value }) ?? value
@@ -518,10 +533,13 @@ struct RollCell: View {
 
             if let unitFormula, let unitCode, let viewModel {
                 let numStr = row.rollLines?.last(where: { $0.isFinal })?.rawBase ?? ""
-                Text(tappableUnitText(unitFormula))
+                Text(showsTappableUnit
+                     ? tappableUnitText(unitFormula)
+                     : plainUnitText(unitFormula))
                     .fixedSize()
                     .contentShape(Rectangle())
                     .onTapGesture {
+                        guard showsTappableUnit else { return }
                         guard !viewModel.rollUnitCandidates(numStr: numStr,
                                                             unitCode: unitCode).isEmpty else { return }
                         isUnitConvertPresented = true
@@ -546,6 +564,14 @@ struct RollCell: View {
         .fixedSize(horizontal: !(isLatest && isFinal), vertical: false)
     }
 
+    /// タップできない単位の見た目（本文サイズで細く薄く）
+    private func plainUnitText(_ formula: String) -> AttributedString {
+        var attr = AttributedString(formula)
+        attr.foregroundColor = COLOR_UNIT
+        attr.font = .system(size: fontSize * calcFontScale, weight: .regular, design: .rounded)
+        return attr
+    }
+
     /// タップできる単位の見た目（下線を付けて換算リストが出せることを示す）
     private func tappableUnitText(_ formula: String) -> AttributedString {
         var attr = AttributedString(formula)
@@ -561,14 +587,6 @@ struct RollCell: View {
         VStack(alignment: .trailing, spacing: 0) {
             if let lines = row.rollLines {
                 ForEach(Array(lines.enumerated()), id: \.offset) { lineIdx, line in
-                    if line.isFinal {
-                        // 最終結果の直前に区切り線
-                        Rectangle()
-                            .fill(Color.secondary.opacity(0.3))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 0.5)
-                            .padding(.vertical, 2)
-                    }
                     // 左: 中間結果（小）/ 右: 演算子+数値。衝突すれば中間結果を省く
                     let opStr = line.op.trimmingCharacters(in: .whitespaces)
                     let rt = (showRunningTotal && !line.isFinal) ? line.runningTotal : nil
@@ -620,9 +638,17 @@ struct RollCell: View {
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.top, 2)
             }
+            // 計算のまとまりを示す区切り線。
+            // 以前は [=] 行の直前に引いていたが、1つの計算が途中で割れて見えるため、
+            // 計算の終わりに引いて前後の間隔を広げる
+            Rectangle()
+                .fill(Color.secondary.opacity(0.3))
+                .frame(maxWidth: .infinity)
+                .frame(height: 0.5)
+                // 数式表示と同じく上下対称に取る
+                .padding(.vertical, SEPARATOR_GAP)
         }
         .scaleEffect(y: -1)
-        .padding(.top, 6)
         .frame(maxWidth: .infinity)
     }
 }
