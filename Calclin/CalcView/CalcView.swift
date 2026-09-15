@@ -516,9 +516,10 @@ private struct NumberFontQuickPickPopover: View {
     }
 }
 
-/// 入力行末尾の単位をタップしたときに出す換算先の選択ポップオーバー
+/// 単位をタップしたときに出す換算先の選択ポップオーバー
 /// - 基準単位が同じ単位だけを並べ、選ぶと数値を換算する
-private struct UnitConvertPickPopover: View {
+/// - 入力行と履歴行の両方から使うので internal にしている
+struct UnitConvertPickPopover: View {
     let candidates: [CalcViewModel.UnitConvertCandidate]
     let onSelect: (KeyDefinition) -> Void
 
@@ -564,16 +565,19 @@ private struct UnitConvertPickPopover: View {
                 }
             }
         }
-        .frame(minWidth: 200, maxHeight: maxPopoverHeight)
+        // 候補が多いので、出せる範囲いっぱいまで広げる
+        .frame(minWidth: 240, idealHeight: maxPopoverHeight, maxHeight: maxPopoverHeight)
         .background(Color(.systemBackground))
     }
 
-    /// ポップオーバーの高さ上限
-    /// - 画面の 3/4 までは使い、候補が多いときに見える行数を増やす
-    /// - 画面外へはみ出さないよう、実画面高から算出する
+    /// ポップオーバーの高さ
+    /// - 候補の数ぶんだけ必要な高さを見積もり、画面の 3/4 を上限にする
+    /// - idealHeight に渡すことで、吹き出しが縦に伸びて多くの行が見えるようにする
     private var maxPopoverHeight: CGFloat {
         let screenHeight = UIScreen.main.bounds.height
-        return max(320, screenHeight * 0.75)
+        // 1行あたり約40pt ＋ 見出しと余白ぶん
+        let needed = CGFloat(candidates.count) * 40 + 48
+        return min(max(240, needed), screenHeight * 0.75)
     }
 
     /// 1行ぶんの表示。入力行と同じく右寄せで、換算後の数値＋単位を並べる

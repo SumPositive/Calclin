@@ -52,6 +52,18 @@ let COLOR_OPERATOR_WAIT: Color = .gray      // 待機演算子　右端の[.]や
 let COLOR_UNIT: Color = .secondary          // 単位
 // 単位の下線色（タップで換算リストを出せる印）
 let COLOR_UNIT_UNDERLINE: Color = .accentColor
+
+// 答えに添える単位の大きさ（答えの文字サイズに対する比率）
+// - 単位は補助情報なので数値より小さくする
+// - ㎡ や 坪 は Hiragino へフォールバックし数字より背が高く出るため、
+//   見た目を揃えるには数値比で 0.6 程度まで落とす必要がある
+let UNIT_FONT_RATIO: CGFloat = 0.62
+
+// 答えに添える単位の持ち上げ量（答えの文字サイズに対する比率）
+// - ベースラインを揃えると、小さい単位は数値より下に沈んで見える
+//   （実測：数値の中心 +9.5pt に対し 坪 は +5.9pt）
+// - その差を埋めて、数値と単位の高さの中心を合わせる
+let UNIT_BASELINE_RATIO: CGFloat = 0.09
 let COLOR_MEMO: Color = .purple             // メモ
 let COLOR_WARN: Color = .red                // 危険！警告色
 // 背景色
@@ -68,6 +80,47 @@ let CALC_PRECISION_MAX: Int = 30  // <= AZDecimal.precision / 2
 
 // HistoryView最大行数　超過時古い行から削除する
 let CALC_HISTORY_MAX: Int = 100
+
+// [=] で単位付きの単独値を確定したときに、自動で換算する相手（プリセット）
+// - 「66坪 =」→ 218.18㎡ のように、よく使う相方へ変換して見せる
+// - [換算元code: 換算先code] の一方向。
+//   尺貫法・ヤードポンド法 → メートル法 の向きだけを既定にしている。
+//   逆向き（m→尺 など）まで既定にすると、普段メートル法だけで使う人に不要な換算が出るため
+// - ㎡↔坪 は不動産で日常的に双方向で使うので、例外的に両向きを入れる
+// - ここに無い単位は基準単位（下の代表）へ寄せる
+let UNIT_AUTO_CONVERT_PRESETS: [String: String] = [
+    // 面積
+    "J坪": "m2",        // 坪 → ㎡
+    "m2": "J坪",        // ㎡ → 坪（不動産で双方向に使う）
+    "J畝": "m2",        // 畝 → ㎡
+    "J反": "hectare",   // 反 → ha
+    "acre": "hectare",  // ac → ha
+    // 長さ
+    "J尺": "m",         // 尺 → m
+    "J寸": "cm",        // 寸 → cm
+    "J里": "km",        // 里 → km
+    "inch": "cm",       // in → cm
+    "foot": "m",        // ft → m
+    "yard": "m",        // yd → m
+    // 重さ
+    "J貫": "kg",        // 貫 → kg
+    "J匁": "g",         // 匁 → g
+    "pondus": "kg",     // lb → kg
+    // 体積
+    "J升": "Litre",     // 升 → L
+    "J合": "Litre",     // 合 → L
+    "gal": "Litre",     // gal → L
+]
+
+// 各基準単位の代表（プリセットに換算先が無いときの寄せ先）
+// - ha → ㎡、t → kg のように、基準単位に揃えて桁を掴みやすくする
+// - 体積の基準は ㎥ だが、日常的に使うのは L なので L を代表にする
+let UNIT_BASE_REPRESENTATIVE: [String: String] = [
+    "m":  "m",
+    "m2": "m2",
+    "m3": "Litre",
+    "kg": "kg",
+]
 
 // 最大CALC数
 let CALC_COUNT_MAX: Int = 3

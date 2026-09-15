@@ -95,7 +95,8 @@ private struct CalcPDFContent: View {
                         Text(row.formula)
                             .font(.system(size: base * fontScale, design: .rounded).monospacedDigit())
                         if !row.answer.isEmpty {
-                            Text(verbatim: row.answer)
+                            // 単位は answer と分けて持っているので、ここで連結して出す
+                            Text(verbatim: row.answer + (row.unitFormula ?? ""))
                                 .font(.system(size: base * fontScale, weight: .bold, design: .rounded).monospacedDigit())
                                 .foregroundStyle(COLOR_ANSWER)
                         }

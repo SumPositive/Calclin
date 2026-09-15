@@ -82,6 +82,9 @@ final class CalcViewModel: ObservableObject {
         var rawBase: String = ""        // 入力値（Base単位、%解決済み）
         var accBase: String = "0"       // 演算前 accumulator（Base単位）
         var unitCode: String? = nil     // 表示単位コード（nil = 単位なし）
+        // 自動換算する前の入力単位（= 行のみ）。
+        // 「ha を a で見たい」のような学習は、換算後ではなく入力した単位を起点に覚える
+        var sourceUnitCode: String? = nil
     }
 
     struct  HistoryRow: Hashable {
@@ -89,6 +92,8 @@ final class CalcViewModel: ObservableObject {
         var formula: AttributedString = ""
         var answer: String  = ""    // [-]符号 [.]小数点 [0]-[9]数字 で構成される実数文字列
         var unitFormula: String?     //= .formula
+        /// 自動換算する前の入力単位code。学習をこの単位を起点に行う
+        var sourceUnitCode: String?
         var memo: String?           // メモ
         var rollLines: [RollLine]?  // 電卓モード用ロール行。nil = 式モード
     }
@@ -406,7 +411,11 @@ final class CalcViewModel: ObservableObject {
     }
 
     /// tokens からFormulaViewに表示するための装飾文字列を生成する
-    func formulaUpdate(_ isAns: Bool = false) {
+    /// - Parameters:
+    ///   - isAns: [=] 用の整形（末尾[0]や予定[.][)]を出さず、右括弧を閉じる）
+    ///   - clearsInput: 計算が確定した後に入力行を空にするか。
+    ///     計算前に括弧を閉じるためだけに呼ぶ場合は false（tokens を消すと計算できない）
+    func formulaUpdate(_ isAns: Bool = false, clearsInput: Bool = false) {
         log(.info, "Start")
         self.formulaAttr = ""
 
@@ -443,14 +452,22 @@ final class CalcViewModel: ObservableObject {
 
         if isAns {
             log(.info, "End Answer")
-            self.isAnswerMode = true
-            // 答え表示も縮小・スクロール段（currentPart を描画する）で使われるので、
-            // formulaAttr と必ず揃えておく。これを忘れると桁数が多いときだけ
-            // 入力行に直前の式が残り続ける
-            self.accumulatorPart = nil
-            self.currentPart = self.formulaAttr
-            // 答えも [数値][単位] の形なので、単位タップで換算リストを出せる
-            self.displayUnit = trailingDisplayUnit()
+            if clearsInput {
+                // 入力行は空にする（電卓モードと揃える）。
+                // 答えは履歴に残っているので、使い直したい時は履歴行をタップして引用する
+                self.tokens = []
+                self.isAnswerMode = false
+                self.formulaAttr = ""
+                self.accumulatorPart = nil
+                self.currentPart = ""
+                self.displayUnit = nil
+            } else {
+                // 計算前に括弧を閉じるための呼び出し。表示だけ整えて tokens は残す
+                self.isAnswerMode = true
+                self.accumulatorPart = nil
+                self.currentPart = self.formulaAttr
+                self.displayUnit = trailingDisplayUnit()
+            }
             save()
             return
         }
@@ -729,6 +746,181 @@ final class CalcViewModel: ObservableObject {
         return (body, matched)
     }
 
+    // MARK: - 単位の自動換算（[=] で単位付きの単独値を確定したとき）
+
+    /// 前回どの単位へ換算したかを覚えておくキー（UserDefaults）
+    private static let unitConvertLastKey = "unitConvertLast"
+
+    /// 「換算元code: 前回選んだ換算先code」
+    /// - 換算元ごとに独立して覚える（㎡→坪 と ha→a は別）
+    private var unitConvertLast: [String: String] {
+        get { UserDefaults.standard.dictionary(forKey: Self.unitConvertLastKey) as? [String: String] ?? [:] }
+        set { UserDefaults.standard.set(newValue, forKey: Self.unitConvertLastKey) }
+    }
+
+    /// ユーザーが選んだ換算を記録する（次回は同じ換算先を使う）
+    /// - 回数は数えず「前回どうしたか」だけを覚える。
+    ///   そのほうが結果を予想しやすく、選び直せばすぐ切り替わる
+    func rememberUnitConversion(from fromCode: String, to toCode: String) {
+        guard fromCode != toCode else { return }
+        var last = unitConvertLast
+        last[fromCode] = toCode
+        unitConvertLast = last
+    }
+
+    /// [=] のあと、この単位をどこへ換算して見せるか
+    /// - 1. 前回この単位から選んだ換算先（学習が最優先）
+    /// - 2. プリセットの換算先（尺貫法・ヤードポンド法 → メートル法 など）
+    /// - 3. どちらも無ければ基準単位の代表（m / ㎡ / L / kg）へ寄せる
+    /// - Returns: 換算先。換算しないほうがよければ nil
+    /// - Note: 数式モード・電卓モードの両方から使う
+    func autoConvertTarget(for def: KeyDefinition) -> KeyDefinition? {
+        guard let base = def.unitBase, base != UNIT_CODE_BARE else { return nil }
+
+        // 1. この単位から前回選んだ換算先（換算元ごとに独立して覚えている）
+        let learned = unitConvertLast[def.code]
+        if let learned,
+           let toDef = keyboardViewModel.keyDef(code: learned),
+           toDef.unitBase == base {
+            return toDef
+        }
+
+        // 2. プリセットの換算先
+        if let toCode = UNIT_AUTO_CONVERT_PRESETS[def.code],
+           let toDef = keyboardViewModel.keyDef(code: toCode),
+           toDef.unitBase == base {
+            return toDef
+        }
+
+        // 3. プリセットに無ければ基準単位の代表へ寄せる
+        //    （ha → ㎡、t → kg など。自分自身が代表なら換算しない）
+        if let repCode = UNIT_BASE_REPRESENTATIVE[base],
+           repCode != def.code,
+           let toDef = keyboardViewModel.keyDef(code: repCode) {
+            return toDef
+        }
+        return nil
+    }
+
+    /// 単位コードから表示文字列を得る（ロール行の単位を別 Text に切り出すのに使う）
+    func unitFormula(for code: String?) -> String? {
+        guard let code, let def = keyboardViewModel.keyDef(code: code),
+              let base = def.unitBase, base != UNIT_CODE_BARE else { return nil }
+        return def.formula
+    }
+
+    /// ロールの [=] 行の単位タップで出す換算候補
+    func rollUnitCandidates(numStr: String, unitCode: String) -> [UnitConvertCandidate] {
+        guard let def = keyboardViewModel.keyDef(code: unitCode) else { return [] }
+        return unitConvertCandidates(numStr: numStr, from: def)
+    }
+
+    /// ロールの [=] 行の換算リストで単位を選んだとき、その履歴の答えを書き換える
+    @MainActor
+    func convertRollAnswer(at rowIndex: Int, to toDef: KeyDefinition) {
+        guard 0 <= rowIndex, rowIndex < historyRows.count,
+              var lines = historyRows[rowIndex].rollLines,
+              let lastIndex = lines.indices.last(where: { lines[$0].isFinal }) else { return }
+        let line = lines[lastIndex]
+        guard let fromCode = line.unitCode,
+              let fromDef = keyboardViewModel.keyDef(code: fromCode),
+              fromDef.code != toDef.code,
+              let converted = unitConv(num: line.rawBase, unit: fromDef, toUnit: toDef) else { return }
+
+        lines[lastIndex].value = AZDecimal(converted).formatted(calcConfig) + toDef.formula
+        lines[lastIndex].rawBase = converted
+        lines[lastIndex].unitCode = toDef.code
+        historyRows[rowIndex].rollLines = lines
+        // answer と unitFormula は分けて持つ（表示側で色や太さを分けられるように）
+        historyRows[rowIndex].answer = AZDecimal(converted).formatted(calcConfig)
+        historyRows[rowIndex].unitFormula = toDef.formula
+        // 学習は「入力した単位」を起点にする。
+        // 自動換算後の単位（ha→㎡ の ㎡）を起点にすると、次に ha を入れても反映されない
+        rememberUnitConversion(from: line.sourceUnitCode ?? fromDef.code, to: toDef.code)
+        save()
+    }
+
+    /// 履歴行の単位タップで出す換算候補
+    /// - 履歴は確定した記録なので書き換えない。選んだ結果は入力行へ引用する
+    func historyUnitCandidates(_ row: HistoryRow) -> [UnitConvertCandidate] {
+        let parsed = parseRollValue(row.answer + (row.unitFormula ?? ""))
+        guard let numStr = parsed.num, let def = parsed.def else { return [] }
+        return unitConvertCandidates(numStr: numStr, from: def)
+    }
+
+    /// 履歴行の換算リストで単位を選んだとき、その行の答えを換算後の値に書き換える
+    /// - タップした行そのものが変わるので、見えている場所で結果が確認できる
+    /// - Parameters:
+    ///   - rowIndex: historyRows のインデックス
+    ///   - toDef: 換算先の単位
+    @MainActor
+    func convertHistoryAnswer(at rowIndex: Int, to toDef: KeyDefinition) {
+        guard 0 <= rowIndex, rowIndex < historyRows.count else {
+            log(.fatal, "convertHistoryAnswer index out of range: \(rowIndex)")
+            return
+        }
+        let row = historyRows[rowIndex]
+        let parsed = parseRollValue(row.answer + (row.unitFormula ?? ""))
+        guard let numStr = parsed.num, let fromDef = parsed.def,
+              fromDef.code != toDef.code,
+              let converted = unitConv(num: numStr, unit: fromDef, toUnit: toDef) else { return }
+
+        historyRows[rowIndex].answer = AZDecimal(converted).formatted(calcConfig)
+        historyRows[rowIndex].unitFormula = toDef.formula
+        // 学習は「入力した単位」を起点にする
+        // （自動換算後の単位を起点にすると、次に同じ単位を入れても反映されない）
+        rememberUnitConversion(from: row.sourceUnitCode ?? fromDef.code, to: toDef.code)
+        save()
+    }
+
+    /// 履歴の行をタップして、答えを入力行に引用する（数式モード）
+    /// - 電卓モードの [=] 行タップと揃える。連続タップで合計を積み上げられる
+    /// - すでに値があって演算子が無ければ [+] を挟んでから続ける
+    /// - Returns: 引用できたら true。単位の基準が合わず足せない場合は false
+    @MainActor
+    @discardableResult
+    func quoteHistoryAnswer(_ row: HistoryRow) -> Bool {
+        guard calcMode == .formula else { return false }
+
+        // 答えの数値と単位を取り出す（answer は "2,586" のような整形済み文字列）
+        let parsed = parseRollValue(row.answer + (row.unitFormula ?? ""))
+        guard let quotedNum = parsed.num else { return false }
+        let quotedDef = parsed.def
+
+        // すでに単位付きの式が組み立て中なら、基準単位が揃っているかを確かめる
+        // （単位なし＝無名数はどちらの側でも許す）
+        if let quotedBase = quotedDef?.unitBase {
+            for token in tokens where token.hasPrefix(TOKEN_UNIT_PREFIX) {
+                let code = String(token.dropFirst())
+                if let def = keyboardViewModel.keyDef(code: code),
+                   let base = def.unitBase, base != UNIT_CODE_BARE,
+                   base != quotedBase {
+                    return false
+                }
+            }
+        }
+
+        // [=] 直後は答えが残っているだけなので、新しい式として組み直す
+        if isAnswerMode {
+            tokens = []
+            isAnswerMode = false
+        }
+
+        // 直前が数値・単位・右括弧なら、続けて足せるよう [+] を挟む
+        // （演算子や左括弧で終わっているときはそのまま値を置く）
+        if let last = tokens.last,
+           Double(last) != nil || last == FM_PT_RIGHT || last.hasPrefix(TOKEN_UNIT_PREFIX) {
+            tokens.append(FM_ADD)
+        }
+
+        tokens.append(quotedNum)
+        if let def = quotedDef {
+            tokens.append(TOKEN_UNIT_PREFIX + def.code)
+        }
+        formulaUpdate()
+        return true
+    }
+
     /// ロールの [=] 行をタップして、答えを入力行に引用する（電卓モード）
     /// - 数値と単位をそのまま引用し、続けて演算子（既定は [+]）を置く
     /// - 連続してタップすれば合計を積み上げられる
@@ -847,14 +1039,20 @@ final class CalcViewModel: ObservableObject {
     /// - Returns: 換算リストの各行。換算元自身も含む。換算先が無い場合は空配列
     func unitConvertCandidates() -> [UnitConvertCandidate] {
         guard let shown = displayUnit,
-              let currentDef = keyboardViewModel.keyDef(code: shown.code),
-              let base = currentDef.unitBase,
-              base != UNIT_CODE_BARE else { return [] }
+              let currentDef = keyboardViewModel.keyDef(code: shown.code) else { return [] }
         // 換算元の数値（[数値][単位]の数値部分）
         guard tokens.count >= 2,
               let last = tokens.last, last.hasPrefix(TOKEN_UNIT_PREFIX) else { return [] }
         let numStr = tokens[tokens.count - 2]
-        guard Double(numStr) != nil else { return [] }
+        return unitConvertCandidates(numStr: numStr, from: currentDef)
+    }
+
+    /// 指定した数値・単位を起点に換算候補を作る
+    /// - 履歴行の単位タップからも使えるよう、入力行の状態に依存しない形にしている
+    func unitConvertCandidates(numStr: String, from currentDef: KeyDefinition) -> [UnitConvertCandidate] {
+        guard let base = currentDef.unitBase,
+              base != UNIT_CODE_BARE,
+              Double(numStr) != nil else { return [] }
 
         // 同じcodeが複数枚のキーボードに登録されていることがあるので、codeで重複を除く
         var seen = Set<String>()
@@ -894,6 +1092,8 @@ final class CalcViewModel: ObservableObject {
               let converted = unitConv(num: numStr, unit: fromDef, toUnit: toDef) else { return }
         tokens[tokens.count - 2] = converted
         tokens[tokens.count - 1] = TOKEN_UNIT_PREFIX + toDef.code
+        // 次回以降の自動換算先に反映する
+        rememberUnitConversion(from: fromDef.code, to: toDef.code)
         // 換算で数値が変わるので、単位2度押しの待ち受けは解除する
         lastUnitSwap = nil
         if calcMode == .calculator {
@@ -927,6 +1127,9 @@ final class CalcViewModel: ObservableObject {
             Manager.shared.toast(String(localized: "calc.unit.cannotConvert"), wait: 2.0)
             return nil
         }
+        // 単位キーの2度押しによる換算も「よく使う換算」として学習する
+        // （換算リストから選ぶより、こちらの方が使われる）
+        rememberUnitConversion(from: fromDef.code, to: keyDef.code)
         return unitConv(num: swap.number, unit: fromDef, toUnit: keyDef)
     }
 
@@ -986,6 +1189,11 @@ final class CalcViewModel: ObservableObject {
                 //
                 var ans_unitFormula: String?
                 var ans_unit: String?
+                // 「数値＋単位」だけの単独値か（計算式ではないか）。
+                // 自動換算はこの形のときだけ行う
+                let isSingleUnitValue = tokens.count == 2
+                    && Double(tokens[0]) != nil
+                    && tokens[1].hasPrefix(TOKEN_UNIT_PREFIX)
                 var minUnitConv: Double = Double.greatestFiniteMagnitude
                 var ansKeyDef: KeyDefinition?
                 var prevToken = ""
@@ -1062,11 +1270,27 @@ final class CalcViewModel: ObservableObject {
                         // Base単位になる
                     }
                 }
+                // 単位付きの単独値（[数値][単位] だけ）なら、よく使う単位へ自動で換算して見せる
+                // - 66坪 = → 218.18㎡ のように、相方の単位で答えを出す
+                // - 計算式のとき（66坪×3 など）は従来どおり同じ単位のまま
+                // 自動換算する前の入力単位（学習の起点にする）
+                let sourceUnitCode = ans_unit
+                if isSingleUnitValue,
+                   let fromCode = ans_unit,
+                   let fromDef = keyboardViewModel.keyDef(code: fromCode),
+                   let toDef = autoConvertTarget(for: fromDef),
+                   let converted = unitConv(num: answer, unit: fromDef, toUnit: toDef) {
+                    answer = converted
+                    ans_unit = toDef.code
+                    ans_unitFormula = toDef.formula
+                }
+
                 // add History
                 let row = HistoryRow( tokens: tokens,
                                       formula: formulaAttr,
                                       answer: AZDecimal(answer).formatted(calcConfig),
                                       unitFormula: ans_unitFormula,
+                                      sourceUnitCode: sourceUnitCode,
                                       memo: nil)
                 // History追加
                 historyRows.append(row)
@@ -1080,8 +1304,8 @@ final class CalcViewModel: ObservableObject {
                     let ub = TOKEN_UNIT_PREFIX + ans_unit
                     tokens.append(ub)
                 }
-                // Answer用フォーマット
-                formulaUpdate(true)
+                // Answer用フォーマット（確定なので入力行は空にする）
+                formulaUpdate(true, clearsInput: true)
             }
             else if 3 < tokens.count {
                 // lastが演算子の場合
@@ -1341,12 +1565,18 @@ final class CalcViewModel: ObservableObject {
     private func inputNumberCalc(_ num: String, isZeroKey: Bool) {
         isCalcRootResult = false
         if isCalcNewEntry || tokens.isEmpty {
+            let startsNewCalc = isAfterEquals || tokens.isEmpty
             tokens = [isZeroKey ? "0" : num]
             isCalcNewEntry = false
             isAnswerMode = false
             isAfterEquals = false
             resetPercMode()
             isCalcNewEntryAfterUnit = false
+            // [=] のあとに数値を打ち始めた＝新しい計算。
+            // 前回の計算単位（自動換算で書き換わっていることがある）を引きずらない
+            if startsNewCalc, pendingOp == nil, rollLinesBuilding.isEmpty {
+                calcUnitDef = nil
+            }
         } else if isCalcNewEntryAfterUnit,
                   tokens.count >= 2,
                   let ut = tokens.last, ut.hasPrefix(TOKEN_UNIT_PREFIX) {
@@ -1581,6 +1811,11 @@ final class CalcViewModel: ObservableObject {
             guard let existing = keyboardViewModel.keyDef(code: keyDef.code),
                   existing.unitBase == keyDef.unitBase else { return }
             tokens.append(TOKEN_UNIT_PREFIX + keyDef.code)
+            // 計算単位（= 結果の表示単位）として記録する。
+            // これを忘れると [=] のときに単位が失われ、答えが無単位になる
+            if keyDef.unitBase != UNIT_CODE_BARE {
+                calcUnitDef = keyDef
+            }
             isCalcNewEntryAfterUnit = true  // 次の数値入力で数値のみ置き換え
             resetPercMode()
             formulaUpdateCalc()
@@ -1622,6 +1857,10 @@ final class CalcViewModel: ObservableObject {
             return
         }
 
+        // 「数値＋単位」だけの単独値か（演算子を一度も押していないか）。
+        // 自動換算はこの形のときだけ行う。ロール行が積まれる前に判定しておく
+        let isSingleUnitValue = rollLinesBuilding.isEmpty && pendingOp == nil
+
         // resultBase = Base単位の結果値
         let resultBase: AZDecimal
 
@@ -1661,11 +1900,34 @@ final class CalcViewModel: ObservableObject {
                                                   unitCode: lineUnitCode))
             } else {
                 resultBase = current
+                // 演算子なしの単独値。通常は入力値と答えが同じなので行を積まないが、
+                // 自動換算で単位が変わるときは「何を換算したか」が分からなくなるため、
+                // 換算元の値をロールに残す（7㎡ → = 2.1175坪）
+                if isSingleUnitValue,
+                   let fromDef = calcUnitDef,
+                   autoConvertTarget(for: fromDef) != nil {
+                    rollLinesBuilding.append(RollLine(op: " ", value: displayValue,
+                                                      isFinal: false,
+                                                      rawBase: current.value,
+                                                      accBase: prevAccumulator.value,
+                                                      unitCode: lineUnitCode))
+                }
             }
         }
 
         // 結果を表示単位に変換
-        let displayUnit = calcUnitDef
+        // 単位付きの単独値なら、よく使う単位へ自動で換算して見せる（数式モードと同じ）
+        var displayUnit = calcUnitDef
+        // 自動換算する前の入力単位（学習をこの単位を起点に行うため）
+        let sourceUnit = calcUnitDef
+        if isSingleUnitValue,
+           let fromDef = calcUnitDef,
+           let toDef = autoConvertTarget(for: fromDef) {
+            displayUnit = toDef
+            // 続けて計算したとき（= の後に [+] など）も換算後の単位で表示するため、
+            // 計算単位そのものを更新しておく
+            calcUnitDef = toDef
+        }
         let resultDisplayStr: String
         let resultNumStr: String
         if let def = displayUnit {
@@ -1679,11 +1941,18 @@ final class CalcViewModel: ObservableObject {
         // = 行タップで引用できるよう、答えの生値と表示単位を持たせる
         rollLinesBuilding.append(RollLine(op: FM_ANS, value: resultDisplayStr, isFinal: true,
                                           rawBase: resultNumStr,
-                                          unitCode: displayUnit?.code))
+                                          unitCode: displayUnit?.code,
+                                          sourceUnitCode: sourceUnit?.code))
 
         // 履歴へ記録
+        // 数値と単位は分けて持つ（数式モードと同じ形）。
+        // answer に単位を混ぜると、表示側で色や太さを分けられない
         let row = HistoryRow(tokens: [], formula: AttributedString(""),
-                             answer: resultDisplayStr,
+                             answer: displayUnit == nil
+                                 ? resultDisplayStr
+                                 : AZDecimal(resultNumStr).formatted(calcConfig),
+                             unitFormula: displayUnit?.formula,
+                             sourceUnitCode: sourceUnit?.code,
                              rollLines: rollLinesBuilding)
         historyRows.append(row)
         if CALC_HISTORY_MAX < historyRows.count { historyRows.removeFirst() }
@@ -1936,7 +2205,14 @@ final class CalcViewModel: ObservableObject {
         }
 
         row.rollLines = lines
-        row.answer = lines.last?.value ?? row.answer
+        // answer は数値だけ、単位は unitFormula に分けて持つ
+        if let last = lines.last {
+            let unit = last.unitCode.flatMap { keyboardViewModel.keyDef(code: $0) }
+            row.answer = unit == nil
+                ? last.value
+                : AZDecimal(last.rawBase).formatted(calcConfig)
+            row.unitFormula = unit?.formula
+        }
         historyRows[historyIndex] = row
 
         cancelRollEdit()
@@ -2018,11 +2294,13 @@ final class CalcViewModel: ObservableObject {
                     tokens: row.tokens,
                     answer: row.answer,
                     unitFormula: row.unitFormula,
+                    sourceUnitCode: row.sourceUnitCode,
                     memo: row.memo,
                     rollLines: row.rollLines?.map { rl in
                         RollLineCodable(op: rl.op, value: rl.value, isFinal: rl.isFinal,
                                         runningTotal: rl.runningTotal, rawBase: rl.rawBase,
-                                        accBase: rl.accBase, unitCode: rl.unitCode)
+                                        accBase: rl.accBase, unitCode: rl.unitCode,
+                                        sourceUnitCode: rl.sourceUnitCode)
                     }
                 )
             },
@@ -2040,7 +2318,8 @@ final class CalcViewModel: ObservableObject {
             rollLinesBuilding: rollLinesBuilding.map { rl in
                 RollLineCodable(op: rl.op, value: rl.value, isFinal: rl.isFinal,
                                 runningTotal: rl.runningTotal, rawBase: rl.rawBase,
-                                accBase: rl.accBase, unitCode: rl.unitCode)
+                                accBase: rl.accBase, unitCode: rl.unitCode,
+                                sourceUnitCode: rl.sourceUnitCode)
             }
         )
         do {
@@ -2082,11 +2361,13 @@ final class CalcViewModel: ObservableObject {
                 formula: makeFormulaAttr(from: row.tokens),
                 answer: row.answer,
                 unitFormula: row.unitFormula,
+                sourceUnitCode: row.sourceUnitCode,
                 memo: row.memo,
                 rollLines: row.rollLines?.map { rl in
                     RollLine(op: rl.op, value: rl.value, isFinal: rl.isFinal,
                              runningTotal: rl.runningTotal, rawBase: rl.rawBase,
-                             accBase: rl.accBase, unitCode: rl.unitCode)
+                             accBase: rl.accBase, unitCode: rl.unitCode,
+                             sourceUnitCode: rl.sourceUnitCode)
                 }
             )
         }
@@ -2110,7 +2391,8 @@ final class CalcViewModel: ObservableObject {
         rollLinesBuilding = state.rollLinesBuilding.map { rl in
             RollLine(op: rl.op, value: rl.value, isFinal: rl.isFinal,
                      runningTotal: rl.runningTotal, rawBase: rl.rawBase,
-                     accBase: rl.accBase, unitCode: rl.unitCode)
+                     accBase: rl.accBase, unitCode: rl.unitCode,
+                     sourceUnitCode: rl.sourceUnitCode)
         }
 
         isLoading = false

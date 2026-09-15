@@ -17,6 +17,8 @@ struct RollLineCodable: Codable {
     var rawBase: String
     var accBase: String
     var unitCode: String?
+    /// 自動換算する前の入力単位（この機能より前の保存データには無いので Optional）
+    var sourceUnitCode: String?
 }
 
 // MARK: - HistoryRow の Codable 表現（AttributedString を除く）
@@ -25,6 +27,8 @@ struct HistoryRowCodable: Codable {
     var tokens: [String]
     var answer: String
     var unitFormula: String?
+    /// 自動換算する前の入力単位（この機能より前の保存データには無いので Optional）
+    var sourceUnitCode: String?
     var memo: String?
     var rollLines: [RollLineCodable]?
 }
