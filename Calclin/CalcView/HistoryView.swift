@@ -34,16 +34,30 @@ struct HistoryView: View {
             ScrollViewReader { proxy in
                 List {
                     ForEach(reversedRows, id: \.offset) { index, row in
-                        // カスタム明細セル
-                        CustomCell(viewModel: viewModel, row: row, rowIndex: index,
-                                   // 直近の結果だけ強調する（次の入力を始めるまで）
-                                   // 電卓モードで作られた行（rollLines を持つ）は
-                                   // 数式モードでは強調しない。
-                                   // answer に単位まで含んでおり、数式モードの
-                                   // 見せ方（数値と単位を分けて拡大）に合わないため
-                                   isLatest: index == viewModel.historyRows.count - 1
-                                             && isFormulaInputEmpty
-                                             && row.rollLines == nil)
+                        // 行が持つ形式で描く。
+                        // 電卓で計算した行（rollLines あり）はロール明細のまま、
+                        // 数式で計算した行は「式＝答え」の1行で見せる。
+                        // モードを切り替えても、計算したときの姿のまま履歴に残る
+                        Group {
+                            if let lines = row.rollLines, !lines.isEmpty {
+                                RollCell(row: row,
+                                         historyIndex: index,
+                                         calcIndex: calcIndex,
+                                         editingHistoryIndex: viewModel.editingHistoryIndex,
+                                         editingLineIndex: viewModel.editingLineIndex,
+                                         onTapAnswer: { line in
+                                             if viewModel.quoteRollAnswer(line) == false {
+                                                 Manager.shared.toast(String(localized: "calc.quote.unitMismatch"))
+                                             }
+                                         },
+                                         viewModel: viewModel)
+                            } else {
+                                CustomCell(viewModel: viewModel, row: row, rowIndex: index,
+                                           // 直近の結果だけ強調する（次の入力を始めるまで）
+                                           isLatest: index == viewModel.historyRows.count - 1
+                                                     && isFormulaInputEmpty)
+                            }
+                        }
                             .id(index)
                             .listRowInsets(EdgeInsets()) // ← これが肝
                             .listRowSeparator(.hidden, edges: .all)
@@ -88,12 +102,17 @@ struct HistoryView: View {
                                 }
                                 .tint(COLOR_ANSWER) // スワイプ背景色
                             }
+                            // 行全体のタップは「式＝答え」の行だけ。
+                            // ロール明細の行はセル内で行ごとにタップを受けるので、
+                            // ここで拾うと二重になる
                             .onTapGesture(count: 2) { // ダブルタップ時の処理
+                                guard row.rollLines == nil else { return }
                                 // 式コピペ　row.tokenからformulaTextを再現する
                                 viewModel.formulaFromHistoryToken(row)
                             }
                             // シングルタップで答えを引用（電卓モードの [=] 行タップと揃える）
                             .onTapGesture {
+                                guard row.rollLines == nil else { return }
                                 if viewModel.quoteHistoryAnswer(row) == false {
                                     Manager.shared.toast(String(localized: "calc.quote.unitMismatch"))
                                 }
@@ -333,25 +352,35 @@ struct RollView: View {
                         .background(COLOR_BACK_FORMULA)
                 }
                 ForEach(reversedRows, id: \.offset) { index, row in
-                    RollCell(row: row,
-                             showRunningTotal: showRunningTotal,
-                             historyIndex: index,
-                             calcIndex: calcIndex,
-                             editingHistoryIndex: viewModel.editingHistoryIndex,
-                             editingLineIndex: viewModel.editingLineIndex,
-                             onTapLine: { lineIdx in
-                                 viewModel.startRollEdit(historyIndex: index, lineIndex: lineIdx)
-                             },
-                             onTapAnswer: { line in
-                                 quoteAnswer(line)
-                             },
-                             // 直近の計算結果だけ入力行と同じ書体にする
-                             // 直近の結果を強調するのは [=] の直後だけ。
-                             // 次の入力を始めるか [CA] でクリアすると解除される
-                             isLatest: index == viewModel.historyRows.count - 1
-                                       && viewModel.isAfterEquals
-                                       && isFormulaInputEmpty,
-                             viewModel: viewModel)
+                    // 行が持つ形式で描く（数式で計算した行は「式＝答え」のまま）
+                    Group {
+                        if let lines = row.rollLines, !lines.isEmpty {
+                            RollCell(row: row,
+                                     showRunningTotal: showRunningTotal,
+                                     historyIndex: index,
+                                     calcIndex: calcIndex,
+                                     editingHistoryIndex: viewModel.editingHistoryIndex,
+                                     editingLineIndex: viewModel.editingLineIndex,
+                                     onTapLine: { lineIdx in
+                                         viewModel.startRollEdit(historyIndex: index, lineIndex: lineIdx)
+                                     },
+                                     onTapAnswer: { line in
+                                         quoteAnswer(line)
+                                     },
+                                     // 直近の計算結果だけ入力行と同じ書体にする
+                                     // 直近の結果を強調するのは [=] の直後だけ。
+                                     // 次の入力を始めるか [CA] でクリアすると解除される
+                                     isLatest: index == viewModel.historyRows.count - 1
+                                               && viewModel.isAfterEquals
+                                               && isFormulaInputEmpty,
+                                     viewModel: viewModel)
+                        } else {
+                            CustomCell(viewModel: viewModel, row: row, rowIndex: index,
+                                       isLatest: index == viewModel.historyRows.count - 1
+                                                 && viewModel.isAfterEquals
+                                                 && isFormulaInputEmpty)
+                        }
+                    }
                         .id(index)
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden, edges: .all)
