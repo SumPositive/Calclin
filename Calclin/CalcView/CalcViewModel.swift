@@ -442,7 +442,7 @@ final class CalcViewModel: ObservableObject {
         for token in tokens {
             if Double(token) != nil { // 数値
                 // .format()は小数制限丸め処理しないので SettingViewModel.decimalDigits は影響しない
-                self.formulaAttr += AttributedString(AZDecimal(token).formatted(calcConfig))
+                self.formulaAttr += AttributedString(minusSignedDisplay(AZDecimal(token).formatted(calcConfig)))
             }
             else if token.hasPrefix(TOKEN_UNIT_PREFIX) {
                 // 単位
@@ -456,7 +456,7 @@ final class CalcViewModel: ObservableObject {
                 }
             }
             else{
-                var attr = AttributedString(token)
+                var attr = AttributedString(operatorDisplay(token))
                 attr.foregroundColor = COLOR_OPERATOR //.opacity(0.5)
                 self.formulaAttr += attr
             }
@@ -1362,7 +1362,7 @@ final class CalcViewModel: ObservableObject {
         // 答え表示中（= 後）：累計なし、答えのみを current として表示
         if isAnswerMode {
             if let numStr = tokens.last, Double(numStr) != nil {
-                curPart = AttributedString(AZDecimal(numStr).formatted(calcConfig))
+                curPart = AttributedString(minusSignedDisplay(AZDecimal(numStr).formatted(calcConfig)))
             }
             self.formulaAttr = curPart
             self.accumulatorPart = nil
@@ -1377,7 +1377,7 @@ final class CalcViewModel: ObservableObject {
             let accStr = editingAccDisplay.isEmpty
                 ? (isAccRootResult ? accumulator.formatted(calcMaxConfig) : unitDisplayStr(accumulator))
                 : editingAccDisplay
-            var accAttr = AttributedString(accStr)
+            var accAttr = AttributedString(minusSignedDisplay(accStr))
             accAttr.foregroundColor = COLOR_NUMBER.opacity(0.4)
             // 現在値と同じ大きさにして「555 + 666」が揃って見えるようにする。
             // 桁が多くて収まらないときは FormulaView 側の minimumScaleFactor で縮む
@@ -1385,7 +1385,7 @@ final class CalcViewModel: ObservableObject {
             accPart = accAttr
 
             // 演算子は current 側へ
-            var opAttr = AttributedString(op)
+            var opAttr = AttributedString(operatorDisplay(op))
             opAttr.foregroundColor = COLOR_OPERATOR
             curPart += opAttr
             if !tokens.isEmpty {
@@ -1403,7 +1403,7 @@ final class CalcViewModel: ObservableObject {
                 let displayStr = isCalcRootResult
                     ? AZDecimal(numStr).formatted(calcMaxConfig)
                     : AZDecimal(numStr).formatted(calcConfig)
-                curPart += AttributedString(displayStr)
+                curPart += AttributedString(minusSignedDisplay(displayStr))
                 if isPercMode {
                     var percAttr = AttributedString(percSymbol)
                     percAttr.foregroundColor = COLOR_OPERATOR
@@ -1426,7 +1426,7 @@ final class CalcViewModel: ObservableObject {
                 }
             } else {
                 // マイナス符号のみ("-") や "-0" など
-                curPart += AttributedString(numStr)
+                curPart += AttributedString(minusSignedDisplay(numStr))
             }
         }
 
@@ -2520,7 +2520,7 @@ final class CalcViewModel: ObservableObject {
         var attr = AttributedString("")
         for token in rowTokens {
             if Double(token) != nil {
-                attr += AttributedString(AZDecimal(token).formatted(calcConfig))
+                attr += AttributedString(minusSignedDisplay(AZDecimal(token).formatted(calcConfig)))
             } else if token.hasPrefix(TOKEN_UNIT_PREFIX) {
                 let code = String(token.dropFirst())
                 if let def = keyboardViewModel.keyDef(code: code), let _ = def.unitBase {
@@ -2529,7 +2529,7 @@ final class CalcViewModel: ObservableObject {
                     attr += a
                 }
             } else {
-                var a = AttributedString(token)
+                var a = AttributedString(operatorDisplay(token))
                 a.foregroundColor = COLOR_OPERATOR
                 attr += a
             }

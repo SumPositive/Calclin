@@ -177,3 +177,30 @@ let CALC_DISABLED_IN_CALCULATOR: Set<String> = [
     "Paren",   // 括弧
     // 単位キーは電卓モードでも使用可能（isKeyDisabled で unitBase を持つものを除外しない）
 ]
+
+
+// MARK: - 負数のマイナス符号
+
+/// 表示用のマイナス記号（U+2212 MINUS SIGN）。
+/// `AZDecimal.formatted()` が返す ASCII "-"（U+002D HYPHEN-MINUS）は数字に対して短く、
+/// 負数だと気づきにくい。U+2212 は数学用のマイナスで横棒が長く高さも数字に揃う。
+/// 実測（40pt・インク幅）：SF Pro Rounded Bold で 13.5pt → 20.2pt。
+let FM_MINUS_DISPLAY = "\u{2212}"
+
+/// 表示用に、先頭の負符号だけを U+2212 に置き換える。
+/// - 先頭の 1 文字しか見ないので、桁区切りや小数点には触れない
+/// - **表示専用**。計算・保存・コピーに使う文字列を通してはいけない
+///   （AZDecimal は ASCII "-" しか解釈しないため）
+func minusSignedDisplay(_ str: String) -> String {
+    guard str.hasPrefix(FM_SUB) else { return str }
+    return FM_MINUS_DISPLAY + str.dropFirst()
+}
+
+/// 表示用に、減算演算子トークンを U+2212 に置き換える。
+/// - `-` と完全一致するときだけ置き換える。`(`・`√`・`%` など他の非数値トークンや、
+///   `-5` のような符号付きの値は対象外
+/// - 負符号と同じ字形になるが、両者は色（演算子はシアン）と位置で区別できる
+/// - **表示専用**。tokens や計算経路へ戻してはいけない
+func operatorDisplay(_ token: String) -> String {
+    token == FM_SUB ? FM_MINUS_DISPLAY : token
+}

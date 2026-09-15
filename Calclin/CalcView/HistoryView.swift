@@ -249,7 +249,7 @@ struct CustomCell: View {
                 equal.foregroundColor = COLOR_OPERATOR //.opacity(0.5)
                 // Answer
                 // 最新行の答えだけ、入力行と同じ書体で一回り大きく見せる
-                var answer = AttributedString(row.answer)
+                var answer = AttributedString(minusSignedDisplay(row.answer))
                 if isLatest {
                     answer.font = setting.numberFont.font(size: latestAnswerFontSize, weight: .bold)
                 } else {
@@ -544,7 +544,7 @@ struct RollCell: View {
 
     @ViewBuilder
     private func rtText(_ value: String, size: CGFloat) -> some View {
-        Text(value)
+        Text(minusSignedDisplay(value))
             .font(.system(size: size, weight: .light, design: .rounded).monospacedDigit())
             .lineLimit(1)
             .fixedSize(horizontal: true, vertical: false)
@@ -564,11 +564,11 @@ struct RollCell: View {
 
         return HStack(spacing: 0) {
             if !opStr.isEmpty {
-                Text(opStr + " ")
+                Text(operatorDisplay(opStr) + " ")
                     .font(.system(size: fontSize * calcFontScale, weight: .regular, design: .rounded))
                     .foregroundStyle(COLOR_OPERATOR)
             }
-            Text(numberPart)
+            Text(minusSignedDisplay(numberPart))
                 // 最新の [=] だけは入力行と同じ書体・サイズにして、直前の答えを見つけやすくする
                 .font(isLatest && isFinal
                       ? setting.numberFont.font(size: latestAnswerFontSize, weight: .bold)
