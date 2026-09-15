@@ -149,11 +149,20 @@ struct HistoryView: View {
                     .frame(height: 44)
                     .allowsHitTesting(false)
                 }
-            .onChange(of: viewModel.historyRows.count) { _, _ in
-                    guard setting.autoScroll == .onEquals,
-                          let first = reversedRows.first else { return }
+            .onChange(of: viewModel.answerTrigger) { _, _ in
+                    // 「おすすめ」は数式モードでは [=] のときだけ最新行を見せる
+                    guard setting.autoScroll == .onEquals
+                            || setting.autoScroll == .recommended else { return }
                     Task { @MainActor in
-                        proxy.scrollTo(first.offset, anchor: .top)
+                        // 追加された行が List に並ぶのを待ってからスクロールする。
+                        // すぐ呼ぶと新しい行がまだ無く、1つ手前までしか動かない。
+                        // さらに最新行は拡大表示に変わって高さが増えるため、
+                        // レイアウトが落ち着いた後にもう一度合わせる
+                        for delay in [0.05, 0.25] {
+                            try? await Task.sleep(for: .seconds(delay))
+                            guard let first = reversedRows.first else { return }
+                            proxy.scrollTo(first.offset, anchor: .top)
+                        }
                     }
                 }
                 .onChange(of: viewModel.formulaAttr) { _, _ in
@@ -418,6 +427,21 @@ struct RollView: View {
                                 Image("trash.fill_rev").imageScale(.large)
                             }
                         }
+                        // 「式＝答え」の行はここでタップを受ける。
+                        // ロール明細の行はセル内で行ごとに受けるので対象外
+                        .onTapGesture {
+                            guard row.rollLines == nil else { return }
+                            if viewModel.quoteHistoryAnswer(row) == false {
+                                Manager.shared.toast(String(localized: "calc.quote.unitMismatch"))
+                            }
+                        }
+                        // 長押しでメモ入力（数式モードの履歴行と揃える）
+                        .onLongPressGesture {
+                            guard row.rollLines == nil else { return }
+                            setting.popupHistoryMemoInfo = (maxLength: 0,
+                                                            index: index,
+                                                            calcIndex: calcIndex)
+                        }
                 }
             }
             .scaleEffect(y: -1)
@@ -437,11 +461,31 @@ struct RollView: View {
                 .frame(height: 44)
                 .allowsHitTesting(false)
             }
-            .onChange(of: viewModel.historyRows.count) { _, _ in
-                guard setting.autoScroll == .onEquals,
-                      let first = reversedRows.first else { return }
+            .onChange(of: viewModel.answerTrigger) { _, _ in
+                guard setting.autoScroll == .onEquals
+                        || setting.autoScroll == .recommended else { return }
                 Task { @MainActor in
-                    proxy.scrollTo(first.offset, anchor: .top)
+                    // 追加された行が List に並ぶのを待ってからスクロールする。
+                    // [=] でライブ行が消え、最新行は拡大表示になって高さが変わるため、
+                    // レイアウトが落ち着いた後にもう一度合わせる
+                    for delay in [0.05, 0.25] {
+                        try? await Task.sleep(for: .seconds(delay))
+                        guard let first = reversedRows.first else { return }
+                        proxy.scrollTo(first.offset, anchor: .top)
+                    }
+                }
+            }
+            // 「おすすめ」は電卓モードでは演算子でも最新行を見せる
+            // （演算子でロールに行が積まれ、計算の途中経過が増えるため）
+            .onChange(of: viewModel.rollLineTrigger) { _, _ in
+                guard setting.autoScroll == .recommended else { return }
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(0.05))
+                    if !viewModel.rollLinesBuilding.isEmpty {
+                        proxy.scrollTo("live", anchor: .top)
+                    } else if let first = reversedRows.first {
+                        proxy.scrollTo(first.offset, anchor: .top)
+                    }
                 }
             }
             .onChange(of: viewModel.formulaAttr) { _, _ in

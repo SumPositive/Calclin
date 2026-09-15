@@ -1312,13 +1312,29 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Latest row"
+            "value" : "Show latest row"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "最下行へ"
+            "value" : "最新行を表示するタイミング"
+          }
+        }
+      }
+    },
+    "settings.autoScroll.recommended" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recommended"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "おすすめ"
           }
         }
       }
@@ -1928,13 +1944,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choose when the roll jumps to the latest row."
+            "value" : "Choose when the roll jumps to the latest row. Recommended: on [=], plus after an operator in calculator mode."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ロールの最下行を自動的に表示するタイミングを設定できます"
+            "value" : "ロールの最新行を自動的に表示するタイミングを設定できます。おすすめは、数式モードは[=]のとき、電卓モードは[=]と演算子のときです"
           }
         }
       }

@@ -69,6 +69,13 @@ final class CalcViewModel: ObservableObject {
     var numberFont: SettingViewModel.NumberFont = .sfProRounded
     // 自動スクロール用トリガー：= 直後の最初のキー入力で +1 する
     @Published var inputStartTrigger: Int = 0
+    /// [=] で計算が確定するたびに +1 する。ロールを末尾までスクロールさせる合図
+    /// - historyRows.count は上限(100件)に達すると増えなくなり、
+    ///   追加と削除が相殺して変化が検知できないため、専用の合図を持つ
+    @Published var answerTrigger: Int = 0
+    /// 電卓モードで演算子を押してロールに行が積まれるたびに +1 する
+    /// - 「おすすめ」設定で、計算の途中経過も追えるようにするための合図
+    @Published var rollLineTrigger: Int = 0
 
     
     struct RollLine: Hashable {
@@ -1320,6 +1327,7 @@ final class CalcViewModel: ObservableObject {
                 if CALC_HISTORY_MAX < historyRows.count {
                     historyRows.removeFirst() // 最初の履歴を削除
                 }
+                answerTrigger += 1
                 // New
                 tokens = [] //.removeAll()
                 tokens.append(answer)
@@ -1736,6 +1744,9 @@ final class CalcViewModel: ObservableObject {
         isCalcRootResult = false
         tokens = []
         isAnswerMode = false
+        // 演算子でロールに行が積まれたので、最新行を見せる合図を出す
+        // （「おすすめ」設定では電卓モードのときだけ使う）
+        rollLineTrigger += 1
         formulaUpdateCalc()
     }
 
@@ -1979,6 +1990,7 @@ final class CalcViewModel: ObservableObject {
                              rollLines: rollLinesBuilding)
         historyRows.append(row)
         if CALC_HISTORY_MAX < historyRows.count { historyRows.removeFirst() }
+        answerTrigger += 1
 
         // 次の計算へ — 結果トークンを表示単位で保持、accumulator は Base単位
         accumulator = resultBase

@@ -450,19 +450,24 @@ final class SettingViewModel: ObservableObject {
 
     /// 自動スクロールタイミング
     enum AutoScroll: String, CaseIterable, Identifiable {
+        /// おすすめ（既定）
+        /// - 数式モード：[=] で確定したとき
+        /// - 電卓モード：[=] に加えて演算子を押したとき（ロールに行が積まれるため）
+        case recommended
         case never    // しない
         case onInput  // 入力開始時
         case onEquals // ＝タップ時
         var id: String { rawValue }
         var localized: String {
             switch self {
+            case .recommended: return String(localized: "settings.autoScroll.recommended")
             case .never:    return String(localized: "settings.autoScroll.off")
             case .onInput:  return String(localized: "settings.autoScroll.onInput")
             case .onEquals: return String(localized: "settings.autoScroll.onTotal")
             }
         }
     }
-    @Published var autoScroll: AutoScroll = .onInput {
+    @Published var autoScroll: AutoScroll = .recommended {
         didSet {
             save(autoScroll.rawValue, forKey: StorageKey.autoScroll)
         }
