@@ -121,6 +121,16 @@ struct CalcView: View {
         .transition(.opacity)
     }
 
+    /// 入力行に表示している式の自然幅をその場で測る。
+    /// - 目印（モードアイコン）と数字が重なるかの判定に使う
+    /// - NSAttributedString の実測なので、SwiftUI の計測を待たずに同期的に求まる
+    private var inputLineTextWidth: CGFloat {
+        let plain = String(viewModel.formulaAttr.characters)
+        guard !plain.isEmpty else { return 0 }
+        let uiFont = UIFont.systemFont(ofSize: 33.6 * inputRowFontScale, weight: .bold)
+        return (plain as NSString).size(withAttributes: [.font: uiFont]).width
+    }
+
     /// 入力行末尾の単位のタップ領域幅
     /// - 入力行のフォントで単位文字列を実測し、指で押しやすいよう左右に少し余裕を持たせる
     /// - 入力行は縮小・スクロールで実フォントが変わるため、最小サイズ側（標準サイズ）で測る。
@@ -184,9 +194,11 @@ struct CalcView: View {
             // アイコンのみでも収まらない狭さ（SE の3面など）でだけ、3つのツールを一回り縮小する
             let usesCompactTools = geo.size.width < 112 * calcFontScale
             // 入力行は右寄せで、桁が増えると左へ伸びる。
-            // 目印（左端・約15pt＋余白）に値が届く前に消して、数字と重ならないようにする
+            // 目印（左端・約15pt＋余白）に値が届く前に消して、数字と重ならないようにする。
+            // 幅は非同期に届く formulaTextWidth ではなくその場で実測する
+            // （測定が1フレーム遅れると、伸びた瞬間に数字と重なってしまう）
             let showsModeMark = !showsInputTools
-                && formulaTextWidth + 38 * min(calcFontScale, 1.5) < geo.size.width
+                && inputLineTextWidth + 38 * min(calcFontScale, 1.5) < geo.size.width
 
             VStack(spacing: 0) {
 
@@ -239,7 +251,8 @@ struct CalcView: View {
                     .environmentObject(setting)
                     .frame(minHeight: 44)
                     .frame(height: inputLineHeight)
-                    .background(PaperPlaneBackground())
+                    // ガラスは操作対象のロールだけに乗せる（非アクティブは素のロール紙）
+                    .background(PaperPlaneBackground(showsGlass: isActive))
                     // 入力中（ツール非表示）は、左端に現在モードの目印だけを残す
                     .overlay(alignment: .leading) {
                         if showsModeMark {
@@ -599,12 +612,63 @@ private struct InputToolsWidthPreferenceKey: PreferenceKey {
     }
 }
 
+/// 入力行の背景。
+/// ロール紙と地続きに見せつつ、薄い青ガラスを一枚かぶせて「今ここに書く」場所だと示す
 private struct PaperPlaneBackground: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// アクティブなロールだけガラスを乗せる
+    let showsGlass: Bool
+
+    /// ガラス端の濃さ。上下端をはっきり濃くして、チューブの縁を立たせる
+    private var glassOpacity: Double { colorScheme == .dark ? 0.42 : 0.26 }
+
+    /// 中央のハイライトの強さ
+    private var centerHighlight: Double { colorScheme == .dark ? 0.06 : 0.28 }
+
     var body: some View {
         ZStack {
             COLOR_BACK_FORMULA
             PaperRollLighting()
+
+            if showsGlass {
+                // 薄い青ガラス。
+                // 上下の端だけ濃くし中央を薄くすることで、断面が丸いガラスチューブが
+                // 横たわって中央が手前に浮き上がっているように見せる
+                // 端から中央へなだらかに薄くする。
+                // 段数を増やして上下端が「線」に見えないようにし、
+                // 円筒の断面のように中央へ向かって連続的に抜けさせる
+                LinearGradient(
+                    stops: [
+                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity), location: 0.00),
+                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.74), location: 0.08),
+                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.50), location: 0.17),
+                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.30), location: 0.28),
+                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.16), location: 0.38),
+                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.10), location: 0.50),
+                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.16), location: 0.62),
+                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.30), location: 0.72),
+                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.50), location: 0.83),
+                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.74), location: 0.92),
+                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity), location: 1.00),
+                    ],
+                    startPoint: .top, endPoint: .bottom)
+
+                // 中央のハイライト。ガラスの丸みが光を集めている表現
+                LinearGradient(
+                    stops: [
+                        .init(color: Color.white.opacity(0.0), location: 0.18),
+                        .init(color: Color.white.opacity(centerHighlight * 0.35), location: 0.32),
+                        .init(color: Color.white.opacity(centerHighlight * 0.80), location: 0.43),
+                        .init(color: Color.white.opacity(centerHighlight), location: 0.50),
+                        .init(color: Color.white.opacity(centerHighlight * 0.80), location: 0.57),
+                        .init(color: Color.white.opacity(centerHighlight * 0.35), location: 0.68),
+                        .init(color: Color.white.opacity(0.0), location: 0.82),
+                    ],
+                    startPoint: .top, endPoint: .bottom)
+            }
         }
+        .allowsHitTesting(false)
     }
 }
 

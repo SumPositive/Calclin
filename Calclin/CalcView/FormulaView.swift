@@ -42,6 +42,12 @@ struct FormulaView: View {
         setting.numberFont.font(size: inputBaseFontSize * calcFontScale, weight: .bold)
     }
 
+    /// 数字の見た目を縦中央に寄せるための下げ幅。
+    /// 行ボックスはディセンダを含むが数字はそこを使わないので、その半分だけ下げる
+    private var descenderCompensation: CGFloat {
+        33.6 * calcFontScale * 0.10
+    }
+
     var body: some View {
         GeometryReader { geo in
             // 枠線 3pt + 見える余白 2pt の分だけ内側へ寄せる
@@ -58,10 +64,35 @@ struct FormulaView: View {
                 stage3ScrollingLine(width: innerWidth)
             }
             // 内側枠：innerWidth に制限して clipped → 余白の手前で確実に切れる
+            // 数字はディセンダ（g や y の下に伸びる部分）を使わないため、
+            // 行ボックスを素直に中央へ置くと視覚的に上寄りに見える。
+            // ディセンダぶんだけ下げて、数字の見た目が中央に来るようにする
             .frame(width: innerWidth, height: geo.size.height, alignment: .trailing)
+            .offset(y: descenderCompensation)
             .clipped()
             // 外側枠：geo 全幅、枠線の内側に見える余白が残る
             .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
+            // 親（CalcView）がツール表示可否を判定するための「式の自然幅」を常に通知する。
+            // ViewThatFits は選ばれた候補しか描画しないため、測定は候補の外に置く
+            // （ここに置かないと、溢れてスクロール段に落ちた瞬間に幅が更新されなくなる）
+            .background {
+                Text(viewModel.formulaAttr)
+                    .font(inputBaseFont)
+                    .dynamicTypeSize(.large)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .hidden()
+                    .background {
+                        GeometryReader { textGeo in
+                            Color.clear
+                                .preference(key: FormulaTextWidthPreferenceKey.self,
+                                            value: textGeo.size.width)
+                        }
+                    }
+            }
+            .onPreferenceChange(FormulaTextWidthPreferenceKey.self) { width in
+                onTextWidthChange?(width)
+            }
         }
         .frame(maxWidth: .infinity)
     }
@@ -79,17 +110,6 @@ struct FormulaView: View {
             .opacity(inputTextOpacity)
             .lineLimit(1)
             .fixedSize()
-            .background {
-                // 親（CalcView）がツール表示可否を判定するために formula 自然幅を通知
-                GeometryReader { textGeo in
-                    Color.clear
-                        .preference(key: FormulaTextWidthPreferenceKey.self,
-                                    value: textGeo.size.width)
-                }
-            }
-            .onPreferenceChange(FormulaTextWidthPreferenceKey.self) { width in
-                onTextWidthChange?(width)
-            }
     }
 
     // MARK: - Stage 1: 横スクロール（1 行のまま）

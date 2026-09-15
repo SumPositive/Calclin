@@ -816,6 +816,12 @@ final class CalcViewModel: ObservableObject {
     private func unitAttrString(_ formula: String, isTappable: Bool) -> AttributedString {
         var attr = AttributedString(formula)
         attr.foregroundColor = COLOR_UNIT
+        // 単位は数値より一回り小さくする。
+        // ㎡ や 坪 は Hiragino へフォールバックし数字より背が高いので、
+        // 同じサイズだと単位のほうが大きく見えてしまう
+        attr.font = numberFont.font(size: 33.6 * numberFontScale * 0.80, weight: .bold)
+        // g や kg のディセンダが入力行の下端に接してしまうので、少し持ち上げる
+        attr.baselineOffset = 33.6 * numberFontScale * 0.06
         if isTappable {
             // 色は Text.LineStyle の中に入れる。
             // attr.underlineColor は UIKit スコープに入るのに対し underlineStyle は SwiftUI スコープへ入り、
