@@ -55,10 +55,11 @@ struct CalcView: View {
 
     private var inputLineHeight: CGFloat {
         // 入力行は視認性を優先して基準サイズを 1.4 倍 (24 → 33.6) に合わせる
-        // - 累計プレフィックスがある（電卓モードで保留演算子あり）時は 2 段表示の余地を確保
-        // - それ以外（数式モード、回答表示中、初期状態）は 1 段で十分なので余白を抑える
-        let multiplier: CGFloat = viewModel.accumulatorPart != nil ? 1.5 : 1.2
-        return max(50, 33.6 * inputRowFontScale * multiplier)
+        // - 2 段表示は廃止して常に 1 行なので、累計の有無で高さを変える必要はない
+        // - 1.25 倍は「文字の自然高 40.3pt ＋ 上下の余白」。
+        //   ㎡ や 坪 は Hiragino へフォールバックし数字より 3pt ほど背が高いので、
+        //   ぎりぎりにすると上が欠ける
+        return max(46, 33.6 * inputRowFontScale * 1.25)
     }
 
     private func syncCalcFontScale() {

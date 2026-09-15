@@ -10,9 +10,7 @@ import SwiftUI
 
 /// 入力行の表示。幅オーバー時は次の段階で適応する：
 /// - Stage 0: 1 行フルサイズ（formulaAttr すべて）
-/// - Stage 1: 2 段（電卓モードかつ累計あり時のみ。上 = accumulator、下 = current）
-/// - Stage 2: 1 行で標準サイズに縮小（current のみ）
-/// - Stage 3: 1 行を標準サイズで横スクロール（current のみ）
+/// - Stage 1: 1 行のまま横スクロール（累計＋現在値。縮小はしない）
 ///
 /// 段階の選択は `ViewThatFits` に委ね、各候補は `.fixedSize()` で intrinsic 幅を申告する。
 struct FormulaView: View {
@@ -44,11 +42,6 @@ struct FormulaView: View {
         setting.numberFont.font(size: inputBaseFontSize * calcFontScale, weight: .bold)
     }
 
-    /// Stage 2/3 で使う「標準サイズ」フロア（fontScale 無視＝1.0 倍固定）
-    private var inputStandardFont: Font {
-        setting.numberFont.font(size: inputBaseFontSize, weight: .bold)
-    }
-
     var body: some View {
         GeometryReader { geo in
             // 枠線 3pt + 見える余白 2pt の分だけ内側へ寄せる
@@ -60,20 +53,8 @@ struct FormulaView: View {
                 // Stage 0: フルサイズ 1 行（全モード）
                 stage0FullLine
 
-                // 電卓モード + 累計あり時は 2 段表示を試す（累計を維持）
-                if viewModel.accumulatorPart != nil {
-                    // Stage 1: 累計（左）＋ 現在値ベースサイズ（右）
-                    stage1TwoLines(currentFont: inputBaseFont)
-                    // Stage 2: 累計（左）＋ 現在値標準サイズ（右）
-                    stage1TwoLines(currentFont: inputStandardFont)
-                } else {
-                    // Stage 2': 標準サイズに縮小して 1 行（累計なしの時の縮小段）
-                    stage2StandardLine
-                }
-
-                // Stage 3: スクロール（最後の手段）
-                // - 累計があれば上段に固定表示し、下段だけ横スクロール
-                // - 累計がなければ 1 行スクロール
+                // Stage 1: 収まらなければ、大きさはそのままで横スクロール
+                // （縮小段は置かない。スクロールで読めるので小さくする必要がない）
                 stage3ScrollingLine(width: innerWidth)
             }
             // 内側枠：innerWidth に制限して clipped → 余白の手前で確実に切れる
@@ -111,65 +92,17 @@ struct FormulaView: View {
             }
     }
 
-    // MARK: - Stage 1 / 2: 2 段表示（電卓モード + 累計あり）
-
-    /// 2 段レイアウト。`currentFont` を切り替えることで Stage 1（ベース）と Stage 2（標準＝縮小）を生成する。
-    /// 累計は常に AttributedString に埋め込まれた小サイズフォントで描画されるため、ここでは指定しない。
-    private func stage1TwoLines(currentFont: Font) -> some View {
-        // 独自 Layout を使い「上段の累計は入力行の左端・下段の現在値は入力行の右端」を実現。
-        // 通常の VStack(alignment:) では行毎に違う水平揃えができない。
-        TwoLineSplitLayout(verticalSpacing: -2) {
-            if let acc = viewModel.accumulatorPart {
-                // accumulatorPart の AttributedString に既にフォント・色が埋め込まれているため、
-                // .font() / .foregroundStyle() は上書きされる（per-character 属性が優先）
-                Text(acc)
-                    .dynamicTypeSize(.large)
-                    .lineLimit(1)
-                    .fixedSize()
-            } else {
-                // ダミー（accumulatorPart != nil の時しかこの Stage は使われないが念のため）
-                Color.clear.frame(width: 0, height: 0)
-            }
-            Text(viewModel.currentPart)
-                .font(currentFont)
-                .dynamicTypeSize(.large)
-                .foregroundStyle(viewModel.isAnswerMode ? COLOR_ANSWER : COLOR_NUMBER)
-                .opacity(inputTextOpacity)
-                .lineLimit(1)
-                .fixedSize()
-        }
-    }
-
-    // MARK: - Stage 2: 標準サイズ縮小 1 行（current のみ）
-
-    private var stage2StandardLine: some View {
-        Text(viewModel.currentPart)
-            .font(inputStandardFont)
-            .dynamicTypeSize(.large)
-            .foregroundStyle(viewModel.isAnswerMode ? COLOR_ANSWER : COLOR_NUMBER)
-            .opacity(inputTextOpacity)
-            .lineLimit(1)
-            .fixedSize()
-    }
-
-    // MARK: - Stage 3: 横スクロール（累計があれば 2 段、なければ 1 段）
+    // MARK: - Stage 1: 横スクロール（1 行のまま）
 
     private func stage3ScrollingLine(width: CGFloat) -> some View {
-        // VStack(alignment: .leading) で累計を左端に固定。下段は ScrollView で current が横スクロール。
+        // 累計と現在値を 1 行にまとめて横スクロールさせる。
         // .frame(width: width) を付けることで親いっぱいに広がり、ViewThatFits は「収まる」と判定する。
-        VStack(alignment: .leading, spacing: -2) {
-            // 上段：累計（あれば固定表示。左端寄せ）
-            if let acc = viewModel.accumulatorPart {
-                Text(acc)
-                    .dynamicTypeSize(.large)
-                    .lineLimit(1)
-                    .fixedSize()
-            }
-            // 下段：current を横スクロール、末尾末尾にアンカー
+        VStack(alignment: .leading, spacing: 0) {
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
-                    Text(viewModel.currentPart)
-                        .font(inputStandardFont)
+                    Text(viewModel.formulaAttr)
+                        // 縮小しないので Stage 0 と同じフルサイズで描く
+                        .font(inputBaseFont)
                         .dynamicTypeSize(.large)
                         .foregroundStyle(viewModel.isAnswerMode ? COLOR_ANSWER : COLOR_NUMBER)
                         .opacity(inputTextOpacity)
@@ -178,7 +111,7 @@ struct FormulaView: View {
                         .frame(minWidth: width, alignment: .trailing)
                         .id(scrollId)
                 }
-                .onChange(of: viewModel.currentPart) {
+                .onChange(of: viewModel.formulaAttr) {
                     Task { @MainActor in
                         proxy.scrollTo(scrollId, anchor: .trailing)
                     }

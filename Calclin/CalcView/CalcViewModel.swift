@@ -1118,8 +1118,9 @@ final class CalcViewModel: ObservableObject {
                 : editingAccDisplay
             var accAttr = AttributedString(accStr)
             accAttr.foregroundColor = COLOR_NUMBER.opacity(0.4)
-            // 入力行のフォント設定に合わせる（基準サイズは小さめの 15.0）
-            accAttr.font = numberFont.font(size: 15.0 * numberFontScale, weight: .bold)
+            // 現在値と同じ大きさにして「555 + 666」が揃って見えるようにする。
+            // 桁が多くて収まらないときは FormulaView 側の minimumScaleFactor で縮む
+            accAttr.font = numberFont.font(size: 33.6 * numberFontScale, weight: .bold)
             accPart = accAttr
 
             // 演算子は current 側へ
