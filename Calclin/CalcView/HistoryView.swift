@@ -136,12 +136,6 @@ struct HistoryView: View {
                                     Manager.shared.toast(String(localized: "calc.quote.unitMismatch"))
                                 }
                             }
-                            // 長押しでメモ入力（電卓モードの [=] 行長押しと揃える）
-                            .onLongPressGesture {
-                                setting.popupHistoryMemoInfo = (maxLength: 0,
-                                                                index: index,
-                                                                calcIndex: calcIndex)
-                            }
                     }
                 }
                 .scaleEffect(y: -1) // 上下反転：末尾固定スクロールのため（List+swipeActions維持の唯一の方法）
@@ -219,6 +213,130 @@ struct CustomCell: View {
         33.6 * setting.inputRowFontScale(for: dynamicTypeSize) * 0.8
     }
 
+    /// 改行用のゼロ幅スペースを差し込んだ式（答え・単位は含まない）
+    /// - 最新行は答えを下段に分けて出すので、上段は式だけにする
+    private var plainFormulaText: AttributedString {
+        withLineBreakHints(plainFormulaTextRaw)
+    }
+
+    /// 最新行以外の1行表示「式＝答え単位（＋メモ）」
+    private var historyLineText: AttributedString {
+        var equal = AttributedString(FM_ANS)
+        equal.foregroundColor = COLOR_OPERATOR
+        var answer = AttributedString(minusSignedDisplay(row.answer))
+        // 答えは式より目立たせる（電卓モードの [=] 行と揃える）
+        answer.font = .system(size: fontSize * calcFontScale,
+                              weight: .bold, design: .rounded).monospacedDigit()
+        var attrStr = plainFormulaTextRaw + equal + answer
+        if let kt = row.unitFormula {
+            var unitKt = AttributedString(kt)
+            unitKt.foregroundColor = COLOR_UNIT
+            // 最新行以外はタップしても換算できないので下線は付けない
+            attrStr += unitKt
+        }
+        return appendMemo(withLineBreakHints(attrStr))
+    }
+
+    /// 式の素の AttributedString（改行ヒント差し込み前）
+    /// - 保存時の入力行の見た目（大きなフォント・下線・持ち上げ）は履歴では使わないので消す
+    private var plainFormulaTextRaw: AttributedString {
+        var formula = row.formula
+        formula.underlineStyle = nil
+        formula.font = nil
+        formula.baselineOffset = nil
+        return formula
+    }
+
+    /// 演算子の前で改行できるようゼロ幅スペースを差し込む
+    /// （1パスで新規構築し、insert() の繰り返しによる再構築を避ける）
+    private func withLineBreakHints(_ attrStr: AttributedString) -> AttributedString {
+        var built = AttributedString()
+        for idx in attrStr.characters.indices {
+            if lineFeedChars.contains(attrStr.characters[idx]) {
+                built += zeroWidthSpace
+            }
+            built.append(attrStr[idx..<attrStr.characters.index(after: idx)])
+        }
+        return built
+    }
+
+    /// メモがあれば末尾に足す
+    private func appendMemo(_ attrStr: AttributedString) -> AttributedString {
+        guard let memo = row.memo else { return attrStr }
+        var out = attrStr
+        var memoAt = AttributedString("\n" + memo)
+        memoAt.foregroundColor = (colorScheme == .dark ? Color.cyan : COLOR_MEMO.opacity(0.7))
+        memoAt.font = .system(size: fontSize * 0.8 * calcFontScale,
+                              weight: .light, design: .rounded)
+        out += memoAt
+        return out
+    }
+
+    /// 最新の [=] 行の下段「＝ 答え 単位」。
+    /// 短い1行なので折り返さず、単位は素直に答えの隣に並ぶ
+    @ViewBuilder
+    private var latestAnswerRow: some View {
+        // 反転の中なので「先に書いたものが画面では下」に出る。
+        // メモは答えの下に出したいので、答えより先に書く
+        if let memo = row.memo, !memo.isEmpty {
+            Text(memo)
+                .scaleEffect(y: -1.0)
+                .font(.system(size: fontSize * 0.8 * calcFontScale,
+                              weight: .light, design: .rounded))
+                .foregroundStyle(colorScheme == .dark ? Color.cyan : COLOR_MEMO.opacity(0.7))
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        // 揃え方は電卓のロール行（valueText）と同じ .center にする。
+        // 下段は短い1行なので折り返さず、これで同じ見え方になる
+        HStack(spacing: 0) {
+            Spacer(minLength: 0)
+            Text({
+                var equal = AttributedString(FM_ANS)
+                equal.foregroundColor = COLOR_OPERATOR
+                equal.font = .system(size: fontSize * calcFontScale,
+                                     weight: .regular, design: .rounded)
+                var answer = AttributedString(minusSignedDisplay(row.answer))
+                answer.font = setting.numberFont.font(size: latestAnswerFontSize, weight: .bold)
+                return equal + answer
+            }())
+                .scaleEffect(y: -1.0) // List の反転を打ち消す
+                .opacity(colorScheme == .dark ? 0.55 : 1.0)
+                .lineLimit(1)
+                // 桁数が多いと幅を超えるので、従来サイズまでは縮めて収める
+                .minimumScaleFactor((fontSize * calcFontScale) / latestAnswerFontSize)
+
+            if let unit = latestUnitText {
+                Text(unit)
+                    .scaleEffect(y: -1.0) // List の反転を打ち消す
+                    .opacity(colorScheme == .dark ? 0.55 : 1.0)
+                    .fixedSize()
+                    .contentShape(Rectangle())
+                    // 行全体にもタップ（＝行引用）が付いているので、
+                    // 単位の上だけは親より先に取る
+                    .highPriorityGesture(TapGesture().onEnded {
+                        guard !viewModel.historyUnitCandidates(row).isEmpty else { return }
+                        isUnitConvertPresented = true
+                    })
+                    // ポップオーバーは単位そのものに付ける。
+                    // List 側に付けると上下反転（scaleEffect(y: -1)）の影響で
+                    // 画面の外に吹き出しが出てしまう
+                    .popover(isPresented: $isUnitConvertPresented, arrowEdge: .bottom) {
+                        // 候補はここで作る。@State に持たせると
+                        // 提示と同じタイミングの更新が間に合わず空になることがある
+                        UnitConvertPickPopover(
+                            candidates: viewModel.historyUnitCandidates(row)
+                        ) { toDef in
+                            // タップした行の答えをそのまま書き換える
+                            viewModel.convertHistoryAnswer(at: rowIndex, to: toDef)
+                            isUnitConvertPresented = false
+                        }
+                        .appFontScale(setting.fontScale)
+                        .presentationCompactAdaptation(.popover)
+                    }
+            }
+        }
+    }
+
     /// 最新行の答えに付く単位（別 Text にしてタップできるようにする）
     private var latestUnitText: AttributedString? {
         guard isLatest, let kt = row.unitFormula, !kt.isEmpty else { return nil }
@@ -226,9 +344,12 @@ struct CustomCell: View {
         unitKt.foregroundColor = COLOR_UNIT
         // タップで換算リストを出せる印
         unitKt.underlineStyle = Text.LineStyle(pattern: .solid, color: COLOR_UNIT_UNDERLINE)
-        unitKt.font = setting.numberFont.font(size: latestAnswerFontSize * UNIT_FONT_RATIO, weight: .bold)
-        // 小さいぶんベースラインを揃えると沈んで見えるので、中心が合うよう持ち上げる
-        unitKt.baselineOffset = latestAnswerFontSize * UNIT_BASELINE_RATIO
+        let unitSize = latestAnswerFontSize * UNIT_FONT_RATIO
+        unitKt.font = setting.numberFont.font(size: unitSize, weight: .bold)
+        // 電卓のロール行と同じ .center 揃えなので、補正も同じ（字ごとの残差だけ）
+        unitKt.baselineOffset = unitBaselineOffset(
+            unit: kt,
+            unitFont: setting.numberFont.uiFont(size: unitSize))
         return unitKt
     }
 
@@ -245,100 +366,36 @@ struct CustomCell: View {
                 // ロール表示と同じ見た目になる
                 .padding(.vertical, SEPARATOR_GAP)
 
-            // 最新行だけ、答えの単位を別 Text にして横に並べる。
-            // 1つの AttributedString に混ぜると単位の位置が特定できずタップできないため
-            // 本文と単位を横に並べる。
-            // - 本文側に maxWidth を与えると単位が右端へ押し出され、
-            //   折り返したとき最終行と離れて見えるので、HStack 側で右寄せする
-            // - 中の Text は scaleEffect(y: -1) で反転しているため、
-            //   ベースライン揃えは反転の影響で意図と逆になるため使わない。
-            //   .top なら反転後も答えの行に単位が並ぶ
-            HStack(alignment: .top, spacing: 0) {
-                Spacer(minLength: 0)
-            // 計算式 = 答え
-            Text({
-                var equal = AttributedString(FM_ANS)
-                equal.foregroundColor = COLOR_OPERATOR //.opacity(0.5)
-                // Answer
-                // 最新行の答えだけ、入力行と同じ書体で一回り大きく見せる
-                var answer = AttributedString(minusSignedDisplay(row.answer))
-                if isLatest {
-                    answer.font = setting.numberFont.font(size: latestAnswerFontSize, weight: .bold)
-                } else {
-                    // 答えは式より目立たせる（電卓モードの [=] 行と揃える）
-                    answer.font = .system(size: fontSize * calcFontScale,
-                                          weight: .bold, design: .rounded).monospacedDigit()
-                }
-                // Formula
-                // 保存時の入力行の見た目をそのまま持っているため、左辺（式）側の単位に
-                // 入力行用の大きなフォントと下線が残っている。
-                // 履歴では左辺をタップしても何も起きないので、どちらも消して本文サイズに戻す
-                var formula = row.formula
-                formula.underlineStyle = nil
-                formula.font = nil
-                // 入力行用に単位を持ち上げていた分も消す。
-                // 残すと左辺の単位だけ浮いて、右辺の単位と濃さ・位置が揃わない
-                formula.baselineOffset = nil
-                var attrStr = formula + equal + answer
-                // UNIT.keyTop ?? .code
-                // 最新行は単位を別 Text に分けて（下で）描くので、ここには含めない
-                if let kt = row.unitFormula, !isLatest {
-                    var unitKt = AttributedString(kt)
-                    unitKt.foregroundColor = COLOR_UNIT //.opacity(0.5)
-                    // ここは最新行以外。タップしても換算できないので下線は付けない
-                    attrStr += unitKt
-                }
-                // 演算子の前で改行させるための処理（1パスで新規構築し insert() の繰り返し再構築を回避）
-                var built = AttributedString()
-                for idx in attrStr.characters.indices {
-                    if lineFeedChars.contains(attrStr.characters[idx]) {
-                        built += zeroWidthSpace
-                    }
-                    built.append(attrStr[idx..<attrStr.characters.index(after: idx)])
-                }
-                attrStr = built
-                // メモ
-                if let memo = row.memo {
-                    var memoAt = AttributedString("\n" + memo)
-                    memoAt.foregroundColor = (colorScheme == .dark ? Color.cyan : COLOR_MEMO.opacity(0.7))
-                    memoAt.font = .system(size: fontSize * 0.8 * calcFontScale, weight: .light, design: .rounded)
-                    attrStr += memoAt
-                }
-                return attrStr
-            }())
-            .scaleEffect(y: -1.0) // List の反転を打ち消す
-            .font(.system(size: fontSize * calcFontScale, weight: .regular, design: .rounded).monospacedDigit())
-            .opacity(colorScheme == .dark ? 0.55 : 1.0)
-            .multilineTextAlignment(.trailing) // 複数行で右寄せ
-            .layoutPriority(1)   // 単位より先に幅を取り、折り返しは本文側で吸収する
-
-                if let unit = latestUnitText {
-                    Text(unit)
+            // 最新の [=] 行は「式」と「＝答え＋単位」を上下2段に分ける。
+            // - 答えを大きく見せるのは [=] 直後だけ。電卓のロール表示と同じ形にする
+            // - 2段に分けると下段は必ず短い1行になるので、折り返しで単位の
+            //   揃え先が崩れる問題が起きない（1つの Text に混ぜると、長い式が
+            //   折り返したときに単位だけ別の行へ付いてしまう）
+            // - それ以外の行は従来どおり「式＝答え単位」を1つの Text で描く
+            if isLatest {
+                // ここは List の上下反転（scaleEffect(y: -1)）の中なので、
+                // 宣言の順番は画面では逆になる。
+                // 「先に書いたものが下に出る」ため、答え → 式 の順に書く
+                // 下段（画面では下）：＝ 答え 単位
+                latestAnswerRow
+                // 上段（画面では上）：式（答えは下段に出すので含めない）
+                if !plainFormulaText.characters.isEmpty {
+                    Text(plainFormulaText)
                         .scaleEffect(y: -1.0) // List の反転を打ち消す
+                        .font(.system(size: fontSize * calcFontScale,
+                                      weight: .regular, design: .rounded).monospacedDigit())
                         .opacity(colorScheme == .dark ? 0.55 : 1.0)
-                        .fixedSize()
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            guard !viewModel.historyUnitCandidates(row).isEmpty else { return }
-                            isUnitConvertPresented = true
-                        }
-                        // ポップオーバーは単位そのものに付ける。
-                        // List 側に付けると上下反転（scaleEffect(y: -1)）の影響で
-                        // 画面の外に吹き出しが出てしまう
-                        .popover(isPresented: $isUnitConvertPresented, arrowEdge: .bottom) {
-                            // 候補はここで作る。@State に持たせると
-                            // 提示と同じタイミングの更新が間に合わず空になることがある
-                            UnitConvertPickPopover(
-                                candidates: viewModel.historyUnitCandidates(row)
-                            ) { toDef in
-                                // タップした行の答えをそのまま書き換える
-                                viewModel.convertHistoryAnswer(at: rowIndex, to: toDef)
-                                isUnitConvertPresented = false
-                            }
-                            .appFontScale(setting.fontScale)
-                            .presentationCompactAdaptation(.popover)
-                        }
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                 }
+            } else {
+                Text(historyLineText)
+                    .scaleEffect(y: -1.0) // List の反転を打ち消す
+                    .font(.system(size: fontSize * calcFontScale,
+                                  weight: .regular, design: .rounded).monospacedDigit())
+                    .opacity(colorScheme == .dark ? 0.55 : 1.0)
+                    .multilineTextAlignment(.trailing) // 複数行で右寄せ
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         .frame(maxWidth: .infinity) // 親View内側一杯に広げる
@@ -485,13 +542,6 @@ struct RollView: View {
                                 Manager.shared.toast(String(localized: "calc.quote.unitMismatch"))
                             }
                         }
-                        // 長押しでメモ入力（数式モードの履歴行と揃える）
-                        .onLongPressGesture {
-                            guard row.rollLines == nil else { return }
-                            setting.popupHistoryMemoInfo = (maxLength: 0,
-                                                            index: index,
-                                                            calcIndex: calcIndex)
-                        }
                 }
             }
             .scaleEffect(y: -1)
@@ -570,6 +620,8 @@ struct RollCell: View {
     var viewModel: CalcViewModel? = nil
     // 単位タップで出す換算ポップオーバー（この行の中で完結させる）
     @State private var isUnitConvertPresented = false
+    // 吹き出しを単位の位置に合わせるために行幅を測る
+    @State private var rowWidth: CGFloat = 0
     @Environment(\.colorScheme) var colorScheme
     // 文字サイズ「自動」ではシステム Dynamic Type から CalcView 用倍率を決める
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -586,6 +638,27 @@ struct RollCell: View {
     ///   ロールは枠が無く同じ指定だと大きく見えるため、実測に合わせて 0.8 を掛ける
     private var latestAnswerFontSize: CGFloat {
         33.6 * setting.inputRowFontScale(for: dynamicTypeSize) * 0.8
+    }
+
+    /// 単位の描画幅（実測）。ポップオーバーの吹き出しを単位の真下に出すために使う
+    /// - 行は右寄せなので「右端から単位幅の半分」が単位の中心になる
+    private func unitDrawnWidth(_ formula: String) -> CGFloat {
+        let size = latestAnswerFontSize * UNIT_FONT_RATIO
+        let uiFont = UIFont.systemFont(ofSize: size, weight: .bold)
+        return (formula as NSString).size(withAttributes: [.font: uiFont]).width
+    }
+
+    /// 吹き出しを単位の位置から出すためのアンカー（行幅に対する割合）
+    /// - x: 右端から単位幅の半分だけ内側（行は右寄せなのでここが単位の中心）
+    /// - y: List が上下反転しているので 0 が画面上の下端になる
+    private func unitAnchor(_ line: CalcViewModel.RollLine) -> UnitPoint {
+        guard rowWidth > 0,
+              let code = line.unitCode,
+              let formula = viewModel?.unitFormula(for: code) else {
+            return UnitPoint(x: 0.92, y: 0)
+        }
+        let x = 1.0 - (unitDrawnWidth(formula) / 2) / rowWidth
+        return UnitPoint(x: min(max(x, 0), 1), y: 0)
     }
 
     private func isEditingLine(_ lineIdx: Int) -> Bool {
@@ -642,25 +715,15 @@ struct RollCell: View {
                      : plainUnitText(unitFormula))
                     .fixedSize()
                     .contentShape(Rectangle())
-                    .onTapGesture {
+                    // 行全体にもタップ（＝行引用）が付いているので、
+                    // 単位の上だけは親より先に取る。
+                    // 通常の .onTapGesture だと親側が先に成立して換算リストが出ない
+                    .highPriorityGesture(TapGesture().onEnded {
                         guard showsTappableUnit else { return }
                         guard !viewModel.rollUnitCandidates(numStr: numStr,
                                                             unitCode: unitCode).isEmpty else { return }
                         isUnitConvertPresented = true
-                    }
-                    // ポップオーバーは単位そのものに付ける
-                    // （List 側に付けると上下反転の影響で画面外に出る）
-                    .popover(isPresented: $isUnitConvertPresented, arrowEdge: .bottom) {
-                        UnitConvertPickPopover(
-                            candidates: viewModel.rollUnitCandidates(numStr: numStr,
-                                                                     unitCode: unitCode)
-                        ) { toDef in
-                            viewModel.convertRollAnswer(at: historyIndex, to: toDef)
-                            isUnitConvertPresented = false
-                        }
-                        .appFontScale(setting.fontScale)
-                        .presentationCompactAdaptation(.popover)
-                    }
+                    })
             }
         }
         // 拡大した最新行は縮小して収めたいので fixedSize を外す
@@ -681,9 +744,13 @@ struct RollCell: View {
         var attr = AttributedString(formula)
         attr.foregroundColor = COLOR_UNIT
         attr.underlineStyle = Text.LineStyle(pattern: .solid, color: COLOR_UNIT_UNDERLINE)
-        attr.font = setting.numberFont.font(size: latestAnswerFontSize * UNIT_FONT_RATIO, weight: .bold)
-        // 小さいぶんベースラインを揃えると沈んで見えるので、中心が合うよう持ち上げる
-        attr.baselineOffset = latestAnswerFontSize * UNIT_BASELINE_RATIO
+        let unitSize = latestAnswerFontSize * UNIT_FONT_RATIO
+        attr.font = setting.numberFont.font(size: unitSize, weight: .bold)
+        // 単位は字ごとにインクの高さが違う（㎡ は右肩の ² のぶん高い）ので、
+        // 固定比率ではなく実測して数値の中心に合わせる
+        attr.baselineOffset = unitBaselineOffset(
+            unit: formula,
+            unitFont: setting.numberFont.uiFont(size: unitSize))
         return attr
     }
 
@@ -713,25 +780,50 @@ struct RollCell: View {
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .opacity(colorScheme == .dark ? 0.55 : 1.0)
+                    // 吹き出しの位置合わせに行幅が要る（単位は右端に描かれる）
+                    .background {
+                        GeometryReader { lineGeo in
+                            Color.clear
+                                .onAppear { rowWidth = lineGeo.size.width }
+                                .onChange(of: lineGeo.size.width) { _, w in rowWidth = w }
+                        }
+                    }
                     .padding(.horizontal, editing ? 4 : 0)
                     .background(editing ? Color.accentColor.opacity(0.18) : Color.clear,
                                 in: RoundedRectangle(cornerRadius: 4))
                     .contentShape(Rectangle())
-                    // [=] 行：タップで答えを引用、長押しでメモ入力
-                    // （連続タップで合計を積み上げられるよう、タップ側を引用にしている）
-                    // 長押しを先に宣言する。逆順だとタップ側が先に成立して
-                    // 長押しがほとんど発火しない
-                    .onLongPressGesture {
-                        guard line.isFinal, historyIndex >= 0 else { return }
-                        setting.popupHistoryMemoInfo = (maxLength: 0,
-                                                        index: historyIndex,
-                                                        calcIndex: calcIndex)
-                    }
+                    // [=] 行：タップで答えを引用（連続タップで合計を積み上げられる）
+                    // メモは右スワイプメニューから入力する。
+                    // 行に長押しを付けると、内側の単位タップ（換算リスト）を奪うため置かない
                     .onTapGesture {
                         if line.isFinal {
                             onTapAnswer?(line)
                         } else {
                             onTapLine?(lineIdx)
+                        }
+                    }
+                    // 換算ポップオーバーは ViewThatFits の外側に置く。
+                    // 中（valueText）に置くと候補ごとに宣言されてしまい、
+                    // 測定で採用されなかった側に付くと表示されない
+                    // 吹き出しは単位の位置から出す。行は右寄せなので
+                    // 「右端から単位幅の半分」を行幅に対する割合で指定する
+                    // （y は List の上下反転を打ち消すため 0 = 画面下側）
+                    .popover(isPresented: Binding(
+                        get: { isUnitConvertPresented && line.isFinal },
+                        set: { if !$0 { isUnitConvertPresented = false } }
+                    ),
+                             attachmentAnchor: .point(unitAnchor(line)),
+                             arrowEdge: .bottom) {
+                        if let viewModel, let unitCode = line.unitCode {
+                            UnitConvertPickPopover(
+                                candidates: viewModel.rollUnitCandidates(numStr: line.rawBase,
+                                                                         unitCode: unitCode)
+                            ) { toDef in
+                                viewModel.convertRollAnswer(at: historyIndex, to: toDef)
+                                isUnitConvertPresented = false
+                            }
+                            .appFontScale(setting.fontScale)
+                            .presentationCompactAdaptation(.popover)
                         }
                     }
                 }

@@ -7,6 +7,8 @@
 
 import Foundation
 import SwiftUI
+import UIKit
+import CoreText
 import AZDecimal
 
 /// アプリ全体で共有する書式・丸め設定（SettingView で更新、CalcViewModel で参照）
@@ -63,7 +65,67 @@ let UNIT_FONT_RATIO: CGFloat = 0.62
 // - ベースラインを揃えると、小さい単位は数値より下に沈んで見える
 //   （実測：数値の中心 +9.5pt に対し 坪 は +5.9pt）
 // - その差を埋めて、数値と単位の高さの中心を合わせる
+// - 固定値のフォールバック。実際は unitBaselineOffset() で字ごとに測る
 let UNIT_BASELINE_RATIO: CGFloat = 0.09
+
+/// 単位の高さ合わせで基準にする字。
+/// 漢字は全角の字面いっぱいに描かれるので、.center 揃えで数字とちょうど合う
+let UNIT_BASELINE_REFERENCE = "坪"
+
+/// 単位を数値と同じ高さに見せるための補正量（`HStack(alignment: .center)` 前提）。
+///
+/// 前提：`.center` は文字の「箱」の中心を揃える。箱の高さはフォントサイズで決まるので、
+/// これだけで数字と単位の**平均的な**高さは揃う（実測：坪 はズレ 0.00pt）。
+///
+/// 残る問題は、単位は字ごとにインク（実際に描かれる範囲）の位置が違うこと。
+/// 例：同じ 16.7pt でも 坪 のインク中心は +5.85、㎡ は +6.57（右肩の ² のぶん高い）。
+/// そこで「基準となる字からどれだけ外れているか」だけを打ち消す。
+///
+/// 注意：数字との差を丸ごと補正してはいけない。それはベースライン揃え用の値で、
+/// `.center` と併用すると二重補正になり、全単位が一律に浮く（実測 3.63pt）。
+/// - Parameters:
+///   - unit: 単位の表示文字列（"㎡" や "坪"）
+///   - unitFont: 単位を描くフォント
+@MainActor
+func unitBaselineOffset(unit: String, unitFont: UIFont, digitsFont: UIFont? = nil) -> CGFloat {
+    // digitsFont を渡された場合はベースライン揃え用。
+    // 数字のインク中心に合わせる（.center のような自動補正が無いぶん、差を丸ごと埋める）
+    if let digitsFont {
+        func inkCenter(_ text: String, _ font: UIFont) -> CGFloat? {
+            guard !text.isEmpty else { return nil }
+            let attr = NSAttributedString(string: text, attributes: [.font: font])
+            let b = CTLineGetBoundsWithOptions(CTLineCreateWithAttributedString(attr),
+                                               .useGlyphPathBounds)
+            guard b.height > 0 else { return nil }
+            return b.minY + b.height / 2
+        }
+        guard let digits = inkCenter("1234567890", digitsFont),
+              let center = inkCenter(unit, unitFont) else {
+            return digitsFont.pointSize * UNIT_BASELINE_RATIO
+        }
+        return digits - center
+    }
+    return unitBaselineOffsetForCenter(unit: unit, unitFont: unitFont)
+}
+
+/// `.center` 揃え用の残差補正（上のコメント参照）
+@MainActor
+private func unitBaselineOffsetForCenter(unit: String, unitFont: UIFont) -> CGFloat {
+    func inkCenter(_ text: String, _ font: UIFont) -> CGFloat? {
+        guard !text.isEmpty else { return nil }
+        let attr = NSAttributedString(string: text, attributes: [.font: font])
+        let bounds = CTLineGetBoundsWithOptions(CTLineCreateWithAttributedString(attr),
+                                                .useGlyphPathBounds)
+        guard bounds.height > 0 else { return nil }
+        return bounds.minY + bounds.height / 2
+    }
+    // 基準は漢字の単位（坪・畝・反）。全角の字面いっぱいに描かれ、
+    // .center でちょうど数字と揃うことを実測で確認している
+    guard let reference = inkCenter(UNIT_BASELINE_REFERENCE, unitFont),
+          let center = inkCenter(unit, unitFont) else { return 0 }
+    // 基準より高く描かれる字（㎡ など）は、その差だけ下げる
+    return reference - center
+}
 
 // 履歴の計算どうしを仕切る線の、上下の余白
 // - 線自身に上下対称で付けるので、リストの上下反転を考えずに済む

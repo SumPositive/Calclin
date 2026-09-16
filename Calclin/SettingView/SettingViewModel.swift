@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 import AZDecimal
 
 // ローカル通知名を定義
@@ -437,6 +438,39 @@ final class SettingViewModel: ObservableObject {
                 return .custom("DINAlternate-Bold", size: size)
             case .dinCondensed:
                 return .custom("DINCondensed-Bold", size: size)
+            }
+        }
+
+        /// 上の font(size:weight:) と同じ書体を UIFont で返す。
+        /// 文字の実寸を測りたいとき（単位の高さ合わせなど）に使う
+        func uiFont(size: CGFloat, weight: UIFont.Weight = .bold) -> UIFont {
+            func designed(_ design: UIFontDescriptor.SystemDesign) -> UIFont {
+                let base = UIFont.systemFont(ofSize: size, weight: weight)
+                guard let d = base.fontDescriptor.withDesign(design) else { return base }
+                return UIFont(descriptor: d, size: size)
+            }
+            switch self {
+            case .sfPro:
+                return UIFont.systemFont(ofSize: size, weight: weight)
+            case .sfProRounded:
+                return designed(.rounded)
+            case .sfMono:
+                return designed(.monospaced)
+            case .menlo:
+                return UIFont(name: "Menlo-Bold", size: size)
+                    ?? UIFont.systemFont(ofSize: size, weight: weight)
+            case .avenirNext:
+                return UIFont(name: "AvenirNext-Bold", size: size)
+                    ?? UIFont.systemFont(ofSize: size, weight: weight)
+            case .avenirNextCondensed:
+                return UIFont(name: "AvenirNextCondensed-Bold", size: size)
+                    ?? UIFont.systemFont(ofSize: size, weight: weight)
+            case .dinAlternate:
+                return UIFont(name: "DINAlternate-Bold", size: size)
+                    ?? UIFont.systemFont(ofSize: size, weight: weight)
+            case .dinCondensed:
+                return UIFont(name: "DINCondensed-Bold", size: size)
+                    ?? UIFont.systemFont(ofSize: size, weight: weight)
             }
         }
     }
