@@ -115,13 +115,14 @@ struct CalcRollView: View {
                         CalcView(viewModel: calcViewModels[index],
                                  calcIndex: index,
                                  isActive: isActive,
-                                 // ロールが1つのときだけ、紙の最上部にアプリ名を刻む
-                                 showsTitle: showCount == 1)
+                                 // 1面のときだけ PDF・色・フォントとアプリ名を出す
+                                 isSingleRoll: showCount == 1)
                             .environmentObject(setting) // settingに変化あればCalcViewが再生成される
                             .frame(width: calcWidth)
                             .accessibilityIdentifier("calcPanel_\(index)") // fastlane snapshot 用: パネル識別
                             .overlay {
-                                PaperRollEdgeLines(isActive: isActive)
+                                PaperRollEdgeLines(isActive: isActive,
+                                                   activeColor: setting.accentTheme.color)
                             }
                             .contentShape(Rectangle()) // paddingを含む領域全体がタップ対象になる
                             .overlay {
@@ -194,24 +195,21 @@ private struct PaperRollEdgeLines: View {
 
     let isActive: Bool
 
+    /// 活性時の縁の色（＝入力行の色）。
+    /// 設定変更で描き直すため、グローバルではなく引数で受け取る
+    /// （グローバル値の更新は SwiftUI の再描画契機にならない）
+    let activeColor: Color
+
     private var edgeBaseColor: Color {
-        if isActive {
-            return COLOR_CALC_ACTIVE
-        }
-        return COLOR_CALC_INACTIVE
+        isActive ? activeColor : COLOR_CALC_INACTIVE
     }
 
     private var edgeGradient: LinearGradient {
+        // 入力行のガラス（PaperPlaneBackground）と同じ stops を使う
         LinearGradient(
-            stops: [
-                .init(color: Color.white.opacity(0.90), location: 0.00),
-                .init(color: Color.white.opacity(0.62), location: 0.08),
-                .init(color: edgeBaseColor.opacity(isActive ? 0.20 : 0.12), location: 0.18),
-                .init(color: edgeBaseColor.opacity(isActive ? 0.34 : 0.20), location: 0.30),
-                .init(color: edgeBaseColor.opacity(activeCenterOpacity), location: 0.50),
-                .init(color: edgeBaseColor.opacity(isActive ? 0.34 : 0.20), location: 0.74),
-                .init(color: edgeBaseColor.opacity(isActive ? 0.18 : 0.10), location: 1.00),
-            ],
+            stops: paperGlassStops(color: edgeBaseColor,
+                                   isActive: isActive,
+                                   centerOpacity: activeCenterOpacity),
             startPoint: .top,
             endPoint: .bottom
         )
@@ -223,7 +221,7 @@ private struct PaperRollEdgeLines: View {
     }
 
     private var edgeWidth: CGFloat {
-        3
+        PAPER_EDGE_WIDTH
     }
 
     var body: some View {

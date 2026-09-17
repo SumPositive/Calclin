@@ -33,6 +33,7 @@ final class SettingViewModel: ObservableObject {
         // 旧キー（slider 0.5〜3.0 の Double）。マイグレーション用に残す
         static let numberFontScale = "numberFontScale"
         static let autoScroll = "autoScroll"
+        static let accentTheme = "accentTheme"
         static let keyShapeMode = "keyShapeMode"
         static let keyShapeAmount = "keyShapeAmount"
         static let keyBrightnessAmount = "keyBrightnessAmount"
@@ -508,6 +509,95 @@ final class SettingViewModel: ObservableObject {
     }
 
     /// キー形状モード（デフォルト画像／カスタム形状）
+    /// アプリのアクセント色。
+    /// 入力行のガラス・モード切替カプセル・単位の下線・ロールの縁などに一斉に効く。
+    /// - 既定のシステム青は彩度100%・明度100%で明るすぎるため、
+    ///   彩度と明度を落とした4色から選べるようにしている
+    /// - ライト／ダークで別の値を持つ（暗い背景では明るめでないと沈む）
+    enum AccentTheme: String, CaseIterable, Identifiable {
+        case standard   // 標準（システムのアクセント色。既定）
+        case teal       // ディープティール
+        case indigo     // 藍
+        case bronze     // ブロンズ／真鍮
+        case graphite   // グラファイト
+
+        var id: String { rawValue }
+
+        var localized: String {
+            switch self {
+            case .standard: return String(localized: "settings.accent.standard")
+            case .teal:     return String(localized: "settings.accent.teal")
+            case .indigo:   return String(localized: "settings.accent.indigo")
+            case .bronze:   return String(localized: "settings.accent.bronze")
+            case .graphite: return String(localized: "settings.accent.graphite")
+            }
+        }
+
+        /// ライトモード用（紙が明るいので濃いめ）
+        /// - accent は「システム青」を自前の値として持つ。
+        ///   SwiftUI の `.accentColor` を参照しないので、ポップオーバー表示中に
+        ///   UIKit が掛ける tintAdjustmentMode = .dimmed の影響を受けない
+        private var lightRGB: (Double, Double, Double) {
+            switch self {
+            case .standard: return (0, 122, 255)
+            case .teal:     return (13, 94, 102)
+            case .indigo:   return (38, 56, 110)
+            case .bronze:   return (138, 106, 52)
+            case .graphite: return (62, 70, 78)
+            }
+        }
+
+        /// ダークモード用（暗い紙に沈まないよう明るめ）
+        private var darkRGB: (Double, Double, Double) {
+            switch self {
+            case .standard: return (10, 132, 255)
+            case .teal:     return (64, 160, 168)
+            case .indigo:   return (120, 140, 205)
+            case .bronze:   return (198, 164, 96)
+            case .graphite: return (158, 168, 178)
+            }
+        }
+
+        /// 実際に使う色。外観（ライト／ダーク）に追従して切り替わる
+        /// - 5色とも単なる色値。システムの `.accentColor` とは切り離してある
+        var color: Color {
+            Color(UIColor { trait in
+                let rgb = trait.userInterfaceStyle == .dark ? self.darkRGB : self.lightRGB
+                return UIColor(red: rgb.0/255, green: rgb.1/255, blue: rgb.2/255, alpha: 1)
+            })
+        }
+
+        /// 入力行のアイコン・記号用の色。
+        /// ダークは黒地に彩度の高い色が乗って眩しいので、少しだけ落ち着かせる
+        /// （実測コントラスト：そのままだと 4.7〜6.6、0.75 で 3.2〜4.4）
+        var iconColor: Color {
+            Color(UIColor { trait in
+                let dark = trait.userInterfaceStyle == .dark
+                let rgb = dark ? self.darkRGB : self.lightRGB
+                return UIColor(red: rgb.0/255, green: rgb.1/255, blue: rgb.2/255,
+                               alpha: dark ? 0.75 : 1.0)
+            })
+        }
+
+        /// 入力行に薄く出すアプリ名の色。
+        /// ダークでは沈みやすいので、ライト（0.45）より濃いめにして見え方を揃える
+        var appNameColor: Color {
+            Color(UIColor { trait in
+                let dark = trait.userInterfaceStyle == .dark
+                let rgb = dark ? self.darkRGB : self.lightRGB
+                return UIColor(red: rgb.0/255, green: rgb.1/255, blue: rgb.2/255,
+                               alpha: dark ? 0.70 : 0.45)
+            })
+        }
+    }
+    @Published var accentTheme: AccentTheme = .standard {
+        didSet {
+            save(accentTheme.rawValue, forKey: StorageKey.accentTheme)
+            // View から遠い箇所（CalcViewModel など）も同じ色を使うので、共有値を更新する
+            calcAccentColor = accentTheme.color
+        }
+    }
+
     enum KeyShapeMode: String, CaseIterable, Identifiable {
         case standard
         case custom
@@ -573,6 +663,9 @@ final class SettingViewModel: ObservableObject {
         groupType = storedEnum(forKey: StorageKey.groupType, default: groupType)
         groupSeparator = storedGroupSeparator(default: groupSeparator)
         autoScroll = storedEnum(forKey: StorageKey.autoScroll, default: autoScroll)
+        accentTheme = storedEnum(forKey: StorageKey.accentTheme, default: accentTheme)
+        // 起動直後の描画に間に合わせるため、共有値をここでも更新しておく
+        calcAccentColor = accentTheme.color
         keyShapeMode = storedEnum(forKey: StorageKey.keyShapeMode, default: keyShapeMode)
         numberFont = storedEnum(forKey: StorageKey.numberFont, default: numberFont)
 

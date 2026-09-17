@@ -45,7 +45,16 @@ let APP_KB_HEIGHT_MAX : CGFloat = 500       // 最大（見栄えで決める）
 
 let COLOR_TITLE: Color = .secondary         // App Name
 // CALC Parts
-let COLOR_CALC_ACTIVE: Color = .accentColor // Calc活性枠
+// 入力行の色は設定（入力行の「色」ボタン）で選べる。5色とも単なる色値で、
+// システムの .accentColor とは切り離してある（ポップオーバー表示中に UIKit が掛ける
+// tintAdjustmentMode = .dimmed で灰色に転ぶのを避けるため）。
+// 適用先：入力行のカバーガラス／入力行のボタン／アプリ名／単位の下線。
+//
+// View からは `setting.accentTheme.color` を直接読むこと。
+// グローバル値の更新は SwiftUI の再描画契機にならず、色を変えても描き直されない。
+// ここは View を持たない CalcViewModel（入力行の単位下線）専用の受け皿。
+// 入力行はキー入力のたびに作り直されるので、こちらは更新が間に合う
+@MainActor var calcAccentColor: Color = .accentColor
 let COLOR_CALC_INACTIVE: Color = .secondary // Calc非活性枠
 let COLOR_NUMBER: Color = .primary          // 数値
 let COLOR_ANSWER: Color = COLOR_NUMBER      // 答え
@@ -53,7 +62,7 @@ let COLOR_OPERATOR: Color = .cyan           // 演算子
 let COLOR_OPERATOR_WAIT: Color = .gray      // 待機演算子　右端の[.]や[)]
 let COLOR_UNIT: Color = .secondary          // 単位
 // 単位の下線色（タップで換算リストを出せる印）
-let COLOR_UNIT_UNDERLINE: Color = .accentColor
+@MainActor var COLOR_UNIT_UNDERLINE: Color { calcAccentColor }
 
 // 答えに添える単位の大きさ（答えの文字サイズに対する比率）
 // - 単位は補助情報なので数値より小さくする
@@ -125,6 +134,61 @@ private func unitBaselineOffsetForCenter(unit: String, unitFont: UIFont) -> CGFl
           let center = inkCenter(unit, unitFont) else { return 0 }
     // 基準より高く描かれる字（㎡ など）は、その差だけ下げる
     return reference - center
+}
+
+/// ロール枠（PaperRollEdgeLines）の線の幅。
+/// 入力行のガラスは、この幅ぶん左右を空けて枠と重ならないようにする
+/// （重ねると左右 3pt だけ色が二重に乗り、縦線に見える）
+let PAPER_EDGE_WIDTH: CGFloat = 3
+
+/// ロール枠のグラデーションが、指定位置（0.0=上端 / 1.0=下端）で
+/// どれだけの濃さになるかを返す。
+/// 入力行のガラスが上下端を枠に合わせるために使う（活性時の値）
+@MainActor
+func paperGlassOpacity(at location: CGFloat, centerOpacity: Double) -> Double {
+    // paperGlassStops の活性時と同じ折れ線。白のストップは色としては 0 扱い
+    let points: [(CGFloat, Double)] = [
+        (0.00, 0.0), (0.08, 0.0), (0.18, 0.20), (0.30, 0.34),
+        (0.50, centerOpacity), (0.74, 0.34), (1.00, 0.18),
+    ]
+    let x = min(max(location, 0), 1)
+    for i in 0..<(points.count - 1) {
+        let (x0, y0) = points[i]
+        let (x1, y1) = points[i + 1]
+        if x0 <= x && x <= x1 {
+            guard x1 > x0 else { return y1 }
+            let t = Double((x - x0) / (x1 - x0))
+            return y0 + (y1 - y0) * t
+        }
+    }
+    return points[points.count - 1].1
+}
+
+/// ロール枠と入力行のガラスで高さを揃えるための座標空間名。
+/// 入力行は自分が CalcView 全体のどこに居るかをこれで測る
+let paperGlassSpace = "paperGlassSpace"
+
+/// ロール枠（PaperRollEdgeLines）と入力行のガラスで共有する縦グラデーション。
+/// 同じ stops を使うことで、枠と入力行が一続きのガラスに見える。
+/// - `activeColor`: 活性時の色（＝入力行の色）／非活性はグレー
+/// - `centerOpacity`: 中央の濃さ。活性時は明暗で変える
+@MainActor
+func paperGlassStops(color: Color, isActive: Bool,
+                     centerOpacity: Double) -> [Gradient.Stop] {
+    [
+        .init(color: Color.white.opacity(0.90), location: 0.00),
+        .init(color: Color.white.opacity(0.62), location: 0.08),
+        .init(color: color.opacity(isActive ? 0.20 : 0.12), location: 0.18),
+        .init(color: color.opacity(isActive ? 0.34 : 0.20), location: 0.30),
+        .init(color: color.opacity(centerOpacity), location: 0.50),
+        .init(color: color.opacity(isActive ? 0.34 : 0.20), location: 0.74),
+        // 下端で色を残すのは意図的。
+        // ロール紙が下から出てきて上端で丸まっていく見え方を作っている：
+        //   上端＝白いハイライト（丸まって光を受ける）
+        //   下端＝色が残る（紙が出てくる側）
+        // 対称にすると、この「紙が繰り出される」感じが消えるので変えないこと
+        .init(color: color.opacity(isActive ? 0.18 : 0.10), location: 1.00),
+    ]
 }
 
 // 履歴の計算どうしを仕切る線の、上下の余白

@@ -13,8 +13,9 @@ struct CalcView: View {
     @ObservedObject var viewModel: CalcViewModel
     let calcIndex: Int
     var isActive: Bool = true
-    /// ロール紙の最上部にアプリ名を刻むか（ロールが1つのときだけ true）
-    var showsTitle: Bool = false
+    /// ロールが1つだけ表示されているか。
+    /// 2面・3面では入力行が狭くなるので、PDF・色・フォントとアプリ名は出さない
+    var isSingleRoll: Bool = false
 
 
     private let narrowWidth: CGFloat = 320
@@ -28,6 +29,11 @@ struct CalcView: View {
     @State private var inputToolsWidth: CGFloat = 0
     // 入力行右側を長押ししたときのフォント選択ポップオーバー表示状態
     @State private var isNumberFontPickerPresented = false
+    /// 入力行の「色」ボタンで出す、入力行の色ピッカー
+    @State private var isAccentPickerPresented = false
+    /// 入力行の「フォント」ボタンで出す数字フォント一覧。
+    /// 右側長押し（isNumberFontPickerPresented）とは吹き出しの出所が違うので State を分ける
+    @State private var isFontPickerFromButtonPresented = false
     // 入力行末尾の単位をタップしたときの換算ポップオーバー表示状態
     @State private var isUnitConvertPickerPresented = false
     // 換算ポップオーバーに表示する候補（開いた時点で確定し、表示中は再計算しない）
@@ -187,14 +193,17 @@ struct CalcView: View {
             // モード切替のラベル（数式／電卓）は達人モードでも出す。
             // セグメンテッドはラベルがあって初めて「どちらを選ぶか」が読めるため、
             // 初心者ヘルプ扱いの showsInputToolTitles とは別に、幅だけで判定する
-            // ツール3つ（数式・電卓・PDF）の実測幅を基準にしきい値を決める
-            // - アイコンのみ： 約96pt（標準サイズ）
-            // - ラベル付き　： 約148pt（「数式」「電卓」の文字ぶん +52pt）
+            // ツールの実測幅を基準にしきい値を決める。
+            // 1面は5つ（数式・電卓・PDF・色・フォント）、2面以上は数式・電卓だけ
+            // - 1面 アイコンのみ： 約145pt／ラベル付き 約205pt
+            // - 多面 アイコンのみ： 約 70pt／ラベル付き 約130pt
+            let modeTitleThreshold: CGFloat = isSingleRoll ? 230 : 172
             let showsModeTitles = isActive
                 && isFormulaInputEmpty
-                && geo.size.width >= 172 * calcFontScale
-            // アイコンのみでも収まらない狭さ（SE の3面など）でだけ、3つのツールを一回り縮小する
-            let usesCompactTools = geo.size.width < 112 * calcFontScale
+                && geo.size.width >= modeTitleThreshold * calcFontScale
+            // アイコンのみでも収まらない狭さ（SE の3面など）でだけ、ツールを一回り縮小する
+            let compactThreshold: CGFloat = isSingleRoll ? 165 : 112
+            let usesCompactTools = geo.size.width < compactThreshold * calcFontScale
             // 入力行は右寄せで、桁が増えると左へ伸びる。
             // 目印（左端・約15pt＋余白）に値が届く前に消して、数字と重ならないようにする。
             // 幅は非同期に届く formulaTextWidth ではなくその場で実測する
@@ -208,12 +217,10 @@ struct CalcView: View {
                 // 左右に 2pt の余白を取り、長い数値が隣の枠線に被らないようクリップする
                 Group {
                     if viewModel.calcMode == .formula {
-                        HistoryView(viewModel: viewModel, calcIndex: calcIndex,
-                                    showsTitle: showsTitle)
+                        HistoryView(viewModel: viewModel, calcIndex: calcIndex)
                             .environmentObject(setting)
                     } else {
                         RollView(viewModel: viewModel, calcIndex: calcIndex,
-                                 showsTitle: showsTitle,
                                  showRunningTotal: !isNarrow)
                             .environmentObject(setting)
                     }
@@ -256,7 +263,28 @@ struct CalcView: View {
                     .frame(minHeight: 44)
                     .frame(height: inputLineHeight)
                     // ガラスは操作対象のロールだけに乗せる（非アクティブは素のロール紙）
-                    .background(PaperPlaneBackground(showsGlass: isActive))
+                    .background(PaperPlaneBackground(showsGlass: isActive,
+                                                     glassColor: setting.accentTheme.color))
+                    // 入力行が空のときだけ、右側にアプリ名を薄く小さく出す。
+                    // - ロール紙の上端グラデーション（紙が奥へ巻き込む表現）を
+                    //   文字で邪魔したくないので、ロールではなく入力行に置く
+                    // - 数値と同じ右寄せ位置に出し、入力が始まったら消えるので
+                    //   プレースホルダとして読める（showsInputTools と同じ条件）
+                    .overlay(alignment: .trailing) {
+                        if isSingleRoll && showsInputTools {
+                            Text("app.title")
+                                // 見出しは常に同じ大きさで見せたいので Dynamic Type に左右されない固定サイズ
+                                .font(.system(size: 13, weight: .regular, design: .rounded))
+                                .lineLimit(1)
+                                // 入力行のガラスやモード切替カプセルと同系色にして、
+                                // 入力行全体が一つのまとまりに見えるようにする
+                                .foregroundStyle(setting.accentTheme.appNameColor)
+                                .padding(.trailing, 10)
+                                .allowsHitTesting(false)
+                                .accessibilityHidden(true) // 装飾なので読み上げ対象から外す
+                                .transition(.opacity)
+                        }
+                    }
                     // 入力中（ツール非表示）は、左端に現在モードの目印だけを残す
                     .overlay(alignment: .leading) {
                         if showsModeMark {
@@ -268,22 +296,43 @@ struct CalcView: View {
                     // ツールは左端にまとめる（PDF 出力 → モード切替 の順）
                     // セグメンテッド側がカプセルの内側余白を持っているので、間隔は詰めてよい
                     .overlay(alignment: .leading) {
+                        // 並びは左から「数式／電卓」「PDF出力」「色」「フォント」
                         HStack(spacing: usesCompactTools ? 2 : 4) {
-                            inputLinePDFButton(showsTitle: showsInputToolTitles,
-                                               isCompact: usesCompactTools)
                             inputLineTools(showsModeTitle: showsModeTitles,
                                            isCompact: usesCompactTools)
+                            // PDF・色・フォントは1面表示のときだけ。
+                            // 2面・3面では入力行が狭く、数式／電卓の切替を優先する
+                            if isSingleRoll {
+                                inputLinePDFButton(showsTitle: showsInputToolTitles,
+                                                   isCompact: usesCompactTools)
+                                inputLineAccentButton(showsTitle: showsInputToolTitles,
+                                                      isCompact: usesCompactTools)
+                                inputLineFontButton(showsTitle: showsInputToolTitles,
+                                                    isCompact: usesCompactTools)
+                            }
                         }
                             .padding(.leading, 6)
                             .opacity(showsInputTools ? 1 : 0)
                             .allowsHitTesting(showsInputTools)
                             .background {
-                                // タイトル付きの最大幅を常に測り、幅判定の揺れを避ける
+                                // タイトル付きの最大幅を常に測り、幅判定の揺れを避ける。
+                                // ここは測定専用なのでボタン（＝popover を持つ View）を
+                                // 使ってはいけない。同じ @State を持つ隠しコピーが
+                                // popover の提示元になってしまい、吹き出しが出なくなる
                                 HStack(spacing: usesCompactTools ? 2 : 4) {
-                                    inputLinePDFButton(showsTitle: true,
-                                                       isCompact: usesCompactTools)
                                     inputLineTools(showsModeTitle: true,
                                                    isCompact: usesCompactTools)
+                                    if isSingleRoll {
+                                        inputLineToolLabel(systemName: "arrow.up.doc",
+                                                           title: String(localized: "common.pdf"),
+                                                           isCompact: usesCompactTools)
+                                        inputLineToolLabel(systemName: "paintpalette",
+                                                           title: String(localized: "common.color"),
+                                                           isCompact: usesCompactTools)
+                                        inputLineToolLabel(systemName: inputLineFontIcon,
+                                                           title: String(localized: "common.font"),
+                                                           isCompact: usesCompactTools)
+                                    }
                                 }
                                     .hidden()
                                     .background {
@@ -369,6 +418,9 @@ struct CalcView: View {
                     }
             }
             .padding(0)
+            // 入力行のガラスが「CalcView 全体のどこに居るか」を測れるようにする
+            // （ロール枠と同じグラデーションを同じ高さで描くため）
+            .coordinateSpace(name: paperGlassSpace)
             .overlay {
                 if isGeneratingPDF {
                     ZStack {
@@ -412,8 +464,9 @@ struct CalcView: View {
         Image(systemName: viewModel.calcMode == .formula
               ? "function" : "plus.forwardslash.minus")
             // 入力行のツールアイコン（17pt）より一回り小さくして、目印として控えめに見せる
-            .font(.system(size: 15 * min(calcFontScale, 1.5), weight: .semibold))
-            .foregroundStyle(COLOR_CALC_ACTIVE.opacity(0.55))
+            // 太さもツールアイコンと揃える（太らせない）
+            .font(.system(size: 15 * min(calcFontScale, 1.5)))
+            .foregroundStyle(setting.accentTheme.iconColor)
             .allowsHitTesting(false)
             .accessibilityLabel(Text(viewModel.calcMode == .formula
                                      ? "calc.mode.formula" : "calc.mode.calculator"))
@@ -434,6 +487,71 @@ struct CalcView: View {
             showCalcModeHintIfNeeded(for: newMode)
         }
         .environmentObject(setting)
+    }
+
+    /// 数字フォント切替のアイコン。数字を扱う設定だと分かる記号にする
+    private var inputLineFontIcon: String { "textformat.123" }
+
+    /// 幅測定専用のツールラベル（ボタンにしない＝popover を持たせない）
+    private func inputLineToolLabel(systemName: String, title: String,
+                                    isCompact: Bool) -> some View {
+        PaperToolButtonLabel(
+            systemName: systemName,
+            title: title,
+            showsTitle: true,
+            isCompact: isCompact,
+            isTightWidth: true
+        )
+    }
+
+    /// 入力行の「色」ボタン。タップで入力行の色を選ぶ吹き出しを出す
+    private func inputLineAccentButton(showsTitle: Bool, isCompact: Bool = false) -> some View {
+        Button {
+            isAccentPickerPresented = true
+        } label: {
+            PaperToolButtonLabel(
+                systemName: "paintpalette",
+                title: String(localized: "common.color"),
+                showsTitle: showsTitle,
+                isCompact: isCompact,
+                isTightWidth: true
+            )
+        }
+        .popover(isPresented: $isAccentPickerPresented, arrowEdge: .bottom) {
+            InputAccentPickPopover(selection: $setting.accentTheme) {
+                isAccentPickerPresented = false
+            }
+            .appFontScale(setting.fontScale)
+            .presentationCompactAdaptation(.popover)
+        }
+    }
+
+    /// 入力行の「フォント」ボタン。タップで数字フォント一覧を出す
+    /// - 入力行右側の長押しでも同じ一覧が出る（そちらは従来どおり残す）
+    private func inputLineFontButton(showsTitle: Bool, isCompact: Bool = false) -> some View {
+        Button {
+            AppAnalytics.logNumberFontQuickPickerOpened(calcMode: viewModel.calcMode)
+            isFontPickerFromButtonPresented = true
+        } label: {
+            PaperToolButtonLabel(
+                systemName: inputLineFontIcon,
+                title: String(localized: "common.font"),
+                showsTitle: showsTitle,
+                isCompact: isCompact,
+                isTightWidth: true
+            )
+        }
+        .popover(isPresented: $isFontPickerFromButtonPresented, arrowEdge: .bottom) {
+            NumberFontQuickPickPopover(
+                selection: $setting.numberFont,
+                previewText: numberFontPreviewText,
+                previewSize: numberFontPreviewSize
+            ) {
+                isFontPickerFromButtonPresented = false
+            }
+            .appFontScale(setting.fontScale)
+            .presentationCompactAdaptation(.popover)
+        }
     }
 
     /// 入力行の右に出す PDF 出力ボタン
@@ -464,6 +582,63 @@ struct CalcView: View {
     }
 }
 
+/// 入力行の「色」ボタンで開く、入力行の色を選ぶポップオーバー
+/// - 設定画面から移設したもの。実際に色が効く入力行のすぐそばで選べるようにする
+private struct InputAccentPickPopover: View {
+    @Binding var selection: SettingViewModel.AccentTheme
+    let onDismiss: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            // 見出しはフォント一覧の吹き出しと揃えて中央寄せ
+            Text("settings.accent")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.horizontal, 10)
+                .padding(.top, 8)
+
+            ForEach(SettingViewModel.AccentTheme.allCases) { theme in
+                Button {
+                    selection = theme
+                    onDismiss()
+                } label: {
+                    HStack(spacing: 10) {
+                        // 選んだ色が一目で分かるよう色見本を出す
+                        Circle()
+                            .fill(theme.color)
+                            .frame(width: 16, height: 16)
+                            .overlay {
+                                Circle().strokeBorder(Color.secondary.opacity(0.25), lineWidth: 0.5)
+                            }
+                        Text(theme.localized)
+                            .font(.subheadline)
+                            .foregroundStyle(theme == selection ? theme.color : Color.primary)
+                        Spacer(minLength: 12)
+                        if theme == selection {
+                            Image(systemName: "checkmark")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(theme.color)
+                        }
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .contentShape(Rectangle())
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(theme == selection
+                                  ? theme.color.opacity(0.12)
+                                  : Color.clear)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.bottom, 8)
+        .frame(minWidth: 200)
+    }
+}
+
 /// 入力行右側を長押ししたときに開く数字フォント選択ポップオーバー
 /// - 各候補をそのフォント自身でプレビュー描画する
 /// - プレビュー文字列とサイズは呼び出し側から指定し、入力行と同じ見た目で比較できる
@@ -473,9 +648,23 @@ private struct NumberFontQuickPickPopover: View {
     let previewSize: CGFloat
     let onDismiss: () -> Void
 
+    /// プレビューの文字サイズ。
+    /// 入力行と同じ大きさにする必要はない（書体の違いが分かれば十分）ので、
+    /// 一覧が縦に伸びすぎないよう控えめにする
+    private var listFontSize: CGFloat {
+        min(previewSize * 0.62, 24)
+    }
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text("settings.numberFont.title")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 2)
+
                 ForEach(SettingViewModel.NumberFont.allCases) { numberFont in
                     Button {
                         selection = numberFont
@@ -484,7 +673,7 @@ private struct NumberFontQuickPickPopover: View {
                         HStack(spacing: 10) {
                             // 入力行と同じ文字列・同じサイズで描画してフォントの違いを見せる
                             Text(previewText)
-                                .font(numberFont.font(size: previewSize, weight: .bold))
+                                .font(numberFont.font(size: listFontSize, weight: .bold))
                                 // 入力行と同じく Dynamic Type の二重拡大を抑止する
                                 .dynamicTypeSize(.large)
                                 .foregroundStyle(numberFont == selection
@@ -499,7 +688,7 @@ private struct NumberFontQuickPickPopover: View {
                             }
                         }
                         .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 4)
                         .contentShape(Rectangle())
                         .background(
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -515,7 +704,7 @@ private struct NumberFontQuickPickPopover: View {
         }
         .scrollIndicators(.hidden)
         // プレビュー文字数や入力行サイズに合わせて余裕を持たせる
-        .frame(minWidth: max(260, previewSize * 6), maxHeight: 480)
+        .frame(minWidth: max(220, listFontSize * 7), maxHeight: 480)
         .background(Color(.systemBackground))
     }
 }
@@ -628,11 +817,12 @@ private struct PaperPlaneBackground: View {
     /// アクティブなロールだけガラスを乗せる
     let showsGlass: Bool
 
-    /// ガラス端の濃さ。上下端をはっきり濃くして、チューブの縁を立たせる
-    private var glassOpacity: Double { colorScheme == .dark ? 0.42 : 0.26 }
+    /// ガラスの色。設定の変更で描き直すため、グローバルではなく引数で受け取る
+    /// （グローバル値の更新は SwiftUI の再描画契機にならない）
+    let glassColor: Color
 
-    /// 中央のハイライトの強さ
-    private var centerHighlight: Double { colorScheme == .dark ? 0.06 : 0.28 }
+    /// 中央の濃さ。ロール枠（PaperRollEdgeLines）と同じ値にする
+    private var glassCenterOpacity: Double { colorScheme == .dark ? 1.0 : 0.75 }
 
     var body: some View {
         ZStack {
@@ -640,40 +830,34 @@ private struct PaperPlaneBackground: View {
             PaperRollLighting()
 
             if showsGlass {
-                // 薄い青ガラス。
-                // 上下の端だけ濃くし中央を薄くすることで、断面が丸いガラスチューブが
-                // 横たわって中央が手前に浮き上がっているように見せる
-                // 端から中央へなだらかに薄くする。
-                // 段数を増やして上下端が「線」に見えないようにし、
-                // 円筒の断面のように中央へ向かって連続的に抜けさせる
-                LinearGradient(
-                    stops: [
-                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity), location: 0.00),
-                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.74), location: 0.08),
-                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.50), location: 0.17),
-                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.30), location: 0.28),
-                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.16), location: 0.38),
-                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.10), location: 0.50),
-                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.16), location: 0.62),
-                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.30), location: 0.72),
-                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.50), location: 0.83),
-                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity * 0.74), location: 0.92),
-                        .init(color: COLOR_CALC_ACTIVE.opacity(glassOpacity), location: 1.00),
-                    ],
-                    startPoint: .top, endPoint: .bottom)
+                // 入力行のカバーガラス。
+                // 上下端はロール枠（PaperRollEdgeLines）と同じ濃さにして枠と繋げ、
+                // そこから縦中央に向かって無色へ抜く。
+                // 中央が抜けることで、入力した数値が色に埋もれず読める
+                GeometryReader { glassGeo in
+                    // 枠は CalcView 全体に掛かるグラデーションなので、
+                    // 入力行の上端・下端に「枠なら何色か」を割合から求めて合わせる
+                    let frame = glassGeo.frame(in: .named(paperGlassSpace))
+                    let totalHeight = max(frame.maxY + (glassGeo.size.height - frame.height), 1)
+                    let topOpacity = paperGlassOpacity(at: frame.minY / totalHeight,
+                                                       centerOpacity: glassCenterOpacity)
+                    let bottomOpacity = paperGlassOpacity(at: frame.maxY / totalHeight,
+                                                          centerOpacity: glassCenterOpacity)
+                    LinearGradient(
+                        stops: [
+                            .init(color: glassColor.opacity(topOpacity), location: 0.00),
+                            .init(color: glassColor.opacity(topOpacity * 0.45), location: 0.22),
+                            .init(color: glassColor.opacity(0.0), location: 0.50),
+                            .init(color: glassColor.opacity(bottomOpacity * 0.45), location: 0.78),
+                            .init(color: glassColor.opacity(bottomOpacity), location: 1.00),
+                        ],
+                        startPoint: .top, endPoint: .bottom)
+                }
+                // 左右はロール枠の線ぶんだけ空ける。
+                // 枠は入力行の上にも重なって描かれるので、ここを空けないと
+                // 左右 3pt だけ色が二重になり、縦線として見えてしまう
+                .padding(.horizontal, PAPER_EDGE_WIDTH)
 
-                // 中央のハイライト。ガラスの丸みが光を集めている表現
-                LinearGradient(
-                    stops: [
-                        .init(color: Color.white.opacity(0.0), location: 0.18),
-                        .init(color: Color.white.opacity(centerHighlight * 0.35), location: 0.32),
-                        .init(color: Color.white.opacity(centerHighlight * 0.80), location: 0.43),
-                        .init(color: Color.white.opacity(centerHighlight), location: 0.50),
-                        .init(color: Color.white.opacity(centerHighlight * 0.80), location: 0.57),
-                        .init(color: Color.white.opacity(centerHighlight * 0.35), location: 0.68),
-                        .init(color: Color.white.opacity(0.0), location: 0.82),
-                    ],
-                    startPoint: .top, endPoint: .bottom)
             }
         }
         .allowsHitTesting(false)
@@ -714,23 +898,25 @@ private struct CalcModeSegmentedControl: View {
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: systemName)
-                    .font(baseFont.weight(.semibold))
+                    // 選択中だけ少し太らせる（ラベルの太さの出し分けと揃える）
+                    .font(baseFont.weight(isSelected ? .semibold : .regular))
                 if showsTitle {
                     Text(title)
                         .font(baseFont.weight(isSelected ? .semibold : .regular))
                         .lineLimit(1)
                 }
             }
-            .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
+            // 入力行の一部なので、設定「入力行の色」に追従させる
+            .foregroundStyle(isSelected ? setting.accentTheme.iconColor : Color.secondary)
             .padding(.horizontal, showsTitle ? (isCompact ? 6 : 8) : (isCompact ? 5 : 10))
             .padding(.vertical, isCompact ? 3 : 4)
             .background(
                 Capsule(style: .continuous)
-                    .fill(isSelected ? Color.accentColor.opacity(0.16) : Color.clear)
+                    .fill(isSelected ? setting.accentTheme.color.opacity(0.16) : Color.clear)
             )
             .overlay(
                 Capsule(style: .continuous)
-                    .strokeBorder(isSelected ? Color.accentColor.opacity(0.62) : Color.secondary.opacity(0.25),
+                    .strokeBorder(isSelected ? setting.accentTheme.iconColor : Color.secondary.opacity(0.25),
                                   lineWidth: isSelected ? 1.2 : 1)
             )
             .contentShape(Capsule(style: .continuous))
@@ -771,8 +957,10 @@ private struct PaperToolButtonLabel: View {
         HStack(spacing: showsTitle ? 5 : 0) {
             Image(systemName: systemName)
                 // 入力行ツールのアイコンは CalcView の文字サイズに合わせる
-                .font(.system(size: iconSize, weight: .semibold))
-                .foregroundStyle(COLOR_CALC_ACTIVE.opacity(0.62))
+                // 記号が読めれば十分なので太らせない（.semibold は黒地で眩しく見える）
+                .font(.system(size: iconSize))
+                // ガラスの上下端と同じ色に見せるため、薄めずそのまま使う
+                .foregroundStyle(setting.accentTheme.iconColor)
 
             if showsTitle {
                 Text(title)
