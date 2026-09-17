@@ -8,10 +8,54 @@
 import SwiftUI
 
 
+/// ロール紙の最上部にエンボス風で刻むアプリ名。
+/// - ロールが1つのときだけ出す（2面以上ではどのロールの見出しか曖昧になるため）
+/// - 紙に型押ししたように見せるため、明るい側と暗い側の影を1pxずつ逆向きにずらして重ねる
+/// - 上端のグラデーションに溶け込ませたいので、文字自体は背景と同系色＋低コントラストにする
+struct RollEmbossedTitle: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// 型押しの陰影。ダークでは明暗の役割が入れ替わる
+    private var highlightColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.14) : Color.white.opacity(0.95)
+    }
+    private var shadowColor: Color {
+        colorScheme == .dark ? Color.black.opacity(0.55) : Color.black.opacity(0.28)
+    }
+    private var faceColor: Color {
+        // 紙と同系色にして「彫られている」感じを出す（濃い文字色にすると印刷に見える）
+        colorScheme == .dark ? Color.white.opacity(0.22) : Color.black.opacity(0.30)
+    }
+
+    var body: some View {
+        // 見出しは常に同じ大きさで見せたいので Dynamic Type に左右されない固定サイズ
+        let font = Font.system(size: 15, weight: .semibold, design: .rounded)
+        Text("app.title")
+            .font(font)
+            .lineLimit(1)
+            .foregroundStyle(faceColor)
+            // 下に明るい影、上に暗い影＝紙にへこませた型押しの見え方
+            .background {
+                ZStack {
+                    Text("app.title").font(font).lineLimit(1)
+                        .foregroundStyle(highlightColor)
+                        .offset(x: 0, y: 1)
+                    Text("app.title").font(font).lineLimit(1)
+                        .foregroundStyle(shadowColor)
+                        .offset(x: 0, y: -1)
+                }
+            }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true) // 装飾なので読み上げ対象から外す
+    }
+}
+
 struct HistoryView: View {
     @EnvironmentObject var setting: SettingViewModel
     @ObservedObject var viewModel: CalcViewModel
     let calcIndex: Int
+    /// ロール紙の最上部にアプリ名を刻むか（ロールが1つのときだけ true）
+    var showsTitle: Bool = false
     
     @State private var showMemoPopover = false
     @State private var currentMemoText = ""
@@ -147,11 +191,18 @@ struct HistoryView: View {
                 .frame(maxWidth: .infinity) // 親のCalcView内側一杯に広げる
                 .padding(0)
                 .overlay(alignment: .top) {
-                    LinearGradient(
-                        colors: [Color(uiColor: .systemBackground).opacity(0.7), Color.clear],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
+                    // 上端のグラデーションに、アプリ名をエンボス風で重ねる
+                    ZStack(alignment: .top) {
+                        LinearGradient(
+                            colors: [Color(uiColor: .systemBackground).opacity(0.7), Color.clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        if showsTitle {
+                            RollEmbossedTitle()
+                                .padding(.top, 3)
+                        }
+                    }
                     .frame(height: 44)
                     .allowsHitTesting(false)
                 }
@@ -409,6 +460,8 @@ struct RollView: View {
     @EnvironmentObject var setting: SettingViewModel
     @ObservedObject var viewModel: CalcViewModel
     let calcIndex: Int
+    /// ロール紙の最上部にアプリ名を刻むか（ロールが1つのときだけ true）
+    var showsTitle: Bool = false
     var showRunningTotal: Bool = true
 
     private var reversedRows: [(offset: Int, element: CalcViewModel.HistoryRow)] {
@@ -553,11 +606,18 @@ struct RollView: View {
             .frame(maxWidth: .infinity)
             .padding(0)
             .overlay(alignment: .top) {
-                LinearGradient(
-                    colors: [Color(uiColor: .systemBackground).opacity(0.7), Color.clear],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+                // 上端のグラデーションに、アプリ名をエンボス風で重ねる
+                ZStack(alignment: .top) {
+                    LinearGradient(
+                        colors: [Color(uiColor: .systemBackground).opacity(0.7), Color.clear],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    if showsTitle {
+                        RollEmbossedTitle()
+                            .padding(.top, 3)
+                    }
+                }
                 .frame(height: 44)
                 .allowsHitTesting(false)
             }

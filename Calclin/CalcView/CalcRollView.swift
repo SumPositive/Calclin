@@ -114,7 +114,9 @@ struct CalcRollView: View {
                         let isActive = index == selectedPage
                         CalcView(viewModel: calcViewModels[index],
                                  calcIndex: index,
-                                 isActive: isActive)
+                                 isActive: isActive,
+                                 // ロールが1つのときだけ、紙の最上部にアプリ名を刻む
+                                 showsTitle: showCount == 1)
                             .environmentObject(setting) // settingに変化あればCalcViewが再生成される
                             .frame(width: calcWidth)
                             .accessibilityIdentifier("calcPanel_\(index)") // fastlane snapshot 用: パネル識別

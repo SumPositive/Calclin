@@ -21,6 +21,9 @@ struct KeyboardView: View {
     @ObservedObject var viewModel: KeyboardViewModel
     @ObservedObject var activeCalcViewModel: CalcViewModel
     let onTap: (KeyDefinition) -> Void
+    /// 設定シートを開く。フッタ左下の歯車から呼ぶ
+    /// （タイトルヘッダーを廃してロールを広げたので、設定の入口はここに置く）
+    var onOpenSettings: (() -> Void)? = nil
 
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
@@ -108,7 +111,8 @@ struct KeyboardView: View {
             VStack(spacing: 4) {
                 KeyboardFooterView(
                     selectedPage: $selectedPage,
-                    pageCount: KeyboardViewModel.pageCount
+                    pageCount: KeyboardViewModel.pageCount,
+                    onOpenSettings: onOpenSettings
                 )
                 // キーボード切り替え操作はインジケータでもできることを示すため、暗めの時は少し透過
                 .opacity(colorScheme == .dark ? 0.60 : 1.0)
@@ -209,7 +213,7 @@ struct KeyboardStylePopupView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label("settings.keyShape", systemImage: "slider.horizontal.3")
+                Label("settings.keyShape", systemImage: "keyboard")
                     .font(.headline)
                 Spacer()
                 Button(action: onClose) {
@@ -290,6 +294,9 @@ private struct KeyboardStyleSlider: View {
 struct KeyboardFooterView: View {
     @Binding var selectedPage: Int
     let pageCount: Int
+    /// 設定シートを開く。左下の歯車から呼ぶ
+    /// （タイトルヘッダーを廃してロールを広げたので、設定の入口はここに置く）
+    var onOpenSettings: (() -> Void)? = nil
     @EnvironmentObject var setting: SettingViewModel
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -351,6 +358,37 @@ struct KeyboardFooterView: View {
                     }
                 }
 
+                // 左下：アプリ設定（右下のキーボード設定ボタンと対称に置く）
+                if let onOpenSettings {
+                    HStack {
+                        VStack(spacing: 0) {
+                            Button {
+                                onOpenSettings()
+                            } label: {
+                                Image(systemName: "gearshape")
+                                    .font(.system(size: 17 * iconScale, weight: .semibold))
+                                    .frame(width: 44 * iconScale, height: 24 * iconScale)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            // 右下のキーボード設定ボタンと同じ扱いにする（左右で色が違うと片方だけ目立つ）
+                            .foregroundStyle(.secondary)
+
+                            if setting.playMode == .beginner {
+                                // 初心者モードではボタンの役割を明示
+                                Text("settings.open")
+                                    .font(.caption)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                                    .foregroundStyle(.secondary)
+                                    .cappedAtLargeTypeSize()
+                            }
+                        }
+                        .padding(.leading, 10)
+                        Spacer()
+                    }
+                }
+
                 HStack {
                     Spacer()
                     VStack(spacing: 0) {
@@ -358,8 +396,10 @@ struct KeyboardFooterView: View {
                             AppAnalytics.logKeyStylePopupOpened()
                             setting.isKeyStylePopupPresented = true
                         } label: {
-                            Image(systemName: "slider.horizontal.3")
-                                // キー形状アイコンはアプリの文字サイズに合わせて拡大する
+                            // 今後キーボード関係の設定をここへ集約していくので、
+                            // 形状に限定した記号ではなくキーボードそのものを示す
+                            Image(systemName: "keyboard")
+                                // アイコンはアプリの文字サイズに合わせて拡大する
                                 .font(.system(size: 17 * iconScale, weight: .semibold))
                                 .frame(width: 44 * iconScale, height: 24 * iconScale)
                                 .contentShape(Rectangle())

@@ -350,12 +350,6 @@ struct ContentView: View {
         }
     }
 
-    private var settingsButtonFrameHeight: CGFloat {
-        let baseHeight: CGFloat = setting.playMode == .beginner ? 40 : 30
-        let scaledHeight = (setting.playMode == .beginner ? 42 : 32) * setting.calcViewFontScale(for: dynamicTypeSize)
-        return max(baseHeight, scaledHeight)
-    }
-
     private var editKeyDefPopupSize: CGSize {
         let scale = setting.calcViewFontScale(for: dynamicTypeSize)
         // 文字サイズが大きい時は編集欄を広げ、フォーム内スクロール量を減らす
@@ -471,47 +465,6 @@ struct ContentView: View {
     var body: some View {
         ZStack { // 全画面の自由な位置にPopupViewを表示するため
             VStack(spacing: 0) {
-                ZStack {
-                    HStack {
-                        Spacer()
-                        // タイトル表示は見出しとして常に同じ大きさで見せたいので、Dynamic Typeの拡大縮小に左右されない固定サイズを指定
-                        Text("app.title")
-                            .font(.system(size: 15))
-                            .lineLimit(1)
-                            .frame(minWidth: 50)
-                            .foregroundColor(COLOR_TITLE)
-
-                        Spacer()
-                    }
-                    HStack {
-                        Spacer()
-                        // 設定（シート起動ボタン）を右上へ寄せてシステムUIとの衝突を回避
-                        VStack(spacing: 0) {
-                            Button(action: {
-                                // 設定シートを開く
-                                isSettingSheetPresented = true
-                            }) {
-                                Image(systemName: "gearshape")
-                                    .accentColor(.accentColor)
-                            }
-                            .padding(.horizontal)
-                            .contentShape(Rectangle())
-
-                            if setting.playMode == .beginner {
-                                // 初心者モードではボタンの役割を明示
-                                Text(String(localized: "settings.open"))
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .padding(.top, 4)
-                                    .padding(.horizontal, 4)
-                                    .cappedAtLargeTypeSize()
-                            }
-                        }
-                    }
-                    .opacity(colorScheme == .dark ? 0.50 : 1.0)
-                    .frame(height: settingsButtonFrameHeight)
-                    .padding(.horizontal)
-                }
                 // 複数Calc横スクロールView
                 CalcRollView(
                     //historyViewModel: historyViewModel,
@@ -579,6 +532,10 @@ struct ContentView: View {
                     // 単位差し替えヒントは「次のキータップまで」表示する。
                     // input() 内で毎回 false に戻るので、今回の入力が単位差し替えの時だけ true になる
                     updateUnitSwapHint()
+                },
+                             onOpenSettings: {
+                    // 設定シートを開く（タイトルヘッダー廃止に伴い左下へ移動）
+                    isSettingSheetPresented = true
                 })
                 .environmentObject(setting)
                 .padding(.horizontal, 4.0)

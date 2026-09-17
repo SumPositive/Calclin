@@ -13,6 +13,8 @@ struct CalcView: View {
     @ObservedObject var viewModel: CalcViewModel
     let calcIndex: Int
     var isActive: Bool = true
+    /// ロール紙の最上部にアプリ名を刻むか（ロールが1つのときだけ true）
+    var showsTitle: Bool = false
 
 
     private let narrowWidth: CGFloat = 320
@@ -206,10 +208,12 @@ struct CalcView: View {
                 // 左右に 2pt の余白を取り、長い数値が隣の枠線に被らないようクリップする
                 Group {
                     if viewModel.calcMode == .formula {
-                        HistoryView(viewModel: viewModel, calcIndex: calcIndex)
+                        HistoryView(viewModel: viewModel, calcIndex: calcIndex,
+                                    showsTitle: showsTitle)
                             .environmentObject(setting)
                     } else {
                         RollView(viewModel: viewModel, calcIndex: calcIndex,
+                                 showsTitle: showsTitle,
                                  showRunningTotal: !isNarrow)
                             .environmentObject(setting)
                     }
