@@ -136,6 +136,38 @@ private func unitBaselineOffsetForCenter(unit: String, unitFont: UIFont) -> CGFl
     return reference - center
 }
 
+/// 最新の [=] 行で答えを拡大表示するときの文字サイズ。
+/// 数式モード（CustomCell）と電卓モード（RollCell）で必ず同じ値を使う
+func calcLatestAnswerFontSize(inputRowFontScale: CGFloat) -> CGFloat {
+    33.6 * inputRowFontScale * 0.8
+}
+
+/// 最新の [=] 行の下に余る、使われないディセンダぶんの高さ。
+/// 行の高さは書体のディセンダまで含むが、数字はそこまで下に伸びないので、
+/// そのままだと答えの下だけ間延びして見える（実測 26.9pt で約 6pt）
+func calcLatestAnswerDescenderGap(inputRowFontScale: CGFloat) -> CGFloat {
+    calcLatestAnswerFontSize(inputRowFontScale: inputRowFontScale) * 0.225
+}
+
+/// 拡大表示の [=] 行で、演算子を数値のベースラインに合わせるための下げ量。
+/// HStack の既定（.center）は「箱の中心」で揃えるので、背の高い数値の隣では
+/// 小さい演算子が上に浮く。その差だけ下げて、数式モード（1つの Text で
+/// ベースラインが揃う）と同じ見え方にする
+@MainActor
+func operatorBaselineDrop(answerSize: CGFloat, operatorSize: CGFloat) -> CGFloat {
+    func rounded(_ size: CGFloat, _ weight: UIFont.Weight) -> UIFont {
+        let base = UIFont.systemFont(ofSize: size, weight: weight)
+        guard let d = base.fontDescriptor.withDesign(.rounded) else { return base }
+        return UIFont(descriptor: d, size: size)
+    }
+    let answerFont = rounded(answerSize, .bold)
+    let operatorFont = rounded(operatorSize, .regular)
+    // 箱の中心からベースラインまでの距離の差＝浮いている量
+    let answerMid = answerFont.lineHeight / 2 + answerFont.descender
+    let operatorMid = operatorFont.lineHeight / 2 + operatorFont.descender
+    return answerMid - operatorMid
+}
+
 /// 入力行の高さ。
 /// 入力行そのもの（CalcView）と、そこに重ねる高さ変更ハンドル（ContentView）で
 /// 同じ値を使う必要があるので、1箇所で定義する

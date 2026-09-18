@@ -209,8 +209,15 @@ struct CustomCell: View {
     }
 
     /// 最新行の答えの文字サイズ。ロールの [=] 行と同じ基準に揃える
+    /// 数式・電卓で同じ値を使う（Config の共有関数）
     private var latestAnswerFontSize: CGFloat {
-        33.6 * setting.inputRowFontScale(for: dynamicTypeSize) * 0.8
+        calcLatestAnswerFontSize(
+            inputRowFontScale: setting.inputRowFontScale(for: dynamicTypeSize))
+    }
+
+    private var latestAnswerDescenderGap: CGFloat {
+        calcLatestAnswerDescenderGap(
+            inputRowFontScale: setting.inputRowFontScale(for: dynamicTypeSize))
     }
 
     /// 改行用のゼロ幅スペースを差し込んだ式（答え・単位は含まない）
@@ -335,6 +342,8 @@ struct CustomCell: View {
                     }
             }
         }
+        // 数字が使わないディセンダぶんを詰める（反転の中なので .top が画面の下）
+        .padding(.top, -latestAnswerDescenderGap)
     }
 
     /// 最新行の答えに付く単位（別 Text にしてタップできるようにする）
@@ -637,8 +646,15 @@ struct RollCell: View {
     /// - 入力行は 33.6pt 基準（特大は 1.7 倍で頭打ち）だが、
     ///   高さ 33.6*scale*1.2 の枠に収めているぶん実際は一回り小さく見える。
     ///   ロールは枠が無く同じ指定だと大きく見えるため、実測に合わせて 0.8 を掛ける
+    /// 数式・電卓で同じ値を使う（Config の共有関数）
     private var latestAnswerFontSize: CGFloat {
-        33.6 * setting.inputRowFontScale(for: dynamicTypeSize) * 0.8
+        calcLatestAnswerFontSize(
+            inputRowFontScale: setting.inputRowFontScale(for: dynamicTypeSize))
+    }
+
+    private var latestAnswerDescenderGap: CGFloat {
+        calcLatestAnswerDescenderGap(
+            inputRowFontScale: setting.inputRowFontScale(for: dynamicTypeSize))
     }
 
     /// 単位の描画幅（実測）。ポップオーバーの吹き出しを単位の真下に出すために使う
@@ -687,11 +703,21 @@ struct RollCell: View {
         let numberPart = (unitFormula.map { value.hasSuffix($0)
             ? String(value.dropLast($0.count)) : value }) ?? value
 
+        // 拡大表示の [=] 行では、演算子が数値より 4.2pt ほど浮いて見える。
+        // HStack の既定（.center）は箱の中心で揃えるため、背の高い数値の隣では
+        // 小さい演算子が上に寄るのが原因（数式モードは1つの Text なのでズレない）。
+        // HStack 全体を .firstTextBaseline にすると単位の位置まで動いてしまうので、
+        // 演算子だけをベースラインぶん下げて合わせる
+        let opBaselineDrop = isLatest && isFinal
+            ? operatorBaselineDrop(answerSize: latestAnswerFontSize,
+                                   operatorSize: fontSize * calcFontScale)
+            : 0
         return HStack(spacing: 0) {
             if !opStr.isEmpty {
                 Text(operatorDisplay(opStr) + " ")
                     .font(.system(size: fontSize * calcFontScale, weight: .regular, design: .rounded))
                     .foregroundStyle(COLOR_OPERATOR)
+                    .offset(y: opBaselineDrop)
             }
             Text(minusSignedDisplay(numberPart))
                 // 最新の [=] だけは入力行と同じ書体・サイズにして、直前の答えを見つけやすくする
@@ -782,6 +808,10 @@ struct RollCell: View {
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .opacity(colorScheme == .dark ? 0.55 : 1.0)
+                    // 拡大表示になる [=] 行だけ、数字が使わないディセンダぶんを詰める。
+                    // RollCell はセル全体を1回だけ反転する（CustomCell のように
+                    // 要素ごとに打ち消さない）ので、ここでの .bottom がそのまま画面の下
+                    .padding(.bottom, isLatest && line.isFinal ? -latestAnswerDescenderGap : 0)
                     // 吹き出しの位置合わせに行幅が要る（単位は右端に描かれる）
                     .background {
                         GeometryReader { lineGeo in
