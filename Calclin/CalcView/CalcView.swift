@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 
 struct CalcView: View {
@@ -31,6 +32,8 @@ struct CalcView: View {
     @State private var isFunctionMenuPresented = false
     /// 機能メニューの右側に開いている内容（nil＝一覧だけ）
     @State private var functionMenuPane: InputFunctionMenuPopover.Pane? = nil
+    /// ロール消去の確認アラート
+    @State private var isClearConfirmPresented = false
     // 入力行末尾の単位をタップしたときの換算ポップオーバー表示状態
     @State private var isUnitConvertPickerPresented = false
     // 換算ポップオーバーに表示する候補（開いた時点で確定し、表示中は再計算しない）
@@ -491,9 +494,25 @@ struct CalcView: View {
                 openPane: $functionMenuPane,
                 numberFontPreviewText: numberFontPreviewText,
                 numberFontPreviewSize: numberFontPreviewSize,
+                onCopyText: {
+                    UIPasteboard.general.string = viewModel.rollText()
+                    isFunctionMenuPresented = false
+                },
+                onTextFile: {
+                    isFunctionMenuPresented = false
+                    if let url = makeCalcTextFile(viewModel: viewModel) {
+                        shareURL = url
+                        isSharing = true
+                    }
+                },
                 onPDF: {
                     isFunctionMenuPresented = false
                     exportPDF()
+                },
+                onClear: {
+                    // 元に戻せないので、閉じてから確認アラートを出す
+                    isFunctionMenuPresented = false
+                    isClearConfirmPresented = true
                 },
                 onFontPickerOpened: {
                     AppAnalytics.logNumberFontQuickPickerOpened(calcMode: viewModel.calcMode)
@@ -506,6 +525,15 @@ struct CalcView: View {
         // 閉じたら次回は一覧から始める
         .onChange(of: isFunctionMenuPresented) { _, isPresented in
             if !isPresented { functionMenuPane = nil }
+        }
+        // ロールの消去は元に戻せないので、最後にもう一度確かめる
+        .alert("roll.clear.confirm.title", isPresented: $isClearConfirmPresented) {
+            Button("roll.clear.confirm.cancel", role: .cancel) { }
+            Button("roll.clear.confirm.ok", role: .destructive) {
+                viewModel.clearHistory()
+            }
+        } message: {
+            Text("roll.clear.confirm.message")
         }
     }
 
@@ -531,12 +559,15 @@ private struct InputFunctionMenuPopover: View {
     @EnvironmentObject var setting: SettingViewModel
 
     /// 右側に開いている内容。nil＝アイコン列だけ
-    enum Pane { case pdf, color, font }
+    enum Pane { case roll, color, font }
 
     @Binding var openPane: Pane?
     let numberFontPreviewText: String
     let numberFontPreviewSize: CGFloat
+    let onCopyText: () -> Void
+    let onTextFile: () -> Void
     let onPDF: () -> Void
+    let onClear: () -> Void
     /// フォントを選んだことを記録する（Analytics）
     let onFontPickerOpened: () -> Void
 
@@ -558,7 +589,7 @@ private struct InputFunctionMenuPopover: View {
     /// 左側：機能のアイコン列（タイトルは右側に出るので、ここはアイコンだけ）
     private var menuList: some View {
         VStack(spacing: 2) {
-            iconRow(systemName: "arrow.up.doc", pane: .pdf, label: "common.pdf")
+            iconRow(systemName: "scroll", pane: .roll, label: "roll.actions.label")
             iconRow(systemName: "paintpalette", pane: .color, label: "common.color")
             iconRow(systemName: "textformat.123", pane: .font, label: "common.font")
         }
@@ -570,8 +601,8 @@ private struct InputFunctionMenuPopover: View {
     @ViewBuilder
     private func detail(_ pane: Pane) -> some View {
         switch pane {
-        case .pdf:
-            pdfPane
+        case .roll:
+            rollPane
         case .color:
             // 選んでも閉じない。入力行の色がその場で変わるのを見ながら選び直せる
             // （選択中の項目はチェック印が付くので、どれを選んだか分かる）
@@ -585,10 +616,10 @@ private struct InputFunctionMenuPopover: View {
         }
     }
 
-    /// PDF 出力。押し間違いで共有シートが開かないよう、「開始」を押してから実行する
-    private var pdfPane: some View {
-        VStack(spacing: 4) {
-            Text("common.pdf")
+    /// ロールの操作（コピー・書き出し・消去）
+    private var rollPane: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("roll.actions.title")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -596,25 +627,34 @@ private struct InputFunctionMenuPopover: View {
                 .padding(.top, 8)
                 .padding(.bottom, 2)
 
-            Button {
-                onPDF()
-            } label: {
-                Text("common.start")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(setting.accentTheme.color)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .contentShape(Rectangle())
-                    .background(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(setting.accentTheme.color.opacity(0.12))
-                            .padding(.horizontal, 12)
-                    )
-            }
-            .buttonStyle(.plain)
+            actionRow(title: "roll.copyText", action: onCopyText)
+            actionRow(title: "roll.makeTextFile", action: onTextFile)
+            actionRow(title: "roll.makePDF", action: onPDF)
+
+            // 消去は他と役割が違う（元に戻せない）ので、離して赤系にする
+            actionRow(title: "roll.clear", isDestructive: true, action: onClear)
+                .padding(.top, 12)
         }
         .padding(.bottom, 8)
+    }
+
+    private func actionRow(title: LocalizedStringKey, isDestructive: Bool = false,
+                           action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(isDestructive ? COLOR_WARN : setting.accentTheme.color)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .contentShape(Rectangle())
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill((isDestructive ? COLOR_WARN : setting.accentTheme.color).opacity(0.12))
+                        .padding(.horizontal, 8)
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     private func iconRow(systemName: String, pane: Pane,

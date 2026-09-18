@@ -377,6 +377,41 @@ final class CalcViewModel: ObservableObject {
         }
     }
     
+    /// ロール（履歴）を全部消す。
+    /// 1行ずつのスワイプ削除では溜まった履歴を片付けられないため、まとめて消せるようにする
+    func clearHistory() {
+        guard !historyRows.isEmpty else { return }
+        historyRows.removeAll()
+        save()
+    }
+
+    /// ロールの内容をテキストにする（コピー・ファイル出力で共用）
+    /// - 画面の見え方に合わせ、電卓の行は明細＋答え、数式の行は「式＝答え」で出す
+    func rollText() -> String {
+        var lines: [String] = []
+        for row in historyRows {
+            if let rollLines = row.rollLines, !rollLines.isEmpty {
+                // 電卓モード：明細行をそのまま並べる
+                for line in rollLines {
+                    let op = line.op.trimmingCharacters(in: .whitespaces)
+                    let value = minusSignedDisplay(line.value)
+                    lines.append(op.isEmpty ? value : "\(operatorDisplay(op)) \(value)")
+                }
+            } else {
+                // 数式モード：式＝答え（単位つき）
+                let formula = String(row.formula.characters)
+                let answer = minusSignedDisplay(row.answer) + (row.unitFormula ?? "")
+                lines.append(formula.isEmpty ? answer : "\(formula)\(FM_ANS)\(answer)")
+            }
+            if let memo = row.memo, !memo.isEmpty {
+                lines.append(memo)
+            }
+            // 計算どうしの区切り
+            lines.append("")
+        }
+        return lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     // HistoryView // 式コピペ　rowからformulaTextを再現する
     func formulaFromHistoryToken(_ row: HistoryRow) {
         tokens = row.tokens

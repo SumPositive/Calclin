@@ -671,17 +671,27 @@ struct SettingView: View {
                     AppAnalytics.logInfoLinkOpened(kind: "manual")
                     openSafari(for: "info.url")
                 } label: {
-                    Text("settings.userGuide")
-                        .font(.body)
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 8)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .strokeBorder(.blue, lineWidth: 1)
-                        )
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("settings.userGuide")
+                            .font(.body)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        // アプリ内では「ロール」で通しているので、
+                        // その語がどこを指すかをここで一度だけ説明する
+                        Text("settings.userGuide.description")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(.blue, lineWidth: 1)
+                    )
                 }
-                .frame(maxWidth: .infinity, alignment: .center)
 
                 // アプリを評価する（App Store のレビュー入力欄を直接開く）
                 Button {

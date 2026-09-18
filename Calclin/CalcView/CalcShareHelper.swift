@@ -121,6 +121,38 @@ private struct CalcPDFContent: View {
 }
 
 
+// MARK: - テキスト生成
+
+/// ロールの内容をテキストファイルにして、その URL を返す。
+/// 共有シートに渡すと「ファイルに保存」やメール添付ができる
+@MainActor
+func makeCalcTextFile(viewModel: CalcViewModel) -> URL? {
+    let body = viewModel.rollText()
+    guard !body.isEmpty else { return nil }
+
+    let formatter = DateFormatter()
+    formatter.dateStyle = .short
+    formatter.timeStyle = .short
+    let title = viewModel.calcMode == .calculator
+        ? String(localized: "calc.share.title.calculator")
+        : String(localized: "calc.share.title.formula")
+    let text = "\(title)  \(formatter.string(from: Date()))\n\n\(body)\n"
+
+    // ファイル名は日時から作る（同じ名前で上書きされないように）
+    let nameFormatter = DateFormatter()
+    nameFormatter.dateFormat = "yyyyMMdd-HHmmss"
+    let url = FileManager.default.temporaryDirectory
+        .appendingPathComponent("Calclin-\(nameFormatter.string(from: Date()))")
+        .appendingPathExtension("txt")
+    do {
+        try text.write(to: url, atomically: true, encoding: .utf8)
+        return url
+    } catch {
+        log(.error, "テキストファイルの書き出しに失敗: \(error)")
+        return nil
+    }
+}
+
 // MARK: - PDF 生成
 
 @MainActor
