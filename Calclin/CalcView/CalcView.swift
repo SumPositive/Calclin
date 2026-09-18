@@ -29,15 +29,8 @@ struct CalcView: View {
     @State private var inputToolsWidth: CGFloat = 0
     /// 入力行の「機能」メニュー（PDF出力・色・フォント）
     @State private var isFunctionMenuPresented = false
-    /// 機能メニューを閉じたあとに開く吹き出し。
-    /// メニューの中で Task を作ると、メニューが閉じる＝その View が消えるときに
-    /// キャンセルされてしまうので、閉じ終わってから親側で開く
-    private enum PendingFunction { case color, font }
-    @State private var pendingFunction: PendingFunction? = nil
-    /// 入力行の「色」ボタンで出す、入力行の色ピッカー
-    @State private var isAccentPickerPresented = false
-    /// 機能メニューから開く数字フォント一覧
-    @State private var isFontPickerFromButtonPresented = false
+    /// 機能メニューの右側に開いている内容（nil＝一覧だけ）
+    @State private var functionMenuPane: InputFunctionMenuPopover.Pane? = nil
     // 入力行末尾の単位をタップしたときの換算ポップオーバー表示状態
     @State private var isUnitConvertPickerPresented = false
     // 換算ポップオーバーに表示する候補（開いた時点で確定し、表示中は再計算しない）
@@ -385,7 +378,7 @@ struct CalcView: View {
                         }
                     }
                     .sensoryFeedback(.success, trigger: isUnitConvertPickerPresented)
-                    .sensoryFeedback(.success, trigger: isFontPickerFromButtonPresented)
+                    .sensoryFeedback(.success, trigger: functionMenuPane)
                     .onPreferenceChange(InputToolsWidthPreferenceKey.self) { width in
                         inputToolsWidth = width
                     }
@@ -492,56 +485,27 @@ struct CalcView: View {
             )
         }
         .popover(isPresented: $isFunctionMenuPresented, arrowEdge: .bottom) {
+            // 吹き出しは1枚だけ。中で左右に分けて「一覧＋選んだ内容」を同時に見せる
+            // （iOS は1つの提示元から吹き出しを2枚同時に出せない）
             InputFunctionMenuPopover(
+                openPane: $functionMenuPane,
+                numberFontPreviewText: numberFontPreviewText,
+                numberFontPreviewSize: numberFontPreviewSize,
                 onPDF: {
                     isFunctionMenuPresented = false
                     exportPDF()
                 },
-                // 色・フォントは「何を開くか」だけ覚えてメニューを閉じる。
-                // 実際に開くのは onDismiss（＝閉じ終わったあと）
-                onColor: {
-                    pendingFunction = .color
-                    isFunctionMenuPresented = false
-                },
-                onFont: {
-                    pendingFunction = .font
-                    isFunctionMenuPresented = false
+                onFontPickerOpened: {
+                    AppAnalytics.logNumberFontQuickPickerOpened(calcMode: viewModel.calcMode)
                 }
             )
+            .environmentObject(setting)
             .appFontScale(setting.fontScale)
             .presentationCompactAdaptation(.popover)
         }
-        // メニューが閉じ切ってから次の吹き出しを開く。
-        // メニューの中から開こうとすると、提示が重なって出ないことがある
+        // 閉じたら次回は一覧から始める
         .onChange(of: isFunctionMenuPresented) { _, isPresented in
-            guard !isPresented, let pending = pendingFunction else { return }
-            pendingFunction = nil
-            switch pending {
-            case .color:
-                isAccentPickerPresented = true
-            case .font:
-                AppAnalytics.logNumberFontQuickPickerOpened(calcMode: viewModel.calcMode)
-                isFontPickerFromButtonPresented = true
-            }
-        }
-        // 色・フォントの吹き出しもこのボタンから出す（アンカーを入力行に揃える）
-        .popover(isPresented: $isAccentPickerPresented, arrowEdge: .bottom) {
-            InputAccentPickPopover(selection: $setting.accentTheme) {
-                isAccentPickerPresented = false
-            }
-            .appFontScale(setting.fontScale)
-            .presentationCompactAdaptation(.popover)
-        }
-        .popover(isPresented: $isFontPickerFromButtonPresented, arrowEdge: .bottom) {
-            NumberFontQuickPickPopover(
-                selection: $setting.numberFont,
-                previewText: numberFontPreviewText,
-                previewSize: numberFontPreviewSize
-            ) {
-                isFontPickerFromButtonPresented = false
-            }
-            .appFontScale(setting.fontScale)
-            .presentationCompactAdaptation(.popover)
+            if !isPresented { functionMenuPane = nil }
         }
     }
 
@@ -564,13 +528,67 @@ struct CalcView: View {
 /// 入力行の「機能」ボタンで開くメニュー。
 /// PDF 出力・色・フォントを1つにまとめ、入力行を広く使えるようにする
 private struct InputFunctionMenuPopover: View {
+    @EnvironmentObject var setting: SettingViewModel
+
+    /// 右側に開いている内容。nil＝アイコン列だけ
+    enum Pane { case pdf, color, font }
+
+    @Binding var openPane: Pane?
+    let numberFontPreviewText: String
+    let numberFontPreviewSize: CGFloat
     let onPDF: () -> Void
-    let onColor: () -> Void
-    let onFont: () -> Void
+    /// フォントを選んだことを記録する（Analytics）
+    let onFontPickerOpened: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 1) {
-            Text("common.function")
+        // iOS は吹き出しを2枚同時に出せないので、1つの吹き出しの中で左右に並べる。
+        // 左＝機能のアイコン列（常に見える） / 右＝選んだ内容
+        HStack(alignment: .top, spacing: 0) {
+            menuList
+            if let pane = openPane {
+                Divider()
+                // アイコン列(56) + 区切り + ここ が画面幅に収まるようにする
+                detail(pane)
+                    .frame(width: 230)
+            }
+        }
+        .animation(.easeOut(duration: 0.18), value: openPane)
+    }
+
+    /// 左側：機能のアイコン列（タイトルは右側に出るので、ここはアイコンだけ）
+    private var menuList: some View {
+        VStack(spacing: 2) {
+            iconRow(systemName: "arrow.up.doc", pane: .pdf, label: "common.pdf")
+            iconRow(systemName: "paintpalette", pane: .color, label: "common.color")
+            iconRow(systemName: "textformat.123", pane: .font, label: "common.font")
+        }
+        .padding(.vertical, 8)
+        .frame(width: 56)
+    }
+
+    /// 右側：選んだ内容
+    @ViewBuilder
+    private func detail(_ pane: Pane) -> some View {
+        switch pane {
+        case .pdf:
+            pdfPane
+        case .color:
+            // 選んでも閉じない。入力行の色がその場で変わるのを見ながら選び直せる
+            // （選択中の項目はチェック印が付くので、どれを選んだか分かる）
+            InputAccentPickPopover(selection: $setting.accentTheme)
+        case .font:
+            NumberFontQuickPickPopover(
+                selection: $setting.numberFont,
+                previewText: numberFontPreviewText,
+                previewSize: numberFontPreviewSize
+            )
+        }
+    }
+
+    /// PDF 出力。押し間違いで共有シートが開かないよう、「開始」を押してから実行する
+    private var pdfPane: some View {
+        VStack(spacing: 4) {
+            Text("common.pdf")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -578,32 +596,51 @@ private struct InputFunctionMenuPopover: View {
                 .padding(.top, 8)
                 .padding(.bottom, 2)
 
-            row(systemName: "arrow.up.doc", title: "common.pdf", action: onPDF)
-            row(systemName: "paintpalette", title: "common.color", action: onColor)
-            row(systemName: "textformat.123", title: "common.font", action: onFont)
+            Button {
+                onPDF()
+            } label: {
+                Text("common.start")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(setting.accentTheme.color)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .contentShape(Rectangle())
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(setting.accentTheme.color.opacity(0.12))
+                            .padding(.horizontal, 12)
+                    )
+            }
+            .buttonStyle(.plain)
         }
         .padding(.bottom, 8)
-        .frame(minWidth: 200)
     }
 
-    private func row(systemName: String, title: LocalizedStringKey,
-                     action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 10) {
-                Image(systemName: systemName)
-                    .font(.system(size: 17))
-                    // アイコンの幅を揃えてタイトルの左端を合わせる
-                    .frame(width: 24, alignment: .center)
-                Text(title)
-                    .font(.subheadline)
-                Spacer(minLength: 12)
+    private func iconRow(systemName: String, pane: Pane,
+                         label: LocalizedStringKey) -> some View {
+        let isOpen = pane == openPane
+        return Button {
+            if openPane == pane {
+                openPane = nil
+            } else {
+                if pane == .font { onFontPickerOpened() }
+                openPane = pane
             }
-            .foregroundStyle(Color.primary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .contentShape(Rectangle())
+        } label: {
+            Image(systemName: systemName)
+                .font(.system(size: 19))
+                .foregroundStyle(isOpen ? setting.accentTheme.color : Color.primary)
+                .frame(width: 44, height: 36)
+                .contentShape(Rectangle())
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(isOpen ? setting.accentTheme.color.opacity(0.12) : Color.clear)
+                )
         }
         .buttonStyle(.plain)
+        // アイコンだけなので、読み上げには機能名を伝える
+        .accessibilityLabel(Text(label))
     }
 }
 
@@ -611,7 +648,6 @@ private struct InputFunctionMenuPopover: View {
 /// - 設定画面から移設したもの。実際に色が効く入力行のすぐそばで選べるようにする
 private struct InputAccentPickPopover: View {
     @Binding var selection: SettingViewModel.AccentTheme
-    let onDismiss: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -625,8 +661,8 @@ private struct InputAccentPickPopover: View {
 
             ForEach(SettingViewModel.AccentTheme.allCases) { theme in
                 Button {
+                    // 選んでも閉じない。入力行の色が変わるのを見ながら選び直せる
                     selection = theme
-                    onDismiss()
                 } label: {
                     HStack(spacing: 10) {
                         // 選んだ色が一目で分かるよう色見本を出す
@@ -671,7 +707,6 @@ private struct NumberFontQuickPickPopover: View {
     @Binding var selection: SettingViewModel.NumberFont
     let previewText: String
     let previewSize: CGFloat
-    let onDismiss: () -> Void
 
     /// プレビューの文字サイズ。
     /// 入力行と同じ大きさにする必要はない（書体の違いが分かれば十分）ので、
@@ -692,8 +727,8 @@ private struct NumberFontQuickPickPopover: View {
 
                 ForEach(SettingViewModel.NumberFont.allCases) { numberFont in
                     Button {
+                        // 選んでも閉じない。入力行の書体が変わるのを見ながら選び直せる
                         selection = numberFont
-                        onDismiss()
                     } label: {
                         HStack(spacing: 10) {
                             // 入力行と同じ文字列・同じサイズで描画してフォントの違いを見せる

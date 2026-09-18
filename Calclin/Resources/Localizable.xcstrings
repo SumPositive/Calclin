@@ -468,6 +468,22 @@
         }
       }
     },
+    "common.start" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開始"
+          }
+        }
+      }
+    },
     "common.pdf" : {
       "localizations" : {
         "en" : {
