@@ -72,11 +72,6 @@ struct SettingView: View {
         dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxLarge
     }
 
-    /// 数字フォント候補は入力行と同じ倍率を使い、書体比較のサイズを揃える
-    private var numberFontMenuPreviewSize: CGFloat {
-        17 * viewModel.inputRowFontScale(for: dynamicTypeSize)
-    }
-
     private func dropdownBinding(_ kind: SettingDropdownKind) -> Binding<Bool> {
         Binding(
             get: { expandedDropdown == kind },
@@ -115,23 +110,37 @@ struct SettingView: View {
     var body: some View {
         ZStack {
             NavigationStack {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 8) {
-                        modeSection
-                        integerSection
-                        decimalSection
-                        keyboardSection
-                        infoSection
-                        supportSection
-                        footerSection
+                VStack(spacing: 0) {
+                    // 設定シートの上部に広告バナーを固定で置く。
+                    // スクロールしても残るよう ScrollView の外に出す
+                    // （fastlane snapshot 撮影中は出さない＝スクショに広告を写さない）
+                    if !SnapshotSupport.isRunningSnapshot {
+                        BannerAdView(adUnitID: ADMOB_BANNER_UnitID,
+                                     size: CGSize(width: 320, height: 50))
+                            .frame(width: 320, height: 50)
+                            // 誤タップを避けるため、バナーの上下は広めに空ける
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity)
                     }
-                    .padding(.horizontal, outerHorizontalPadding)
-                    .padding(.top, 8)
-                    .padding(.bottom)
+
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 8) {
+                            modeSection
+                            integerSection
+                            decimalSection
+                            keyboardSection
+                            infoSection
+                            supportSection
+                            footerSection
+                        }
+                        .padding(.horizontal, outerHorizontalPadding)
+                        .padding(.top, 8)
+                        .padding(.bottom)
+                    }
+                    // 設定カードの表示を優先し、縦スクロールインジケータは出さない
+                    .scrollIndicators(.hidden)
                 }
-                // 設定カードの表示を優先し、縦スクロールインジケータは出さない
-                .scrollIndicators(.hidden)
-                .navigationTitle(Text("settings.title"))
+                .navigationTitle(Text("app.title"))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
@@ -290,72 +299,12 @@ struct SettingView: View {
                     }
                 }
                 .zIndex(expandedDropdown == .fontScale ? 50 : 0)
-                VStack(alignment: .leading, spacing: 4) {
-                    AdaptiveControlRow {
-                        Label("settings.autoScroll", systemImage: "arrow.down.to.line")
-                            .labelStyle(.titleAndIcon)
-                            .font(.subheadline)
-                    } control: {
-                        SettingDropdown(options: SettingViewModel.AutoScroll.allCases,
-                                        selection: $viewModel.autoScroll,
-                                        isExpanded: dropdownBinding(.autoScroll),
-                                        minWidth: 140) { mode in
-                            Text(mode.localized)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                    }
-                    .zIndex(expandedDropdown == .autoScroll ? 60 : 0)
-                    if viewModel.playMode == .beginner {
-                        Text("settings.help.autoScroll")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 2)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .cappedAtLargeTypeSize()
-                    }
-                }
-                .zIndex(expandedDropdown == .autoScroll ? 50 : 0)
-
-                // 数字フォント（入力行のみに適用）
-                // 桁区切り方式と同じ独自 dropdown を使い、各候補をそのフォント自身で描画する
-                VStack(alignment: .leading, spacing: 4) {
-                    AdaptiveControlRow {
-                        Label("settings.numberFont", systemImage: "textformat.123")
-                            .labelStyle(.titleAndIcon)
-                            .font(.subheadline)
-                    } control: {
-                        SettingDropdown(options: SettingViewModel.NumberFont.allCases,
-                                        selection: $viewModel.numberFont,
-                                        isExpanded: dropdownBinding(.numberFont),
-                                        minWidth: 220,
-                                        labelStylesOwnFont: true) { numberFont in
-                            // サンプル文字列は現在の桁区切り方式・記号・小数点に追随する
-                            // （AZDecimal.formatted を利用して既存ロジックを再利用）
-                            Text(SettingViewModel.NumberFont.sample(config: calcConfig))
-                                .font(numberFont.font(size: numberFontMenuPreviewSize, weight: .bold))
-                                // 数字フォント候補は inputRowFontScale で拡大率を制御する
-                                .dynamicTypeSize(.large)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                    }
-                    // 開いた候補を同じカード内の後続行より前面に出す
-                    .zIndex(expandedDropdown == .numberFont ? 60 : 0)
-                    if viewModel.playMode == .beginner {
-                        Text("settings.help.numberFont")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 2)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .cappedAtLargeTypeSize()
-                    }
-                }
-                .zIndex(expandedDropdown == .numberFont ? 50 : 0)
             }
             .padding(.top, -12)
             .padding(.leading, sectionLeadingPadding)
         }
         // 候補ポップアップが下のカードに隠れないよう前面に出す
-        .zIndex(isDropdownExpanded(in: [.playMode, .appearanceMode, .autoScroll, .fontScale, .numberFont]) ? 50 : 0)
+        .zIndex(isDropdownExpanded(in: [.playMode, .appearanceMode, .fontScale]) ? 50 : 0)
     }
 
     /// 整数部の見え方をまとめるカード
@@ -671,27 +620,17 @@ struct SettingView: View {
                     AppAnalytics.logInfoLinkOpened(kind: "manual")
                     openSafari(for: "info.url")
                 } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("settings.userGuide")
-                            .font(.body)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                        // アプリ内では「ロール」で通しているので、
-                        // その語がどこを指すかをここで一度だけ説明する
-                        Text("settings.userGuide.description")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .strokeBorder(.blue, lineWidth: 1)
-                    )
+                    Text("settings.userGuide")
+                        .font(.body)
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(.blue, lineWidth: 1)
+                        )
                 }
+                .frame(maxWidth: .infinity, alignment: .center)
 
                 // アプリを評価する（App Store のレビュー入力欄を直接開く）
                 Button {
@@ -837,8 +776,6 @@ private enum SettingDropdownKind {
     case playMode
     case appearanceMode
     case fontScale
-    case autoScroll
-    case numberFont
     case groupType
     case roundType
 }
@@ -1324,17 +1261,13 @@ private struct SettingSectionCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 12) {
             if let title {
                 Group {
-                    if dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxxLarge {
-                        VStack(alignment: .leading, spacing: 8) {
-                            headerBadge
-                            headerText(title: title, description: description)
-                        }
-                    } else {
-                        HStack(spacing: 10) {
-                            headerBadge
-                            headerText(title: title, description: description)
-                            Spacer()
-                        }
+                    // 文字サイズが大きくてもアイコンと見出しは1行に並べる。
+                    // アイコンは 30pt 固定で、見出しも「表示」「整数部」のように短いため、
+                    // 縦に折り返すと縦幅ばかり食って読みにくくなる
+                    HStack(spacing: 10) {
+                        headerBadge
+                        headerText(title: title, description: description)
+                        Spacer(minLength: 0)
                     }
                 }
             }

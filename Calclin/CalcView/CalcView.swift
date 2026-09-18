@@ -559,7 +559,7 @@ private struct InputFunctionMenuPopover: View {
     @EnvironmentObject var setting: SettingViewModel
 
     /// 右側に開いている内容。nil＝アイコン列だけ
-    enum Pane { case roll, color, font }
+    enum Pane { case roll, color, font, scroll }
 
     @Binding var openPane: Pane?
     let numberFontPreviewText: String
@@ -592,6 +592,8 @@ private struct InputFunctionMenuPopover: View {
             iconRow(systemName: "scroll", pane: .roll, label: "roll.actions.label")
             iconRow(systemName: "paintpalette", pane: .color, label: "common.color")
             iconRow(systemName: "textformat.123", pane: .font, label: "common.font")
+            iconRow(systemName: "arrow.down.to.line", pane: .scroll,
+                    label: "settings.autoScroll")
         }
         .padding(.vertical, 8)
         .frame(width: 56)
@@ -613,7 +615,53 @@ private struct InputFunctionMenuPopover: View {
                 previewText: numberFontPreviewText,
                 previewSize: numberFontPreviewSize
             )
+        case .scroll:
+            autoScrollPane
         }
+    }
+
+    /// 最新行を表示するタイミング。
+    /// 効果がロールに出るので、設定画面ではなくロールのそばで選べるようにする
+    private var autoScrollPane: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("settings.autoScroll")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.horizontal, 10)
+                .padding(.top, 8)
+
+            ForEach(SettingViewModel.AutoScroll.allCases) { mode in
+                Button {
+                    // 選んでも閉じない。他の項目と揃える
+                    setting.autoScroll = mode
+                } label: {
+                    HStack(spacing: 10) {
+                        Text(mode.localized)
+                            .font(.subheadline)
+                            .foregroundStyle(mode == setting.autoScroll
+                                             ? setting.accentTheme.color : Color.primary)
+                        Spacer(minLength: 12)
+                        if mode == setting.autoScroll {
+                            Image(systemName: "checkmark")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(setting.accentTheme.color)
+                        }
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .contentShape(Rectangle())
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(mode == setting.autoScroll
+                                  ? setting.accentTheme.color.opacity(0.12)
+                                  : Color.clear)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.bottom, 8)
     }
 
     /// ロールの操作（コピー・書き出し・消去）

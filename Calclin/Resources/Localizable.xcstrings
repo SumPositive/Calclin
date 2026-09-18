@@ -2059,22 +2059,6 @@
         }
       }
     },
-    "settings.userGuide.description" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The \"roll\" is the band of calculations that scrolls above the input row, like a receipt."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「ロール」は、入力行の上に流れる計算の帯です（レシートのように計算が流れていきます）"
-          }
-        }
-      }
-    },
     "settings.userGuide" : {
       "localizations" : {
         "en" : {
@@ -2156,40 +2140,6 @@
         }
       }
     },
-    "settings.numberFont" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Number Font"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "数字フォント"
-          }
-        }
-      }
-    },
-    "settings.help.numberFont" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Applies to the input row. You can also change it by long-pressing the right side of the input row."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "入力行に適用されます。入力行の右側を長押しでも変更できます"
-          }
-        }
-      }
-    },
     "settings.fontScale.system" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2254,23 +2204,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "特大"
-          }
-        }
-      }
-    },
-    "settings.help.autoScroll" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose when the roll jumps to the latest row. Recommended: on [=], plus after an operator in calculator mode."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ロールの最新行を自動的に表示するタイミングを設定できます。おすすめは、数式モードは[=]のとき、電卓モードは[=]と演算子のときです"
           }
         }
       }

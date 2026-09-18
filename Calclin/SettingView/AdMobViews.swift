@@ -192,10 +192,13 @@ struct AdMobAdSheetView: View {
 // MARK: - UIViewRepresentable で AdMob のバナー広告を表示する
 struct BannerAdView: UIViewRepresentable {
     let adUnitID: String
+    /// バナーの大きさ。既定は Medium Rectangle（300x250）。
+    /// 設定シートの上部など、帯状に置きたい場所では 320x50 を指定する
+    var size: CGSize = CGSize(width: 300, height: 250)
 
     func makeUIView(context: Context) -> BannerView {
-        // アダプティブではなく固定サイズの300x250を使う
-        let bannerSize = adSizeFor(cgSize: CGSize(width: 300, height: 250))
+        // アダプティブではなく固定サイズを使う
+        let bannerSize = adSizeFor(cgSize: size)
         let banner = BannerView(adSize: bannerSize)
         banner.adUnitID = adUnitID
         banner.rootViewController = UIApplication.shared.rootController
