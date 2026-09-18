@@ -425,13 +425,29 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Color"
+            "value" : "Input row color"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "色"
+            "value" : "入力行の色"
+          }
+        }
+      }
+    },
+    "common.function" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Functions"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "機能"
           }
         }
       }
@@ -441,13 +457,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Font"
+            "value" : "Input number font"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "フォント"
+            "value" : "入力数字フォント"
           }
         }
       }
@@ -457,13 +473,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PDF"
+            "value" : "Export roll as PDF"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PDF"
+            "value" : "ロールをPDFで出力"
           }
         }
       }
@@ -1969,13 +1985,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Input row number font"
+            "value" : "Input number font"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "入力行の数字フォント"
+            "value" : "入力数字フォント"
           }
         }
       }

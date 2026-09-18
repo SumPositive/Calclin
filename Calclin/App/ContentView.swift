@@ -173,6 +173,8 @@ struct PassthroughLongPressArea: UIViewRepresentable {
 private struct KeyboardResizeHandle: View {
     let isActive: Bool
     let isHinting: Bool
+    /// 長押しを拾う高さ（入力行の高さに合わせる）
+    let senseHeight: CGFloat
     let onLongPressChanged: (Bool) -> Void
     let onDragChanged: (CGFloat) -> Void
     let onEnded: () -> Void
@@ -216,13 +218,16 @@ private struct KeyboardResizeHandle: View {
     }
 
     var body: some View {
-        // 入力行中央に重ね、通常時は見せずに長押し成立後だけ表示する
-        // - contentShape は付けない：これがあると 180×44 領域でタッチを掴んでしまい、
+        // 入力行に重ね、通常時は見せずに長押し成立後だけハンドルを表示する
+        // - contentShape は付けない：これがあるとタッチを掴んでしまい、
         //   FormulaView の水平スクロールが阻害される。
         //   長押し検出は下の PassthroughLongPressArea（window レベルの gesture recognizer）が担当する。
         Rectangle()
             .fill(Color.clear)
-            .frame(width: 180, height: 44)
+            // 見た目のハンドルは中央の 180pt だが、長押しは入力行のどこでも拾いたいので
+            // 当たり判定だけ横いっぱいに広げる
+            .frame(maxWidth: .infinity)
+            .frame(height: senseHeight)
             .allowsHitTesting(false)
             .overlay {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -252,7 +257,9 @@ private struct KeyboardResizeHandle: View {
                     onDragChanged: onDragChanged,
                     onEnded: onEnded
                 )
-                .frame(width: 180, height: 44)
+                // 入力行のどこを長押ししてもハンドルが出るようにする
+                .frame(maxWidth: .infinity)
+                .frame(height: senseHeight)
             }
             .onChange(of: isHinting) { _, _ in
                 startHintAnimationIfNeeded()
@@ -484,6 +491,9 @@ struct ContentView: View {
                     KeyboardResizeHandle(
                         isActive: isKeyboardResizing || isKeyboardResizeHintVisible,
                         isHinting: isKeyboardResizeHintVisible,
+                        // 入力行のどこを長押ししてもハンドルが出るよう、行と同じ高さで拾う
+                        senseHeight: calcInputLineHeight(
+                            inputRowFontScale: setting.inputRowFontScale(for: dynamicTypeSize)),
                         onLongPressChanged: { isPressing in
                             if isPressing {
                                 hasUsedKeyboardResizeHandle = true

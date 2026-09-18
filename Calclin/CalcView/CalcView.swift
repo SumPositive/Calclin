@@ -27,12 +27,16 @@ struct CalcView: View {
     @State private var isGeneratingPDF = false
     @State private var formulaTextWidth: CGFloat = 0
     @State private var inputToolsWidth: CGFloat = 0
-    // 入力行右側を長押ししたときのフォント選択ポップオーバー表示状態
-    @State private var isNumberFontPickerPresented = false
+    /// 入力行の「機能」メニュー（PDF出力・色・フォント）
+    @State private var isFunctionMenuPresented = false
+    /// 機能メニューを閉じたあとに開く吹き出し。
+    /// メニューの中で Task を作ると、メニューが閉じる＝その View が消えるときに
+    /// キャンセルされてしまうので、閉じ終わってから親側で開く
+    private enum PendingFunction { case color, font }
+    @State private var pendingFunction: PendingFunction? = nil
     /// 入力行の「色」ボタンで出す、入力行の色ピッカー
     @State private var isAccentPickerPresented = false
-    /// 入力行の「フォント」ボタンで出す数字フォント一覧。
-    /// 右側長押し（isNumberFontPickerPresented）とは吹き出しの出所が違うので State を分ける
+    /// 機能メニューから開く数字フォント一覧
     @State private var isFontPickerFromButtonPresented = false
     // 入力行末尾の単位をタップしたときの換算ポップオーバー表示状態
     @State private var isUnitConvertPickerPresented = false
@@ -62,12 +66,8 @@ struct CalcView: View {
     }
 
     private var inputLineHeight: CGFloat {
-        // 入力行は視認性を優先して基準サイズを 1.4 倍 (24 → 33.6) に合わせる
-        // - 2 段表示は廃止して常に 1 行なので、累計の有無で高さを変える必要はない
-        // - 1.25 倍は「文字の自然高 40.3pt ＋ 上下の余白」。
-        //   ㎡ や 坪 は Hiragino へフォールバックし数字より 3pt ほど背が高いので、
-        //   ぎりぎりにすると上が欠ける
-        return max(46, 33.6 * inputRowFontScale * 1.25)
+        // 高さ変更ハンドル（ContentView）と同じ値を使う
+        calcInputLineHeight(inputRowFontScale: inputRowFontScale)
     }
 
     private func syncCalcFontScale() {
@@ -293,22 +293,36 @@ struct CalcView: View {
                                 .transition(.opacity)
                         }
                     }
-                    // ツールは左端にまとめる（PDF 出力 → モード切替 の順）
+                    // 「機能」アイコンから右（アプリ名のあたりまで）を押しても
+                    // 機能メニューが開くようにする。小さなアイコンを狙わずに済む
+                    // - ツール（数式／電卓・機能）の実幅より右側だけを対象にして、
+                    //   セグメントのタップを邪魔しない
+                    .overlay(alignment: .trailing) {
+                        if isSingleRoll && showsInputTools {
+                            // ツールの実測幅より右だけをタップ領域にする。
+                            // 全幅にすると数式／電卓セグメントのタップを奪ってしまう
+                            let toolsEnd = inputToolsWidth + 6
+                            Color.clear
+                                .frame(width: max(geo.size.width - toolsEnd, 0))
+                                .contentShape(Rectangle())
+                                .onTapGesture { isFunctionMenuPresented = true }
+                        }
+                    }
+                    // ツールは左端にまとめる（数式／電卓 → 機能 の順）
                     // セグメンテッド側がカプセルの内側余白を持っているので、間隔は詰めてよい
                     .overlay(alignment: .leading) {
-                        // 並びは左から「数式／電卓」「PDF出力」「色」「フォント」
+                        // 並びは左から「数式／電卓」「機能（PDF出力・色・フォント）」
                         HStack(spacing: usesCompactTools ? 2 : 4) {
                             inputLineTools(showsModeTitle: showsModeTitles,
                                            isCompact: usesCompactTools)
-                            // PDF・色・フォントは1面表示のときだけ。
-                            // 2面・3面では入力行が狭く、数式／電卓の切替を優先する
+                            // PDF・色・フォントは「機能」1つにまとめる。
+                            // 1面表示のときだけ出す（2面・3面では入力行が狭く、
+                            // 数式／電卓の切替を優先する）
                             if isSingleRoll {
-                                inputLinePDFButton(showsTitle: showsInputToolTitles,
-                                                   isCompact: usesCompactTools)
-                                inputLineAccentButton(showsTitle: showsInputToolTitles,
-                                                      isCompact: usesCompactTools)
-                                inputLineFontButton(showsTitle: showsInputToolTitles,
-                                                    isCompact: usesCompactTools)
+                                inputLineFunctionButton(showsTitle: showsInputToolTitles,
+                                                        isCompact: usesCompactTools)
+                                    // モード切替とは役割が違うので少し離す
+                                    .padding(.leading, usesCompactTools ? 6 : 10)
                             }
                         }
                             .padding(.leading, 6)
@@ -323,15 +337,10 @@ struct CalcView: View {
                                     inputLineTools(showsModeTitle: true,
                                                    isCompact: usesCompactTools)
                                     if isSingleRoll {
-                                        inputLineToolLabel(systemName: "arrow.up.doc",
-                                                           title: String(localized: "common.pdf"),
+                                        inputLineToolLabel(systemName: inputLineFunctionIcon,
+                                                           title: String(localized: "common.function"),
                                                            isCompact: usesCompactTools)
-                                        inputLineToolLabel(systemName: "paintpalette",
-                                                           title: String(localized: "common.color"),
-                                                           isCompact: usesCompactTools)
-                                        inputLineToolLabel(systemName: inputLineFontIcon,
-                                                           title: String(localized: "common.font"),
-                                                           isCompact: usesCompactTools)
+                                            .padding(.leading, usesCompactTools ? 6 : 10)
                                     }
                                 }
                                     .hidden()
@@ -343,42 +352,6 @@ struct CalcView: View {
                                         }
                                     }
                             }
-                    }
-                    // 入力行の右側 1/3 を長押しでフォント選択ポップオーバーを開く
-                    // SwiftUI の .onLongPressGesture は Color.clear 上でもタッチを掴んでしまい、
-                    // FormulaView の水平スクロールを阻害する。代わりに PassthroughLongPressArea を使い、
-                    // window レベルの UILongPressGestureRecognizer + hitTest=nil で
-                    // 下層のスクロール等を一切邪魔せずに長押しだけ拾う。
-                    .overlay(alignment: .trailing) {
-                        GeometryReader { rowGeo in
-                            PassthroughLongPressArea(
-                                minimumDuration: 0.6,
-                                onLongPressChanged: { isPressing in
-                                    if isPressing {
-                                        AppAnalytics.logNumberFontQuickPickerOpened(calcMode: viewModel.calcMode)
-                                        isNumberFontPickerPresented = true
-                                    }
-                                },
-                                onDragChanged: { _ in },
-                                onEnded: { }
-                            )
-                            .frame(width: rowGeo.size.width / 3, height: rowGeo.size.height)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .popover(isPresented: $isNumberFontPickerPresented,
-                                     // メニュー位置は維持しつつ、吹き出し先だけ右寄りにする
-                                     attachmentAnchor: .point(UnitPoint(x: 0.78, y: 0.18)),
-                                     arrowEdge: .bottom) {
-                                NumberFontQuickPickPopover(
-                                    selection: $setting.numberFont,
-                                    previewText: numberFontPreviewText,
-                                    previewSize: numberFontPreviewSize
-                                ) {
-                                    isNumberFontPickerPresented = false
-                                }
-                                .appFontScale(setting.fontScale)
-                                .presentationCompactAdaptation(.popover)
-                            }
-                        }
                     }
                     // 入力行末尾の単位をタップして換算ポップオーバーを開く
                     // 入力行は常に右寄せ・単位は必ず末尾に描画されるため、
@@ -412,7 +385,7 @@ struct CalcView: View {
                         }
                     }
                     .sensoryFeedback(.success, trigger: isUnitConvertPickerPresented)
-                    .sensoryFeedback(.success, trigger: isNumberFontPickerPresented)
+                    .sensoryFeedback(.success, trigger: isFontPickerFromButtonPresented)
                     .onPreferenceChange(InputToolsWidthPreferenceKey.self) { width in
                         inputToolsWidth = width
                     }
@@ -489,9 +462,6 @@ struct CalcView: View {
         .environmentObject(setting)
     }
 
-    /// 数字フォント切替のアイコン。数字を扱う設定だと分かる記号にする
-    private var inputLineFontIcon: String { "textformat.123" }
-
     /// 幅測定専用のツールラベル（ボタンにしない＝popover を持たせない）
     private func inputLineToolLabel(systemName: String, title: String,
                                     isCompact: Bool) -> some View {
@@ -504,42 +474,63 @@ struct CalcView: View {
         )
     }
 
-    /// 入力行の「色」ボタン。タップで入力行の色を選ぶ吹き出しを出す
-    private func inputLineAccentButton(showsTitle: Bool, isCompact: Bool = false) -> some View {
+    /// 機能メニューのアイコン。吹き出しが開くことを示す
+    private var inputLineFunctionIcon: String { "bubble.middle.bottom" }
+
+    /// 入力行の「機能」ボタン。PDF出力・色・フォントをまとめた吹き出しを出す
+    /// - 吹き出しはこのボタンから出す（アンカーは入力行）
+    private func inputLineFunctionButton(showsTitle: Bool, isCompact: Bool = false) -> some View {
         Button {
-            isAccentPickerPresented = true
+            isFunctionMenuPresented = true
         } label: {
             PaperToolButtonLabel(
-                systemName: "paintpalette",
-                title: String(localized: "common.color"),
+                systemName: inputLineFunctionIcon,
+                title: String(localized: "common.function"),
                 showsTitle: showsTitle,
                 isCompact: isCompact,
                 isTightWidth: true
             )
         }
+        .popover(isPresented: $isFunctionMenuPresented, arrowEdge: .bottom) {
+            InputFunctionMenuPopover(
+                onPDF: {
+                    isFunctionMenuPresented = false
+                    exportPDF()
+                },
+                // 色・フォントは「何を開くか」だけ覚えてメニューを閉じる。
+                // 実際に開くのは onDismiss（＝閉じ終わったあと）
+                onColor: {
+                    pendingFunction = .color
+                    isFunctionMenuPresented = false
+                },
+                onFont: {
+                    pendingFunction = .font
+                    isFunctionMenuPresented = false
+                }
+            )
+            .appFontScale(setting.fontScale)
+            .presentationCompactAdaptation(.popover)
+        }
+        // メニューが閉じ切ってから次の吹き出しを開く。
+        // メニューの中から開こうとすると、提示が重なって出ないことがある
+        .onChange(of: isFunctionMenuPresented) { _, isPresented in
+            guard !isPresented, let pending = pendingFunction else { return }
+            pendingFunction = nil
+            switch pending {
+            case .color:
+                isAccentPickerPresented = true
+            case .font:
+                AppAnalytics.logNumberFontQuickPickerOpened(calcMode: viewModel.calcMode)
+                isFontPickerFromButtonPresented = true
+            }
+        }
+        // 色・フォントの吹き出しもこのボタンから出す（アンカーを入力行に揃える）
         .popover(isPresented: $isAccentPickerPresented, arrowEdge: .bottom) {
             InputAccentPickPopover(selection: $setting.accentTheme) {
                 isAccentPickerPresented = false
             }
             .appFontScale(setting.fontScale)
             .presentationCompactAdaptation(.popover)
-        }
-    }
-
-    /// 入力行の「フォント」ボタン。タップで数字フォント一覧を出す
-    /// - 入力行右側の長押しでも同じ一覧が出る（そちらは従来どおり残す）
-    private func inputLineFontButton(showsTitle: Bool, isCompact: Bool = false) -> some View {
-        Button {
-            AppAnalytics.logNumberFontQuickPickerOpened(calcMode: viewModel.calcMode)
-            isFontPickerFromButtonPresented = true
-        } label: {
-            PaperToolButtonLabel(
-                systemName: inputLineFontIcon,
-                title: String(localized: "common.font"),
-                showsTitle: showsTitle,
-                isCompact: isCompact,
-                isTightWidth: true
-            )
         }
         .popover(isPresented: $isFontPickerFromButtonPresented, arrowEdge: .bottom) {
             NumberFontQuickPickPopover(
@@ -554,31 +545,65 @@ struct CalcView: View {
         }
     }
 
-    /// 入力行の右に出す PDF 出力ボタン
-    /// - モード切替と役割が違う（設定ではなく書き出し）ので、左右に分けて置く
-    private func inputLinePDFButton(showsTitle: Bool, isCompact: Bool = false) -> some View {
-        Button {
-            AppAnalytics.logPDFExportStarted(calcMode: viewModel.calcMode)
-            isGeneratingPDF = true
-            Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 80_000_000)
-                let url = makeCalcPDF(viewModel: viewModel, fontScale: calcFontScale)
-                isGeneratingPDF = false
-                if let url {
-                    shareURL = url
-                    isSharing = true
-                }
+    /// PDF を書き出して共有シートを開く（機能メニューから呼ぶ）
+    private func exportPDF() {
+        AppAnalytics.logPDFExportStarted(calcMode: viewModel.calcMode)
+        isGeneratingPDF = true
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 80_000_000)
+            let url = makeCalcPDF(viewModel: viewModel, fontScale: calcFontScale)
+            isGeneratingPDF = false
+            if let url {
+                shareURL = url
+                isSharing = true
             }
-        } label: {
-            PaperToolButtonLabel(
-                // 「書類を書き出す」を1つの絵で示す。押した先は共有シート
-                systemName: "arrow.up.doc",
-                title: String(localized: "common.pdf"),
-                showsTitle: showsTitle,
-                isCompact: isCompact,
-                isTightWidth: true
-            )
         }
+    }
+}
+
+/// 入力行の「機能」ボタンで開くメニュー。
+/// PDF 出力・色・フォントを1つにまとめ、入力行を広く使えるようにする
+private struct InputFunctionMenuPopover: View {
+    let onPDF: () -> Void
+    let onColor: () -> Void
+    let onFont: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text("common.function")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.horizontal, 12)
+                .padding(.top, 8)
+                .padding(.bottom, 2)
+
+            row(systemName: "arrow.up.doc", title: "common.pdf", action: onPDF)
+            row(systemName: "paintpalette", title: "common.color", action: onColor)
+            row(systemName: "textformat.123", title: "common.font", action: onFont)
+        }
+        .padding(.bottom, 8)
+        .frame(minWidth: 200)
+    }
+
+    private func row(systemName: String, title: LocalizedStringKey,
+                     action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: systemName)
+                    .font(.system(size: 17))
+                    // アイコンの幅を揃えてタイトルの左端を合わせる
+                    .frame(width: 24, alignment: .center)
+                Text(title)
+                    .font(.subheadline)
+                Spacer(minLength: 12)
+            }
+            .foregroundStyle(Color.primary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 

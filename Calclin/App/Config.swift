@@ -136,6 +136,16 @@ private func unitBaselineOffsetForCenter(unit: String, unitFont: UIFont) -> CGFl
     return reference - center
 }
 
+/// 入力行の高さ。
+/// 入力行そのもの（CalcView）と、そこに重ねる高さ変更ハンドル（ContentView）で
+/// 同じ値を使う必要があるので、1箇所で定義する
+/// - 基準サイズを 1.4 倍 (24 → 33.6) にしたぶん、行も 1.25 倍で確保する
+/// - ㎡ や 坪 は Hiragino へフォールバックし数字より 3pt ほど背が高いので、
+///   ぎりぎりにすると上が欠ける
+func calcInputLineHeight(inputRowFontScale: CGFloat) -> CGFloat {
+    max(46, 33.6 * inputRowFontScale * 1.25)
+}
+
 /// ロール枠（PaperRollEdgeLines）の線の幅。
 /// 入力行のガラスは、この幅ぶん左右を空けて枠と重ならないようにする
 /// （重ねると左右 3pt だけ色が二重に乗り、縦線に見える）
