@@ -996,6 +996,22 @@
         }
       }
     },
+    "keyboard.splitRows" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch the top 2 rows and bottom 4 rows separately"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上2段と下4段を分ける"
+          }
+        }
+      }
+    },
     "keyboard.layout" : {
       "localizations" : {
         "en" : {

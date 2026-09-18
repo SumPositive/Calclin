@@ -38,10 +38,6 @@ struct SettingView: View {
     @State private var isImporting = false        // キーボードインポートシート
     @State private var expandedDropdown: SettingDropdownKind? = nil  // 独自プルダウンの開閉状態
 
-    // 文字サイズに追随するボタン高さ（Dynamic Type で自動スケール）
-    @ScaledMetric(relativeTo: .footnote) private var actionButtonHeight: CGFloat = 34
-    @ScaledMetric(relativeTo: .subheadline) private var smallButtonHeight: CGFloat = 24
-
     // 現在の Dynamic Type サイズ（特大時に左右余白を最小化して内容欠けを防ぐ）
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -65,11 +61,6 @@ struct SettingView: View {
         } else {
             return 12
         }
-    }
-
-    /// 特大以上は横並びを避け、縦積みへ切り替える
-    private var usesVerticalSectionLayout: Bool {
-        dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxLarge
     }
 
     private func dropdownBinding(_ kind: SettingDropdownKind) -> Binding<Bool> {
@@ -462,23 +453,25 @@ struct SettingView: View {
             iconName: "keyboard",
             tint: Color(.systemBlue)
         ) {
-            Group {
-                if usesVerticalSectionLayout {
-                    VStack(alignment: .leading, spacing: 12) {
-                        exportButtonBlock
-                        importButtonBlock
-                        resetButtonBlock
-                    }
-                } else {
-                    HStack(spacing: 4) {
-                        exportButtonBlock
-                        importButtonBlock
-                        Spacer()
-                        resetButtonBlock
-                    }
-                }
+            VStack(alignment: .leading, spacing: 12) {
+            // 上2段（機能・単位）と下4段（テンキー）を別々に切り替えるか
+            // 入力行の色はあくまで入力行のもの。
+            // 一般的なスイッチなので標準のアクセント色を使う
+            Toggle(isOn: $viewModel.splitsKeyboardRows) {
+                Text("keyboard.splitRows")
+                    .font(.subheadline)
+            }
+            .padding(.bottom, 8)
+
+            // 説明文をボタンの中に入れたので、横並びだと文章が潰れる。
+            // 「アプリを評価する」と同じく、常に縦に積む
+            VStack(alignment: .leading, spacing: 12) {
+                exportButtonBlock
+                importButtonBlock
+                resetButtonBlock
             }
             .padding(.top, -8)
+            }
             .padding(.leading, sectionLeadingPadding)
         }
     }
@@ -495,7 +488,7 @@ struct SettingView: View {
     }
 
     private var exportButtonBlock: some View {
-        VStack(alignment: usesVerticalSectionLayout ? .leading : .center, spacing: 4) {
+        VStack(alignment: .leading, spacing: 4) {
             Button {
                 isPreparingExport = true
                 Task {
@@ -510,53 +503,59 @@ struct SettingView: View {
                     }
                 }
             } label: {
-                Label("keyboard.export", systemImage: "square.and.arrow.up")
-                    .font(.footnote)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 8)
-                    .frame(maxWidth: usesVerticalSectionLayout ? .infinity : nil)
-                    .frame(height: actionButtonHeight)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .strokeBorder(.blue, lineWidth: 1)
-                    )
+                // 説明文はボタンの中に入れる（「アプリを評価する」と同じ作り）
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("keyboard.export", systemImage: "square.and.arrow.up")
+                        .font(.footnote)
+                        .lineLimit(2)
+                    Text("keyboard.exportHelp")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(.blue, lineWidth: 1)
+                )
             }
-            Text("keyboard.exportHelp")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private var importButtonBlock: some View {
-        VStack(alignment: usesVerticalSectionLayout ? .leading : .center, spacing: 4) {
+        VStack(alignment: .leading, spacing: 4) {
             Button {
                 isImporting = true
             } label: {
-                Label("keyboard.import", systemImage: "square.and.arrow.down")
-                    .font(.footnote)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 8)
-                    .frame(maxWidth: usesVerticalSectionLayout ? .infinity : nil)
-                    .frame(height: actionButtonHeight)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .strokeBorder(.green, lineWidth: 1)
-                    )
+                // 説明文はボタンの中に入れる（「アプリを評価する」と同じ作り）
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("keyboard.import", systemImage: "square.and.arrow.down")
+                        .font(.footnote)
+                        .lineLimit(2)
+                    Text("keyboard.importHelp")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(.green, lineWidth: 1)
+                )
             }
-            Text("keyboard.importHelp")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private var resetButtonBlock: some View {
-        VStack(alignment: usesVerticalSectionLayout ? .leading : .center, spacing: 4) {
+        VStack(alignment: .leading, spacing: 4) {
             Button {
                 // 初期化処理の成否に応じて、完了可否をトースト表示する
                 let isSuccess = keyboardViewModel.initKeyboardJson(isToast: false)
@@ -568,23 +567,26 @@ struct SettingView: View {
                 // 初期化はインパクトが大きいので、誤タップ防止策の検討材料にする
                 AppAnalytics.logKeyboardReset()
             } label: {
-                Text("keyboard.reset")
-                    .font(.subheadline)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 8)
-                    .frame(maxWidth: usesVerticalSectionLayout ? .infinity : nil)
-                    .frame(height: smallButtonHeight)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .strokeBorder(.red, lineWidth: 1)
-                    )
+                // 説明文はボタンの中に入れる（「アプリを評価する」と同じ作り）
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("keyboard.reset", systemImage: "arrow.counterclockwise")
+                        .font(.footnote)
+                        .lineLimit(2)
+                    Text("keyboard.resetHelp")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(.red, lineWidth: 1)
+                )
             }
-            Text("keyboard.resetHelp")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
