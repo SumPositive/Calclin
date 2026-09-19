@@ -453,24 +453,12 @@ struct SettingView: View {
             iconName: "keyboard",
             tint: Color(.systemBlue)
         ) {
-            VStack(alignment: .leading, spacing: 12) {
-            // 上2段（機能・単位）と下4段（テンキー）を別々に切り替えるか
-            // 入力行の色はあくまで入力行のもの。
-            // 一般的なスイッチなので標準のアクセント色を使う
-            Toggle(isOn: $viewModel.splitsKeyboardRows) {
-                Text("keyboard.splitRows")
-                    .font(.subheadline)
-            }
-            .padding(.bottom, 8)
-
             // 説明文をボタンの中に入れたので、横並びだと文章が潰れる。
             // 「アプリを評価する」と同じく、常に縦に積む
             VStack(alignment: .leading, spacing: 12) {
                 exportButtonBlock
                 importButtonBlock
                 resetButtonBlock
-            }
-            .padding(.top, -8)
             }
             .padding(.leading, sectionLeadingPadding)
         }

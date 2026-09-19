@@ -139,6 +139,31 @@ struct CalcView: View {
     /// - 入力行のフォントで単位文字列を実測し、指で押しやすいよう左右に少し余裕を持たせる
     /// - 入力行は縮小・スクロールで実フォントが変わるため、最小サイズ側（標準サイズ）で測る。
     ///   実際の描画が拡大されている場合はタップ領域が単位より狭くなるだけで、誤爆はしない
+    /// 換算リストの吹き出しを取り付ける位置（タップ領域に対する割合）。
+    /// - y: 入力行の文字は FormulaView 側で descenderCompensation ぶん
+    ///   下げて描かれているので、その割合ぶん下げて単位の高さに合わせる
+    /// - x: 0.5 だとタップ領域の中心＝単位のやや右から出るので、
+    ///   単位の左寄りに取り付けて吹き出しを左へ寄せる
+    private var unitPopoverAnchor: UnitPoint {
+        UnitPoint(x: UNIT_POPOVER_ANCHOR_X,
+                  y: 0.5 + inputTextDescenderDrop / unitTapHeight
+                         + UNIT_POPOVER_ANCHOR_Y_ADJUST)
+    }
+
+    /// 入力行の文字が中央から下げて描かれている量。
+    /// FormulaView の descenderCompensation と同じ式にする
+    /// （数字はディセンダを使わないぶん、下げないと視覚的に上寄りに見えるため）
+    private var inputTextDescenderDrop: CGFloat {
+        33.6 * inputRowFontScale * 0.10
+    }
+
+    /// 単位のタップ領域の高さ。
+    /// 吹き出しはこの領域の中心から出るので、単位の文字の高さに合わせる。
+    /// Apple 推奨の 44pt に近い範囲で、入力行からはみ出さない大きさにする
+    private var unitTapHeight: CGFloat {
+        min(max(33.6 * inputRowFontScale, 32), inputLineHeight)
+    }
+
     private func unitTapWidth(_ formula: String) -> CGFloat {
         // 書体ごとの実フォントではなく同サイズのシステム太字で概算する。
         // タップ領域の目安が分かれば十分で、書体差による誤差は下の下限・上限で吸収される
@@ -356,7 +381,14 @@ struct CalcView: View {
                         if let unit = viewModel.displayUnit {
                             Color.clear
                                 .frame(width: unitTapWidth(unit.formula))
-                                .frame(maxHeight: .infinity)
+                                // 高さは単位の文字くらいに留める。
+                                // maxHeight: .infinity にすると入力行の高さいっぱいの
+                                // 帯になり、吹き出しがその中心（＝単位より上）から出る
+                                .frame(height: unitTapHeight)
+                                // 入力行の文字は FormulaView 側で
+                                // descenderCompensation ぶん下げて描かれているので、
+                                // タップ領域も同じだけ下げて単位に重ねる
+                                .offset(y: inputTextDescenderDrop)
                                 .contentShape(Rectangle())
                                 .onTapGesture {
                                     // 換算は開いた瞬間に一度だけ行い、結果を保持して再計算を避ける
@@ -367,8 +399,14 @@ struct CalcView: View {
                                     AppAnalytics.logUnitConvertPickerOpened(calcMode: viewModel.calcMode)
                                     isUnitConvertPickerPresented = true
                                 }
+                                // 単位の左側に出す（矢印は吹き出しの右端＝.trailing に付く）。
+                                // 上に出すと入力行から画面上端までしか高さが取れず、
+                                // 候補が少ししか見えない。横に出せば画面の高さいっぱいに伸ばせる
+                                // 矢印の位置は attachmentAnchor で決まる
+                                // （.offset は見た目だけを動かし、取り付け枠は動かない）
                                 .popover(isPresented: $isUnitConvertPickerPresented,
-                                         arrowEdge: .bottom) {
+                                         attachmentAnchor: .point(unitPopoverAnchor),
+                                         arrowEdge: .trailing) {
                                     UnitConvertPickPopover(
                                         candidates: unitConvertCandidates
                                     ) { toDef in
@@ -869,6 +907,11 @@ struct UnitConvertPickPopover: View {
         candidates.first(where: { $0.isCurrent })?.id
     }
 
+    /// 候補一覧そのものの高さ（全行ぶん）。
+    /// 行の高さは文字サイズ設定で 30pt〜76pt まで変わるため定数では見積もれない。
+    /// 実際に並べた中身を測って、その高さを吹き出しに要求する
+    @State private var contentHeight: CGFloat = 0
+
     var body: some View {
         VStack(spacing: 2) {
             Text("calc.unit.convertList")
@@ -895,6 +938,14 @@ struct UnitConvertPickPopover: View {
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
+                    // 全行ぶんの高さを測って親へ伝える（スクロールの中身なので
+                    // ここが「本当に必要な高さ」になる）
+                    .background {
+                        GeometryReader { geo in
+                            Color.clear.preference(key: UnitListHeightKey.self,
+                                                   value: geo.size.height)
+                        }
+                    }
                 }
                 .scrollIndicators(.hidden)
                 // 換算元が中央に来るよう、開いた直後にスクロールする
@@ -906,20 +957,30 @@ struct UnitConvertPickPopover: View {
                 }
             }
         }
-        // 候補が多いので、出せる範囲いっぱいまで広げる
-        .frame(minWidth: 240, idealHeight: maxPopoverHeight, maxHeight: maxPopoverHeight)
+        .onPreferenceChange(UnitListHeightKey.self) { height in
+            contentHeight = height
+        }
+        // 全行が入る高さを要求する。入りきらないぶんは ScrollView が引き受ける
+        .frame(minWidth: 240, idealHeight: popoverHeight, maxHeight: popoverHeight)
         .background(Color(.systemBackground))
     }
 
-    /// ポップオーバーの高さ
-    /// - 候補の数ぶんだけ必要な高さを見積もり、画面の 3/4 を上限にする
-    /// - idealHeight に渡すことで、吹き出しが縦に伸びて多くの行が見えるようにする
-    private var maxPopoverHeight: CGFloat {
-        let screenHeight = UIScreen.main.bounds.height
-        // 1行あたり約40pt ＋ 見出しと余白ぶん
-        let needed = CGFloat(candidates.count) * 40 + 48
-        return min(max(240, needed), screenHeight * 0.75)
+    /// 吹き出しの高さ
+    /// - 全行が見えるだけの高さを要求し、画面に入りきらないときだけ頭打ちにする
+    ///   （そのときは中身の ScrollView でスクロールできる）
+    /// - 単位の横（arrowEdge: .trailing）に出しているので、上下は画面いっぱいまで
+    ///   使える。0.9 はセーフエリアと吹き出しの余白ぶんの控え
+    private var popoverHeight: CGFloat {
+        let limit = UIScreen.main.bounds.height * 0.9
+        // 測る前（初回レイアウト）は candidates 数からの概算でつなぐ
+        let needed = contentHeight > 0
+            ? contentHeight + headerHeight
+            : CGFloat(candidates.count) * 37 + headerHeight
+        return min(needed, limit)
     }
+
+    /// 見出しと VStack の余白ぶん（実測 21.7pt ＋ padding）
+    private var headerHeight: CGFloat { 34 }
 
     /// 1行ぶんの表示。入力行と同じく右寄せで、換算後の数値＋単位を並べる
     private func row(_ candidate: CalcViewModel.UnitConvertCandidate) -> some View {
@@ -946,6 +1007,15 @@ struct UnitConvertPickPopover: View {
                       ? Color.accentColor.opacity(0.12)
                       : Color(.secondarySystemBackground))
         )
+    }
+}
+
+/// 換算リストの中身（全行ぶん）の高さを親へ伝える
+private struct UnitListHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 

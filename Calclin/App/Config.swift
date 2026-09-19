@@ -52,9 +52,6 @@ let COLOR_TITLE: Color = .secondary         // App Name
 //
 // View からは `setting.accentTheme.color` を直接読むこと。
 // グローバル値の更新は SwiftUI の再描画契機にならず、色を変えても描き直されない。
-// ここは View を持たない CalcViewModel（入力行の単位下線）専用の受け皿。
-// 入力行はキー入力のたびに作り直されるので、こちらは更新が間に合う
-@MainActor var calcAccentColor: Color = .accentColor
 let COLOR_CALC_INACTIVE: Color = .secondary // Calc非活性枠
 let COLOR_NUMBER: Color = .primary          // 数値
 let COLOR_ANSWER: Color = COLOR_NUMBER      // 答え
@@ -62,7 +59,9 @@ let COLOR_OPERATOR: Color = .cyan           // 演算子
 let COLOR_OPERATOR_WAIT: Color = .gray      // 待機演算子　右端の[.]や[)]
 let COLOR_UNIT: Color = .secondary          // 単位
 // 単位の下線色（タップで換算リストを出せる印）
-@MainActor var COLOR_UNIT_UNDERLINE: Color { calcAccentColor }
+// 「タップできる」という機能の印なので、入力行の色（好みで変えられる装飾）とは
+// 切り離し、常に標準のアクセント色にする
+let COLOR_UNIT_UNDERLINE: Color = .accentColor
 
 // 答えに添える単位の大きさ（答えの文字サイズに対する比率）
 // - 単位は補助情報なので数値より小さくする
@@ -80,6 +79,13 @@ let UNIT_BASELINE_RATIO: CGFloat = 0.09
 /// 単位の高さ合わせで基準にする字。
 /// 漢字は全角の字面いっぱいに描かれるので、.center 揃えで数字とちょうど合う
 let UNIT_BASELINE_REFERENCE = "坪"
+
+// 単位タップで出す換算リストの、吹き出しの取り付け位置（タップ領域に対する割合）。
+// 見た目を微調整するための値なので、実機で見ながらここだけ動かせるようにしている
+// - X: 0.5 が単位の中心。小さくするほど吹き出しが左へ寄る
+// - Y: 0 が補正なし（＝単位の高さ）。大きくするほど下へ下がる
+let UNIT_POPOVER_ANCHOR_X: CGFloat = 0.2
+let UNIT_POPOVER_ANCHOR_Y_ADJUST: CGFloat = 0.25
 
 /// 単位を数値と同じ高さに見せるための補正量（`HStack(alignment: .center)` 前提）。
 ///

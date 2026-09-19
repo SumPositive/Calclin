@@ -327,7 +327,9 @@ struct CustomCell: View {
                     // ポップオーバーは単位そのものに付ける。
                     // List 側に付けると上下反転（scaleEffect(y: -1)）の影響で
                     // 画面の外に吹き出しが出てしまう
-                    .popover(isPresented: $isUnitConvertPresented, arrowEdge: .bottom) {
+                    // 単位の左側に出す（矢印は吹き出しの右端＝.trailing に付く）。
+                    // 上に出すと高さが取れず候補が少ししか見えない
+                    .popover(isPresented: $isUnitConvertPresented, arrowEdge: .trailing) {
                         // 候補はここで作る。@State に持たせると
                         // 提示と同じタイミングの更新が間に合わず空になることがある
                         UnitConvertPickPopover(
@@ -351,9 +353,9 @@ struct CustomCell: View {
         guard isLatest, let kt = row.unitFormula, !kt.isEmpty else { return nil }
         var unitKt = AttributedString(kt)
         unitKt.foregroundColor = COLOR_UNIT
-        // タップで換算リストを出せる印
-        // 設定変更で描き直すため、グローバルではなく観測している setting から取る
-        unitKt.underlineStyle = Text.LineStyle(pattern: .solid, color: setting.accentTheme.color)
+        // タップで換算リストを出せる印。
+        // 機能の印なので入力行の色には追従させず、常に標準のアクセント色にする
+        unitKt.underlineStyle = Text.LineStyle(pattern: .solid, color: COLOR_UNIT_UNDERLINE)
         let unitSize = latestAnswerFontSize * UNIT_FONT_RATIO
         unitKt.font = setting.numberFont.font(size: unitSize, weight: .bold)
         // 電卓のロール行と同じ .center 揃えなので、補正も同じ（字ごとの残差だけ）
@@ -770,8 +772,9 @@ struct RollCell: View {
     private func tappableUnitText(_ formula: String) -> AttributedString {
         var attr = AttributedString(formula)
         attr.foregroundColor = COLOR_UNIT
-        // 設定変更で描き直すため、グローバルではなく観測している setting から取る
-        attr.underlineStyle = Text.LineStyle(pattern: .solid, color: setting.accentTheme.color)
+        // タップで換算リストを出せる印。
+        // 機能の印なので入力行の色には追従させず、常に標準のアクセント色にする
+        attr.underlineStyle = Text.LineStyle(pattern: .solid, color: COLOR_UNIT_UNDERLINE)
         let unitSize = latestAnswerFontSize * UNIT_FONT_RATIO
         attr.font = setting.numberFont.font(size: unitSize, weight: .bold)
         // 単位は字ごとにインクの高さが違う（㎡ は右肩の ² のぶん高い）ので、
@@ -845,7 +848,8 @@ struct RollCell: View {
                         set: { if !$0 { isUnitConvertPresented = false } }
                     ),
                              attachmentAnchor: .point(unitAnchor(line)),
-                             arrowEdge: .bottom) {
+                             // 単位の左側に出す（矢印は吹き出しの右端＝.trailing）
+                             arrowEdge: .trailing) {
                         if let viewModel, let unitCode = line.unitCode {
                             UnitConvertPickPopover(
                                 candidates: viewModel.rollUnitCandidates(numStr: line.rawBase,

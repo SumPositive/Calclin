@@ -996,22 +996,6 @@
         }
       }
     },
-    "keyboard.splitRows" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Switch the top 2 rows and bottom 4 rows separately"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上2段と下4段を分ける"
-          }
-        }
-      }
-    },
     "keyboard.layout" : {
       "localizations" : {
         "en" : {
@@ -1248,13 +1232,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Swipe to switch keyboards\nLong-press to edit keys"
+            "value" : "Swipe or tap a dot below to switch keyboards\nLong-press to edit keys"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "左右にスワイプすればキーボードが切り替わります\nキーを長押しすればキー定義を変更できます"
+            "value" : "左右にスワイプするか下の丸を押せばキーボードが切り替わります\nキーを長押しすればキー定義を変更できます"
           }
         }
       }

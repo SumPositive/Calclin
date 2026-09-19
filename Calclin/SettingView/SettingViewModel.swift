@@ -34,7 +34,6 @@ final class SettingViewModel: ObservableObject {
         static let numberFontScale = "numberFontScale"
         static let autoScroll = "autoScroll"
         static let accentTheme = "accentTheme"
-        static let splitsKeyboardRows = "splitsKeyboardRows"
         static let keyShapeMode = "keyShapeMode"
         static let keyShapeAmount = "keyShapeAmount"
         static let keyBrightnessAmount = "keyBrightnessAmount"
@@ -594,8 +593,6 @@ final class SettingViewModel: ObservableObject {
     @Published var accentTheme: AccentTheme = .standard {
         didSet {
             save(accentTheme.rawValue, forKey: StorageKey.accentTheme)
-            // View から遠い箇所（CalcViewModel など）も同じ色を使うので、共有値を更新する
-            calcAccentColor = accentTheme.color
         }
     }
 
@@ -612,15 +609,6 @@ final class SettingViewModel: ObservableObject {
             }
         }
     }
-    /// キーボードの上2段と下4段を別々に切り替えるか。
-    /// ON にすると、機能・単位キー（上2段）とテンキー（下4段）を
-    /// それぞれ独立してスワイプでページ送りできる
-    @Published var splitsKeyboardRows: Bool = true {
-        didSet {
-            save(splitsKeyboardRows, forKey: StorageKey.splitsKeyboardRows)
-        }
-    }
-
     @Published var keyShapeMode: KeyShapeMode = .standard {
         didSet {
             save(keyShapeMode.rawValue, forKey: StorageKey.keyShapeMode)
@@ -674,12 +662,6 @@ final class SettingViewModel: ObservableObject {
         groupSeparator = storedGroupSeparator(default: groupSeparator)
         autoScroll = storedEnum(forKey: StorageKey.autoScroll, default: autoScroll)
         accentTheme = storedEnum(forKey: StorageKey.accentTheme, default: accentTheme)
-        // 起動直後の描画に間に合わせるため、共有値をここでも更新しておく
-        calcAccentColor = accentTheme.color
-        // 既定は ON。保存が無い初回は true のままにする
-        if defaults.object(forKey: StorageKey.splitsKeyboardRows) != nil {
-            splitsKeyboardRows = defaults.bool(forKey: StorageKey.splitsKeyboardRows)
-        }
         keyShapeMode = storedEnum(forKey: StorageKey.keyShapeMode, default: keyShapeMode)
         numberFont = storedEnum(forKey: StorageKey.numberFont, default: numberFont)
 
