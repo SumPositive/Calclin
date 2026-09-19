@@ -852,6 +852,22 @@
         }
       }
     },
+    "settings.keySettings" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Key settings"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キー設定"
+          }
+        }
+      }
+    },
     "settings.keyShape" : {
       "localizations" : {
         "en" : {
@@ -1040,6 +1056,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "キーが空欄・未定義に置き換わります"
+          }
+        }
+      }
+    },
+    "keyboard.reset.confirm.cancel" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "しない"
+          }
+        }
+      }
+    },
+    "keyboard.reset.confirm.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your custom key layout and definitions will be lost. This cannot be undone."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自分で変更したキー定義と配置は失われます。元に戻せません"
+          }
+        }
+      }
+    },
+    "keyboard.reset.confirm.ok" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "する"
+          }
+        }
+      }
+    },
+    "keyboard.reset.confirm.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset the keyboard layout?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キーボード配置を初期化しますか？"
           }
         }
       }

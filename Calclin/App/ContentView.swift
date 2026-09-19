@@ -296,6 +296,9 @@ struct ContentView: View {
     }
     
     // @State 変化あればViewが更新される
+    /// キー設定ポップアップからのキー配置書き出しが準備中か
+    /// （JSON を作る間だけプログレスを出す）
+    @State private var isPreparingKeyboardExport = false
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
     // フォアグラウンド復帰時にハンドル案内を出すため、Scene状態を監視する
@@ -400,11 +403,23 @@ struct ContentView: View {
         min(max(height, minimumKeyboardHeight), APP_KB_HEIGHT_MAX)
     }
 
-    private func keyStylePopupY(screenHeight: CGFloat) -> CGFloat {
-        // キーボードを見ながら調整できるよう、ポップアップはキーボード上のCalcView側へ寄せる
-        let keyboardTop = screenHeight - normalizedKeyboardHeight
-        let upperY = max(190, keyboardTop - 120)
-        return min(max(keyboardTop / 2 + 42, 190), upperY)
+    /// キー設定ポップアップの上端の位置（セーフエリア上端からの距離）。
+    /// ロール上部のヘッダ（CalcRollHeaderView）のすぐ下に置く。
+    /// 固定値なので、折りたたみを開け閉めしても位置が動かない
+    /// ＃CalcRollHeaderView の HEADER_HEIGHT と揃えること
+    /// ＃ロールが1面かつ初心者モードでないときはヘッダ自体が出ないが、
+    ///   その場合もロール上端の余白として同じ位置で収まりが良いので揃えている
+    private var keyStylePopupTopInset: CGFloat {
+        // 初心者モードはヘッダに説明文が付くぶん背が高い（+42）
+        setting.playMode == .beginner ? 44 + 42 : 44
+    }
+
+    /// キー設定ポップアップの高さの上限。
+    /// 上端は固定なので、そこから下へ伸ばせるぶんだけを上限にする。
+    /// 入り切らないぶんは中身の ScrollView でスクロールする
+    private func keyStylePopupMaxHeight(screenHeight: CGFloat) -> CGFloat {
+        // 下端は画面の底から少し浮かせる（フッタのボタンにかからないように）
+        max(200, screenHeight - keyStylePopupTopInset - 40)
     }
 
     /// 単位キーで「換算せずに単位だけ差し替えた」直後に出す操作ヒント
@@ -651,11 +666,26 @@ struct ContentView: View {
                                 setting.isKeyStylePopupPresented = false
                             }
 
-                        KeyboardStylePopupView {
-                            setting.isKeyStylePopupPresented = false
-                        }
+                        KeyboardStylePopupView(
+                            onClose: { setting.isKeyStylePopupPresented = false },
+                            // 全体の上限を渡す（見出しぶんはポップアップ側で実測して引く）
+                            maxPopupHeight: keyStylePopupMaxHeight(
+                                screenHeight: geo.size.height),
+                            layoutActions: {
+                                AnyView(
+                                    KeyboardLayoutActionsView(
+                                        isPreparingExport: $isPreparingKeyboardExport)
+                                        .environmentObject(keyboardViewModel)
+                                )
+                            }
+                        )
                         .environmentObject(setting)
                         .frame(width: popupWidth)
+                        // 高さは指定しない。中身（ScrollView）が自分で
+                        // min(実測, 上限) に縮むので、閉じれば小さくなり、
+                        // 開いて入り切らなければ上限で止まってスクロールする。
+                        // ＃ここで maxHeight を与えると、閉じていても
+                        //   その高さまで広がって下半分が空白になる
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(COLOR_BACK_SETTING)
@@ -665,11 +695,29 @@ struct ContentView: View {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .stroke(Color.gray.opacity(0.3))
                         )
-                        .position(x: geo.size.width / 2,
-                                  y: keyStylePopupY(screenHeight: geo.size.height))
+                        // 上端を固定し、開いたら下へ伸ばす。
+                        // 位置が動かないので、折りたたみを開け閉めしても
+                        // 見出しと閉じるボタンが同じ場所に留まる
+                        .frame(maxWidth: .infinity, maxHeight: .infinity,
+                               alignment: .top)
+                        .padding(.top, keyStylePopupTopInset)
                     }
                 }
                 .zIndex(2) // キーボードの上に出す
+            }
+
+            //(ZStack 2.5) キー配置の書き出し準備中
+            if isPreparingKeyboardExport {
+                Color.black.opacity(0.25)
+                    .ignoresSafeArea()
+                    .zIndex(2)
+                ProgressView()
+                    .progressViewStyle(.circular)
+                    .scaleEffect(1.4)
+                    .padding(24)
+                    .background(.thinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .zIndex(2)
             }
 
             //(ZStack 3) ToastView表示

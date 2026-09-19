@@ -68,6 +68,7 @@
 				CalcView/FormulaView.swift,
 				CalcView/HistoryView.swift,
 				KeyboardView/initKeyboard.json,
+				KeyboardView/KeyboardLayoutActionsView.swift,
 				KeyboardView/KeyboardView.swift,
 				KeyboardView/KeyboardViewModel.swift,
 				KeyboardView/KeyDefinition.json,

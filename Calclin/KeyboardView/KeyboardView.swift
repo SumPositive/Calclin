@@ -208,15 +208,37 @@ struct CubeRotationModifier: ViewModifier {
     }
 }
 
-/// キーボードを見ながらキー形状を調整するポップアップ
+/// キーボードを見ながらキー設定を調整するポップアップ。
+/// キーの形状に加えて、キー配置の書き出し・読み込み・初期化もここから行う
+/// （キーボードを見ながら操作したい設定をひとまとめにしている）
 struct KeyboardStylePopupView: View {
     @EnvironmentObject var setting: SettingViewModel
     let onClose: () -> Void
+    /// ポップアップ全体に使ってよい高さの上限。
+    /// 見出しの高さは実測して差し引くので、ここには全体の値を渡す
+    /// （見出しは文字サイズで 52pt〜106pt まで変わるため、決め打ちにできない）
+    var maxPopupHeight: CGFloat = .infinity
+    /// キー配置の操作（書き出し・読み込み・初期化）。
+    /// シートやファイル選択の提示元は呼び出し側に任せる
+    @ViewBuilder var layoutActions: () -> AnyView
+
+    /// キー配置の折りたたみ。
+    /// 既定は閉じたまま。開くとポップアップが縦に伸びてキーボードが隠れるので、
+    /// 必要なときだけ開いてもらう
+    @State private var isLayoutExpanded = false
+
+    /// 見出しより下の中身の高さ（実測）。
+    /// ScrollView をこの高さに縮めて、閉じたときに空白が残らないようにする
+    @State private var contentHeight: CGFloat = 0
+
+    /// 見出し（タイトルと閉じるボタン）の高さ（実測）
+    @State private var headerHeight: CGFloat = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // 見出しと閉じるボタンはスクロールさせない（常に押せるようにする）
             HStack {
-                Label("settings.keyShape", systemImage: "keyboard")
+                Label("settings.keySettings", systemImage: "keyboard")
                     .font(.headline)
                 Spacer()
                 Button(action: onClose) {
@@ -226,6 +248,38 @@ struct KeyboardStylePopupView: View {
                 }
                 .buttonStyle(.plain)
             }
+            .padding(.horizontal, 14)
+            .padding(.top, 14)
+            .background {
+                GeometryReader { geo in
+                    Color.clear.preference(key: KeyStyleHeaderHeightKey.self,
+                                           value: geo.size.height)
+                }
+            }
+
+            scrollableContent
+        }
+        .onPreferenceChange(KeyStyleHeaderHeightKey.self) { height in
+            headerHeight = height
+        }
+        // 折りたたみの開閉でキーボードの見える範囲が変わるので、動きを付けて分かるようにする
+        .animation(.easeOut(duration: 0.2), value: isLayoutExpanded)
+    }
+
+    /// 中身に使ってよい高さ（全体の上限から、実測した見出しぶんを引く）
+    private var maxContentHeight: CGFloat {
+        guard maxPopupHeight.isFinite else { return .infinity }
+        // VStack の spacing(12) ぶんも引く
+        return max(80, maxPopupHeight - headerHeight - 12)
+    }
+
+    /// 見出しより下。背が高くなったときはここだけスクロールさせる。
+    /// ＃ScrollView は与えられた高さを目一杯使うので、そのまま置くと
+    ///   折りたたみを閉じても下半分が空白のまま残る。
+    ///   中身の高さを測って ScrollView 自身をその高さに縮める
+    private var scrollableContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
 
             Picker("settings.keyShape", selection: $setting.keyShapeMode) {
                 ForEach(SettingViewModel.KeyShapeMode.allCases) { mode in
@@ -270,8 +324,58 @@ struct KeyboardStylePopupView: View {
                     )
                 }
             }
+
+            Divider()
+
+            // キー配置（書き出し・読み込み・初期化）。
+            // 開くと縦に伸びてキーボードが隠れるので、既定は閉じておく
+            DisclosureGroup(isExpanded: $isLayoutExpanded) {
+                layoutActions()
+                    .padding(.top, 8)
+            } label: {
+                Label("keyboard.layout", systemImage: "square.grid.3x3")
+                    .font(.subheadline)
+            }
+            .tint(.secondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.bottom, 14)
+            .background {
+                GeometryReader { geo in
+                    Color.clear.preference(key: KeyStyleContentHeightKey.self,
+                                           value: geo.size.height)
+                }
+            }
         }
-        .padding(14)
+        // 中身ぶんの高さに縮める（入り切らないときは親の maxHeight で頭打ちになり、
+        // そこからは実際にスクロールする）
+        // 中身ぶんに縮める。上限を超えるときだけ頭打ちにしてスクロールさせる
+        .frame(height: contentHeight > 0
+               ? min(contentHeight, maxContentHeight)
+               : nil)
+        .scrollBounceBehavior(.basedOnSize)
+        .scrollIndicators(.automatic)
+        .onPreferenceChange(KeyStyleContentHeightKey.self) { height in
+            contentHeight = height
+        }
+    }
+}
+
+/// キー設定ポップアップの見出しの高さを伝える
+private struct KeyStyleHeaderHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
+/// キー設定ポップアップの中身の高さを伝える
+private struct KeyStyleContentHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 
@@ -440,7 +544,7 @@ struct KeyboardFooterView: View {
                         .foregroundStyle(.secondary)
 
                         if setting.playMode == .beginner {
-                            Text("settings.keyShape")
+                            Text("settings.keySettings")
                                 .font(.caption)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)

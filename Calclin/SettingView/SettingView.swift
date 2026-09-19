@@ -8,34 +8,16 @@
 import SwiftUI
 import UIKit
 import SafariServices
-import UniformTypeIdentifiers
 
 let SettingView_HEIGHT: CGFloat = 730.0 // シート表示時の高さ指定
 
-/// UIActivityViewController を SwiftUI から使うラッパー
-private struct ActivityView: UIViewControllerRepresentable {
-    let data: Data
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        let dateStr = DateFormatter.yyyyMMdd.string(from: Date())
-        let provider = NSItemProvider(item: data as NSData, typeIdentifier: UTType.json.identifier)
-        // suggestedName がファイル保存ダイアログの初期ファイル名になる
-        provider.suggestedName = "CalclinKeyboard_\(dateStr)"
-        return UIActivityViewController(activityItems: [provider], applicationActivities: nil)
-    }
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
-
 struct SettingView: View {
     @EnvironmentObject var viewModel: SettingViewModel
-    @EnvironmentObject var keyboardViewModel: KeyboardViewModel
     @StateObject private var manager = Manager.shared  // シングルトンのToast状態を監視する
     @Environment(\.dismiss) private var dismiss  // シートを閉じるための環境値
     @State private var showSafari = false  // Safariシート表示有無
     @State private var safariURL: URL?  // 開く予定のURLを保持
     @State private var showTipSheet = false    // 投げ銭シートの有無
-    @State private var isPreparingExport = false  // エクスポート準備中（プログレス表示）
-    @State private var exportShareData: Data?     // 共有シートに渡す JSON データ
-    @State private var isImporting = false        // キーボードインポートシート
     @State private var expandedDropdown: SettingDropdownKind? = nil  // 独自プルダウンの開閉状態
 
     // 現在の Dynamic Type サイズ（特大時に左右余白を最小化して内容欠けを防ぐ）
@@ -119,7 +101,6 @@ struct SettingView: View {
                             modeSection
                             integerSection
                             decimalSection
-                            keyboardSection
                             infoSection
                             supportSection
                             footerSection
@@ -150,19 +131,6 @@ struct SettingView: View {
                     }
                 }
             }
-            // エクスポート準備中のプログレス表示
-            if isPreparingExport {
-                Color.black.opacity(0.25)
-                    .ignoresSafeArea()
-                    .zIndex(9)
-                ProgressView()
-                    .progressViewStyle(.circular)
-                    .scaleEffect(1.4)
-                    .padding(24)
-                    .background(.thinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .zIndex(10)
-            }
             // 設定シート内でもToastを最前面に重ねて、背面に隠れないようにする
             if manager.showToast {
                 VStack {
@@ -179,31 +147,6 @@ struct SettingView: View {
             // URLが設定されている時だけSafariを開く
             if let safariURL {
                 SafariView(url: safariURL)
-            }
-        }
-        .sheet(isPresented: Binding(
-            get: { exportShareData != nil },
-            set: { if !$0 { exportShareData = nil } }
-        )) {
-            if let data = exportShareData {
-                ActivityView(data: data)
-                    .presentationDetents([.medium, .large])
-            }
-        }
-        .fileImporter(
-            isPresented: $isImporting,
-            allowedContentTypes: [.json]
-        ) { result in
-            switch result {
-            case .success(let url):
-                let ok = keyboardViewModel.importKeyboardJson(from: url)
-                Manager.shared.toast(
-                    ok ? String(localized: "keyboard.importSuccess") : String(localized: "keyboard.importFailure"),
-                    wait: 2.0
-                )
-                if ok { AppAnalytics.logKeyboardRestored() }
-            case .failure:
-                Manager.shared.toast(String(localized: "keyboard.importFailure"), wait: 2.0)
             }
         }
     }
@@ -446,24 +389,6 @@ struct SettingView: View {
         .zIndex(expandedDropdown == .roundType ? 50 : 0)
     }
 
-    /// キーボード設定の保存・読込カード
-    private var keyboardSection: some View {
-        SettingSectionCard(
-            title: "keyboard.layout",
-            iconName: "keyboard",
-            tint: Color(.systemBlue)
-        ) {
-            // 説明文をボタンの中に入れたので、横並びだと文章が潰れる。
-            // 「アプリを評価する」と同じく、常に縦に積む
-            VStack(alignment: .leading, spacing: 12) {
-                exportButtonBlock
-                importButtonBlock
-                resetButtonBlock
-            }
-            .padding(.leading, sectionLeadingPadding)
-        }
-    }
-
     /// 開発者応援ボタンをまとめるカード
     private var supportSection: some View {
         SettingSectionCard(
@@ -472,109 +397,6 @@ struct SettingView: View {
             tint: .pink
         ) {
             supportTipButton
-        }
-    }
-
-    private var exportButtonBlock: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Button {
-                isPreparingExport = true
-                Task {
-                    // makeExportData は MainActor 上で実行、エンコード後に共有
-                    let data = keyboardViewModel.makeExportData()
-                    isPreparingExport = false
-                    if let data {
-                        exportShareData = data
-                        AppAnalytics.logKeyboardSaved()
-                    } else {
-                        Manager.shared.toast(String(localized: "keyboard.exportFailure"), wait: 2.0)
-                    }
-                }
-            } label: {
-                // 説明文はボタンの中に入れる（「アプリを評価する」と同じ作り）
-                VStack(alignment: .leading, spacing: 4) {
-                    Label("keyboard.export", systemImage: "square.and.arrow.up")
-                        .font(.footnote)
-                        .lineLimit(2)
-                    Text("keyboard.exportHelp")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.vertical, 6)
-                .padding(.horizontal, 8)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .strokeBorder(.blue, lineWidth: 1)
-                )
-            }
-        }
-    }
-
-    private var importButtonBlock: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Button {
-                isImporting = true
-            } label: {
-                // 説明文はボタンの中に入れる（「アプリを評価する」と同じ作り）
-                VStack(alignment: .leading, spacing: 4) {
-                    Label("keyboard.import", systemImage: "square.and.arrow.down")
-                        .font(.footnote)
-                        .lineLimit(2)
-                    Text("keyboard.importHelp")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.vertical, 6)
-                .padding(.horizontal, 8)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .strokeBorder(.green, lineWidth: 1)
-                )
-            }
-        }
-    }
-
-    private var resetButtonBlock: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Button {
-                // 初期化処理の成否に応じて、完了可否をトースト表示する
-                let isSuccess = keyboardViewModel.initKeyboardJson(isToast: false)
-                if isSuccess {
-                    Manager.shared.toast(String(localized: "keyboard.resetSuccess"), wait: 3.0)
-                } else {
-                    Manager.shared.toast(String(localized: "keyboard.resetFailure"), wait: 2.0)
-                }
-                // 初期化はインパクトが大きいので、誤タップ防止策の検討材料にする
-                AppAnalytics.logKeyboardReset()
-            } label: {
-                // 説明文はボタンの中に入れる（「アプリを評価する」と同じ作り）
-                VStack(alignment: .leading, spacing: 4) {
-                    Label("keyboard.reset", systemImage: "arrow.counterclockwise")
-                        .font(.footnote)
-                        .lineLimit(2)
-                    Text("keyboard.resetHelp")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.vertical, 6)
-                .padding(.horizontal, 8)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .strokeBorder(.red, lineWidth: 1)
-                )
-            }
         }
     }
 
@@ -1379,16 +1201,6 @@ struct SafariView: UIViewControllerRepresentable {
         return SFSafariViewController(url: url)
     }
     func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
-}
-
-private extension DateFormatter {
-    /// "yyyyMMdd" フォーマットの共有インスタンス（ファイル名生成用）
-    static let yyyyMMdd: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyyMMdd"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f
-    }()
 }
 
 #Preview {
