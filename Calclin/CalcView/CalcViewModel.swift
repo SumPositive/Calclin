@@ -863,8 +863,23 @@ final class CalcViewModel: ObservableObject {
     }
 
     /// ロールの [=] 行の単位タップで出す換算候補
-    func rollUnitCandidates(numStr: String, unitCode: String) -> [UnitConvertCandidate] {
+    /// - Parameters:
+    ///   - numStr: 表示単位での答え（設定桁数で丸め済み）
+    ///   - unitCode: 表示単位
+    ///   - baseValue: Base単位での答え（丸める前）。
+    ///     `numStr` が 0 に丸まってしまった行では、こちらを起点にする。
+    ///     例：4㎟ は表示単位 ㎡・小数5桁だと 0 に丸まるが、
+    ///     Base単位の値 0.000004 は残っているので、そこから換算し直せる
+    func rollUnitCandidates(numStr: String, unitCode: String,
+                            baseValue: String? = nil) -> [UnitConvertCandidate] {
         guard let def = keyboardViewModel.keyDef(code: unitCode) else { return [] }
+        // 表示値が 0 でも、Base単位に値が残っていればそちらから換算する
+        if isZeroValue(numStr), let baseValue, !isZeroValue(baseValue),
+           let base = def.unitBase,
+           let baseDef = keyboardViewModel.keyDef(code: base) {
+            return unitConvertCandidates(numStr: baseValue, from: baseDef,
+                                         currentCode: def.code)
+        }
         return unitConvertCandidates(numStr: numStr, from: def)
     }
 
@@ -878,19 +893,60 @@ final class CalcViewModel: ObservableObject {
         guard let fromCode = line.unitCode,
               let fromDef = keyboardViewModel.keyDef(code: fromCode),
               fromDef.code != toDef.code,
-              let converted = unitConv(num: line.rawBase, unit: fromDef, toUnit: toDef) else { return }
+              let converted = convertedValue(line: line, from: fromDef, to: toDef) else { return }
 
-        lines[lastIndex].value = AZDecimal(converted).formatted(calcConfig) + toDef.formula
+        // 行に書き込む値は計算結果と同じく設定の小数桁数に従う
+        // （換算リストだけは最大桁で見せる＝そこで細かい値を確認できる）。
+        // ただし設定桁で 0 になってしまうときは、0 でなくなる桁まで伸ばす
+        let display = unitAnswerFormatted(converted)
+        lines[lastIndex].value = display + toDef.formula
         lines[lastIndex].rawBase = converted
         lines[lastIndex].unitCode = toDef.code
+        // accBase（Base単位の値）は換算しても量そのものは変わらないので据え置く。
+        // これを消すと、次にまた単位をタップしたときに起点を失う
         historyRows[rowIndex].rollLines = lines
         // answer と unitFormula は分けて持つ（表示側で色や太さを分けられるように）
-        historyRows[rowIndex].answer = AZDecimal(converted).formatted(calcConfig)
+        historyRows[rowIndex].answer = display
         historyRows[rowIndex].unitFormula = toDef.formula
         // 学習は「入力した単位」を起点にする。
         // 自動換算後の単位（ha→㎡ の ㎡）を起点にすると、次に ha を入れても反映されない
         rememberUnitConversion(from: line.sourceUnitCode ?? fromDef.code, to: toDef.code)
         save()
+    }
+
+    /// 換算後の答えを、行に書き込む形に整形する。
+    /// 計算結果と同じく設定の小数桁数に従うが、それだと 0 になってしまう小さな値は
+    /// 0 でなくなる桁まで伸ばす（`= 0cm²` のような無意味な行を残さない）
+    private func unitAnswerFormatted(_ converted: String) -> String {
+        let normal = AZDecimal(converted).rounded(calcConfig).formatted(calcConfig)
+        guard isZeroValue(normal), !isZeroValue(converted) else { return normal }
+
+        let maxDigits = Int(SETTING_decimalDigits_MAX)
+        var digits = calcConfig.decimalDigits + 1
+        while digits <= maxDigits {
+            var config = calcConfig
+            config.decimalDigits = digits
+            let candidate = AZDecimal(converted).rounded(config).formatted(config)
+            if !isZeroValue(candidate) { return candidate }
+            digits += 1
+        }
+        return normal
+    }
+
+    /// 換算リストで選ばれた単位への換算値を求める。
+    /// 表示値（rawBase）が 0 に丸まっている行では Base単位（accBase）から換算する。
+    /// 換算リストの表示と同じ起点を使わないと、リストでは 0.06 と出ていたのに
+    /// 選ぶと 0 になる、という食い違いが起きる
+    private func convertedValue(line: RollLine,
+                                from fromDef: KeyDefinition,
+                                to toDef: KeyDefinition) -> String? {
+        if isZeroValue(line.rawBase), !isZeroValue(line.accBase),
+           let baseCode = fromDef.unitBase,
+           let baseDef = keyboardViewModel.keyDef(code: baseCode) {
+            return unitConv(num: line.accBase, unit: baseDef, toUnit: toDef,
+                            decimalDigits: Int(SETTING_decimalDigits_MAX))
+        }
+        return unitConv(num: line.rawBase, unit: fromDef, toUnit: toDef)
     }
 
     /// 履歴行の単位タップで出す換算候補
@@ -998,7 +1054,8 @@ final class CalcViewModel: ObservableObject {
         tokens = [numStr]
         if let def = unitDef {
             tokens.append(TOKEN_UNIT_PREFIX + def.code)
-            calcUnitDef = def
+            // Bare単位（π・φ・𝑒）は結果の表示単位にしない
+            calcUnitDef = def.unitBase == UNIT_CODE_BARE ? nil : def
         }
         isCalcNewEntry = false
         isCalcNewEntryAfterUnit = false
@@ -1073,6 +1130,19 @@ final class CalcViewModel: ObservableObject {
     ///   （文字色は COLOR_UNIT のままにして、数値・演算子の色分けを崩さない）
     /// - 履歴行など、タップできない場所では下線を付けない（押せそうで押せない見た目を避ける）
     /// - Parameter isTappable: 換算リストを開ける単位かどうか
+    /// 百分率・歩合の記号（% 割 分 厘）の見た目。
+    /// - 大きさは単位に合わせる（数値より一回り小さく）。同じ大きさだと
+    ///   「割」「分」「厘」は漢字なので数字より目立ってしまう
+    /// - 色は演算子と同じ。数値に掛かる操作であって単位ではないため
+    private func percentAttrString(_ symbol: String) -> AttributedString {
+        var attr = AttributedString(symbol)
+        attr.foregroundColor = COLOR_OPERATOR
+        attr.font = numberFont.font(size: 33.6 * numberFontScale * 0.80, weight: .bold)
+        // 単位と同じだけ持ち上げて、下端の位置を揃える
+        attr.baselineOffset = 33.6 * numberFontScale * 0.06
+        return attr
+    }
+
     private func unitAttrString(_ formula: String, isTappable: Bool) -> AttributedString {
         var attr = AttributedString(formula)
         attr.foregroundColor = COLOR_UNIT
@@ -1117,30 +1187,65 @@ final class CalcViewModel: ObservableObject {
 
     /// 指定した数値・単位を起点に換算候補を作る
     /// - 履歴行の単位タップからも使えるよう、入力行の状態に依存しない形にしている
-    func unitConvertCandidates(numStr: String, from currentDef: KeyDefinition) -> [UnitConvertCandidate] {
+    /// - Parameter currentCode: 一覧で「現在の単位」として印を付けるコード。
+    ///   nil なら `currentDef` 自身。表示が 0 になった行では換算の起点を Base単位へ
+    ///   振り替えるため、印だけは元の表示単位に残したいときに指定する
+    func unitConvertCandidates(numStr: String, from currentDef: KeyDefinition,
+                               currentCode: String? = nil) -> [UnitConvertCandidate] {
         guard let base = currentDef.unitBase,
               base != UNIT_CODE_BARE,
               Double(numStr) != nil else { return [] }
 
+        let markCode = currentCode ?? currentDef.code
         // 同じcodeが複数枚のキーボードに登録されていることがあるので、codeで重複を除く
         var seen = Set<String>()
         let rows: [UnitConvertCandidate] = keyboardViewModel.keyDefs.compactMap { def in
             guard def.unitBase == base,
                   def.hidden != true,
                   seen.insert(def.code).inserted else { return nil }
-            let isCurrent = def.code == currentDef.code
+            let isCurrent = def.code == markCode
             let value: String
-            if isCurrent {
-                // 換算元の行は換算せず、いま表示している数値をそのまま出す
-                value = AZDecimal(numStr).formatted(calcConfig)
+            if def.code == currentDef.code {
+                // 換算の起点そのもの＝換算せず、渡された数値をそのまま出す。
+                // 他の行と桁の扱いを揃える（換算は常に最大桁）
+                value = unitConvertedFormatted(numStr)
             } else {
-                guard let converted = unitConv(num: numStr, unit: currentDef, toUnit: def) else { return nil }
-                value = AZDecimal(converted).formatted(calcConfig)
+                guard let converted = unitConvForPreview(numStr: numStr,
+                                                         from: currentDef,
+                                                         to: def) else { return nil }
+                value = converted
             }
             return UnitConvertCandidate(def: def, previewValue: value, isCurrent: isCurrent)
         }
         // 換算元しか無い＝換算先が無いのでメニューを出す意味がない
         return rows.contains(where: { !$0.isCurrent }) ? rows : []
+    }
+
+    /// 換算リストに出す1件ぶんの数値（表示用に整形済み）。
+    /// 換算は常に最大桁で行う（計算結果の丸め設定には従わない）
+    private func unitConvForPreview(numStr: String,
+                                    from currentDef: KeyDefinition,
+                                    to def: KeyDefinition) -> String? {
+        guard let converted = unitConv(num: numStr, unit: currentDef, toUnit: def,
+                                       decimalDigits: Int(SETTING_decimalDigits_MAX)) else {
+            return nil
+        }
+        return unitConvertedFormatted(converted)
+    }
+
+    /// 単位換算の結果を整形する。
+    /// 換算は「計算結果」ではなく同じ量の言い換えなので、設定の小数桁数では丸めず
+    /// 常に最大桁で見せる（丸めると換算リストの意味が失われ、小さい単位では 0 になる）
+    /// - 末尾の余分な 0 は trailZero: false により付かない
+    private func unitConvertedFormatted(_ value: String) -> String {
+        AZDecimal(value).formatted(unitConvertConfig)
+    }
+
+    /// 単位換算の計算・表示に使う設定（小数桁数だけ最大にしたもの）
+    private var unitConvertConfig: AZDecimalConfig {
+        var config = calcConfig
+        config.decimalDigits = Int(SETTING_decimalDigits_MAX)
+        return config
     }
 
     /// 単位タップの換算メニューから単位を選んだときに、実際に換算する
@@ -1158,7 +1263,15 @@ final class CalcViewModel: ObservableObject {
         let numStr = tokens[tokens.count - 2]
         guard Double(numStr) != nil,
               let converted = unitConv(num: numStr, unit: fromDef, toUnit: toDef) else { return }
-        tokens[tokens.count - 2] = converted
+        // 設定桁の換算で 0 になってしまうときだけ、最大桁で換算し直して入れる
+        // （換算リストに値が出ていたのに、選ぶと 0 になるのを避ける）
+        var result = converted
+        if isZeroValue(converted), !isZeroValue(numStr),
+           let exact = unitConv(num: numStr, unit: fromDef, toUnit: toDef,
+                                decimalDigits: Int(SETTING_decimalDigits_MAX)) {
+            result = exact
+        }
+        tokens[tokens.count - 2] = result
         tokens[tokens.count - 1] = TOKEN_UNIT_PREFIX + toDef.code
         // 次回以降の自動換算先に反映する
         rememberUnitConversion(from: fromDef.code, to: toDef.code)
@@ -1207,7 +1320,10 @@ final class CalcViewModel: ObservableObject {
     ///   - unit: 単位 KeyDef  =nil: Base or 単位なし
     ///   - toUnit: 変換後の単位 KeyDef
     /// - Returns: 変換後の数値文字列
-    private func unitConv( num:String, unit:KeyDefinition? = nil, toUnit:KeyDefinition) -> String? {
+    /// - Parameter decimalDigits: 計算に使う小数桁数。
+    ///   nil なら設定値。換算結果が 0 になってしまう小さな値を出すときに増やす
+    private func unitConv( num:String, unit:KeyDefinition? = nil, toUnit:KeyDefinition,
+                           decimalDigits: Int? = nil) -> String? {
         var form = num
         if let unit = unit {
             guard unit.unitBase == toUnit.unitBase  else {
@@ -1224,7 +1340,7 @@ final class CalcViewModel: ObservableObject {
             form += "/" + conv
         }
         // 計算結果（小数制限丸め処理済み）
-        let ans = answer(form)
+        let ans = answer(form, decimalDigits: decimalDigits)
         return ans
     }
     
@@ -1445,9 +1561,7 @@ final class CalcViewModel: ObservableObject {
                     : AZDecimal(numStr).formatted(calcConfig)
                 curPart += AttributedString(minusSignedDisplay(displayStr))
                 if isPercMode {
-                    var percAttr = AttributedString(percSymbol)
-                    percAttr.foregroundColor = COLOR_OPERATOR
-                    curPart += percAttr
+                    curPart += percentAttrString(percSymbol)
                 } else if let ut = unitToken {
                     let code = String(ut.dropFirst())
                     if let def = keyboardViewModel.keyDef(code: code) {
@@ -1516,6 +1630,18 @@ final class CalcViewModel: ObservableObject {
             trailZero: false,
             groupType: calcConfig.groupType,
             groupSeparator: calcConfig.groupSeparator)
+    }
+
+    /// 表示文字列が実質 0 か（"0" や "0.000" など、数字がすべて 0）
+    private func isZeroValue(_ text: String) -> Bool {
+        var hasDigit = false
+        for ch in text {
+            if ch.isNumber {
+                hasDigit = true
+                if ch != "0" { return false }
+            }
+        }
+        return hasDigit
     }
 
     @MainActor
@@ -1808,8 +1934,12 @@ final class CalcViewModel: ObservableObject {
     private func toBaseValue(_ numStr: String, unitDef: KeyDefinition?) -> AZDecimal {
         if let def = unitDef, def.code != def.unitBase, let conv = def.unitConv {
             // Base単位への変換: num * conv
+            // ＃ここは計算途中の内部値なので、設定の小数桁数で丸めてはいけない。
+            //   小さい単位（㎟ など）は Base単位に直すと桁が下がるため、
+            //   設定桁数で丸めると 0 になって値そのものを失う
+            //   （例：5㎟ → 5*0.000001 は小数5桁だと 0、最大桁なら 0.000005）
             let expr = numStr + "*" + conv
-            let baseStr = answer(expr)
+            let baseStr = answer(expr, decimalDigits: Int(SETTING_decimalDigits_MAX))
             return AZDecimal(baseStr)
         }
         return AZDecimal(numStr)
@@ -1859,7 +1989,9 @@ final class CalcViewModel: ObservableObject {
                 // 換算後は数値が変わるので、2度押し履歴は破棄する
                 tokens[tokens.count - 2] = converted
                 tokens[tokens.count - 1] = TOKEN_UNIT_PREFIX + keyDef.code
-                calcUnitDef = keyDef  // 換算後の単位を記録
+                // Bare単位（π・φ・𝑒）は「単位」ではなく定数倍なので、
+                // 結果の表示単位にしてはいけない（無単位のまま答えを出す）
+                calcUnitDef = keyDef.unitBase == UNIT_CODE_BARE ? nil : keyDef
                 lastUnitSwap = nil
                 formulaUpdateCalc()
             } else {
@@ -1867,7 +1999,8 @@ final class CalcViewModel: ObservableObject {
                 // （例：60㎡ で[坪]を押すと 18.15坪 ではなく 60坪 になる）
                 // 換算しないので unitBase が異なる単位（㎡→kg など）にも置き換えられる
                 tokens[tokens.count - 1] = TOKEN_UNIT_PREFIX + keyDef.code
-                calcUnitDef = keyDef  // 差し替え後の単位を記録
+                // Bare単位（π・φ・𝑒）は結果の表示単位にしない（上と同じ理由）
+                calcUnitDef = keyDef.unitBase == UNIT_CODE_BARE ? nil : keyDef
                 // 同じ単位キーをもう一度押したときに換算できるよう、換算元を覚えておく
                 // 同じ単位の押し直し（換算元＝換算先）は履歴を更新しない
                 if code != keyDef.code {
@@ -2012,9 +2145,13 @@ final class CalcViewModel: ObservableObject {
             resultDisplayStr = resultBase.formatted(calcConfig)
         }
 
-        // = 行タップで引用できるよう、答えの生値と表示単位を持たせる
+        // = 行タップで引用できるよう、答えの生値と表示単位を持たせる。
+        // accBase には Base単位の答えを入れる。表示単位に直した rawBase は
+        // 設定桁数で丸まっていて、小さな値だと 0 になってしまう
+        // （4㎟ → 0㎡ のような行から換算リストを出すのに使う）
         rollLinesBuilding.append(RollLine(op: FM_ANS, value: resultDisplayStr, isFinal: true,
                                           rawBase: resultNumStr,
+                                          accBase: resultBase.value,
                                           unitCode: displayUnit?.code,
                                           sourceUnitCode: sourceUnit?.code))
 
@@ -2144,7 +2281,10 @@ final class CalcViewModel: ObservableObject {
         if historyIndex != -1 { rollLinesBuilding = [] }
         accumulator = AZDecimal(line.accBase)
         pendingOp = line.op == " " ? nil : line.op
-        calcUnitDef = line.unitCode.flatMap { keyboardViewModel.keyDef(code: $0) }
+        // Bare単位（π・φ・𝑒）は結果の表示単位にしない
+        calcUnitDef = line.unitCode
+            .flatMap { keyboardViewModel.keyDef(code: $0) }
+            .flatMap { $0.unitBase == UNIT_CODE_BARE ? nil : $0 }
 
         // 現在値を tokens に預置（= を押せばそのまま確定、数字を打てば上書き）
         // rawBase は Base単位なので表示単位に変換して tokens にセット
@@ -2382,7 +2522,11 @@ final class CalcViewModel: ObservableObject {
 
     /// 数式から答えを計算する（文字列→評価→丸め→raw文字列）
     /// - Returns: 丸め済みの数値文字列。エラー時はローカライズ済みエラー文字列
-    private func answer(_ formula: String) -> String {
+    /// - Parameter decimalDigits: 計算に使う小数桁数（nil なら設定値）。
+    ///   ＃AZFormula.evaluateDecimal は渡した config の桁数で丸めた値を返すので、
+    ///     細かい値が必要なときは「評価する前に」桁数を上げる必要がある
+    ///     （評価後に rounded() で桁数を増やしても、すでに 0 なので戻らない）
+    private func answer(_ formula: String, decimalDigits: Int? = nil) -> String {
         guard !formula.isEmpty else {
             log(.warning, "formula: なし")
             return String(localized: "calc.result.noData", defaultValue: "No data")
@@ -2390,7 +2534,9 @@ final class CalcViewModel: ObservableObject {
 
         log(.info, "formula: \(formula)")
 
-        switch AZFormula.evaluateDecimal(formula, config: calcConfig) {
+        var config = calcConfig
+        if let decimalDigits { config.decimalDigits = decimalDigits }
+        switch AZFormula.evaluateDecimal(formula, config: config) {
         case .success(let decimal):
             // .keepFull は rounded(_:) が self を返すため全桁保持される
             return decimal.value

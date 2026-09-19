@@ -674,10 +674,13 @@ struct RollCell: View {
         guard rowWidth > 0,
               let code = line.unitCode,
               let formula = viewModel?.unitFormula(for: code) else {
-            return UnitPoint(x: 0.92, y: 0)
+            return UnitPoint(x: 0.92, y: 0.5)
         }
-        let x = 1.0 - (unitDrawnWidth(formula) / 2) / rowWidth
-        return UnitPoint(x: min(max(x, 0), 1), y: 0)
+        // 単位の「左端」を狙う（行は右寄せなので、右端から単位の幅ぶん戻る）。
+        // 中央を狙うと吹き出しが単位の上に乗ってしまう
+        let x = 1.0 - unitDrawnWidth(formula) / rowWidth
+        // y は行の縦中央。List が上下反転していても 0.5 は 0.5 のまま
+        return UnitPoint(x: min(max(x, 0), 1), y: 0.5)
     }
 
     private func isEditingLine(_ lineIdx: Int) -> Bool {
@@ -738,7 +741,10 @@ struct RollCell: View {
                 .lineLimit(1)
 
             if let unitFormula, let unitCode, let viewModel {
-                let numStr = row.rollLines?.last(where: { $0.isFinal })?.rawBase ?? ""
+                let finalLine = row.rollLines?.last(where: { $0.isFinal })
+                let numStr = finalLine?.rawBase ?? ""
+                // 表示値が 0 に丸まっていても、Base単位なら値が残っている
+                let baseValue = finalLine?.accBase
                 Text(showsTappableUnit
                      ? tappableUnitText(unitFormula)
                      : plainUnitText(unitFormula))
@@ -750,7 +756,8 @@ struct RollCell: View {
                     .highPriorityGesture(TapGesture().onEnded {
                         guard showsTappableUnit else { return }
                         guard !viewModel.rollUnitCandidates(numStr: numStr,
-                                                            unitCode: unitCode).isEmpty else { return }
+                                                            unitCode: unitCode,
+                                                            baseValue: baseValue).isEmpty else { return }
                         isUnitConvertPresented = true
                     })
             }
@@ -853,7 +860,8 @@ struct RollCell: View {
                         if let viewModel, let unitCode = line.unitCode {
                             UnitConvertPickPopover(
                                 candidates: viewModel.rollUnitCandidates(numStr: line.rawBase,
-                                                                         unitCode: unitCode)
+                                                                         unitCode: unitCode,
+                                                                         baseValue: line.accBase)
                             ) { toDef in
                                 viewModel.convertRollAnswer(at: historyIndex, to: toDef)
                                 isUnitConvertPresented = false

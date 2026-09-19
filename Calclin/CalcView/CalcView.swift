@@ -140,14 +140,14 @@ struct CalcView: View {
     /// - 入力行は縮小・スクロールで実フォントが変わるため、最小サイズ側（標準サイズ）で測る。
     ///   実際の描画が拡大されている場合はタップ領域が単位より狭くなるだけで、誤爆はしない
     /// 換算リストの吹き出しを取り付ける位置（タップ領域に対する割合）。
+    /// 単位の「左端・縦中央」に付ける（吹き出しは左に出るので、
+    /// 単位の上に重ならず、文字の高さの真ん中から伸びて見える）
+    /// - x: 0 = タップ領域の左端。タップ領域は単位の幅に合わせてあるので単位の左端
     /// - y: 入力行の文字は FormulaView 側で descenderCompensation ぶん
-    ///   下げて描かれているので、その割合ぶん下げて単位の高さに合わせる
-    /// - x: 0.5 だとタップ領域の中心＝単位のやや右から出るので、
-    ///   単位の左寄りに取り付けて吹き出しを左へ寄せる
+    ///   下げて描かれているので、その割合ぶん下げて単位の縦中央に合わせる
     private var unitPopoverAnchor: UnitPoint {
-        UnitPoint(x: UNIT_POPOVER_ANCHOR_X,
-                  y: 0.5 + inputTextDescenderDrop / unitTapHeight
-                         + UNIT_POPOVER_ANCHOR_Y_ADJUST)
+        UnitPoint(x: 0,
+                  y: 0.5 + inputTextDescenderDrop / unitTapHeight)
     }
 
     /// 入力行の文字が中央から下げて描かれている量。
@@ -1183,7 +1183,9 @@ private struct PaperToolButtonLabel: View {
             if showsTitle {
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.secondary.opacity(0.70))
+                    // アイコンと同じ色みにして、入力行のまとまりを保つ
+                    // （.secondary だとテーマ色から外れて浮いて見える）
+                    .foregroundStyle(setting.accentTheme.toolLabelColor)
                     // 入力行ツールのラベルは特大時でも大ぎないよう「大」上限にする
                     .cappedAtLargeTypeSize()
             }

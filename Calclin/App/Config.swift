@@ -80,12 +80,6 @@ let UNIT_BASELINE_RATIO: CGFloat = 0.09
 /// 漢字は全角の字面いっぱいに描かれるので、.center 揃えで数字とちょうど合う
 let UNIT_BASELINE_REFERENCE = "坪"
 
-// 単位タップで出す換算リストの、吹き出しの取り付け位置（タップ領域に対する割合）。
-// 見た目を微調整するための値なので、実機で見ながらここだけ動かせるようにしている
-// - X: 0.5 が単位の中心。小さくするほど吹き出しが左へ寄る
-// - Y: 0 が補正なし（＝単位の高さ）。大きくするほど下へ下がる
-let UNIT_POPOVER_ANCHOR_X: CGFloat = 0.2
-let UNIT_POPOVER_ANCHOR_Y_ADJUST: CGFloat = 0.25
 
 /// 単位を数値と同じ高さに見せるための補正量（`HStack(alignment: .center)` 前提）。
 ///

@@ -579,6 +579,20 @@ final class SettingViewModel: ObservableObject {
             })
         }
 
+        /// 入力行ツールのラベル（「数式」「電卓」「機能」）の色。
+        /// アイコンと同じ色みで揃えて、入力行のまとまりを保つ。
+        /// - ライトは薄くしない：0.70 まで落とすと標準色（青）で
+        ///   コントラスト 2.45 まで下がり読みにくい（1.0 なら 3.54）
+        /// - ダークはアイコンと同じ 0.75（黒地で彩度が眩しいため）
+        var toolLabelColor: Color {
+            Color(UIColor { trait in
+                let dark = trait.userInterfaceStyle == .dark
+                let rgb = dark ? self.darkRGB : self.lightRGB
+                return UIColor(red: rgb.0/255, green: rgb.1/255, blue: rgb.2/255,
+                               alpha: dark ? 0.75 : 1.0)
+            })
+        }
+
         /// 入力行に薄く出すアプリ名の色。
         /// ダークでは沈みやすいので、ライト（0.45）より濃いめにして見え方を揃える
         var appNameColor: Color {
