@@ -1245,19 +1245,49 @@ private struct UnitListHeightKey: PreferenceKey {
 private struct FunctionMenuHeightLimit: ViewModifier {
     let maxHeight: CGFloat
 
-    @ViewBuilder
+    /// 上限を超えていたか。
+    /// ＃測る前は素のまま出す。常に ScrollView で包むと、収まっていても
+    ///   スクロールしてしまい、フォント一覧のように自前の ScrollView を
+    ///   持つ内容では縦スクロールが二重になる
+    /// ＃一度 true にしたら戻さない。ScrollView に入れた途端に中身の実寸が
+    ///   変わると、包む／包まないが交互に切り替わって震えるため
+    @State private var overflows = false
+
     func body(content: Content) -> some View {
-        if maxHeight.isFinite && maxHeight > 0 {
-            ScrollView(.vertical) {
-                // 横幅は中身のまま（ScrollView に潰されないよう固定する）
-                content
-                    .fixedSize(horizontal: true, vertical: false)
+        let measured = content.background {
+            GeometryReader { contentGeo in
+                Color.clear
+                    .preference(key: FunctionMenuContentHeightKey.self,
+                                value: contentGeo.size.height)
             }
-            .frame(maxHeight: maxHeight)
-            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
-        } else {
-            content
         }
+
+        return Group {
+            if overflows {
+                ScrollView(.vertical) {
+                    // 横幅は中身のまま（ScrollView に潰されないよう固定する）
+                    measured
+                        .fixedSize(horizontal: true, vertical: false)
+                }
+                .frame(maxHeight: maxHeight)
+                .scrollBounceBehavior(.basedOnSize, axes: .vertical)
+            } else {
+                measured
+            }
+        }
+        .onPreferenceChange(FunctionMenuContentHeightKey.self) { height in
+            guard !overflows, maxHeight.isFinite, maxHeight > 0, height > 0 else { return }
+            if height > maxHeight { overflows = true }
+        }
+    }
+}
+
+/// 機能メニューの中身の高さ
+private struct FunctionMenuContentHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 
