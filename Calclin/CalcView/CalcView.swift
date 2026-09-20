@@ -32,8 +32,11 @@ struct CalcView: View {
     @State private var isFunctionMenuPresented = false
     /// 機能メニューの右側に開いている内容（nil＝一覧だけ）
     @State private var functionMenuPane: InputFunctionMenuPopover.Pane? = nil
-    /// 入力行より上（ロール）の高さ。機能メニューをどちら向きに出すか決めるのに使う
-    @State private var rollAreaHeight: CGFloat = 0
+    /// 「機能」ボタンの位置（.global 座標）。
+    /// ＃吹き出しの向きと高さは、アンカーと表示領域を同じ座標系で測って決める。
+    ///   ローカルの高さと UIScreen を混ぜると、ヘッダや安全領域、
+    ///   Split View が抜け落ちて下側の空きを多く見積もってしまう
+    @State private var functionButtonFrame: CGRect = .zero
     /// ロール消去の確認アラート
     @State private var isClearConfirmPresented = false
     // 入力行末尾の単位をタップしたときの換算ポップオーバー表示状態
@@ -249,14 +252,6 @@ struct CalcView: View {
                     }
                 }
                 .frame(maxHeight: .infinity)
-                // 機能メニューを上下どちらへ出すか決めるため、ロールの高さを測る
-                .background {
-                    GeometryReader { rollGeo in
-                        Color.clear
-                            .preference(key: RollAreaHeightPreferenceKey.self,
-                                        value: rollGeo.size.height)
-                    }
-                }
                 .overlay {
                     PaperRollLighting()
                 }
@@ -435,8 +430,8 @@ struct CalcView: View {
                     }
             }
             .padding(0)
-            .onPreferenceChange(RollAreaHeightPreferenceKey.self) { height in
-                rollAreaHeight = height
+            .onPreferenceChange(FunctionButtonFramePreferenceKey.self) { frame in
+                functionButtonFrame = frame
             }
             // 入力行のガラスが「CalcView 全体のどこに居るか」を測れるようにする
             // （ロール枠と同じグラデーションを同じ高さで描くため）
@@ -524,46 +519,48 @@ struct CalcView: View {
     /// 機能メニューのアイコン。吹き出しが開くことを示す
     private var inputLineFunctionIcon: String { "bubble.middle.bottom" }
 
-    /// 機能メニュー（アイコン列）の高さ。
-    /// アイコン6行（各36pt）＋行間（2pt×5）＋上下の余白（8pt×2）。
-    /// ＃小さく見積もると「上に入る」と誤判定してスクロールになるので、
-    ///   iconRow の実寸（36pt）から計算する
-    private var functionMenuEstimatedHeight: CGFloat {
-        // 余白は functionMenuMargin 側で引くので、ここは中身の高さだけ
-        let rows: CGFloat = 6 * 36 + 5 * 2 + 16   // = 242
-        return rows * min(calcFontScale, 1.5)
-    }
-
     /// 吹き出しと画面端・矢印のあいだに要る余白
     private let functionMenuMargin: CGFloat = 40
 
-    /// ボタンより上（ロール側）に実際に置ける高さ
+    /// 吹き出しを出せる範囲（.global 座標）。
+    /// ＃ボタンと同じ座標系で、かつキーボードまで含む範囲が要る。
+    ///   CalcView を測ると入力行までしか入らず、UIScreen だと
+    ///   安全領域や Split View が入らないので、ウインドウの安全領域を使う
+    private var screenSafeFrame: CGRect {
+        guard let window = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap(\.windows)
+            .first(where: { $0.isKeyWindow })
+        else { return .zero }
+        return window.bounds.inset(by: window.safeAreaInsets)
+    }
+
+    /// ボタンより上（ロール側）に実際に置ける高さ。
+    /// ボタンの上端から安全領域の上端まで（どちらも .global 座標）
     private var functionMenuSpaceAbove: CGFloat {
-        max(rollAreaHeight - functionMenuMargin, 0)
+        guard !functionButtonFrame.isEmpty, !screenSafeFrame.isEmpty else { return 0 }
+        return max(functionButtonFrame.minY - screenSafeFrame.minY - functionMenuMargin, 0)
     }
 
     /// ボタンより下（キーボード側）に実際に置ける高さ。
-    /// CalcView からはキーボードを測れないので、画面の高さから引いて求める
+    /// ボタンの下端から安全領域の下端まで（どちらも .global 座標）
     private var functionMenuSpaceBelow: CGFloat {
-        let screenHeight = UIScreen.main.bounds.height
-        // 入力行より下＝画面の高さ － ロール － 入力行
-        let below = screenHeight - rollAreaHeight - inputLineHeight
-        return max(below - functionMenuMargin, 0)
+        guard !functionButtonFrame.isEmpty, !screenSafeFrame.isEmpty else { return 0 }
+        return max(screenSafeFrame.maxY - functionButtonFrame.maxY - functionMenuMargin, 0)
     }
 
-    /// 機能メニューに使える高さ（実際に出す向きの側の空き）
+    /// 機能メニューに使える高さ（実際に出す向きの側の空き）。
+    /// ＃まだ測れていない（0）あいだは制限しない。
+    ///   0 を渡すと吹き出しが潰れてしまう
     private var functionMenuAvailableHeight: CGFloat {
-        max(functionMenuSpaceAbove, functionMenuSpaceBelow)
+        let space = max(functionMenuSpaceAbove, functionMenuSpaceBelow)
+        return space > 0 ? space : .infinity
     }
 
     /// 機能メニューを出す向き。
-    /// ＃arrowEdge: .bottom は「ボタンの上」に出す指定。
-    ///   ロールが低い端末では上に全項目が入らずスクロールになってしまうので、
-    ///   上下で広い方（たいていはキーボード側）へ出す
+    /// ＃arrowEdge: .bottom は「ボタンの上」に出す指定（矢印が下に付く）。
+    ///   ボタンを境に、上下で広い方へ出して全項目を見せる
     private var functionMenuArrowEdge: Edge {
-        // 広い方へ出す。
-        // ＃ロール側は「画面上端まで」しか使えず、実測してもなお足りずに
-        //   スクロールになった。キーボード側の方が広いので、そちらを優先する
         functionMenuSpaceBelow >= functionMenuSpaceAbove
             ? .top     // ボタンの下（キーボード側）へ開く
             : .bottom  // ボタンの上（ロール側）へ開く
@@ -582,6 +579,16 @@ struct CalcView: View {
                 isCompact: isCompact,
                 isTightWidth: true
             )
+        }
+        // 吹き出しの向き・高さを決めるため、ボタンの位置を .global で測る。
+        // ＃幅測定用の隠しコピー（inputLineToolLabel）は Button ではないので、
+        //   ここには来ない。実際の提示元だけが位置を報告する
+        .background {
+            GeometryReader { buttonGeo in
+                Color.clear
+                    .preference(key: FunctionButtonFramePreferenceKey.self,
+                                value: buttonGeo.frame(in: .global))
+            }
         }
         .popover(isPresented: $isFunctionMenuPresented,
                  arrowEdge: functionMenuArrowEdge) {
@@ -1254,14 +1261,16 @@ private struct FunctionMenuHeightLimit: ViewModifier {
     }
 }
 
-/// ロール（入力行より上）の高さ。機能メニューの向きを決めるのに使う
-private struct RollAreaHeightPreferenceKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
+/// 「機能」ボタンの位置（.global）。吹き出しの向きを決めるのに使う
+private struct FunctionButtonFramePreferenceKey: PreferenceKey {
+    static let defaultValue: CGRect = .zero
 
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        let next = nextValue()
+        if !next.isEmpty { value = next }
     }
 }
+
 
 private struct InputToolsWidthPreferenceKey: PreferenceKey {
     static let defaultValue: CGFloat = 0
