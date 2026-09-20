@@ -37,6 +37,9 @@ struct CalcView: View {
     ///   ローカルの高さと UIScreen を混ぜると、ヘッダや安全領域、
     ///   Split View が抜け落ちて下側の空きを多く見積もってしまう
     @State private var functionButtonFrame: CGRect = .zero
+    /// 機能メニューの中身の実寸。上側に収まるかの判定に使う。
+    /// ＃0＝まだ測っていない。概算値を置くと実際と食い違うので持たない
+    @State private var functionMenuContentHeight: CGFloat = 0
     /// ロール消去の確認アラート
     @State private var isClearConfirmPresented = false
     // 入力行末尾の単位をタップしたときの換算ポップオーバー表示状態
@@ -561,7 +564,14 @@ struct CalcView: View {
     /// ＃arrowEdge: .bottom は「ボタンの上」に出す指定（矢印が下に付く）。
     ///   ボタンを境に、上下で広い方へ出して全項目を見せる
     private var functionMenuArrowEdge: Edge {
-        functionMenuSpaceBelow >= functionMenuSpaceAbove
+        // 上（ロール側）を優先する。ロールの上に出た方が、
+        // キーボードを隠さずキーを押しながら設定を見比べられる
+        if functionMenuContentHeight > 0,
+           functionMenuSpaceAbove >= functionMenuContentHeight {
+            return .bottom  // ボタンの上（ロール側）へ開く
+        }
+        // 上に全部入らないときだけ、広い方（たいていはキーボード側）へ逃がす
+        return functionMenuSpaceBelow > functionMenuSpaceAbove
             ? .top     // ボタンの下（キーボード側）へ開く
             : .bottom  // ボタンの上（ロール側）へ開く
     }
@@ -589,6 +599,25 @@ struct CalcView: View {
                     .preference(key: FunctionButtonFramePreferenceKey.self,
                                 value: buttonGeo.frame(in: .global))
             }
+        }
+        // 吹き出しの中身（アイコン列）の高さを、開く前に測っておく。
+        // ＃popover の中身は開いた瞬間に作られるので、そこで測ると
+        //   初回だけ向きが決まらない。同じ見た目の隠しコピーで先に測る
+        .background {
+            InputFunctionMenuPopover.iconColumnSizingView
+                .hidden()
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+                .background {
+                    GeometryReader { columnGeo in
+                        Color.clear
+                            .preference(key: FunctionMenuContentHeightKey.self,
+                                        value: columnGeo.size.height)
+                    }
+                }
+        }
+        .onPreferenceChange(FunctionMenuContentHeightKey.self) { height in
+            if height > 0 { functionMenuContentHeight = height }
         }
         .popover(isPresented: $isFunctionMenuPresented,
                  arrowEdge: functionMenuArrowEdge) {
@@ -697,6 +726,21 @@ private struct InputFunctionMenuPopover: View {
         // ＃はみ出したまま出すと iOS が吹き出しごと縮めて、先頭の項目が隠れる
         .modifier(FunctionMenuHeightLimit(maxHeight: maxHeight))
         .animation(.easeOut(duration: 0.18), value: openPane)
+    }
+
+    /// アイコン列の高さを測るためだけの見本。
+    /// ＃ここに Button や popover を置いてはいけない。同じ @State を持つ
+    ///   隠しコピーが提示元になって、吹き出しが出なくなる（過去の不具合）
+    static var iconColumnSizingView: some View {
+        VStack(spacing: 2) {
+            ForEach(0..<6, id: \.self) { _ in
+                Image(systemName: "circle")
+                    .font(.system(size: 19))
+                    .frame(width: 44, height: 36)
+            }
+        }
+        .padding(.vertical, 8)
+        .frame(width: 56)
     }
 
     /// 左側：機能のアイコン列（タイトルは右側に出るので、ここはアイコンだけ）
