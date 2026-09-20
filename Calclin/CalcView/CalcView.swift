@@ -552,17 +552,24 @@ struct CalcView: View {
         return max(screenSafeFrame.maxY - functionButtonFrame.maxY - functionMenuMargin, 0)
     }
 
-    /// 機能メニューに使える高さ（実際に出す向きの側の空き）。
+    /// 機能メニューに使える高さ。
+    /// ＃必ず「実際に出す向き」の側の空きを返す。広い方を返すと、
+    ///   上に出すのに下側の広さぶんの高さを許してしまい、
+    ///   上端で切れたり iOS に位置をずらされたりする
     /// ＃まだ測れていない（0）あいだは制限しない。
     ///   0 を渡すと吹き出しが潰れてしまう
     private var functionMenuAvailableHeight: CGFloat {
-        let space = max(functionMenuSpaceAbove, functionMenuSpaceBelow)
+        // .top＝ボタンの下（キーボード側）へ開く、.bottom＝ボタンの上（ロール側）
+        let space = functionMenuArrowEdge == .top
+            ? functionMenuSpaceBelow
+            : functionMenuSpaceAbove
         return space > 0 ? space : .infinity
     }
 
     /// 機能メニューを出す向き。
     /// ＃arrowEdge: .bottom は「ボタンの上」に出す指定（矢印が下に付く）。
-    ///   ボタンを境に、上下で広い方へ出して全項目を見せる
+    /// ＃高さ上限（functionMenuAvailableHeight）はこの判断に従うので、
+    ///   ここを変えるときは向きと上限がずれていないか確かめること
     private var functionMenuArrowEdge: Edge {
         // 上（ロール側）を優先する。ロールの上に出た方が、
         // キーボードを隠さずキーを押しながら設定を見比べられる
@@ -743,7 +750,7 @@ private struct InputFunctionMenuPopover: View {
         .frame(width: 56)
     }
 
-    /// 左側：機能のアイコン列（タイトルは右側に出るので、ここはアイコンだけ）
+    /// 左側：機能のアイコン列（達人モードはアイコンだけ、初心者モードは名前も出す）
     private var menuList: some View {
         VStack(spacing: 2) {
             iconRow(systemName: "scroll", pane: .roll, label: "roll.actions.label")
@@ -758,7 +765,9 @@ private struct InputFunctionMenuPopover: View {
                     label: "settings.section.decimal")
         }
         .padding(.vertical, 8)
-        .frame(width: 56)
+        // 名前を出すときは中身に合わせて広げる（アイコンだけなら従来どおり 56pt）
+        .frame(width: showsTitles ? nil : 56)
+        .fixedSize(horizontal: showsTitles, vertical: false)
     }
 
     /// 右側：選んだ内容
@@ -1008,6 +1017,13 @@ private struct InputFunctionMenuPopover: View {
         .buttonStyle(.plain)
     }
 
+    /// 初心者モードではアイコンの右に機能名を出す。
+    /// ＃ただし右側の内容を開いている間は畳む。
+    ///   名前つきの列(約130) + 区切り + 内容(230) では SE の幅に収まらない
+    private var showsTitles: Bool {
+        setting.playMode == .beginner && openPane == nil
+    }
+
     private func iconRow(systemName: String, pane: Pane,
                          label: LocalizedStringKey) -> some View {
         let isOpen = pane == openPane
@@ -1019,18 +1035,29 @@ private struct InputFunctionMenuPopover: View {
                 openPane = pane
             }
         } label: {
-            Image(systemName: systemName)
-                .font(.system(size: 19))
-                .foregroundStyle(isOpen ? setting.accentTheme.color : Color.primary)
-                .frame(width: 44, height: 36)
-                .contentShape(Rectangle())
-                .background(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(isOpen ? setting.accentTheme.color.opacity(0.12) : Color.clear)
-                )
+            HStack(spacing: 6) {
+                Image(systemName: systemName)
+                    .font(.system(size: 19))
+                    .frame(width: 44, height: 36)
+                // 初心者モードでは、アイコンだけでは何の機能か分からないので名前も出す
+                if showsTitles {
+                    Text(label)
+                        .font(.footnote)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .padding(.trailing, 10)
+                }
+            }
+            .foregroundStyle(isOpen ? setting.accentTheme.color : Color.primary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(isOpen ? setting.accentTheme.color.opacity(0.12) : Color.clear)
+            )
         }
         .buttonStyle(.plain)
-        // アイコンだけなので、読み上げには機能名を伝える
+        // 達人モードはアイコンだけになるので、読み上げには必ず機能名を伝える
         .accessibilityLabel(Text(label))
     }
 }
