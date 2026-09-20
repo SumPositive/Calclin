@@ -14,11 +14,17 @@ struct InputCase: Sendable {
     let expected: String
 }
 
+// ＃マイナスの表示は U+2212（MINUS SIGN）。
+//   プラスと同じ幅にするため ASCII の '-' から変えてあるので、期待値も合わせる
 let inputCases = [
-    InputCase(index: 10_001, keys: ["#1", "Add", "Sub", "#2"], expected: "1-2."),
-    InputCase(index: 10_002, keys: ["Sub", "#1", "Sub", "Sub", "#2"], expected: "-1+2."),
-    InputCase(index: 10_003, keys: ["Sub", "#1", "Mul", "Sub", "#2"], expected: "-1×-2."),
-    InputCase(index: 10_004, keys: ["#1", "#2", "Sign", "Mul", "Sub", "#3", "Sign"], expected: "-12×3."),
+    InputCase(index: 10_001, keys: ["#1", "Add", "Sub", "#2"],
+              expected: "1\u{2212}2."),
+    InputCase(index: 10_002, keys: ["Sub", "#1", "Sub", "Sub", "#2"],
+              expected: "\u{2212}1+2."),
+    InputCase(index: 10_003, keys: ["Sub", "#1", "Mul", "Sub", "#2"],
+              expected: "\u{2212}1×\u{2212}2."),
+    InputCase(index: 10_004, keys: ["#1", "#2", "Sign", "Mul", "Sub", "#3", "Sign"],
+              expected: "\u{2212}12×3."),
     InputCase(index: 10_005, keys: ["#00", "Div", "#000"], expected: "0÷0."),
     InputCase(index: 10_006,
               keys: ["Deci", "Deci", "#1", "Deci", "Add", "Deci", "Deci", "#2", "Deci"],
@@ -64,6 +70,16 @@ private func formulaText(of viewModel: CalcViewModel) -> String {
     String(viewModel.formulaAttr.characters)
 }
 
+/// [=] のあとの答え（単位つき）を、画面と同じ整形で取り出す。
+///
+/// ＃入力行は [=] で空になる（ロール上の操作では変わらない、キーボードだけで変わる）。
+///   そのため確定後の検算は formulaAttr ではなく履歴の答えを見る
+@MainActor
+private func answerText(of viewModel: CalcViewModel) throws -> String {
+    let row = try #require(viewModel.historyRows.last)
+    return viewModel.displayFormatted(row.answer) + (row.unitFormula ?? "")
+}
+
 @Suite("計算入力", .serialized)
 @MainActor
 struct CalcViewModelInputTests {
@@ -83,7 +99,7 @@ struct CalcViewModelInputTests {
             #expect(formulaText(of: viewModel) == "1+3.")
 
             try input(["Sign"], into: viewModel)
-            #expect(formulaText(of: viewModel) == "1-3.")
+            #expect(formulaText(of: viewModel) == "1\u{2212}3.")
         }
     }
 
@@ -94,7 +110,9 @@ struct CalcViewModelInputTests {
             #expect(formulaText(of: viewModel) == "1cm+1km")
 
             try input(["Ans"], into: viewModel)
-            #expect(formulaText(of: viewModel) == "100,001cm")
+            #expect(try answerText(of: viewModel) == "100,001cm")
+            // 確定したので入力行は空
+            #expect(formulaText(of: viewModel).isEmpty)
         }
     }
 
@@ -102,10 +120,11 @@ struct CalcViewModelInputTests {
     func treatsBareValueAsBaseUnit() throws {
         try withFormulaViewModel(index: 10_102) { viewModel in
             try input(["#1", "cm", "Add", "#1", "km", "Sub", "#1"], into: viewModel)
-            #expect(formulaText(of: viewModel) == "1cm+1km-1.")
+            #expect(formulaText(of: viewModel) == "1cm+1km\u{2212}1.")
 
             try input(["Ans"], into: viewModel)
-            #expect(formulaText(of: viewModel) == "999.01m")
+            #expect(try answerText(of: viewModel) == "999.01m")
+            #expect(formulaText(of: viewModel).isEmpty)
         }
     }
 
@@ -116,7 +135,8 @@ struct CalcViewModelInputTests {
             #expect(formulaText(of: viewModel) == "100×5%")
 
             try input(["Ans"], into: viewModel)
-            #expect(formulaText(of: viewModel) == "5")
+            #expect(try answerText(of: viewModel) == "5")
+            #expect(formulaText(of: viewModel).isEmpty)
         }
     }
 
@@ -127,7 +147,8 @@ struct CalcViewModelInputTests {
             #expect(formulaText(of: viewModel) == "100+5%")
 
             try input(["Ans"], into: viewModel)
-            #expect(formulaText(of: viewModel) == "105")
+            #expect(try answerText(of: viewModel) == "105")
+            #expect(formulaText(of: viewModel).isEmpty)
         }
     }
 
