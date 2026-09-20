@@ -260,6 +260,28 @@ struct CustomCell: View {
         return UnitPoint(x: min(max(x, 0), 1), y: min(max(y, 0), 1))
     }
 
+    /// 最新行の記号（= ≒）の文字サイズ。
+    /// ＃電卓のロール行（RollCell は 15pt 基準）と同じ見え方にするため、
+    ///   数式側（本文 16pt）でもロールと同じ基準で計算する
+    private var answerSignFontSize: CGFloat {
+        ROLL_BODY_FONT_SIZE * calcFontScale
+    }
+
+    /// 拡大した答えの隣で、記号（= ≒）を縦中央に見せるための持ち上げ量。
+    /// 1つの Text なのでベースラインが共通になり、そのままだと記号が下付きに見える。
+    /// 実測：scale=1.0 で約 5pt、1.4 で約 7pt（字形により = と ≒ でも差がある）
+    private var answerSignBaselineLift: CGFloat {
+        operatorBaselineDrop(answerSize: latestAnswerFontSize,
+                             operatorSize: answerSignFontSize,
+                             symbol: answerSign)
+    }
+
+    /// 答えが数値ではなく文言（「桁あふれ」など）か。
+    /// 文言は数字用の大きな書体で描くと行から溢れるので、本文の大きさに留める
+    private var isAnswerMessage: Bool {
+        Double(displayedAnswer.replacingOccurrences(of: ",", with: "")) == nil
+    }
+
     /// 表示のために丸められているか（＝長押しで全桁が見られるか）
     private var isAnswerRounded: Bool {
         viewModel.hasHiddenPrecision(row.answer)
@@ -340,22 +362,37 @@ struct CustomCell: View {
         }
         // 揃え方は電卓のロール行（valueText）と同じ .center にする。
         // 下段は短い1行なので折り返さず、これで同じ見え方になる
+        // ＃桁が多いときは、縮小で潰れる前に横スクロールで全体を見せる
+        //   （電卓モードのロール行と同じ扱い）
         HStack(spacing: 0) {
             Spacer(minLength: 0)
             Text({
-                var equal = AttributedString(answerSign)
+                // 記号と数値の間に空きを入れる（電卓のロール行と同じ）
+                var equal = AttributedString(answerSign + " ")
                 equal.foregroundColor = COLOR_OPERATOR
-                equal.font = .system(size: fontSize * calcFontScale,
+                equal.font = .system(size: answerSignFontSize,
                                      weight: .regular, design: .rounded)
+                // 記号と答えは1つの Text なのでベースラインが揃う。
+                // 答えを大きくすると、小さい記号は下付きに見えてしまうので、
+                // インクの中心どうしが合う高さまで持ち上げる
+                // （拡大しない文言のときは同じ大きさなのでずらさない）
+                if !isAnswerMessage {
+                    equal.baselineOffset = answerSignBaselineLift
+                }
                 var answer = AttributedString(minusSignedDisplay(displayedAnswer))
-                answer.font = setting.numberFont.font(size: latestAnswerFontSize, weight: .bold)
+                // 「桁あふれ」などの文言は数値ではないので拡大しない
+                answer.font = isAnswerMessage
+                    ? .system(size: fontSize * calcFontScale, weight: .bold, design: .rounded)
+                    : setting.numberFont.font(size: latestAnswerFontSize, weight: .bold)
                 return equal + answer
             }())
                 .scaleEffect(y: -1.0) // List の反転を打ち消す
                 .opacity(colorScheme == .dark ? 0.55 : 1.0)
                 .lineLimit(1)
                 // 桁数が多いと幅を超えるので、従来サイズまでは縮めて収める
-                .minimumScaleFactor((fontSize * calcFontScale) / latestAnswerFontSize)
+                .minimumScaleFactor(isAnswerMessage
+                                    ? 1.0
+                                    : (fontSize * calcFontScale) / latestAnswerFontSize)
                 // タップで、表示のために丸める前の値を見せる。
                 // ≒ と数値は1つの Text なので、どちらを押しても反応する
                 // ＃親のタップ（ダブルタップの式コピペ）より先に受け取る
@@ -400,8 +437,12 @@ struct CustomCell: View {
                     }
             }
         }
+        // 桁が多い行は、縮小で潰す代わりに横スクロールで全体を見せる
+        // （電卓モードのロール行と同じ扱い）
+        .modifier(HorizontalOverflowScroll(availableWidth: cellSize.width))
         // 数字が使わないディセンダぶんを詰める（反転の中なので .top が画面の下）
-        .padding(.top, -latestAnswerDescenderGap)
+        // ＃拡大した数字のときだけ。文言は拡大していないので詰めると欠ける
+        .padding(.top, isAnswerMessage ? 0 : -latestAnswerDescenderGap)
     }
 
     /// 最新行の答えに付く単位（別 Text にしてタップできるようにする）
@@ -714,7 +755,7 @@ struct RollCell: View {
     // 文字サイズ「自動」ではシステム Dynamic Type から CalcView 用倍率を決める
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    private let fontSize: CGFloat = 15.0
+    private let fontSize: CGFloat = ROLL_BODY_FONT_SIZE
 
     private var calcFontScale: CGFloat {
         setting.calcViewFontScale(for: dynamicTypeSize)
@@ -778,6 +819,12 @@ struct RollCell: View {
         return UnitPoint(x: min(max(x, 0), 1), y: min(max(y, 0), 1))
     }
 
+    /// その行の値が数値ではなく文言（「桁あふれ」など）か
+    private func isMessageLine(_ line: CalcViewModel.RollLine) -> Bool {
+        let shown = viewModel?.rollLineDisplay(line) ?? line.value
+        return Double(shown.replacingOccurrences(of: ",", with: "")) == nil
+    }
+
     /// 中間結果（行の左端に小さく出る値）
     /// - Parameters:
     ///   - accBase: 丸めていない中間結果。≒ の判定とタップ表示に使う
@@ -822,13 +869,18 @@ struct RollCell: View {
         // 丸めている行の [=] は ≒ にして、表示が厳密な値でないことを示す
         // （明細行の演算子 + − × ÷ はそのまま）
         let displayOp = (isRounded && opStr == FM_ANS) ? FM_ANS_APPROX : opStr
+        // 「桁あふれ」のような文言は数値ではないので、拡大しない。
+        // 数字用の大きさで描くと文字が大きすぎて行から溢れる
+        let isMessage = Double(numberPart.replacingOccurrences(of: ",", with: "")) == nil
+        let enlarges = isLatest && isFinal && !isMessage
         // 拡大表示の [=] 行では、記号が数値より浮いて見える。
         // HStack の既定（.center）は箱の中心で揃えるため、背の高い数値の隣では
         // 小さい記号が上に寄るのが原因（数式モードは1つの Text なのでズレない）。
         // HStack 全体を .firstTextBaseline にすると単位の位置まで動いてしまうので、
         // 記号だけを下げて、インクの中心どうしで揃える。
         // ＃= と ≒ は字形が違うので、実際に出す記号を渡して測る
-        let opBaselineDrop = isLatest && isFinal
+        // ＃文言のときは拡大しないので、ずらす必要もない
+        let opBaselineDrop = enlarges
             ? operatorBaselineDrop(answerSize: latestAnswerFontSize,
                                    operatorSize: fontSize * calcFontScale,
                                    symbol: operatorDisplay(displayOp))
@@ -842,20 +894,24 @@ struct RollCell: View {
                         .font(.system(size: fontSize * calcFontScale,
                                       weight: .regular, design: .rounded))
                         .foregroundStyle(COLOR_OPERATOR)
-                        .offset(y: opBaselineDrop)
+                        // ＃セルは scaleEffect(y: -1) で反転しているので、
+                        //   画面上で「持ち上げる」には y をマイナスにする
+                        .offset(y: -opBaselineDrop)
                 }
                 Text(minusSignedDisplay(numberPart))
                     // 最新の [=] だけは入力行と同じ書体・サイズにして、直前の答えを見つけやすくする
-                    .font(isLatest && isFinal
+                    // （「桁あふれ」などの文言は拡大せず、本文の大きさのまま）
+                    .font(enlarges
                           ? setting.numberFont.font(size: latestAnswerFontSize, weight: .bold)
                           : .system(size: fontSize * calcFontScale,
                                     weight: isFinal ? .bold : .regular,
                                     design: .rounded)
                               .monospacedDigit())
                     .foregroundStyle(isFinal ? COLOR_ANSWER : COLOR_NUMBER)
-                    // 大きくしたぶん桁数が多いと幅を超えるので、狭いパネルでは縮めて収める
-                    // （従来サイズまで縮み、それ以上は小さくしない）
-                    .minimumScaleFactor(isLatest && isFinal
+                    // 幅を超えるときは縮めて収める
+                    // - 拡大した最新行：従来サイズまで縮む
+                    // - 桁が多くて行幅を超える行：右端（下位桁）まで見えるよう縮む
+                    .minimumScaleFactor(enlarges
                                         ? (fontSize * calcFontScale) / latestAnswerFontSize
                                         : 1.0)
                     .lineLimit(1)
@@ -962,10 +1018,17 @@ struct RollCell: View {
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .opacity(colorScheme == .dark ? 0.55 : 1.0)
+                    // 桁が多い行は、セルを広げずに中身だけ横スクロールさせる。
+                    // ＃セルが広がると List の行からはみ出し、左右のスワイプメニューが
+                    //   画面外に押し出されて出せなくなる。セル幅は固定が前提
+                    .modifier(HorizontalOverflowScroll(availableWidth: cellSize.width))
                     // 拡大表示になる [=] 行だけ、数字が使わないディセンダぶんを詰める。
                     // RollCell はセル全体を1回だけ反転する（CustomCell のように
                     // 要素ごとに打ち消さない）ので、ここでの .bottom がそのまま画面の下
-                    .padding(.bottom, isLatest && line.isFinal ? -latestAnswerDescenderGap : 0)
+                    // 詰めるのは拡大した数字のときだけ。
+                    // 「桁あふれ」などの文言は拡大していないので、詰めると下が欠ける
+                    .padding(.bottom, isLatest && line.isFinal && !isMessageLine(line)
+                             ? -latestAnswerDescenderGap : 0)
                     // 吹き出しの位置合わせに行幅が要る（単位は右端に描かれる）
                     .background {
                         GeometryReader { lineGeo in
@@ -1043,6 +1106,12 @@ struct RollCell: View {
                 .padding(.vertical, SEPARATOR_GAP)
         }
         .scaleEffect(y: -1)
+        // セル幅は List の行に合わせて固定する。
+        // ＃広げてはいけない。行からはみ出すと左右のスワイプメニューが
+        //   画面外へ押し出され、メモや削除が出せなくなる。
+        //   桁が多い行は中身だけを横スクロールさせる（HorizontalOverflowScroll）
+        // ＃ここで clipped() は付けない。吹き出し（換算リスト・最大精度）の
+        //   取り付け位置まで切られてしまう。はみ出しは ScrollView 側で抑える
         .frame(maxWidth: .infinity)
         // セル内のどこをタップしたかを測るための座標系。
         // 吹き出しをその位置から出すために使う
@@ -1147,5 +1216,41 @@ struct FullPrecisionPopover: View {
         .padding(12)
         // 長い値でも読める幅を確保しつつ、画面からはみ出さない
         .frame(maxWidth: 280)
+    }
+}
+
+/// 幅に収まらない行だけ、横スクロールできるようにする。
+/// - セル自体は広げない。広げると List の行をはみ出し、
+///   左右のスワイプメニューが画面外へ押し出されて出せなくなる
+/// - 行は右寄せなので、初期位置は右端（下位桁が見える側）に合わせる
+private struct HorizontalOverflowScroll: ViewModifier {
+    /// 行が最低限とるべき幅（＝セルの幅）。
+    /// ＃これを渡さないと、横スクロールの中では幅が無限に提案され、
+    ///   中間結果を左端へ押しやる Spacer が伸びる先を失う
+    ///   （結果、中間結果が数値のすぐ隣に寄ってしまう）
+    let availableWidth: CGFloat
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        // 幅がまだ measure できていない初回は、横スクロールに入れない。
+        // 入れてしまうと Spacer が伸びる先を失い、中間結果が右へ寄った状態で
+        // 一瞬描かれてしまう
+        if availableWidth <= 0 {
+            content
+        } else {
+            scrollable(content)
+        }
+    }
+
+    private func scrollable(_ content: Content) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            content
+                .frame(minWidth: availableWidth, alignment: .trailing)
+        }
+        // 収まっているときは弾まない（通常の行と同じ感触にする）
+        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+        // 初期表示は右端（いちばん見たい下位桁）。
+        // 収まっている行では位置が変わらないので、見た目は従来どおり右寄せ
+        .defaultScrollAnchor(.trailing)
     }
 }

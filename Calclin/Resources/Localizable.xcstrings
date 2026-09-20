@@ -105,13 +105,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Too many digits"
+            "value" : "Overflow"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "桁数オーバー"
+            "value" : "桁あふれ"
           }
         }
       }

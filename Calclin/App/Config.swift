@@ -81,6 +81,11 @@ let UNIT_BASELINE_RATIO: CGFloat = 0.09
 /// 漢字は全角の字面いっぱいに描かれるので、.center 揃えで数字とちょうど合う
 let UNIT_BASELINE_REFERENCE = "坪"
 
+/// ロール行の本文サイズ。
+/// 最新行の記号（= ≒）は数式モードでもこの基準に合わせ、
+/// 電卓モードと同じ見え方にする
+let ROLL_BODY_FONT_SIZE: CGFloat = 15.0
+
 
 /// 単位を数値と同じ高さに見せるための補正量（`HStack(alignment: .center)` 前提）。
 ///
@@ -150,10 +155,12 @@ func calcLatestAnswerDescenderGap(inputRowFontScale: CGFloat) -> CGFloat {
     calcLatestAnswerFontSize(inputRowFontScale: inputRowFontScale) * 0.225
 }
 
-/// 拡大表示の [=] 行で、記号（= ≒）を数値に合わせるための下げ量。
-/// HStack の既定（.center）は「箱の中心」で揃えるので、背の高い数値の隣では
-/// 小さい記号が上に浮く。実際に描かれるインクの中心どうしを揃えて、
-/// 数式モード（1つの Text でベースラインが揃う）と同じ見え方にする
+/// 拡大表示の [=] 行で、記号（= ≒）を数値の縦中央に合わせるための
+/// **持ち上げ量**（プラス＝ベースラインから上へ）。
+/// 実際に描かれるインクの中心どうしを揃えるので、字形の違う = と ≒ で値が変わる。
+/// - `AttributedString.baselineOffset` にはそのまま渡す（プラスが上）
+/// - `.offset(y:)` に渡すときは符号を反転する（プラスが下）。
+///   さらに scaleEffect(y: -1) の中ではもう一度反転することに注意
 @MainActor
 func operatorBaselineDrop(answerSize: CGFloat, operatorSize: CGFloat,
                           symbol: String = FM_ANS) -> CGFloat {

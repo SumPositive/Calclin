@@ -1956,6 +1956,7 @@ final class CalcViewModel: ObservableObject {
 
     /// 電卓モード：Base単位の AZDecimal を calcUnitDef の表示文字列（数値+単位）に変換する
     private func unitDisplayStr(_ base: AZDecimal) -> String {
+        if base.isNaN { return String(localized: "calc.error.overflowDigits") }
         guard let def = calcUnitDef else { return base.formatted(calcConfig) }
         let converted = fromBaseValue(base, toUnitDef: def)
         return AZDecimal(converted).formatted(calcConfig) + def.formula
@@ -1963,6 +1964,8 @@ final class CalcViewModel: ObservableObject {
 
     /// 電卓モード：中間結果（runningTotal）用 — Base単位のままで表示する
     private func baseUnitDisplayStr(_ base: AZDecimal) -> String {
+        // 桁あふれは "nan" と出さず理由を書く（単位も付けない）
+        if base.isNaN { return String(localized: "calc.error.overflowDigits") }
         guard let def = calcUnitDef,
               let baseCode = def.unitBase, baseCode != UNIT_CODE_BARE,
               def.code != baseCode,
@@ -2147,7 +2150,12 @@ final class CalcViewModel: ObservableObject {
         }
         let resultDisplayStr: String
         let resultNumStr: String
-        if let def = displayUnit {
+        if resultBase.isNaN {
+            // 桁あふれ（計算できなかった）。"nan" のまま出すと意味が伝わらないので、
+            // 答えの位置に理由を出す。単位は付けない
+            resultNumStr = resultBase.value
+            resultDisplayStr = String(localized: "calc.error.overflowDigits")
+        } else if let def = displayUnit {
             resultNumStr = fromBaseValue(resultBase, toUnitDef: def)
             resultDisplayStr = AZDecimal(resultNumStr).formatted(calcConfig) + def.formula
         } else {
@@ -2170,11 +2178,12 @@ final class CalcViewModel: ObservableObject {
         // 数値と単位は分けて持つ（数式モードと同じ形）。
         // answer に単位を混ぜると、表示側で色や太さを分けられない
         // answer は丸めずに保存する（表示側で設定桁に丸める）
+        // 桁あふれの行は単位を持たせない（「桁あふれ㎡」になってしまう）
         let row = HistoryRow(tokens: [], formula: AttributedString(""),
-                             answer: displayUnit == nil
+                             answer: displayUnit == nil || resultBase.isNaN
                                  ? resultBase.value
                                  : resultNumStr,
-                             unitFormula: displayUnit?.formula,
+                             unitFormula: resultBase.isNaN ? nil : displayUnit?.formula,
                              sourceUnitCode: sourceUnit?.code,
                              rollLines: rollLinesBuilding)
         historyRows.append(row)
@@ -2182,7 +2191,9 @@ final class CalcViewModel: ObservableObject {
         answerTrigger += 1
 
         // 次の計算へ — 結果トークンを表示単位で保持、accumulator は Base単位
-        accumulator = resultBase
+        // 桁あふれの答えは引き継がない（そのまま持つと次の計算も
+        // すべて桁あふれになり、[CA] を押すまで復帰できない）
+        accumulator = resultBase.isNaN ? .zero : resultBase
         pendingOp = nil
         rollLinesBuilding = []
         isCalcNewEntry = true
@@ -2476,11 +2487,16 @@ final class CalcViewModel: ObservableObject {
                 // 最終行: 結果を再計算
                 let resultDisplayStr: String
                 let resultNumStr: String
-                if let def = calcUnitDef {
+                if acc.isNaN {
+                    // 編集した結果が桁あふれになることもある（= 行と同じ扱い）
+                    resultNumStr = acc.value
+                    resultDisplayStr = String(localized: "calc.error.overflowDigits")
+                } else if let def = calcUnitDef {
                     resultNumStr = fromBaseValue(acc, toUnitDef: def)
                     resultDisplayStr = AZDecimal(resultNumStr).formatted(calcConfig) + def.formula
                 } else {
-                    resultNumStr = acc.rounded(calcConfig).value
+                    // 保存値は丸めない（表示だけ設定桁で丸める）
+                    resultNumStr = acc.value
                     resultDisplayStr = acc.formatted(calcConfig)
                 }
                 lines[idx].value = resultDisplayStr
@@ -2526,6 +2542,16 @@ final class CalcViewModel: ObservableObject {
         case FM_DIV, FM_DIV_:  result = lhs / rhs
         default:                return lhs
         }
+        // 桁あふれは NaN で返る。知らせたうえで、NaN のまま返す。
+        // ＃ここで lhs（計算前の値）に戻してはいけない。
+        //   呼び出し側は「計算できた」と思い込み、= 行に直前の値が出てしまう。
+        //   NaN は表示側（displayFormatted など）が「桁あふれ」と描くので、
+        //   そのまま流したほうが正しく伝わる
+        //   （数式モードは AZFormula が .failure(.overflow) を返す別経路）
+        if result.isNaN {
+            log(.error, "桁あふれ: \(lhs.value) \(op) \(rhs.value)")
+            Manager.shared.toast(String(localized: "calc.error.overflowDigits"), wait: 3.0)
+        }
         return result   // 丸めなし：accumulator は最大精度で保持し、表示時に formatted(calcConfig) で丸める
     }
 
@@ -2535,9 +2561,19 @@ final class CalcViewModel: ObservableObject {
     /// 保持している値（丸めていない）を、設定の小数桁数で表示用に整形する。
     /// 保存値は最大精度なので、表示のたびにここで丸める
     func displayFormatted(_ value: String) -> String {
+        // 桁あふれ（計算できなかった）は理由を出す。
+        // ＃"nan" は Double(_:) が受け付けてしまうので、数値判定より先に弾く。
+        //   AZDecimal("nan") は数字が無いので 0 になり、
+        //   桁あふれが「答えが 0」に化けてしまう
+        if isNaNValue(value) { return String(localized: "calc.error.overflowDigits") }
         // エラー文字列などの非数値はそのまま返す
         guard Double(value) != nil else { return value }
         return AZDecimal(value).rounded(calcConfig).formatted(calcConfig)
+    }
+
+    /// 計算できなかった値（桁あふれ・ゼロ除算など）か
+    private func isNaNValue(_ value: String) -> Bool {
+        value.lowercased() == "nan"
     }
 
     /// ロール行の表示文字列を、いまの設定で作り直す。
@@ -2546,6 +2582,10 @@ final class CalcViewModel: ObservableObject {
     /// - Parameter line: 対象の行
     /// - Returns: 数値＋単位の表示文字列
     func rollLineDisplay(_ line: RollLine) -> String {
+        // 桁あふれは "nan" と出さず理由を書く
+        if isNaNValue(line.rawBase) || isNaNValue(line.value) {
+            return String(localized: "calc.error.overflowDigits")
+        }
         // 数値として扱えない行（エラー文字列など）は記録された表示をそのまま使う
         guard Double(line.rawBase) != nil else { return line.value }
         // ＃% 割 分 厘 の行は value に記号が入っていて（"5%"）、
@@ -2554,16 +2594,28 @@ final class CalcViewModel: ObservableObject {
             || line.value.hasSuffix(FM_PER_BU) || line.value.hasSuffix(FM_PER_RI) {
             return line.value
         }
-        let number = displayFormatted(line.rawBase)
         guard let code = line.unitCode,
-              let formula = unitFormula(for: code) else { return number }
-        return number + formula
+              let def = keyboardViewModel.keyDef(code: code),
+              let formula = unitFormula(for: code) else {
+            return displayFormatted(line.rawBase)
+        }
+        // ＃rawBase は Base単位（明細行）。表示単位のラベルを付けるなら、
+        //   数値も表示単位へ戻す必要がある。
+        //   そのまま並べると 20坪 が「66.1157坪」（㎡ の値＋坪）になる
+        //   ただし = 行（isFinal）の rawBase は最初から表示単位の答え
+        let shown = line.isFinal
+            ? line.rawBase
+            : fromBaseValue(AZDecimal(line.rawBase), toUnitDef: def)
+        return displayFormatted(shown) + formula
     }
 
     /// ロール行の中間結果（左端に小さく出る値）を、いまの設定で作り直す。
     /// `runningTotal` も計算時点の整形済み文字列なので、`accBase` から組み直す
     func rollRunningTotalDisplay(_ line: RollLine) -> String? {
         guard let stored = line.runningTotal, !stored.isEmpty else { return nil }
+        if isNaNValue(line.accBase) || isNaNValue(stored) {
+            return String(localized: "calc.error.overflowDigits")
+        }
         guard Double(line.accBase) != nil else { return stored }
         // 単位は記録された文字列の末尾に付いているので、数値部だけ差し替える
         let number = displayFormatted(line.accBase)
@@ -2577,6 +2629,7 @@ final class CalcViewModel: ObservableObject {
 
     /// 保持している値を最大精度のまま整形する（長押しで出す吹き出し用）
     func fullPrecisionFormatted(_ value: String) -> String {
+        if isNaNValue(value) { return String(localized: "calc.error.overflowDigits") }
         guard Double(value) != nil else { return value }
         var config = calcConfig
         config.decimalDigits = AZ_INTERNAL_DECIMAL_DIGITS
@@ -2585,7 +2638,7 @@ final class CalcViewModel: ObservableObject {
 
     /// 表示用に丸めた値と、保持している値が違うか（＝長押しで見る意味があるか）
     func hasHiddenPrecision(_ value: String) -> Bool {
-        guard Double(value) != nil else { return false }
+        guard !isNaNValue(value), Double(value) != nil else { return false }
         return displayFormatted(value) != fullPrecisionFormatted(value)
     }
 
