@@ -100,6 +100,38 @@
         }
       }
     },
+    "calc.error.overflowDigits" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Too many digits — the result may be inaccurate"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "桁数が多すぎます。結果が正しくない可能性があります"
+          }
+        }
+      }
+    },
+    "calc.fullPrecision.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full precision value"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最大精度の値"
+          }
+        }
+      }
+    },
     "calc.error.divideByZero" : {
       "localizations" : {
         "en" : {

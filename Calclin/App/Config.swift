@@ -55,6 +55,7 @@ let COLOR_TITLE: Color = .secondary         // App Name
 let COLOR_CALC_INACTIVE: Color = .secondary // Calc非活性枠
 let COLOR_NUMBER: Color = .primary          // 数値
 let COLOR_ANSWER: Color = COLOR_NUMBER      // 答え
+
 let COLOR_OPERATOR: Color = .cyan           // 演算子
 let COLOR_OPERATOR_WAIT: Color = .gray      // 待機演算子　右端の[.]や[)]
 let COLOR_UNIT: Color = .secondary          // 単位
@@ -149,12 +150,13 @@ func calcLatestAnswerDescenderGap(inputRowFontScale: CGFloat) -> CGFloat {
     calcLatestAnswerFontSize(inputRowFontScale: inputRowFontScale) * 0.225
 }
 
-/// 拡大表示の [=] 行で、演算子を数値のベースラインに合わせるための下げ量。
+/// 拡大表示の [=] 行で、記号（= ≒）を数値に合わせるための下げ量。
 /// HStack の既定（.center）は「箱の中心」で揃えるので、背の高い数値の隣では
-/// 小さい演算子が上に浮く。その差だけ下げて、数式モード（1つの Text で
-/// ベースラインが揃う）と同じ見え方にする
+/// 小さい記号が上に浮く。実際に描かれるインクの中心どうしを揃えて、
+/// 数式モード（1つの Text でベースラインが揃う）と同じ見え方にする
 @MainActor
-func operatorBaselineDrop(answerSize: CGFloat, operatorSize: CGFloat) -> CGFloat {
+func operatorBaselineDrop(answerSize: CGFloat, operatorSize: CGFloat,
+                          symbol: String = FM_ANS) -> CGFloat {
     func rounded(_ size: CGFloat, _ weight: UIFont.Weight) -> UIFont {
         let base = UIFont.systemFont(ofSize: size, weight: weight)
         guard let d = base.fontDescriptor.withDesign(.rounded) else { return base }
@@ -162,10 +164,30 @@ func operatorBaselineDrop(answerSize: CGFloat, operatorSize: CGFloat) -> CGFloat
     }
     let answerFont = rounded(answerSize, .bold)
     let operatorFont = rounded(operatorSize, .regular)
-    // 箱の中心からベースラインまでの距離の差＝浮いている量
+
+    // 記号（= ≒）は左右対称なので、ベースラインではなく「インクの中心」を
+    // 数字の中心に合わせたほうが揃って見える。
+    // ベースライン揃えだと記号が 3pt ほど沈む（実測：= で 2.8pt、≒ で 3.3pt）
+    if let numberCenter = inkCenterY("0123456789", font: answerFont),
+       let symbolCenter = inkCenterY(symbol, font: operatorFont) {
+        return numberCenter - symbolCenter
+    }
+
+    // 測れなかったときは従来どおり箱の中心で揃える
     let answerMid = answerFont.lineHeight / 2 + answerFont.descender
     let operatorMid = operatorFont.lineHeight / 2 + operatorFont.descender
     return answerMid - operatorMid
+}
+
+/// 文字の「インクの中心」をベースラインからの距離で返す。
+/// 字形によって実際に描かれる高さが違うので、見た目を揃えるには実測が要る
+@MainActor
+private func inkCenterY(_ text: String, font: UIFont) -> CGFloat? {
+    let line = CTLineCreateWithAttributedString(
+        NSAttributedString(string: text, attributes: [.font: font]))
+    let bounds = CTLineGetBoundsWithOptions(line, .useGlyphPathBounds)
+    guard !bounds.isNull else { return nil }
+    return (bounds.minY + bounds.maxY) / 2
 }
 
 /// 入力行の高さ。
@@ -302,6 +324,16 @@ let CALC_COUNT_MAX: Int = 3
 let FORMULA_LENGTH_MAX: Int = 200
 
 
+// 内部計算・保存に使う小数桁数。
+// AZDecimal(SBCD) エンジンの上限（整数30桁・小数30桁）に合わせる。
+// 計算途中と保存値はこの精度のまま持ち、丸めるのは画面に出すときだけにする
+// （途中で設定桁に丸めると、小さい値が 0 になって二度と戻らない）
+let AZ_INTERNAL_DECIMAL_DIGITS: Int = 30
+
+// AZDecimal(SBCD) が扱える整数部の桁数。
+// これを超えると例外にならず、黙って下位桁が欠ける
+let AZ_INTERNAL_INTEGER_DIGITS: Int = 30
+
 // Setting 初期値
 // 小数部の表示最大桁数（この桁まで可変、0埋めしない）
 let SETTING_decimalDigits_MAX: Double = 10.0
@@ -313,6 +345,11 @@ let FM_DECIMAL  = "."   // 小数点
 let FM_PT_LEFT  = "("   // 左括弧
 let FM_PT_RIGHT = ")"   // 右括弧
 let FM_ANS      = "="   // 答え
+// 表示のために丸めた答えに使う記号（U+2252 ほぼ等しい）。
+// 設定の小数桁数で丸めた結果、保持している値と一致しないときにこちらを出す。
+// 「=」のままだと丸めた値を厳密な答えと誤読されるため、記号で区別する
+// （長押しで全桁を表示できる合図も兼ねる）
+let FM_ANS_APPROX = "\u{2252}"   // ≒
 // 四則演算子
 let FM_OPERATORS = "+-*/×÷"  // 四則演算子
 let FM_ADD      = "+"   // 加算 ASCII+（U+002B） テンキー上のAsciiプラス

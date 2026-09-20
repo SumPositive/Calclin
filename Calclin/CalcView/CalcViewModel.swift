@@ -103,6 +103,9 @@ final class CalcViewModel: ObservableObject {
         var sourceUnitCode: String?
         var memo: String?           // メモ
         var rollLines: [RollLine]?  // 電卓モード用ロール行。nil = 式モード
+        /// 表示のために丸めた答えか（PDF など、View の外へ渡すときの目印）。
+        /// 画面表示では viewModel.hasHiddenPrecision() で都度判定するので使わない
+        var isAnswerRounded: Bool = false
     }
     @Published var historyRows: [HistoryRow] = []
 
@@ -399,9 +402,13 @@ final class CalcViewModel: ObservableObject {
                 }
             } else {
                 // 数式モード：式＝答え（単位つき）
+                // row.answer は丸めていない保持値なので、画面と同じく設定桁に丸める
                 let formula = String(row.formula.characters)
-                let answer = minusSignedDisplay(row.answer) + (row.unitFormula ?? "")
-                lines.append(formula.isEmpty ? answer : "\(formula)\(FM_ANS)\(answer)")
+                let answer = minusSignedDisplay(displayFormatted(row.answer))
+                    + (row.unitFormula ?? "")
+                // 丸めた値は ≒ で示す（画面の表示と揃える）
+                let sign = hasHiddenPrecision(row.answer) ? FM_ANS_APPROX : FM_ANS
+                lines.append(formula.isEmpty ? answer : "\(formula)\(sign)\(answer)")
             }
             if let memo = row.memo, !memo.isEmpty {
                 lines.append(memo)
@@ -1084,11 +1091,14 @@ final class CalcViewModel: ObservableObject {
 
     /// ロールの [=] 行をタップして、答えを入力行に引用する（電卓モード）
     /// - 数値と単位をそのまま引用し、続けて演算子（既定は [+]）を置く
-    /// - 連続してタップすれば合計を積み上げられる
+    /// - 連続して呼べば合計を積み上げられる
     /// - 入力途中の値があっても引用値で置き換える
     /// - Parameters:
-    ///   - line: タップされた [=] 行
+    ///   - line: 対象の [=] 行
     /// - Returns: 引用できたら true。単位の基準が合わず加算できない場合は false
+    /// - Note: いまは呼び出し元がない。ロールのタップで入力行を書き換えるのをやめ、
+    ///   「入力行が変わるのはキーボード操作だけ」に整理したため。
+    ///   積み上げは今後 [M+][M-] キーから使う想定で残している
     @MainActor
     @discardableResult
     func quoteRollAnswer(_ line: RollLine) -> Bool {
@@ -1470,9 +1480,11 @@ final class CalcViewModel: ObservableObject {
                 }
 
                 // add History
+                // answer は丸めずに保存する。表示側で設定桁に丸めるので、
+                // 表示桁を上げれば保持している精度まで見える
                 let row = HistoryRow( tokens: tokens,
                                       formula: formulaAttr,
-                                      answer: AZDecimal(answer).formatted(calcConfig),
+                                      answer: answer,
                                       unitFormula: ans_unitFormula,
                                       sourceUnitCode: sourceUnitCode,
                                       memo: nil)
@@ -1934,13 +1946,10 @@ final class CalcViewModel: ObservableObject {
     private func toBaseValue(_ numStr: String, unitDef: KeyDefinition?) -> AZDecimal {
         if let def = unitDef, def.code != def.unitBase, let conv = def.unitConv {
             // Base単位への変換: num * conv
-            // ＃ここは計算途中の内部値なので、設定の小数桁数で丸めてはいけない。
-            //   小さい単位（㎟ など）は Base単位に直すと桁が下がるため、
-            //   設定桁数で丸めると 0 になって値そのものを失う
-            //   （例：5㎟ → 5*0.000001 は小数5桁だと 0、最大桁なら 0.000005）
+            // answer() は既定で最大精度を返すので、ここで桁を指定する必要はない
+            // （設定桁で丸めると 5㎟ → 0 のように値そのものを失う）
             let expr = numStr + "*" + conv
-            let baseStr = answer(expr, decimalDigits: Int(SETTING_decimalDigits_MAX))
-            return AZDecimal(baseStr)
+            return AZDecimal(answer(expr))
         }
         return AZDecimal(numStr)
     }
@@ -1966,7 +1975,8 @@ final class CalcViewModel: ObservableObject {
     /// 電卓モード：Base単位の値を指定単位に変換した文字列を返す
     private func fromBaseValue(_ base: AZDecimal, toUnitDef: KeyDefinition?) -> String {
         guard let def = toUnitDef, def.code != def.unitBase, let conv = def.unitConv else {
-            return base.rounded(calcConfig).value
+            // 丸めずに返す（保存値は最大精度、丸めるのは表示時だけ）
+            return base.value
         }
         let expr = base.value + "/" + conv
         return answer(expr)
@@ -2141,7 +2151,8 @@ final class CalcViewModel: ObservableObject {
             resultNumStr = fromBaseValue(resultBase, toUnitDef: def)
             resultDisplayStr = AZDecimal(resultNumStr).formatted(calcConfig) + def.formula
         } else {
-            resultNumStr = resultBase.rounded(calcConfig).value
+            // 保存値は丸めない。表示だけ設定桁で丸める
+            resultNumStr = resultBase.value
             resultDisplayStr = resultBase.formatted(calcConfig)
         }
 
@@ -2158,10 +2169,11 @@ final class CalcViewModel: ObservableObject {
         // 履歴へ記録
         // 数値と単位は分けて持つ（数式モードと同じ形）。
         // answer に単位を混ぜると、表示側で色や太さを分けられない
+        // answer は丸めずに保存する（表示側で設定桁に丸める）
         let row = HistoryRow(tokens: [], formula: AttributedString(""),
                              answer: displayUnit == nil
-                                 ? resultDisplayStr
-                                 : AZDecimal(resultNumStr).formatted(calcConfig),
+                                 ? resultBase.value
+                                 : resultNumStr,
                              unitFormula: displayUnit?.formula,
                              sourceUnitCode: sourceUnit?.code,
                              rollLines: rollLinesBuilding)
@@ -2520,12 +2532,95 @@ final class CalcViewModel: ObservableObject {
 
     // MARK: - Private Methods
 
-    /// 数式から答えを計算する（文字列→評価→丸め→raw文字列）
-    /// - Returns: 丸め済みの数値文字列。エラー時はローカライズ済みエラー文字列
-    /// - Parameter decimalDigits: 計算に使う小数桁数（nil なら設定値）。
-    ///   ＃AZFormula.evaluateDecimal は渡した config の桁数で丸めた値を返すので、
-    ///     細かい値が必要なときは「評価する前に」桁数を上げる必要がある
-    ///     （評価後に rounded() で桁数を増やしても、すでに 0 なので戻らない）
+    /// 保持している値（丸めていない）を、設定の小数桁数で表示用に整形する。
+    /// 保存値は最大精度なので、表示のたびにここで丸める
+    func displayFormatted(_ value: String) -> String {
+        // エラー文字列などの非数値はそのまま返す
+        guard Double(value) != nil else { return value }
+        return AZDecimal(value).rounded(calcConfig).formatted(calcConfig)
+    }
+
+    /// ロール行の表示文字列を、いまの設定で作り直す。
+    /// `RollLine.value` は計算した時点の設定で整形済みなので、そのまま出すと
+    /// 小数桁数を変えても古い桁のまま残る。丸めていない `rawBase` から組み直す
+    /// - Parameter line: 対象の行
+    /// - Returns: 数値＋単位の表示文字列
+    func rollLineDisplay(_ line: RollLine) -> String {
+        // 数値として扱えない行（エラー文字列など）は記録された表示をそのまま使う
+        guard Double(line.rawBase) != nil else { return line.value }
+        // ＃% 割 分 厘 の行は value に記号が入っていて（"5%"）、
+        //   rawBase は解決後の値（0.05）なので組み直せない。記録された表示を使う
+        if line.value.hasSuffix(FM_PERC) || line.value.hasSuffix(FM_PER_WARI)
+            || line.value.hasSuffix(FM_PER_BU) || line.value.hasSuffix(FM_PER_RI) {
+            return line.value
+        }
+        let number = displayFormatted(line.rawBase)
+        guard let code = line.unitCode,
+              let formula = unitFormula(for: code) else { return number }
+        return number + formula
+    }
+
+    /// ロール行の中間結果（左端に小さく出る値）を、いまの設定で作り直す。
+    /// `runningTotal` も計算時点の整形済み文字列なので、`accBase` から組み直す
+    func rollRunningTotalDisplay(_ line: RollLine) -> String? {
+        guard let stored = line.runningTotal, !stored.isEmpty else { return nil }
+        guard Double(line.accBase) != nil else { return stored }
+        // 単位は記録された文字列の末尾に付いているので、数値部だけ差し替える
+        let number = displayFormatted(line.accBase)
+        guard let code = line.unitCode,
+              let def = keyboardViewModel.keyDef(code: code),
+              let baseCode = def.unitBase, baseCode != UNIT_CODE_BARE,
+              def.code != baseCode,
+              let baseDef = keyboardViewModel.keyDef(code: baseCode) else { return number }
+        return number + baseDef.formula
+    }
+
+    /// 保持している値を最大精度のまま整形する（長押しで出す吹き出し用）
+    func fullPrecisionFormatted(_ value: String) -> String {
+        guard Double(value) != nil else { return value }
+        var config = calcConfig
+        config.decimalDigits = AZ_INTERNAL_DECIMAL_DIGITS
+        return AZDecimal(value).formatted(config)
+    }
+
+    /// 表示用に丸めた値と、保持している値が違うか（＝長押しで見る意味があるか）
+    func hasHiddenPrecision(_ value: String) -> Bool {
+        guard Double(value) != nil else { return false }
+        return displayFormatted(value) != fullPrecisionFormatted(value)
+    }
+
+    /// 桁あふれの疑いがあればユーザーへ通知する。
+    /// AZDecimal(SBCD) は整数部30桁を超えても例外にならず、黙って下位桁が欠ける
+    /// （例：30桁 × 10 → 末尾が 0 に化ける）。値が壊れたまま気付けないのは危険なので、
+    /// 結果が上限桁に達していたら警告を出す
+    /// - Note: 乗算で桁が一周してしまう場合（30桁 × 30桁 → 1）はここでは検出できない。
+    ///   結果から見分けられないため、エンジン側（AZCalc）の対応が要る
+    private func warnIfOverflow(_ decimal: AZDecimal, formula: String) {
+        let digits = integerDigitCount(decimal.value)
+        guard digits >= AZ_INTERNAL_INTEGER_DIGITS else { return }
+        log(.warning, "桁あふれの可能性: 整数部\(digits)桁  formula: \(formula)")
+        Manager.shared.toast(String(localized: "calc.error.overflowDigits"), wait: 3.0)
+    }
+
+    /// 数値文字列の整数部の桁数（符号と小数部を除く）
+    private func integerDigitCount(_ value: String) -> Int {
+        var text = value
+        if text.hasPrefix("-") { text.removeFirst() }
+        let intPart = text.split(separator: Character(FM_DECIMAL),
+                                 omittingEmptySubsequences: false).first.map(String.init) ?? "0"
+        // "0.5" のような 0 始まりは 1 桁扱い
+        let trimmed = intPart.drop(while: { $0 == "0" })
+        return trimmed.isEmpty ? 1 : trimmed.count
+    }
+
+    /// 数式から答えを計算する（文字列→評価→raw文字列）
+    /// - Returns: **丸めていない**数値文字列。エラー時はローカライズ済みエラー文字列
+    /// - Note: 値は常に内部の最大精度（小数30桁）で返し、丸めるのは表示時だけにする。
+    ///   ＃AZFormula.evaluateDecimal は渡した config の桁数で丸めた値を返すため、
+    ///     ここで設定桁を渡すと、その時点で情報が失われて後から復元できない
+    ///     （例：5/1000000 は小数5桁だと 0 になり、以後どう丸めても 0 のまま）
+    /// - Parameter decimalDigits: 計算に使う小数桁数（nil なら最大精度）。
+    ///   通常は指定しない。表示用に丸めたいときは呼び出し側で formatted(calcConfig) する
     private func answer(_ formula: String, decimalDigits: Int? = nil) -> String {
         guard !formula.isEmpty else {
             log(.warning, "formula: なし")
@@ -2535,10 +2630,12 @@ final class CalcViewModel: ObservableObject {
         log(.info, "formula: \(formula)")
 
         var config = calcConfig
-        if let decimalDigits { config.decimalDigits = decimalDigits }
+        // 既定は最大精度。保存する値を丸めないための要
+        config.decimalDigits = decimalDigits ?? AZ_INTERNAL_DECIMAL_DIGITS
         switch AZFormula.evaluateDecimal(formula, config: config) {
         case .success(let decimal):
-            // .keepFull は rounded(_:) が self を返すため全桁保持される
+            // 桁あふれは黙って値が欠けるので、ここで気付けるようにする
+            warnIfOverflow(decimal, formula: formula)
             return decimal.value
         case .failure(.tooLong):
             log(.warning, "formula: FORMULA_MAX_LENGTH OVER")

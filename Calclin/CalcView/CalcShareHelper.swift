@@ -95,8 +95,10 @@ private struct CalcPDFContent: View {
                         Text(row.formula)
                             .font(.system(size: base * fontScale, design: .rounded).monospacedDigit())
                         if !row.answer.isEmpty {
-                            // 単位は answer と分けて持っているので、ここで連結して出す
-                            Text(verbatim: row.answer + (row.unitFormula ?? ""))
+                            // 単位は answer と分けて持っているので、ここで連結して出す。
+                            // 丸めた答えは ≒ を前に付ける（画面と同じ表し方）
+                            Text(verbatim: (row.isAnswerRounded ? FM_ANS_APPROX + " " : "")
+                                 + row.answer + (row.unitFormula ?? ""))
                                 .font(.system(size: base * fontScale, weight: .bold, design: .rounded).monospacedDigit())
                                 .foregroundStyle(COLOR_ANSWER)
                         }
@@ -190,6 +192,16 @@ func makeCalcPDF(viewModel: CalcViewModel, fontScale: CGFloat) -> URL? {
         }
     }
     guard !rows.isEmpty else { return nil }
+
+    // answer は丸めていない保持値なので、画面と同じく設定桁に丸めてから描く。
+    // 丸めた行は記号を ≒ にして、厳密な値でないことを PDF 上でも示す
+    rows = rows.map { row in
+        guard !row.answer.isEmpty else { return row }
+        var copy = row
+        copy.answer = viewModel.displayFormatted(row.answer)
+        copy.isAnswerRounded = viewModel.hasHiddenPrecision(row.answer)
+        return copy
+    }
 
     let minPt: CGFloat = 8.0 / 2.54 * 72   // 8cm
     let maxPt: CGFloat = 29.7 / 2.54 * 72  // A4横幅

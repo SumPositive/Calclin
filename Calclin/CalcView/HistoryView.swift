@@ -50,11 +50,6 @@ struct HistoryView: View {
                                              viewModel.startRollEdit(historyIndex: index,
                                                                      lineIndex: lineIdx)
                                          },
-                                         onTapAnswer: { line in
-                                             if viewModel.quoteRollAnswer(line) == false {
-                                                 Manager.shared.toast(String(localized: "calc.quote.unitMismatch"))
-                                             }
-                                         },
                                          viewModel: viewModel)
                             } else {
                                 CustomCell(viewModel: viewModel, row: row, rowIndex: index,
@@ -121,21 +116,11 @@ struct HistoryView: View {
                                 }
                                 .tint(COLOR_ANSWER) // スワイプ背景色
                             }
-                            // 行全体のタップは「式＝答え」の行だけ。
-                            // ロール明細の行はセル内で行ごとにタップを受けるので、
-                            // ここで拾うと二重になる
-                            .onTapGesture(count: 2) { // ダブルタップ時の処理
-                                guard row.rollLines == nil else { return }
-                                // 式コピペ　row.tokenからformulaTextを再現する
-                                viewModel.formulaFromHistoryToken(row)
-                            }
-                            // シングルタップで答えを引用（電卓モードの [=] 行タップと揃える）
-                            .onTapGesture {
-                                guard row.rollLines == nil else { return }
-                                if viewModel.quoteHistoryAnswer(row) == false {
-                                    Manager.shared.toast(String(localized: "calc.quote.unitMismatch"))
-                                }
-                            }
+                            // ＃ロールのタップで入力行を書き換えない。
+                            //   入力行が変わるのはキーボード操作だけ、と役割を分けている。
+                            //   - タップ ＝ 丸める前の値を見せる（CustomCell 内で処理）
+                            //   - 式コピペ・答えコピペ ＝ スワイプメニューから明示的に行う
+                            //   （ダブルタップの式コピペは、スワイプメニューと重複するため廃止）
                     }
                 }
                 .scaleEffect(y: -1) // 上下反転：末尾固定スクロールのため（List+swipeActions維持の唯一の方法）
@@ -194,6 +179,10 @@ struct CustomCell: View {
     /// 履歴の最新行かどうか（最新の答えだけ入力行と同じ書体・大きさで見せる）
     var isLatest: Bool = false
     // 単位タップで出す換算ポップオーバー（この行の中で完結させる）
+    /// 答えのタップで、丸める前の値を吹き出しで見せる（押された位置も持つ）
+    @State private var fullPrecisionValue: FullPrecisionItem?
+    /// セル全体の大きさ（吹き出しをタップ位置から出すのに使う）
+    @State private var cellSize: CGSize = .zero
     @State private var isUnitConvertPresented = false
 
     private let fontSize: CGFloat = 16.0
@@ -226,11 +215,67 @@ struct CustomCell: View {
         withLineBreakHints(plainFormulaTextRaw)
     }
 
+    /// 表示用の答え（保存値は丸めていないので、ここで設定桁に丸める）
+    private var displayedAnswer: String {
+        viewModel.displayFormatted(row.answer)
+    }
+
+    /// 「≒ 答え（＋単位）」の描画幅。
+    /// 1行表示では式と答えが1つの Text なので、タップを答え側だけに絞るために測る
+    private var answerDrawnWidth: CGFloat {
+        let size = fontSize * calcFontScale
+        let numberFont = UIFont.systemFont(ofSize: size, weight: .bold)
+        let signFont = UIFont.systemFont(ofSize: size, weight: .regular)
+        var width = (minusSignedDisplay(displayedAnswer) as NSString)
+            .size(withAttributes: [.font: numberFont]).width
+        width += (answerSign as NSString).size(withAttributes: [.font: signFont]).width
+        if let unit = row.unitFormula {
+            width += (unit as NSString).size(withAttributes: [.font: signFont]).width
+        }
+        return width
+    }
+
+    /// タップ位置が「≒ 答え」の上か（行は右寄せなので、右端から答え幅ぶん）。
+    /// 電卓と同じく、式の部分を押しても反応しないようにする
+    /// - 幅が測れないときは従来どおり行全体で受ける
+    private func isOnAnswer(_ x: CGFloat) -> Bool {
+        guard cellSize.width > 0 else { return true }
+        // 指の太さぶん少し広げて押しやすくする
+        let slack: CGFloat = 8
+        return x >= cellSize.width - answerDrawnWidth - slack
+    }
+
+    /// 吹き出しを出す位置（セルに対する割合）。
+    /// タップした値のすぐそばから出したいので、押された座標を使う
+    /// ＃RollCell と違い、CustomCell は List の反転を「要素ごと」に
+    ///   打ち消している（セル自身は反転したまま）。
+    ///   座標系もセル自身に付くので、y は上下を入れ替える必要がある
+    private var fullPrecisionAnchor: UnitPoint {
+        guard cellSize.width > 0, cellSize.height > 0,
+              let point = fullPrecisionValue?.tapPoint else {
+            return UnitPoint(x: 0.5, y: 0.5)
+        }
+        let x = point.x / cellSize.width
+        let y = 1.0 - point.y / cellSize.height
+        return UnitPoint(x: min(max(x, 0), 1), y: min(max(y, 0), 1))
+    }
+
+    /// 表示のために丸められているか（＝長押しで全桁が見られるか）
+    private var isAnswerRounded: Bool {
+        viewModel.hasHiddenPrecision(row.answer)
+    }
+
+    /// 答えの前に置く記号。丸めているときは ≒ にして、
+    /// 表示が厳密な値ではないこと（長押しで全桁が見られること）を示す
+    private var answerSign: String {
+        isAnswerRounded ? FM_ANS_APPROX : FM_ANS
+    }
+
     /// 最新行以外の1行表示「式＝答え単位（＋メモ）」
     private var historyLineText: AttributedString {
-        var equal = AttributedString(FM_ANS)
+        var equal = AttributedString(answerSign)
         equal.foregroundColor = COLOR_OPERATOR
-        var answer = AttributedString(minusSignedDisplay(row.answer))
+        var answer = AttributedString(minusSignedDisplay(displayedAnswer))
         // 答えは式より目立たせる（電卓モードの [=] 行と揃える）
         answer.font = .system(size: fontSize * calcFontScale,
                               weight: .bold, design: .rounded).monospacedDigit()
@@ -298,11 +343,11 @@ struct CustomCell: View {
         HStack(spacing: 0) {
             Spacer(minLength: 0)
             Text({
-                var equal = AttributedString(FM_ANS)
+                var equal = AttributedString(answerSign)
                 equal.foregroundColor = COLOR_OPERATOR
                 equal.font = .system(size: fontSize * calcFontScale,
                                      weight: .regular, design: .rounded)
-                var answer = AttributedString(minusSignedDisplay(row.answer))
+                var answer = AttributedString(minusSignedDisplay(displayedAnswer))
                 answer.font = setting.numberFont.font(size: latestAnswerFontSize, weight: .bold)
                 return equal + answer
             }())
@@ -311,6 +356,17 @@ struct CustomCell: View {
                 .lineLimit(1)
                 // 桁数が多いと幅を超えるので、従来サイズまでは縮めて収める
                 .minimumScaleFactor((fontSize * calcFontScale) / latestAnswerFontSize)
+                // タップで、表示のために丸める前の値を見せる。
+                // ≒ と数値は1つの Text なので、どちらを押しても反応する
+                // ＃親のタップ（ダブルタップの式コピペ）より先に受け取る
+                .contentShape(Rectangle())
+                .highPriorityGesture(
+                    SpatialTapGesture(coordinateSpace: .named(rollCellSpace)).onEnded { g in
+                        guard isAnswerRounded else { return }
+                        fullPrecisionValue = FullPrecisionItem(value: row.answer,
+                                                               tapPoint: g.location)
+                    }
+                )
 
             if let unit = latestUnitText {
                 Text(unit)
@@ -408,9 +464,39 @@ struct CustomCell: View {
                     .opacity(colorScheme == .dark ? 0.55 : 1.0)
                     .multilineTextAlignment(.trailing) // 複数行で右寄せ
                     .frame(maxWidth: .infinity, alignment: .trailing)
+                    // 最新行以外も ≒ が出るので、同じくタップで全桁を見られるようにする
+                    .contentShape(Rectangle())
+                    .highPriorityGesture(
+                        SpatialTapGesture(coordinateSpace: .named(rollCellSpace)).onEnded { g in
+                            guard isAnswerRounded else { return }
+                            // 式と答えが1つの Text なので、答えの上を押したときだけ反応する
+                            guard isOnAnswer(g.location.x) else { return }
+                            fullPrecisionValue = FullPrecisionItem(value: row.answer,
+                                                                   tapPoint: g.location)
+                        }
+                    )
             }
         }
         .frame(maxWidth: .infinity) // 親View内側一杯に広げる
+        // セル内のどこをタップしたかを測るための座標系
+        .coordinateSpace(name: rollCellSpace)
+        .background {
+            GeometryReader { cellGeo in
+                Color.clear
+                    .onAppear { cellSize = cellGeo.size }
+                    .onChange(of: cellGeo.size) { _, size in cellSize = size }
+            }
+        }
+        // 吹き出しはセルに1つだけ置き、押された位置から出す
+        .popover(item: $fullPrecisionValue,
+                 attachmentAnchor: .point(fullPrecisionAnchor),
+                 arrowEdge: .top) { item in
+            FullPrecisionPopover(
+                value: viewModel.fullPrecisionFormatted(item.value),
+                unit: row.unitFormula
+            )
+            .presentationCompactAdaptation(.popover)
+        }
     }
 }
 
@@ -436,12 +522,6 @@ struct RollView: View {
 
     /// [=] 行をタップして答えを入力行へ引用する
     /// - 基準単位が違って足せない場合は引用せず、理由を知らせる
-    private func quoteAnswer(_ line: CalcViewModel.RollLine) {
-        if viewModel.quoteRollAnswer(line) == false {
-            Manager.shared.toast(String(localized: "calc.quote.unitMismatch"))
-        }
-    }
-
     var body: some View {
         ScrollViewReader { proxy in
             List {
@@ -455,9 +535,8 @@ struct RollView: View {
                              onTapLine: { lineIdx in
                                  viewModel.startRollEdit(historyIndex: -1, lineIndex: lineIdx)
                              },
-                             onTapAnswer: { line in
-                                 quoteAnswer(line)
-                             })
+                             // 入力途中のロールでも ≒ のタップや単位の換算を使えるようにする
+                             viewModel: viewModel)
                         .id("live")
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden, edges: .all)
@@ -477,9 +556,6 @@ struct RollView: View {
                                      editingLineIndex: viewModel.editingLineIndex,
                                      onTapLine: { lineIdx in
                                          viewModel.startRollEdit(historyIndex: index, lineIndex: lineIdx)
-                                     },
-                                     onTapAnswer: { line in
-                                         quoteAnswer(line)
                                      },
                                      // 直近の計算結果だけ入力行と同じ書体にする
                                      // 直近の結果を強調するのは [=] の直後だけ。
@@ -546,14 +622,9 @@ struct RollView: View {
                             }
                             .tint(COLOR_ANSWER) // スワイプ背景色
                         }
-                        // 「式＝答え」の行はここでタップを受ける。
-                        // ロール明細の行はセル内で行ごとに受けるので対象外
-                        .onTapGesture {
-                            guard row.rollLines == nil else { return }
-                            if viewModel.quoteHistoryAnswer(row) == false {
-                                Manager.shared.toast(String(localized: "calc.quote.unitMismatch"))
-                            }
-                        }
+                        // ＃シングルタップでの答え引用は廃止した。
+                        //   タップは「丸める前の値を見せる」役割に統一し（CustomCell 内で処理）、
+                        //   引用はスワイプメニューの「答えコピペ」から行う
                 }
             }
             .scaleEffect(y: -1)
@@ -625,15 +696,20 @@ struct RollCell: View {
     var editingLineIndex: Int = 0
     var onTapLine: ((Int) -> Void)? = nil
     /// [=] 行をタップしたとき（答えを入力行へ引用する）
-    var onTapAnswer: ((CalcViewModel.RollLine) -> Void)? = nil
     /// 履歴の最新行かどうか（最新の [=] だけ入力行と同じ書体で見せる）
     var isLatest: Bool = false
     /// 換算リストを出すために参照する（最新の [=] 行の単位タップ）
     var viewModel: CalcViewModel? = nil
     // 単位タップで出す換算ポップオーバー（この行の中で完結させる）
     @State private var isUnitConvertPresented = false
+    /// 長押しされた行の、丸める前の値（nil = 吹き出しなし）。
+    /// 行ごとに中身が違うので Bool ではなく値そのものを持つ
+    @State private var fullPrecisionValue: FullPrecisionItem?
     // 吹き出しを単位の位置に合わせるために行幅を測る
+    /// 行の幅。単位の吹き出し位置と、タップの左右判定に使う
     @State private var rowWidth: CGFloat = 0
+    /// セル全体の大きさ（吹き出しをタップ位置から出すのに使う）
+    @State private var cellSize: CGSize = .zero
     @Environment(\.colorScheme) var colorScheme
     // 文字サイズ「自動」ではシステム Dynamic Type から CalcView 用倍率を決める
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -687,19 +763,54 @@ struct RollCell: View {
         editingHistoryIndex == historyIndex && editingLineIndex == lineIdx
     }
 
-    @ViewBuilder
-    private func rtText(_ value: String, size: CGFloat) -> some View {
-        Text(minusSignedDisplay(value))
+    /// 吹き出しを出す位置（セルに対する割合）。
+    /// タップした値のすぐそばから出したいので、押された座標を使う
+    private var fullPrecisionAnchor: UnitPoint {
+        guard cellSize.width > 0, cellSize.height > 0,
+              let point = fullPrecisionValue?.tapPoint else {
+            return UnitPoint(x: 0.5, y: 0.5)
+        }
+        // ＃y の反転は不要。座標系（coordinateSpace）も popover も
+        //   scaleEffect(y: -1) より後ろに付けているので、
+        //   タップ位置とアンカーは同じ（反転後の）座標軸で揃っている
+        let x = point.x / cellSize.width
+        let y = point.y / cellSize.height
+        return UnitPoint(x: min(max(x, 0), 1), y: min(max(y, 0), 1))
+    }
+
+    /// 中間結果（行の左端に小さく出る値）
+    /// - Parameters:
+    ///   - accBase: 丸めていない中間結果。≒ の判定とタップ表示に使う
+    /// ＃単一の Text を return するだけなので @ViewBuilder は付けない
+    ///   （明示 return と併用すると builder が無効になり警告が出る）
+    private func rtText(_ value: String, size: CGFloat, accBase: String? = nil) -> some View {
+        // 中間結果も答えと同じく、丸めているなら ≒ を付けてタップできるようにする
+        let isRounded = accBase.map { viewModel?.hasHiddenPrecision($0) ?? false } ?? false
+        let sign = isRounded ? FM_ANS_APPROX : FM_ANS
+        return Text(sign + " " + minusSignedDisplay(value))
             .font(.system(size: size, weight: .light, design: .rounded).monospacedDigit())
             .lineLimit(1)
             .fixedSize(horizontal: true, vertical: false)
             .foregroundStyle(Color.secondary.opacity(0.7))
+            .contentShape(Rectangle())
+            // ≒ が出ている中間結果は、タップで丸める前の値を見せる
+            .highPriorityGesture(
+                SpatialTapGesture(coordinateSpace: .named(rollCellSpace)).onEnded { g in
+                    guard isRounded, let accBase else { return }
+                    // 中間結果は Base単位なので、単位は付けずに出す
+                    fullPrecisionValue = FullPrecisionItem(value: accBase,
+                                                           tapPoint: g.location)
+                }
+            )
     }
 
     // 本体は単一の HStack を return するだけなので @ViewBuilder は付けない
     // （明示 return と併用すると builder が無効化されエラーになる）
     private func valueText(opStr: String, value: String, isFinal: Bool,
-                           unitCode: String? = nil) -> some View {
+                           unitCode: String? = nil,
+                           rawBase: String? = nil) -> some View {
+        // 表示のために丸められているか（＝長押しで全桁が見られるか）
+        let isRounded = rawBase.map { viewModel?.hasHiddenPrecision($0) ?? false } ?? false
         // 単位は常に別 Text に分ける（数値と色・太さを変えるため）。
         // タップで換算リストを出せるのは最新の [=] 行だけ
         let unitFormula = viewModel?.unitFormula(for: unitCode) ?? nil
@@ -708,37 +819,62 @@ struct RollCell: View {
         let numberPart = (unitFormula.map { value.hasSuffix($0)
             ? String(value.dropLast($0.count)) : value }) ?? value
 
-        // 拡大表示の [=] 行では、演算子が数値より 4.2pt ほど浮いて見える。
+        // 丸めている行の [=] は ≒ にして、表示が厳密な値でないことを示す
+        // （明細行の演算子 + − × ÷ はそのまま）
+        let displayOp = (isRounded && opStr == FM_ANS) ? FM_ANS_APPROX : opStr
+        // 拡大表示の [=] 行では、記号が数値より浮いて見える。
         // HStack の既定（.center）は箱の中心で揃えるため、背の高い数値の隣では
-        // 小さい演算子が上に寄るのが原因（数式モードは1つの Text なのでズレない）。
+        // 小さい記号が上に寄るのが原因（数式モードは1つの Text なのでズレない）。
         // HStack 全体を .firstTextBaseline にすると単位の位置まで動いてしまうので、
-        // 演算子だけをベースラインぶん下げて合わせる
+        // 記号だけを下げて、インクの中心どうしで揃える。
+        // ＃= と ≒ は字形が違うので、実際に出す記号を渡して測る
         let opBaselineDrop = isLatest && isFinal
             ? operatorBaselineDrop(answerSize: latestAnswerFontSize,
-                                   operatorSize: fontSize * calcFontScale)
+                                   operatorSize: fontSize * calcFontScale,
+                                   symbol: operatorDisplay(displayOp))
             : 0
         return HStack(spacing: 0) {
-            if !opStr.isEmpty {
-                Text(operatorDisplay(opStr) + " ")
-                    .font(.system(size: fontSize * calcFontScale, weight: .regular, design: .rounded))
-                    .foregroundStyle(COLOR_OPERATOR)
-                    .offset(y: opBaselineDrop)
+            // 記号（≒ など）と数値はまとめて1つの長押し範囲にする。
+            // ≒ が「全桁を見られる」合図なので、そこからも長押しできないと分かりにくい
+            HStack(spacing: 0) {
+                if !opStr.isEmpty {
+                    Text(operatorDisplay(displayOp) + " ")
+                        .font(.system(size: fontSize * calcFontScale,
+                                      weight: .regular, design: .rounded))
+                        .foregroundStyle(COLOR_OPERATOR)
+                        .offset(y: opBaselineDrop)
+                }
+                Text(minusSignedDisplay(numberPart))
+                    // 最新の [=] だけは入力行と同じ書体・サイズにして、直前の答えを見つけやすくする
+                    .font(isLatest && isFinal
+                          ? setting.numberFont.font(size: latestAnswerFontSize, weight: .bold)
+                          : .system(size: fontSize * calcFontScale,
+                                    weight: isFinal ? .bold : .regular,
+                                    design: .rounded)
+                              .monospacedDigit())
+                    .foregroundStyle(isFinal ? COLOR_ANSWER : COLOR_NUMBER)
+                    // 大きくしたぶん桁数が多いと幅を超えるので、狭いパネルでは縮めて収める
+                    // （従来サイズまで縮み、それ以上は小さくしない）
+                    .minimumScaleFactor(isLatest && isFinal
+                                        ? (fontSize * calcFontScale) / latestAnswerFontSize
+                                        : 1.0)
+                    .lineLimit(1)
             }
-            Text(minusSignedDisplay(numberPart))
-                // 最新の [=] だけは入力行と同じ書体・サイズにして、直前の答えを見つけやすくする
-                .font(isLatest && isFinal
-                      ? setting.numberFont.font(size: latestAnswerFontSize, weight: .bold)
-                      : .system(size: fontSize * calcFontScale,
-                                weight: isFinal ? .bold : .regular,
-                                design: .rounded)
-                          .monospacedDigit())
-                .foregroundStyle(isFinal ? COLOR_ANSWER : COLOR_NUMBER)
-                // 大きくしたぶん桁数が多いと幅を超えるので、狭いパネルでは縮めて収める
-                // （従来サイズまで縮み、それ以上は小さくしない）
-                .minimumScaleFactor(isLatest && isFinal
-                                    ? (fontSize * calcFontScale) / latestAnswerFontSize
-                                    : 1.0)
-                .lineLimit(1)
+            .contentShape(Rectangle())
+            // 丸めている行（≒）は、タップで丸める前の値を見せる。
+            // ＃単位タップと同じく highPriorityGesture で受ける。
+            //   List の行は swipeActions を持つと外側の onTapGesture が
+            //   届かないので、内側の要素で直接拾う必要がある
+            // ＃popover はここに置かない。valueText は ViewThatFits の中から
+            //   呼ばれるので、候補ごとに宣言されて表示されないことがある
+            .highPriorityGesture(
+                SpatialTapGesture(coordinateSpace: .named(rollCellSpace)).onEnded { g in
+                    guard isRounded, let rawBase else { return }
+                    fullPrecisionValue = FullPrecisionItem(value: rawBase,
+                                                           unitCode: unitCode,
+                                                           tapPoint: g.location)
+                }
+            )
 
             if let unitFormula, let unitCode, let viewModel {
                 let finalLine = row.rollLines?.last(where: { $0.isFinal })
@@ -798,23 +934,31 @@ struct RollCell: View {
                 ForEach(Array(lines.enumerated()), id: \.offset) { lineIdx, line in
                     // 左: 中間結果（小）/ 右: 演算子+数値。衝突すれば中間結果を省く
                     let opStr = line.op.trimmingCharacters(in: .whitespaces)
-                    let rt = (showRunningTotal && !line.isFinal) ? line.runningTotal : nil
+                    // 中間結果も、いまの設定で組み直す（記録時の桁のまま残さない）
+                    let rt = (showRunningTotal && !line.isFinal)
+                        ? (viewModel?.rollRunningTotalDisplay(line) ?? line.runningTotal)
+                        : nil
                     let editing = isEditingLine(lineIdx)
                     ViewThatFits(in: .horizontal) {
                         // 候補1: 中間結果あり（左）＋ op+value（右）
                         if let rt, !rt.isEmpty {
                             HStack(spacing: 0) {
-                                rtText(rt, size: fontSize * 0.65 * calcFontScale)
+                                rtText(rt, size: fontSize * 0.65 * calcFontScale,
+                                       accBase: line.accBase)
                                     .fixedSize(horizontal: true, vertical: false)
                                 Spacer(minLength: 8)
-                                valueText(opStr: opStr, value: line.value, isFinal: line.isFinal,
-                                          unitCode: line.unitCode)
+                                valueText(opStr: opStr,
+                                          value: viewModel?.rollLineDisplay(line) ?? line.value,
+                                          isFinal: line.isFinal,
+                                          unitCode: line.unitCode, rawBase: line.rawBase)
                                     .fixedSize(horizontal: true, vertical: false)
                             }
                         }
                         // 候補2: 中間結果なし（常に収まる）
-                        valueText(opStr: opStr, value: line.value, isFinal: line.isFinal,
-                                  unitCode: line.unitCode)
+                        valueText(opStr: opStr,
+                                          value: viewModel?.rollLineDisplay(line) ?? line.value,
+                                          isFinal: line.isFinal,
+                                  unitCode: line.unitCode, rawBase: line.rawBase)
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .opacity(colorScheme == .dark ? 0.55 : 1.0)
@@ -834,15 +978,23 @@ struct RollCell: View {
                     .background(editing ? Color.accentColor.opacity(0.18) : Color.clear,
                                 in: RoundedRectangle(cornerRadius: 4))
                     .contentShape(Rectangle())
-                    // [=] 行：タップで答えを引用（連続タップで合計を積み上げられる）
+                    // タップの役割
+                    // - [=] 行：≒ が出ていれば丸める前の値を見せる（valueText 側で拾う）
+                    // - 明細行：編集を始める。ただし行の右半分だけを対象にする。
+                    //   左半分には中間結果（≒ 付き）が出ていて、そちらのタップと
+                    //   取り合いになるため、編集は数値が並ぶ右側に限る
+                    // ＃答えの引用（連続タップで積み上げ）は廃止した。
+                    //   同じタップに2つの意味を持たせると、≒ を押したつもりで
+                    //   引用されるなど取り違えが起きる。積み上げは [M+][M-] で担う
                     // メモは右スワイプメニューから入力する。
-                    // 行に長押しを付けると、内側の単位タップ（換算リスト）を奪うため置かない
-                    .onTapGesture {
-                        if line.isFinal {
-                            onTapAnswer?(line)
-                        } else {
-                            onTapLine?(lineIdx)
-                        }
+                    // 長押しは内側の単位タップ（換算リスト）を奪うため置かない
+                    .onTapGesture { location in
+                        // [=] 行のタップ（丸める前の値）は valueText 側で拾う
+                        guard !line.isFinal else { return }
+                        // 右半分だけで編集に入る（左半分は中間結果のタップに譲る）。
+                        // 幅が測れていないときは従来どおり行全体で受ける
+                        guard rowWidth <= 0 || location.x >= rowWidth / 2 else { return }
+                        onTapLine?(lineIdx)
                     }
                     // 換算ポップオーバーは ViewThatFits の外側に置く。
                     // 中（valueText）に置くと候補ごとに宣言されてしまい、
@@ -892,6 +1044,29 @@ struct RollCell: View {
         }
         .scaleEffect(y: -1)
         .frame(maxWidth: .infinity)
+        // セル内のどこをタップしたかを測るための座標系。
+        // 吹き出しをその位置から出すために使う
+        .coordinateSpace(name: rollCellSpace)
+        .background {
+            GeometryReader { cellGeo in
+                Color.clear
+                    .onAppear { cellSize = cellGeo.size }
+                    .onChange(of: cellGeo.size) { _, size in cellSize = size }
+            }
+        }
+        // 丸める前の値の吹き出し。
+        // ＃セルに1つだけ置く。行ごと（ForEach の中）に置くと、
+        //   同じ @State を見る popover が行数ぶん宣言されてしまい、
+        //   どれを出すか決まらず1つも表示されない
+        .popover(item: $fullPrecisionValue,
+                 attachmentAnchor: .point(fullPrecisionAnchor),
+                 arrowEdge: .top) { item in
+            FullPrecisionPopover(
+                value: viewModel?.fullPrecisionFormatted(item.value) ?? item.value,
+                unit: viewModel?.unitFormula(for: item.unitCode)
+            )
+            .presentationCompactAdaptation(.popover)
+        }
     }
 }
 
@@ -931,5 +1106,46 @@ struct HistoryMemoView: View {
             .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(4)
+    }
+}
+
+/// タップで表示する「丸める前の値」。popover(item:) に渡すため Identifiable にする
+struct FullPrecisionItem: Identifiable {
+    let value: String
+    /// 単位コード（吹き出しは行の外に置くので、対象の単位も一緒に持たせる）
+    var unitCode: String? = nil
+    /// 押された位置（セル座標系）。吹き出しをその近くから出すために使う
+    var tapPoint: CGPoint? = nil
+    var id: String { value + "|" + (unitCode ?? "") }
+}
+
+/// ロール／履歴セル内のタップ位置を測るための座標系名
+let rollCellSpace = "rollCellSpace"
+
+/// 答えの長押しで出す「丸める前の値」の吹き出し。
+/// 画面には設定の小数桁数で丸めた値が出ているので、
+/// 実際に計算へ使われている値をここで確認できるようにする
+struct FullPrecisionPopover: View {
+    /// 最大精度のまま整形した数値
+    let value: String
+    /// 単位（無い計算では nil）
+    let unit: String?
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Text("calc.fullPrecision.title")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            // 桁が多いので折り返して全部見せる（右端で切らない）
+            Text(minusSignedDisplay(value) + (unit ?? ""))
+                .font(.system(.body, design: .rounded).monospacedDigit())
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.center)
+        }
+        .padding(12)
+        // 長い値でも読める幅を確保しつつ、画面からはみ出さない
+        .frame(maxWidth: 280)
     }
 }
