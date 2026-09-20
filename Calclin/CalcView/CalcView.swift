@@ -32,6 +32,8 @@ struct CalcView: View {
     @State private var isFunctionMenuPresented = false
     /// 機能メニューの右側に開いている内容（nil＝一覧だけ）
     @State private var functionMenuPane: InputFunctionMenuPopover.Pane? = nil
+    /// 入力行より上（ロール）の高さ。機能メニューをどちら向きに出すか決めるのに使う
+    @State private var rollAreaHeight: CGFloat = 0
     /// ロール消去の確認アラート
     @State private var isClearConfirmPresented = false
     // 入力行末尾の単位をタップしたときの換算ポップオーバー表示状態
@@ -247,6 +249,14 @@ struct CalcView: View {
                     }
                 }
                 .frame(maxHeight: .infinity)
+                // 機能メニューを上下どちらへ出すか決めるため、ロールの高さを測る
+                .background {
+                    GeometryReader { rollGeo in
+                        Color.clear
+                            .preference(key: RollAreaHeightPreferenceKey.self,
+                                        value: rollGeo.size.height)
+                    }
+                }
                 .overlay {
                     PaperRollLighting()
                 }
@@ -425,6 +435,9 @@ struct CalcView: View {
                     }
             }
             .padding(0)
+            .onPreferenceChange(RollAreaHeightPreferenceKey.self) { height in
+                rollAreaHeight = height
+            }
             // 入力行のガラスが「CalcView 全体のどこに居るか」を測れるようにする
             // （ロール枠と同じグラデーションを同じ高さで描くため）
             .coordinateSpace(name: paperGlassSpace)
@@ -511,6 +524,51 @@ struct CalcView: View {
     /// 機能メニューのアイコン。吹き出しが開くことを示す
     private var inputLineFunctionIcon: String { "bubble.middle.bottom" }
 
+    /// 機能メニュー（アイコン列）の高さ。
+    /// アイコン6行（各36pt）＋行間（2pt×5）＋上下の余白（8pt×2）。
+    /// ＃小さく見積もると「上に入る」と誤判定してスクロールになるので、
+    ///   iconRow の実寸（36pt）から計算する
+    private var functionMenuEstimatedHeight: CGFloat {
+        // 余白は functionMenuMargin 側で引くので、ここは中身の高さだけ
+        let rows: CGFloat = 6 * 36 + 5 * 2 + 16   // = 242
+        return rows * min(calcFontScale, 1.5)
+    }
+
+    /// 吹き出しと画面端・矢印のあいだに要る余白
+    private let functionMenuMargin: CGFloat = 40
+
+    /// ボタンより上（ロール側）に実際に置ける高さ
+    private var functionMenuSpaceAbove: CGFloat {
+        max(rollAreaHeight - functionMenuMargin, 0)
+    }
+
+    /// ボタンより下（キーボード側）に実際に置ける高さ。
+    /// CalcView からはキーボードを測れないので、画面の高さから引いて求める
+    private var functionMenuSpaceBelow: CGFloat {
+        let screenHeight = UIScreen.main.bounds.height
+        // 入力行より下＝画面の高さ － ロール － 入力行
+        let below = screenHeight - rollAreaHeight - inputLineHeight
+        return max(below - functionMenuMargin, 0)
+    }
+
+    /// 機能メニューに使える高さ（実際に出す向きの側の空き）
+    private var functionMenuAvailableHeight: CGFloat {
+        max(functionMenuSpaceAbove, functionMenuSpaceBelow)
+    }
+
+    /// 機能メニューを出す向き。
+    /// ＃arrowEdge: .bottom は「ボタンの上」に出す指定。
+    ///   ロールが低い端末では上に全項目が入らずスクロールになってしまうので、
+    ///   上下で広い方（たいていはキーボード側）へ出す
+    private var functionMenuArrowEdge: Edge {
+        // 広い方へ出す。
+        // ＃ロール側は「画面上端まで」しか使えず、実測してもなお足りずに
+        //   スクロールになった。キーボード側の方が広いので、そちらを優先する
+        functionMenuSpaceBelow >= functionMenuSpaceAbove
+            ? .top     // ボタンの下（キーボード側）へ開く
+            : .bottom  // ボタンの上（ロール側）へ開く
+    }
+
     /// 入力行の「機能」ボタン。PDF出力・色・フォントをまとめた吹き出しを出す
     /// - 吹き出しはこのボタンから出す（アンカーは入力行）
     private func inputLineFunctionButton(showsTitle: Bool, isCompact: Bool = false) -> some View {
@@ -525,11 +583,13 @@ struct CalcView: View {
                 isTightWidth: true
             )
         }
-        .popover(isPresented: $isFunctionMenuPresented, arrowEdge: .bottom) {
+        .popover(isPresented: $isFunctionMenuPresented,
+                 arrowEdge: functionMenuArrowEdge) {
             // 吹き出しは1枚だけ。中で左右に分けて「一覧＋選んだ内容」を同時に見せる
             // （iOS は1つの提示元から吹き出しを2枚同時に出せない）
             InputFunctionMenuPopover(
                 openPane: $functionMenuPane,
+                maxHeight: functionMenuAvailableHeight,
                 numberFontPreviewText: numberFontPreviewText,
                 numberFontPreviewSize: numberFontPreviewSize,
                 onCopyText: {
@@ -603,6 +663,8 @@ private struct InputFunctionMenuPopover: View {
     /// プルダウンの開閉（吹き出しの中でさらに候補リストを開く）
     @State private var isGroupTypeExpanded = false
     @State private var isRoundTypeExpanded = false
+    /// この高さに収める（画面からはみ出して iOS に縮められるのを防ぐ）
+    var maxHeight: CGFloat = .infinity
     let numberFontPreviewText: String
     let numberFontPreviewSize: CGFloat
     let onCopyText: () -> Void
@@ -624,6 +686,9 @@ private struct InputFunctionMenuPopover: View {
                     .frame(width: 230)
             }
         }
+        // 入りきらない高さのときだけ縦スクロールにする。
+        // ＃はみ出したまま出すと iOS が吹き出しごと縮めて、先頭の項目が隠れる
+        .modifier(FunctionMenuHeightLimit(maxHeight: maxHeight))
         .animation(.easeOut(duration: 0.18), value: openPane)
     }
 
@@ -1165,6 +1230,36 @@ private struct UnitListHeightKey: PreferenceKey {
 
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = max(value, nextValue())
+    }
+}
+
+/// 機能メニューを指定の高さに収める。
+/// 収まるなら素のまま、収まらないときだけスクロールさせる
+private struct FunctionMenuHeightLimit: ViewModifier {
+    let maxHeight: CGFloat
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if maxHeight.isFinite && maxHeight > 0 {
+            ScrollView(.vertical) {
+                // 横幅は中身のまま（ScrollView に潰されないよう固定する）
+                content
+                    .fixedSize(horizontal: true, vertical: false)
+            }
+            .frame(maxHeight: maxHeight)
+            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
+        } else {
+            content
+        }
+    }
+}
+
+/// ロール（入力行より上）の高さ。機能メニューの向きを決めるのに使う
+private struct RollAreaHeightPreferenceKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 

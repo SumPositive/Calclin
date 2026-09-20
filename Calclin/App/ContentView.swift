@@ -567,6 +567,9 @@ struct ContentView: View {
                 .frame(minWidth: APP_KB_WIDTH_MIN, maxWidth: APP_KB_WIDTH_MAX,
                        minHeight: minimumKeyboardHeight, maxHeight: APP_KB_HEIGHT_MAX)
                 .frame(height: normalizedKeyboardHeight)
+                // 入力行と接して窮屈に見えるので、少し離す。
+                // 高さの frame より外に付けて、リサイズで扱う高さは変えない
+                .padding(.top, APP_KB_TOP_GAP)
             }
             .background(Color.primary.opacity(0.05)) // 控えめな背景
             .zIndex(0)

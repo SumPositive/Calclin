@@ -40,6 +40,10 @@ let APP_KB_WIDTH_MAX : CGFloat = 480        // 最大（見栄えで決める）
 // KeyboardView 高さ
 let APP_KB_HEIGHT_MIN : CGFloat = 320       // 最小（SEの幅、全機能が見切れず使用できる状態）
 let APP_KB_HEIGHT_MAX : CGFloat = 500       // 最大（見栄えで決める）
+/// 入力行とキーボードの間隔。
+/// ＃0 だと入力行の数値とキーの上端が接して窮屈に見える。
+///   キーボードの高さ（リサイズ量）には含めず、外側の余白として足す
+let APP_KB_TOP_GAP : CGFloat = 8
 
 //-------------------------------------- Color関係
 
