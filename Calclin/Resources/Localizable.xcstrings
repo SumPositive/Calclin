@@ -105,13 +105,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Too many digits — the result may be inaccurate"
+            "value" : "Too many digits"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "桁数が多すぎます。結果が正しくない可能性があります"
+            "value" : "桁数オーバー"
           }
         }
       }

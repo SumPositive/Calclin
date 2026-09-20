@@ -2589,30 +2589,6 @@ final class CalcViewModel: ObservableObject {
         return displayFormatted(value) != fullPrecisionFormatted(value)
     }
 
-    /// 桁あふれの疑いがあればユーザーへ通知する。
-    /// AZDecimal(SBCD) は整数部30桁を超えても例外にならず、黙って下位桁が欠ける
-    /// （例：30桁 × 10 → 末尾が 0 に化ける）。値が壊れたまま気付けないのは危険なので、
-    /// 結果が上限桁に達していたら警告を出す
-    /// - Note: 乗算で桁が一周してしまう場合（30桁 × 30桁 → 1）はここでは検出できない。
-    ///   結果から見分けられないため、エンジン側（AZCalc）の対応が要る
-    private func warnIfOverflow(_ decimal: AZDecimal, formula: String) {
-        let digits = integerDigitCount(decimal.value)
-        guard digits >= AZ_INTERNAL_INTEGER_DIGITS else { return }
-        log(.warning, "桁あふれの可能性: 整数部\(digits)桁  formula: \(formula)")
-        Manager.shared.toast(String(localized: "calc.error.overflowDigits"), wait: 3.0)
-    }
-
-    /// 数値文字列の整数部の桁数（符号と小数部を除く）
-    private func integerDigitCount(_ value: String) -> Int {
-        var text = value
-        if text.hasPrefix("-") { text.removeFirst() }
-        let intPart = text.split(separator: Character(FM_DECIMAL),
-                                 omittingEmptySubsequences: false).first.map(String.init) ?? "0"
-        // "0.5" のような 0 始まりは 1 桁扱い
-        let trimmed = intPart.drop(while: { $0 == "0" })
-        return trimmed.isEmpty ? 1 : trimmed.count
-    }
-
     /// 数式から答えを計算する（文字列→評価→raw文字列）
     /// - Returns: **丸めていない**数値文字列。エラー時はローカライズ済みエラー文字列
     /// - Note: 値は常に内部の最大精度（小数30桁）で返し、丸めるのは表示時だけにする。
@@ -2634,8 +2610,6 @@ final class CalcViewModel: ObservableObject {
         config.decimalDigits = decimalDigits ?? AZ_INTERNAL_DECIMAL_DIGITS
         switch AZFormula.evaluateDecimal(formula, config: config) {
         case .success(let decimal):
-            // 桁あふれは黙って値が欠けるので、ここで気付けるようにする
-            warnIfOverflow(decimal, formula: formula)
             return decimal.value
         case .failure(.tooLong):
             log(.warning, "formula: FORMULA_MAX_LENGTH OVER")
@@ -2647,8 +2621,10 @@ final class CalcViewModel: ObservableObject {
             log(.error, "ゼロ除算: \(formula)")
             return String(localized: "calc.error.divideByZero")
         case .failure(.overflow):
+            // AZCalc 2.1.0 で乗算の桁あふれも確実に検出されるようになったので、
+            // 「エラー」ではなく桁数が原因だと分かる文言にする
             log(.error, "オーバーフロー: \(formula)")
-            return String(localized: "calc.result.error", defaultValue: "Error")
+            return String(localized: "calc.error.overflowDigits")
         case .failure(.unmatchedParenthesis):
             log(.error, "括弧の不一致: \(formula)")
             return String(localized: "calc.result.error", defaultValue: "Error")

@@ -330,10 +330,6 @@ let FORMULA_LENGTH_MAX: Int = 200
 // （途中で設定桁に丸めると、小さい値が 0 になって二度と戻らない）
 let AZ_INTERNAL_DECIMAL_DIGITS: Int = 30
 
-// AZDecimal(SBCD) が扱える整数部の桁数。
-// これを超えると例外にならず、黙って下位桁が欠ける
-let AZ_INTERNAL_INTEGER_DIGITS: Int = 30
-
 // Setting 初期値
 // 小数部の表示最大桁数（この桁まで可変、0埋めしない）
 let SETTING_decimalDigits_MAX: Double = 10.0

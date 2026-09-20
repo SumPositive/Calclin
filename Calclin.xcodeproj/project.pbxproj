@@ -795,8 +795,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SumPositive/AZCalc";
 			requirement = {
-				kind = exactVersion;
-				version = 2.0.0;
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
 			};
 		};
 		C3165E4B2EE6D68A00169223 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
