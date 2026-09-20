@@ -597,9 +597,12 @@ private struct InputFunctionMenuPopover: View {
     @EnvironmentObject var setting: SettingViewModel
 
     /// 右側に開いている内容。nil＝アイコン列だけ
-    enum Pane { case roll, color, font, scroll }
+    enum Pane { case roll, color, font, scroll, integer, decimal }
 
     @Binding var openPane: Pane?
+    /// プルダウンの開閉（吹き出しの中でさらに候補リストを開く）
+    @State private var isGroupTypeExpanded = false
+    @State private var isRoundTypeExpanded = false
     let numberFontPreviewText: String
     let numberFontPreviewSize: CGFloat
     let onCopyText: () -> Void
@@ -632,6 +635,11 @@ private struct InputFunctionMenuPopover: View {
             iconRow(systemName: "textformat.123", pane: .font, label: "common.font")
             iconRow(systemName: "arrow.down.to.line", pane: .scroll,
                     label: "settings.autoScroll")
+            // 数値の見え方（整数部・小数部）も、ロールを見ながら変えられるようにする
+            iconRow(systemName: "number", pane: .integer,
+                    label: "settings.section.integer")
+            iconRow(systemName: "dot.viewfinder", pane: .decimal,
+                    label: "settings.section.decimal")
         }
         .padding(.vertical, 8)
         .frame(width: 56)
@@ -655,6 +663,10 @@ private struct InputFunctionMenuPopover: View {
             )
         case .scroll:
             autoScrollPane
+        case .integer:
+            integerPane
+        case .decimal:
+            decimalPane
         }
     }
 
@@ -700,6 +712,143 @@ private struct InputFunctionMenuPopover: View {
             }
         }
         .padding(.bottom, 8)
+    }
+
+    /// 整数部（桁区切り方式・記号）。
+    /// 設定画面と同じ内容だが、吹き出しは幅が狭いので縦に積む
+    private var integerPane: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            paneTitle("settings.section.integer")
+
+            paneSubTitle("settings.groupingStyle")
+            // 候補が長め（例文つき）なので、設定画面と同じプルダウンで選ぶ
+            SettingDropdown(options: SettingViewModel.GroupType.allCases,
+                            selection: $setting.groupType,
+                            isExpanded: $isGroupTypeExpanded,
+                            minWidth: 210) { type in
+                // 例文の記号は、いま選んでいる区切り記号・小数点に合わせる
+                Text(type.localized(groupSeparator: setting.groupSeparator.symbol,
+                                    decimalSeparator: setting.decimalSeparator.symbol))
+            }
+            .padding(.horizontal, 10)
+            .onChange(of: setting.groupType) { _, newValue in
+                calcConfig.groupType = newValue.azGroupType
+                NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                AppAnalytics.logGroupTypeChanged(to: newValue)
+            }
+
+            paneSubTitle("settings.groupingSymbol")
+            // 記号は短いので横に並べる
+            HStack(spacing: 6) {
+                ForEach(SettingViewModel.GroupSeparator.allCases) { sep in
+                    symbolChip(sep.rawValue, isSelected: sep == setting.groupSeparator) {
+                        setting.groupSeparator = sep
+                        calcConfig.groupSeparator = sep.symbol
+                        NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                        AppAnalytics.logGroupSeparatorChanged(to: sep)
+                    }
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.bottom, 8)
+        }
+    }
+
+    /// 小数部（有効桁数・丸め処理・小数点）
+    private var decimalPane: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            paneTitle("settings.section.decimal")
+
+            // 有効桁数はスライダー。いまの値を数字でも見せる
+            HStack(spacing: 8) {
+                Text("settings.decimalDigits")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(" \(Int(setting.decimalDigits)) ")
+                    .font(.caption.monospacedDigit())
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .background(Color(.systemGray5))
+                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+            }
+            .padding(.horizontal, 10)
+
+            Slider(value: $setting.decimalDigits,
+                   in: 0...(SETTING_decimalDigits_MAX), step: 1.0)
+                .padding(.horizontal, 10)
+                .onChange(of: setting.decimalDigits) { _, newValue in
+                    calcConfig.decimalDigits = Int(newValue)
+                    calcConfig.trailZero = false
+                    NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                    AppAnalytics.logDecimalDigitsChanged(to: newValue)
+                }
+
+            paneSubTitle("settings.rounding")
+            SettingDropdown(options: SettingViewModel.RoundType.allCases,
+                            selection: $setting.roundType,
+                            isExpanded: $isRoundTypeExpanded,
+                            minWidth: 210) { type in
+                Text(type.localized)
+            }
+            .padding(.horizontal, 10)
+            .onChange(of: setting.roundType) { _, newValue in
+                calcConfig.roundType = newValue.azRoundType
+                NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                AppAnalytics.logRoundTypeChanged(to: newValue)
+            }
+
+            paneSubTitle("settings.decimalPoint")
+            HStack(spacing: 6) {
+                ForEach(SettingViewModel.DecimalSeparator.allCases) { sep in
+                    symbolChip(sep.rawValue, isSelected: sep == setting.decimalSeparator) {
+                        setting.decimalSeparator = sep
+                        calcConfig.decimalSeparator = sep.symbol
+                        NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                        AppAnalytics.logDecimalSeparatorChanged(to: sep)
+                    }
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.bottom, 8)
+        }
+    }
+
+    /// 吹き出しの見出し
+    private func paneTitle(_ key: LocalizedStringKey) -> some View {
+        Text(key)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.horizontal, 10)
+            .padding(.top, 8)
+    }
+
+    /// 吹き出しの中の小見出し
+    private func paneSubTitle(_ key: LocalizedStringKey) -> some View {
+        Text(key)
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 10)
+            .padding(.top, 6)
+    }
+
+    /// 記号の選択肢（短いので横並び）
+    private func symbolChip(_ text: String, isSelected: Bool,
+                            action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(isSelected ? setting.accentTheme.color : Color.primary)
+                .frame(minWidth: 40)
+                .padding(.vertical, 6)
+                .contentShape(Rectangle())
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(isSelected ? setting.accentTheme.color.opacity(0.12)
+                                         : Color(.secondarySystemBackground))
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     /// ロールの操作（コピー・書き出し・消去）

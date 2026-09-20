@@ -2102,7 +2102,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "丸め処理"
+            "value" : "丸め方式"
           }
         }
       }

@@ -99,8 +99,6 @@ struct SettingView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 8) {
                             modeSection
-                            integerSection
-                            decimalSection
                             infoSection
                             supportSection
                             footerSection
@@ -242,153 +240,6 @@ struct SettingView: View {
     }
 
     /// 整数部の見え方をまとめるカード
-    private var integerSection: some View {
-        SettingSectionCard(
-            title: "settings.section.integer",
-            iconName: "number",
-            tint: Color(.systemTeal)
-        ) {
-            VStack(alignment: .leading, spacing: 8) {
-                AdaptiveControlRow {
-                    // 桁区切りタイプ
-                    Text("settings.groupingStyle")
-                        .font(.subheadline)
-                } control: {
-                    SettingDropdown(options: SettingViewModel.GroupType.allCases,
-                                    selection: $viewModel.groupType,
-                                    isExpanded: dropdownBinding(.groupType),
-                                    minWidth: 210) { type in
-                        // 例文中の桁区切り記号・小数点を現在選択中の記号に動的置換して表示する
-                        Text(type.localized(groupSeparator: viewModel.groupSeparator.symbol,
-                                            decimalSeparator: viewModel.decimalSeparator.symbol))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .onChange(of: viewModel.groupType) { oldValue, newValue in
-                        log(.info, ".onChange groupType")
-                        // 選択されたときに呼ばれる処理
-                        viewModel.groupType = newValue
-                        calcConfig.groupType = newValue.azGroupType
-                        // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
-                        NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
-                        // 区切り方式の嗜好を把握するためにAnalyticsへ送信する
-                        AppAnalytics.logGroupTypeChanged(to: newValue)
-                    }
-                }
-                // 開いた候補を同じカード内の後続行より前面に出す
-                .zIndex(expandedDropdown == .groupType ? 60 : 0)
-
-                // 桁区切り記号
-                AdaptiveRadioRow(options: SettingViewModel.GroupSeparator.allCases,
-                                 selection: $viewModel.groupSeparator,
-                                 minOptionWidth: 60) {
-                    Text("settings.groupingSymbol")
-                        .font(.subheadline)
-                } label: { type in
-                    Text(type.rawValue)
-                }
-                .onChange(of: viewModel.groupSeparator) { oldValue, newValue in
-                    log(.info, ".onChange groupSeparator")
-                    // 選択されたときに呼ばれる処理
-                    viewModel.groupSeparator = newValue
-                    calcConfig.groupSeparator = newValue.symbol
-                    // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
-                    NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
-                    // 利用者が好む記号を記録して、次期UI改善の参考にする
-                    AppAnalytics.logGroupSeparatorChanged(to: newValue)
-                }
-            }
-            .padding(.top, -12)
-            .padding(.leading, sectionLeadingPadding)
-        }
-        // 候補ポップアップが下のカードに隠れないよう前面に出す
-        .zIndex(expandedDropdown == .groupType ? 50 : 0)
-    }
-
-    /// 小数部の見え方をまとめるカード
-    private var decimalSection: some View {
-        SettingSectionCard(
-            title: "settings.section.decimal",
-            iconName: "dot.viewfinder",
-            tint: Color(.systemIndigo)
-        ) {
-            VStack(alignment: .leading, spacing: 8) {
-                AdaptiveLabelRow {
-                    Text("settings.decimalDigits")
-                        .font(.subheadline)
-                    Text(" \(Int(viewModel.decimalDigits)) ")
-                        .monospacedDigit()
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
-                        .background(Color(.systemGray5))
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                    Slider(
-                        value: $viewModel.decimalDigits,
-                        in: 0...(SETTING_decimalDigits_MAX),
-                        step: 1.0
-                    )
-                    .onChange(of: viewModel.decimalDigits, { oldValue, newValue in
-                        log(.info, ".onChange decimalDigits")
-                        // @State decDigi 更新により描画
-                        viewModel.decimalDigits = newValue // Double型
-                        calcConfig.decimalDigits = Int(viewModel.decimalDigits)
-                        calcConfig.trailZero = false
-                        // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
-                        NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
-                        // 有効桁数の調整頻度を把握し、UI改善に役立てる
-                        AppAnalytics.logDecimalDigitsChanged(to: newValue)
-                    })
-                }
-                
-                AdaptiveControlRow {
-                    Text("settings.rounding")
-                        .font(.subheadline)
-                } control: {
-                    SettingDropdown(options: SettingViewModel.RoundType.allCases,
-                                    selection: $viewModel.roundType,
-                                    isExpanded: dropdownBinding(.roundType),
-                                    minWidth: 210) { type in
-                        Text(type.localized)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .onChange(of: viewModel.roundType) { oldValue, newValue in
-                        log(.info, ".onChange roundType")
-                        calcConfig.roundType = newValue.azRoundType
-                        // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
-                        NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
-                        // 丸め方法の選好をAnalyticsで収集し、デフォルト値検討に活用する
-                        AppAnalytics.logRoundTypeChanged(to: newValue)
-                    }
-                }
-                // 開いた候補を同じカード内の後続行より前面に出す
-                .zIndex(expandedDropdown == .roundType ? 60 : 0)
-
-                // 小数点
-                AdaptiveRadioRow(options: SettingViewModel.DecimalSeparator.allCases,
-                                 selection: $viewModel.decimalSeparator,
-                                 minOptionWidth: 72) {
-                    Text("settings.decimalPoint")
-                        .font(.subheadline)
-                } label: { type in
-                    Text(type.rawValue)
-                }
-                .onChange(of: viewModel.decimalSeparator) { oldValue, newValue in
-                    log(.info, ".onChange decimalSeparator")
-                    // 選択されたときに呼ばれる処理
-                    viewModel.decimalSeparator = newValue
-                    calcConfig.decimalSeparator = newValue.symbol
-                    // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
-                    NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
-                    // ロケール毎の好みを把握してUI文言改善に反映する
-                    AppAnalytics.logDecimalSeparatorChanged(to: newValue)
-                }
-            }
-            .padding(.top, -12)
-            .padding(.leading, sectionLeadingPadding)
-        }
-        // 候補ポップアップが下のカードに隠れないよう前面に出す
-        .zIndex(expandedDropdown == .roundType ? 50 : 0)
-    }
-
     /// 開発者応援ボタンをまとめるカード
     private var supportSection: some View {
         SettingSectionCard(
@@ -593,7 +444,8 @@ private enum SettingDropdownKind {
 }
 
 /// Dynamic Typeで欠けない独自プルダウン
-private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: View {
+/// - 設定シートと、入力行の「機能」吹き出しの両方から使う
+struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: View {
     @EnvironmentObject var viewModel: SettingViewModel
     @State private var buttonFrame: CGRect = .zero  // 吹き出し方向を決めるためのボタン位置
     let options: [Option]
@@ -612,6 +464,9 @@ private struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: Vi
                      arrowEdge: popupOpensUpward ? .bottom : .top) {
                 // 外側タップで閉じられる標準ポップアップとして表示する
                 popoverContent
+                    // 吹き出しは環境を引き継がないので、明示的に渡し直す
+                    // （入力行の「機能」吹き出しから開くときに必要）
+                    .environmentObject(viewModel)
                     .presentationCompactAdaptation(.popover)
                     .presentationBackground(Color(.systemBackground))
                     .padding(2)
@@ -883,54 +738,6 @@ private struct SettingRadioGroup<Option: Hashable & Identifiable, Label: View>: 
     }
 }
 
-/// ラジオ行を「見出し込み1行」「2段で選択肢1行」「選択肢折り返し」の順に選ぶ
-private struct AdaptiveRadioRow<Option: Hashable & Identifiable, Title: View, Label: View>: View {
-    let options: [Option]
-    @Binding var selection: Option
-    var minOptionWidth: CGFloat = 96
-    var maxOptionWidth: CGFloat = 240
-    var horizontalPadding: CGFloat = 10
-    var optionSpacing: CGFloat = 6
-    var groupPadding: CGFloat = 6
-    @ViewBuilder let title: () -> Title
-    @ViewBuilder let label: (Option) -> Label
-
-    var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .center, spacing: 8) {
-                title()
-                Spacer(minLength: 8)
-                radioGroup(wrapsOptions: false)
-            }
-
-            VStack(alignment: .leading, spacing: 3) {
-                title()
-                radioGroup(wrapsOptions: false)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-
-            VStack(alignment: .leading, spacing: 3) {
-                title()
-                radioGroup(wrapsOptions: true)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-        }
-    }
-
-    private func radioGroup(wrapsOptions: Bool) -> some View {
-        SettingRadioGroup(options: options,
-                          selection: $selection,
-                          minOptionWidth: minOptionWidth,
-                          maxOptionWidth: maxOptionWidth,
-                          horizontalPadding: horizontalPadding,
-                          optionSpacing: optionSpacing,
-                          groupPadding: groupPadding,
-                          wrapsOptions: wrapsOptions) { option in
-            label(option)
-        }
-    }
-}
-
 /// 選択肢を自然幅で並べ、入らない時だけ次の行へ送る
 private struct SettingFlowLayout: Layout {
     var spacing: CGFloat
@@ -1008,31 +815,6 @@ private struct SettingFlowLayout: Layout {
     }
 }
 
-/// アクセシビリティサイズ時は縦並び、それ以外は横並びにする適応レイアウト
-/// - 設定行のラベル＋ピッカーが横幅に収まらない時の対応
-private struct AdaptiveLabelRow<Content: View>: View {
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    let alignment: VerticalAlignment
-    @ViewBuilder let content: () -> Content
-
-    init(alignment: VerticalAlignment = .center, @ViewBuilder content: @escaping () -> Content) {
-        self.alignment = alignment
-        self.content = content
-    }
-
-    var body: some View {
-        if DynamicTypeSize.xxxLarge <= dynamicTypeSize {
-            // 大以上では操作部に横幅を渡し、選択肢の折り返しを減らす
-            VStack(alignment: .leading, spacing: 4) {
-                content()
-            }
-        } else {
-            HStack(alignment: alignment, spacing: 4) {
-                content()
-            }
-        }
-    }
-}
 
 /// カード感をSwiftUIで再現する共通コンポーネント
 private struct SettingSectionCard<Content: View>: View {
