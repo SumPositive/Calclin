@@ -253,10 +253,11 @@ struct CalcView: View {
             // （測定が1フレーム遅れると、伸びた瞬間に数字と重なってしまう）
             let showsModeMark = !showsInputTools
                 && inputLineTextWidth + 38 * min(calcFontScale, 1.5) < geo.size.width
-            // [?] は常に出したいが、入力行は右寄せで左へ伸びるので、
-            // 数字が届いたら重なる。届く前に消す（目印と同じ考え方）
-            let helpMarkWidth = 26 * min(calcFontScale, 1.5)
-            let showsHelpMark = inputLineTextWidth + helpMarkWidth < geo.size.width
+            // [?] はアプリ名と同じく、入力が始まったら消す。
+            // ＃入力行は右寄せで左へ伸びるので、残すと数字と重なる。
+            //   数字が届くまで粘る作りにしていたが、入力中もずっと出ていて
+            //   邪魔だったので、ツール類と同じタイミングで引っ込める
+            let showsHelpMark = showsInputTools
 
             VStack(spacing: 0) {
 
@@ -318,8 +319,8 @@ struct CalcView: View {
                     // - 数値と同じ右寄せ位置に出し、入力が始まったら消えるので
                     //   プレースホルダとして読める（showsInputTools と同じ条件）
                     .overlay(alignment: .trailing) {
-                        // ＃[?] は常に出す。アプリ名（app.title）は入力が始まると
-                        //   消えるが、説明はいつでも開けるようにしておきたい
+                        // ＃[?] とアプリ名は入力が始まると消える（数字と重なるため）。
+                        //   [?] は多面表示でも出す（アプリ名は1面のときだけ）
                         HStack(spacing: 8) {
                             if showsHelpMark {
                                 Button {
@@ -803,7 +804,9 @@ private struct InputFunctionMenuPopover: View {
         }
         // 入りきらない高さのときだけ縦スクロールにする。
         // ＃はみ出したまま出すと iOS が吹き出しごと縮めて、先頭の項目が隠れる
-        .modifier(FunctionMenuHeightLimit(maxHeight: maxHeight))
+        // フォント一覧は自前で縦スクロールするので、外側では包まない
+        .modifier(FunctionMenuHeightLimit(maxHeight: maxHeight,
+                                          contentScrollsItself: openPane == .font))
         .animation(.easeOut(duration: 0.18), value: openPane)
     }
 
@@ -1385,54 +1388,38 @@ private struct UnitListHeightKey: PreferenceKey {
 
 /// 機能メニューを指定の高さに収める。
 /// 収まるなら素のまま、収まらないときだけスクロールさせる
+/// 機能メニューを指定の高さに収める。
+///
+/// ＃縦スクロールを担当するのは必ず一層だけにする。
+///   - 中身が自前で ScrollView を持つ場合（フォント一覧）は、
+///     ここでは包まず高さだけ制限して、中身側にスクロールさせる
+///   - それ以外は、はみ出すときだけここで包む
+///   両方が ScrollView になると、指の動きがどちらに取られるか定まらない
 private struct FunctionMenuHeightLimit: ViewModifier {
     let maxHeight: CGFloat
+    /// 中身が自前でスクロールするか（true ならここでは包まない）
+    let contentScrollsItself: Bool
 
-    /// 上限を超えていたか。
-    /// ＃測る前は素のまま出す。常に ScrollView で包むと、収まっていても
-    ///   スクロールしてしまい、フォント一覧のように自前の ScrollView を
-    ///   持つ内容では縦スクロールが二重になる
-    /// ＃一度 true にしたら戻さない。ScrollView に入れた途端に中身の実寸が
-    ///   変わると、包む／包まないが交互に切り替わって震えるため
-    @State private var overflows = false
-
+    @ViewBuilder
     func body(content: Content) -> some View {
-        let measured = content.background {
-            GeometryReader { contentGeo in
-                Color.clear
-                    .preference(key: FunctionMenuContentHeightKey.self,
-                                value: contentGeo.size.height)
+        if contentScrollsItself {
+            // 中身にスクロールさせる。ここは高さを渡すだけ
+            content.frame(maxHeight: maxHeight)
+        } else {
+            // 収まるときは素のまま、はみ出すときだけスクロール。
+            // ＃ScrollView は中身の高さを超えない限りスクロールしないので、
+            //   常に包んでも「収まっていてもスクロールする」ことはない
+            ScrollView(.vertical) {
+                // 横幅は中身のまま（ScrollView に潰されないよう固定する）
+                content
+                    .fixedSize(horizontal: true, vertical: false)
             }
-        }
-
-        return Group {
-            if overflows {
-                ScrollView(.vertical) {
-                    // 横幅は中身のまま（ScrollView に潰されないよう固定する）
-                    measured
-                        .fixedSize(horizontal: true, vertical: false)
-                }
-                .frame(maxHeight: maxHeight)
-                .scrollBounceBehavior(.basedOnSize, axes: .vertical)
-            } else {
-                measured
-            }
-        }
-        .onPreferenceChange(FunctionMenuContentHeightKey.self) { height in
-            guard !overflows, maxHeight.isFinite, maxHeight > 0, height > 0 else { return }
-            if height > maxHeight { overflows = true }
+            .frame(maxHeight: maxHeight)
+            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
         }
     }
 }
 
-/// 機能メニューの中身の高さ
-private struct FunctionMenuContentHeightKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
-    }
-}
 
 /// 「機能」ボタンの位置（.global）。吹き出しの向きを決めるのに使う
 private struct FunctionButtonFramePreferenceKey: PreferenceKey {
@@ -1444,6 +1431,15 @@ private struct FunctionButtonFramePreferenceKey: PreferenceKey {
     }
 }
 
+
+/// 機能メニュー（アイコン列）の高さ。吹き出しをどちら向きに出すか決めるのに使う
+private struct FunctionMenuContentHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
 
 /// 入力行右端（[?]＋アプリ名）の幅
 private struct AppNameWidthPreferenceKey: PreferenceKey {
