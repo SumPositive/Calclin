@@ -17,6 +17,14 @@ extension CGRect {
 
 let KEYBOARD_PAGE_GAP = 20.0 // ページ間隔 padding以上無ければ隣ページが見えてしまう
 
+/// キーボードのページ切り替えアニメーション。
+/// 達人モードは操作に慣れている前提なので倍速にする（ロール切り替えと揃える）
+/// - Parameter base: 初心者モードでの秒数
+@MainActor
+func keyboardPageAnimation(_ base: Double, isBeginner: Bool) -> Animation {
+    .easeOut(duration: isBeginner ? base : base / 2)
+}
+
 struct KeyboardView: View {
     @ObservedObject var viewModel: KeyboardViewModel
     @ObservedObject var activeCalcViewModel: CalcViewModel
@@ -32,6 +40,9 @@ struct KeyboardView: View {
     // @State 変化あればViewが更新される
     @State private var selectedPage: Int = 2 // 初期で3ページ目（インデックス2）を表示
     @State private var dragOffset: CGFloat = 0
+
+    /// 達人モードではページ切り替えを倍速にする
+    private var isBeginner: Bool { setting.playMode == .beginner }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -89,7 +100,8 @@ struct KeyboardView: View {
                             }
                     }
                 }
-                .animation(.easeOut(duration: 0.35), value: selectedPage)
+                .animation(keyboardPageAnimation(0.35, isBeginner: isBeginner),
+                           value: selectedPage)
             }
             .padding(0)
             // iPadでは左右ページの一部が見えてしまうので、iPhone同様に現在のページだけを描画範囲に収める
@@ -101,7 +113,7 @@ struct KeyboardView: View {
                         dragOffset = value.translation.width
                     }
                     .onEnded { value in
-                        withAnimation(.easeOut(duration: 0.3)) {
+                        withAnimation(keyboardPageAnimation(0.3, isBeginner: isBeginner)) {
                             let w = value.translation.width
                             if abs(w) < SWIPE_THRESHOLD {
                                 withAnimation {
@@ -395,6 +407,9 @@ struct KeyboardFooterView: View {
     @EnvironmentObject var setting: SettingViewModel
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
+    /// 達人モードではページ切り替えを倍速にする
+    private var isBeginner: Bool { setting.playMode == .beginner }
+
     private var iconScale: CGFloat {
         setting.calcViewFontScale(for: dynamicTypeSize)
     }
@@ -440,7 +455,7 @@ struct KeyboardFooterView: View {
             }
             Spacer(minLength: 0)
         }
-        .animation(.easeOut(duration: 0.2), value: selectedPage)
+        .animation(keyboardPageAnimation(0.2, isBeginner: isBeginner), value: selectedPage)
     }
 
     /// インジケータのボタン同士の間隔。
