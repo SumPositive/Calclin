@@ -425,13 +425,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Using the keyboard"
+            "value" : "Changing the keyboard"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "キーボードを使う"
+            "value" : "キーボードを変える"
           }
         }
       }
@@ -448,22 +448,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "・左右にスワイプするか下の丸を押せばキーボードが切り替わります\n・キーを長押しすればキー定義を変更できます"
-          }
-        }
-      }
-    },
-    "calcFrame.help.intro" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "There are %lld rolls (calculation lists)"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ロール（計算一覧）は%lldつあります"
           }
         }
       }
@@ -538,13 +522,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "When several rolls are visible, you can also tap a roll directly to switch to it."
+            "value" : "There are %lld rolls (calculation lists)\n\u2022 When several rolls are visible, you can also tap a roll directly to switch to it"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ロールが複数見えているとき、ロールを直接タップしても切り替えることができます"
+            "value" : "ロール（計算一覧）は%lldつあります\n・ロールが複数見えているとき、ロールを直接タップしても切り替えることができます"
           }
         }
       }

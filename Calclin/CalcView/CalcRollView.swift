@@ -534,63 +534,51 @@ struct CalcRollHelpSheet: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 0) {
-                // まず全体像（いくつあるのか）を伝えてから、個々の操作を説明する。
-                // ＃スクロールしても見え続けるよう、ScrollView の外に置く
-                // ＃件数は CALC_COUNT_MAX から差し込む（文面に直接書かない）
-                Text(String(format: String(localized: "calcFrame.help.intro"),
-                            CALC_COUNT_MAX))
-                    .font(.subheadline)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
-
-                Divider()
-                    .padding(.top, 12)
-
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        // アイコンはヘッダのインジケータと同じ ◁▷ にして、
-                        // どれを操作する話か一目で分かるようにする
-                        section(title: "calcFrame.help.switch.title",
-                                body: "calcFrame.help.switch.body") {
-                            HStack(spacing: 2) {
-                                Image(systemName: "arrowtriangle.left")
-                                Image(systemName: "arrowtriangle.right")
-                            }
-                        }
-                        // アイコンはヘッダ両端のボタンと同じ [-][+] にする
-                        section(title: "calcFrame.help.count.title",
-                                body: "calcFrame.help.count.body") {
-                            HStack(spacing: 2) {
-                                Image(systemName: "minus.square")
-                                Image(systemName: "plus.square")
-                            }
-                        }
-                        section(title: "calcFrame.help.edit.title",
-                                body: "calcFrame.help.edit.body") {
-                            Image(systemName: "hand.tap")
-                        }
-                        section(title: "calcFrame.help.unit.title",
-                                body: "calcFrame.help.unit.body") {
-                            Image(systemName: "ruler")
-                        }
-                        section(title: "calcFrame.help.keyboard.title",
-                                body: "calcFrame.help.keyboard.body") {
-                            Image(systemName: "keyboard")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    // アイコンはヘッダのインジケータと同じ ◁▷ にして、
+                    // どれを操作する話か一目で分かるようにする
+                    // ＃先頭にロールの数を書く。件数は CALC_COUNT_MAX から
+                    //   差し込むので、文面に直接書かない
+                    section(title: "calcFrame.help.switch.title",
+                            bodyText: String(format:
+                                String(localized: "calcFrame.help.switch.body"),
+                                CALC_COUNT_MAX)) {
+                        HStack(spacing: 2) {
+                            Image(systemName: "arrowtriangle.left")
+                            Image(systemName: "arrowtriangle.right")
                         }
                     }
-                    .padding(20)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    // ＃ScrollView の中身を測る。外枠（VStack）を測ると
-                    //   「今開いている高さ」が返り、自分の値で自分が決まってしまう
-                    .background {
-                        GeometryReader { contentGeo in
-                            Color.clear
-                                .preference(key: HelpSheetHeightKey.self,
-                                            value: contentGeo.size.height)
+                    // アイコンはヘッダ両端のボタンと同じ [-][+] にする
+                    section(title: "calcFrame.help.count.title",
+                            body: "calcFrame.help.count.body") {
+                        HStack(spacing: 2) {
+                            Image(systemName: "minus.square")
+                            Image(systemName: "plus.square")
                         }
+                    }
+                    section(title: "calcFrame.help.edit.title",
+                            body: "calcFrame.help.edit.body") {
+                        Image(systemName: "hand.tap")
+                    }
+                    section(title: "calcFrame.help.unit.title",
+                            body: "calcFrame.help.unit.body") {
+                        Image(systemName: "ruler")
+                    }
+                    section(title: "calcFrame.help.keyboard.title",
+                            body: "calcFrame.help.keyboard.body") {
+                        Image(systemName: "keyboard")
+                    }
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                // ＃ScrollView の中身を測る。外枠（VStack）を測ると
+                //   「今開いている高さ」が返り、自分の値で自分が決まってしまう
+                .background {
+                    GeometryReader { contentGeo in
+                        Color.clear
+                            .preference(key: HelpSheetHeightKey.self,
+                                        value: contentGeo.size.height)
                     }
                 }
             }
@@ -637,7 +625,16 @@ struct CalcRollHelpSheet: View {
     /// 記号はヘッダの実物と同じものを並べたいので、呼び出し側から渡す
     private func section<Symbol: View>(
         title: LocalizedStringKey,
-        body: LocalizedStringKey,
+        body: LocalizedStringResource,
+        @ViewBuilder symbol: () -> Symbol
+    ) -> some View {
+        section(title: title, bodyText: String(localized: body), symbol: symbol)
+    }
+
+    /// 本文を組み立て済みの文字列で渡す版（件数などを差し込むとき用）
+    private func section<Symbol: View>(
+        title: LocalizedStringKey,
+        bodyText: String,
         @ViewBuilder symbol: () -> Symbol
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -646,7 +643,7 @@ struct CalcRollHelpSheet: View {
                 Text(title)
             }
             .font(.headline)
-            Text(body)
+            Text(bodyText)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 // 長い説明なので、幅で切らずに折り返す
