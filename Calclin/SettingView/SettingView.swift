@@ -262,7 +262,8 @@ struct SettingView: View {
                 .padding(.vertical, 4)
         }
         .buttonStyle(.borderedProminent)
-        .tint(.pink)
+        // 入力行と同じテーマ色にそろえる（固定のピンクだと配色から浮く）
+        .tint(viewModel.accentTheme.color)
         .sheet(isPresented: $showTipSheet) {
             TipSheetView()
                 .appFontScale(viewModel.fontScale)
