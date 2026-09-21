@@ -17,6 +17,9 @@ struct CalcView: View {
     /// ロールが1つだけ表示されているか。
     /// 2面・3面では入力行が狭くなるので、PDF・色・フォントとアプリ名は出さない
     var isSingleRoll: Bool = false
+    /// ロールをスクロールしている間 true。入力行だけを隠す
+    /// （ロール本体はパネルごと動くので隠さない）
+    var hidesInputLine: Bool = false
 
 
     private let narrowWidth: CGFloat = 320
@@ -471,6 +474,13 @@ struct CalcView: View {
                                 }
                         }
                     }
+                    // ロール切り替え中、入力行のツール・アプリ名までフェードすると
+                    // 文字だけが遅れて浮いて見える。パネルと一緒に動かしたいので、
+                    // アクティブ切り替えによる出し入れはアニメーションさせない
+                    .animation(nil, value: isActive)
+                    // スクロール中は入力行を消す。
+                    // ＃opacity だけにして領域は残す（高さが変わるとロールが揺れる）
+                    .opacity(hidesInputLine ? 0 : 1)
                     .sensoryFeedback(.success, trigger: isUnitConvertPickerPresented)
                     .sensoryFeedback(.success, trigger: functionMenuPane)
                     .onPreferenceChange(InputToolsWidthPreferenceKey.self) { width in

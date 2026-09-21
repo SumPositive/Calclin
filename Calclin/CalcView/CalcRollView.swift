@@ -21,6 +21,12 @@ struct CalcRollView: View {
     @State private var selectedPage: Int = 0 // 初期で2ページ目（インデックス1）を表示
     @State private var showStart: Int = 0
     @State private var showCount: Int = 1
+    /// ロールをスクロールしている間だけ true。
+    /// ＃入力行をパネルと一緒に動かそうとすると、文字だけが浮いて遅れて見える。
+    ///   スクロール中は入力行を消し、終わってからフェードで戻す
+    @State private var isRollScrolling = false
+    /// スクロール終了を知らせる予約（連続操作で古い予約が残らないよう保持する）
+    @State private var rollScrollEndTask: Task<Void, Never>?
     // ダークモード対応
     @Environment(\.colorScheme) var colorScheme
 
@@ -55,37 +61,77 @@ struct CalcRollView: View {
         setting.playMode == .beginner
     }
 
+    /// ロール切り替えのアニメーション。
+    /// 達人モードは操作に慣れている前提なので倍速にして、待たされないようにする
+    private var rollScrollDuration: Double { isBeginner ? 0.5 : 0.25 }
+
+    private var rollScrollAnimation: Animation {
+        .easeOut(duration: rollScrollDuration)
+    }
+
+    /// 入力行を消してからスクロールし、終わったら戻す。
+    /// 戻し方は初心者モードのみフェード（達人モードは即表示）
+    private func scrollRoll(_ change: () -> Void) {
+        rollScrollEndTask?.cancel()
+        // 消すのは即座に（フェードアウトを見せると、それ自体が遅れて見える）
+        isRollScrolling = true
+        withAnimation(rollScrollAnimation) {
+            change()
+        }
+        rollScrollEndTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(rollScrollDuration))
+            guard !Task.isCancelled else { return }
+            // 戻すときだけフェード。達人モードは待たされたくないので即表示にする
+            if isBeginner {
+                withAnimation(.easeIn(duration: 0.15)) {
+                    isRollScrolling = false
+                }
+            } else {
+                isRollScrolling = false
+            }
+        }
+    }
+
     
     var body: some View {
         VStack(spacing: 0) {
-            if isBeginner || singleMode == false {
-                // 上部メニュー
-                CalcRollHeaderView(
-                    isBeginner: isBeginner,
-                    selectedPage: selectedPage,
-                    pageCount: calcViewModels.count,
-                    showStart: showStart,
-                    showCount: showCount,
-                    onPageChange: { newPage in
-                        selectedPage = newPage
-                        //
+            // 上部メニュー。インジケータとロール増減は常に出す
+            // ＃以前は達人モードの1面表示だけ隠していたが、
+            //   今どのページに居るのかが分からなくなるので常時表示にした
+            CalcRollHeaderView(
+                isBeginner: isBeginner,
+                selectedPage: selectedPage,
+                pageCount: calcViewModels.count,
+                showStart: showStart,
+                showCount: showCount,
+                onPageChange: { newPage in
+                    // 同じページなら何もしない（入力行のチラつきを防ぐ）
+                    guard newPage != selectedPage else { return }
+                    selectedPage = newPage
+                    // 画面外のページへ移るときは、見えている範囲をずらして追従する。
+                    // ＃ここを withAnimation で包まないと offset が瞬間移動する。
+                    //   左右で見え方が変わっていたのはこれが原因（左は
+                    //   onShowChange 経由でアニメーションが掛かっていた）
+                    scrollRoll {
                         if selectedPage < showStart {
                             showStart = selectedPage
                         }
                         else if showStart + showCount <= selectedPage {
                             showStart = selectedPage - showCount + 1
                         }
-                        onCalcChange(newPage)
-                    },
-                    onShowChange: { newStart, newCount in
-                        withAnimation(.easeOut(duration: 0.5)) {
-                            showStart = newStart
-                            showCount = newCount
-                        }
                     }
-                )
-                .opacity(colorScheme == .dark ? 0.60 : 1.0)
-            }
+                    onCalcChange(newPage)
+                },
+                onShowChange: { newStart, newCount in
+                    // 変化がないなら何もしない（入力行のチラつきを防ぐ）
+                    guard newStart != showStart || newCount != showCount else { return }
+                    scrollRoll {
+                        showStart = newStart
+                        showCount = newCount
+                    }
+                }
+            )
+            .opacity(colorScheme == .dark ? 0.60 : 1.0)
 
             // CalcViewを3個横に並べ、1ページずつ左右に切り替える
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
@@ -101,7 +147,9 @@ struct CalcRollView: View {
                                  calcIndex: index,
                                  isActive: isActive,
                                  // 1面のときだけ PDF・色・フォントとアプリ名を出す
-                                 isSingleRoll: showCount == 1)
+                                 isSingleRoll: showCount == 1,
+                                 // スクロール中は入力行を隠す（浮いて見えるのを避ける）
+                                 hidesInputLine: isRollScrolling)
                             .environmentObject(setting) // settingに変化あればCalcViewが再生成される
                             .frame(width: calcWidth)
                             .accessibilityIdentifier("calcPanel_\(index)") // fastlane snapshot 用: パネル識別
@@ -269,6 +317,10 @@ struct CalcRollHeaderView: View {
                 .opacity(showCount == 1 ? 0.3 : 1.0)
                 .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
                 .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
+                // インジケータ（◁ ▷）と高さを揃える。
+                // ＃padding()（全周16pt）のぶんアイコンが下がって見えるので、
+                //   上だけ詰める。タップ範囲は padding のまま残す
+                .padding(.top, -4)
                 //debug// .border(Color.red)
 
                 if isBeginner {
@@ -341,18 +393,10 @@ struct CalcRollHeaderView: View {
                             pageNext()
                         }
                     }
-                    .onTapGesture(count: 2) { location in
-                        // ダブルタップで　2列＞3列＞1列　に切り替える
-                        let midX = geoIndicator.size.width / 2
-                        if location.x < midX + Double(selectedPage - 1) * IND_CIRCLE_SIZE * 2.0 {
-                            // 左側でダブルタップ：表示CalcView減少
-                            showMinus()
-                        }
-                        else{
-                            // 右側でダブルタップ：表示CalcView増加
-                            showPlus()
-                        }
-                    }
+                    // ＃ここにダブルタップを置かないこと。
+                    //   シングルタップが「2回目が来ないか」を待つぶん、
+                    //   ページ送りの反応が目に見えて遅れる。
+                    //   ロール数の増減は両端の [-][+] ボタンで行う
 
                     if isBeginner {
                         // 操作方法はここに全部書くと6行になってロールを押し下げるので、
@@ -389,13 +433,15 @@ struct CalcRollHeaderView: View {
                     // 表示CalcView増加
                     showPlus()
                 }) {
-                    Image(systemName: "plus.square.on.square")
+                    Image(systemName: "plus.square")
                         //.imageScale(.large)
                 }
                 .accessibilityIdentifier("calcPanel_increase") // fastlane snapshot 用
                 .opacity(showCount == pageCount ? 0.3 : 1.0)
                 .padding() // これがないとタップ有効範囲がImageの最小範囲だけになってしまう
                 .contentShape(Rectangle()) // paddingを含む領域全体をタップ対象にする
+                // インジケータ（◁ ▷）と高さを揃える（左ボタンと同じ）
+                .padding(.top, -4)
                 //debug// .border(Color.red)
 
                 if isBeginner {
@@ -435,23 +481,18 @@ struct CalcRollHeaderView: View {
 
     // 前ページへ
     private func pagePrev() {
-        if showStart == selectedPage {
-            // 表示CalcView前方へ
-            onShowChange(max(showStart - 1, 0), showCount)
-        }
-        // 前ページへ
-        onPageChange(max(selectedPage - 1, 0))
+        // 端では何もしない。
+        // ＃呼んでしまうと、動かないのに入力行の消去→復帰だけが走ってチラつく
+        guard 0 < selectedPage else { return }
+        // 見えている範囲の調整は onPageChange 側がまとめて行う（左右で同じ動きにする）
+        onPageChange(selectedPage - 1)
     }
 
     // 次ページへ
     private func pageNext() {
-        guard pageCount > 0 else { return }
-        if showStart + showCount == selectedPage {
-            // 表示CalcView後方へ
-            onShowChange(max(showStart + 1, pageCount - 1), showCount)
-        }
-        // 次ページへ
-        onPageChange(min(selectedPage + 1, pageCount - 1))
+        // 端では何もしない（pagePrev と同じ理由）
+        guard selectedPage < pageCount - 1 else { return }
+        onPageChange(selectedPage + 1)
     }
 
     // 表示CalcView減少
@@ -524,7 +565,7 @@ struct CalcRollHelpSheet: View {
                                 body: "calcFrame.help.count.body") {
                             HStack(spacing: 2) {
                                 Image(systemName: "minus.square")
-                                Image(systemName: "plus.square.on.square")
+                                Image(systemName: "plus.square")
                             }
                         }
                         section(title: "calcFrame.help.edit.title",
