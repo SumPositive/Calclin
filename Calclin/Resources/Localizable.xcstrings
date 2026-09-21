@@ -329,13 +329,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fewer frames"
+            "value" : "Fewer rolls"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "計算機(枠)の表示を減らす"
+            "value" : "ロールを減らす"
           }
         }
       }
@@ -345,29 +345,238 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "More frames"
+            "value" : "More rolls"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "計算機(枠)の表示を増やす"
+            "value" : "ロールを増やす"
           }
         }
       }
     },
-    "calcFrame.switchHint" : {
+    "calcFrame.help.edit.title" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Swipe or tap to switch\nDouble-tap works too"
+            "value" : "Editing rows"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "左右にスワイプまたは\n枠内をタップして切り替え\nダブルタップも有効です"
+            "value" : "行を編集する"
+          }
+        }
+      }
+    },
+    "calcFrame.help.edit.body" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\u2022 In Calc, tap a detail row to edit its operator and value\n\u2022 Swipe right to add a note, or to copy the formula or the answer\n\u2022 Swipe left to delete the row"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "・電卓の明細行をタップすると演算子と数値を修正できます\n・右へスワイプするとメモを付けたり、式や答えをコピーしたりできます\n・左へスワイプすると削除できます"
+          }
+        }
+      }
+    },
+    "calcFrame.help.unit.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changing the unit"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "単位を変える"
+          }
+        }
+      }
+    },
+    "calcFrame.help.unit.body" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When a unit is underlined, tap it to show the conversion list and pick another unit."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "単位に下線があるときタップで変換リストを表示し、選択すれば単位を変更できます"
+          }
+        }
+      }
+    },
+    "calcFrame.help.keyboard.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Using the keyboard"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キーボードを使う"
+          }
+        }
+      }
+    },
+    "calcFrame.help.keyboard.body" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\u2022 Swipe left or right, or tap a dot below, to switch keyboards\n\u2022 Long-press a key to change what it does"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "・左右にスワイプするか下の丸を押せばキーボードが切り替わります\n・キーを長押しすればキー定義を変更できます"
+          }
+        }
+      }
+    },
+    "calcFrame.help.intro" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There are %lld rolls (calculation lists)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ロール（計算一覧）は%lldつあります"
+          }
+        }
+      }
+    },
+    "calcFrame.help.buttonShort" : {
+      "comment" : "ヘッダのボタンに出す表記。読み上げは calcFrame.help.button（ロール操作）を使う",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Help"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ヘルプ"
+          }
+        }
+      }
+    },
+    "calcFrame.help.button" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Roll controls"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ロール操作"
+          }
+        }
+      }
+    },
+    "calcFrame.help.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Help"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ヘルプ"
+          }
+        }
+      }
+    },
+    "calcFrame.help.switch.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switching rolls"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ロールを切り替える"
+          }
+        }
+      }
+    },
+    "calcFrame.help.switch.body" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When several rolls are visible, you can also tap a roll directly to switch to it."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ロールが複数見えているとき、ロールを直接タップしても切り替えることができます"
+          }
+        }
+      }
+    },
+    "calcFrame.help.count.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How many rolls to show"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "表示するロールの数"
+          }
+        }
+      }
+    },
+    "calcFrame.help.count.body" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use the buttons at either end of the header to show fewer or more rolls side by side. Double-tapping a roll changes the count too. Each roll keeps its own calculation."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ヘッダ両端のボタンで、並べて表示するロールの数を増減できます。ロールをダブルタップしても増減できます。ロールごとに別の計算を保持します"
           }
         }
       }
@@ -544,38 +753,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "↑="
-          }
-        }
-      }
-    },
-    "history.formulaHint" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Swipe row for note/copy"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "数式の行をスワイプすればメモしたり、式をコピーできます"
-          }
-        }
-      }
-    },
-    "history.rollHint" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap row to edit. = for note"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "明細行をタップすれば編集できます。=行はメモ入力できます"
           }
         }
       }
@@ -1335,22 +1512,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保存に失敗しました"
-          }
-        }
-      }
-    },
-    "keyboard.switchHint" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Swipe or tap a dot below to switch keyboards\nLong-press to edit keys"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "左右にスワイプするか下の丸を押せばキーボードが切り替わります\nキーを長押しすればキー定義を変更できます"
           }
         }
       }

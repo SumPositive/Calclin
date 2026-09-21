@@ -42,6 +42,11 @@ struct CalcView: View {
     @State private var functionMenuContentHeight: CGFloat = 0
     /// ロール消去の確認アラート
     @State private var isClearConfirmPresented = false
+    /// ロール操作の説明シート（達人モードでは入力行の [?] から開く）
+    @State private var isRollHelpPresented = false
+    @State private var rollHelpContentHeight: CGFloat = 0
+    /// 入力行右端（[?]＋アプリ名）の実測幅。機能メニューのタップ領域から除くのに使う
+    @State private var appNameWidth: CGFloat = 0
     // 入力行末尾の単位をタップしたときの換算ポップオーバー表示状態
     @State private var isUnitConvertPickerPresented = false
     // 換算ポップオーバーに表示する候補（開いた時点で確定し、表示中は再計算しない）
@@ -226,10 +231,16 @@ struct CalcView: View {
             // 1面は5つ（数式・電卓・PDF・色・フォント）、2面以上は数式・電卓だけ
             // - 1面 アイコンのみ： 約145pt／ラベル付き 約205pt
             // - 多面 アイコンのみ： 約 70pt／ラベル付き 約130pt
+            // ＃しきい値は日本語（数式／電卓）を前提に決めた値なので、
+            //   英語（Formula／Calc／Functions）では足りずラベルが切れる。
+            //   ラベル付きの実測幅（inputToolsWidth）が分かっていればそちらを使う
             let modeTitleThreshold: CGFloat = isSingleRoll ? 230 : 172
+            let neededToolsWidth = inputToolsWidth > 0
+                ? inputToolsWidth + 24            // 実測（隠しコピーはラベル付きを測っている）
+                : modeTitleThreshold * calcFontScale
             let showsModeTitles = isActive
                 && isFormulaInputEmpty
-                && geo.size.width >= modeTitleThreshold * calcFontScale
+                && geo.size.width >= neededToolsWidth
             // アイコンのみでも収まらない狭さ（SE の3面など）でだけ、ツールを一回り縮小する
             let compactThreshold: CGFloat = isSingleRoll ? 165 : 112
             let usesCompactTools = geo.size.width < compactThreshold * calcFontScale
@@ -239,6 +250,10 @@ struct CalcView: View {
             // （測定が1フレーム遅れると、伸びた瞬間に数字と重なってしまう）
             let showsModeMark = !showsInputTools
                 && inputLineTextWidth + 38 * min(calcFontScale, 1.5) < geo.size.width
+            // [?] は常に出したいが、入力行は右寄せで左へ伸びるので、
+            // 数字が届いたら重なる。届く前に消す（目印と同じ考え方）
+            let helpMarkWidth = 26 * min(calcFontScale, 1.5)
+            let showsHelpMark = inputLineTextWidth + helpMarkWidth < geo.size.width
 
             VStack(spacing: 0) {
 
@@ -300,18 +315,43 @@ struct CalcView: View {
                     // - 数値と同じ右寄せ位置に出し、入力が始まったら消えるので
                     //   プレースホルダとして読める（showsInputTools と同じ条件）
                     .overlay(alignment: .trailing) {
-                        if isSingleRoll && showsInputTools {
-                            Text("app.title")
-                                // 見出しは常に同じ大きさで見せたいので Dynamic Type に左右されない固定サイズ
-                                .font(.system(size: 13, weight: .regular, design: .rounded))
-                                .lineLimit(1)
-                                // 入力行のガラスやモード切替カプセルと同系色にして、
-                                // 入力行全体が一つのまとまりに見えるようにする
-                                .foregroundStyle(setting.accentTheme.appNameColor)
-                                .padding(.trailing, 10)
-                                .allowsHitTesting(false)
-                                .accessibilityHidden(true) // 装飾なので読み上げ対象から外す
+                        // ＃[?] は常に出す。アプリ名（app.title）は入力が始まると
+                        //   消えるが、説明はいつでも開けるようにしておきたい
+                        HStack(spacing: 8) {
+                            if showsHelpMark {
+                                Button {
+                                    isRollHelpPresented = true
+                                } label: {
+                                    Image(systemName: "questionmark.circle")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(setting.accentTheme.appNameColor)
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel(Text("calcFrame.help.button"))
                                 .transition(.opacity)
+                            }
+
+                            if isSingleRoll && showsInputTools {
+                                Text("app.title")
+                                    // 見出しは常に同じ大きさで見せたいので Dynamic Type に左右されない固定サイズ
+                                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                                    .lineLimit(1)
+                                    // 入力行のガラスやモード切替カプセルと同系色にして、
+                                    // 入力行全体が一つのまとまりに見えるようにする
+                                    .foregroundStyle(setting.accentTheme.appNameColor)
+                                    .allowsHitTesting(false)
+                                    .accessibilityHidden(true) // 装飾なので読み上げ対象から外す
+                                    .transition(.opacity)
+                            }
+                        }
+                        .padding(.trailing, 10)
+                        .background {
+                            GeometryReader { nameGeo in
+                                Color.clear
+                                    .preference(key: AppNameWidthPreferenceKey.self,
+                                                value: nameGeo.size.width)
+                            }
                         }
                     }
                     // 入力中（ツール非表示）は、左端に現在モードの目印だけを残す
@@ -330,11 +370,16 @@ struct CalcView: View {
                         if isSingleRoll && showsInputTools {
                             // ツールの実測幅より右だけをタップ領域にする。
                             // 全幅にすると数式／電卓セグメントのタップを奪ってしまう
+                            // ＃右端の [?]＋アプリ名のぶんは除く。重ねると [?] を押しても
+                            //   こちらが反応して機能メニューが開いてしまう
                             let toolsEnd = inputToolsWidth + 6
+                            let width = geo.size.width - toolsEnd - appNameWidth
                             Color.clear
-                                .frame(width: max(geo.size.width - toolsEnd, 0))
+                                .frame(width: max(width, 0))
                                 .contentShape(Rectangle())
                                 .onTapGesture { isFunctionMenuPresented = true }
+                                // [?] と重ならないよう、右端のぶんだけ左へ寄せる
+                                .padding(.trailing, appNameWidth)
                         }
                     }
                     // ツールは左端にまとめる（数式／電卓 → 機能 の順）
@@ -430,6 +475,16 @@ struct CalcView: View {
                     .sensoryFeedback(.success, trigger: functionMenuPane)
                     .onPreferenceChange(InputToolsWidthPreferenceKey.self) { width in
                         inputToolsWidth = width
+                    }
+                    .onPreferenceChange(AppNameWidthPreferenceKey.self) { width in
+                        appNameWidth = width
+                    }
+                    .sheet(isPresented: $isRollHelpPresented) {
+                        CalcRollHelpSheet(onMeasured: { height in
+                            rollHelpContentHeight = height
+                        })
+                        .presentationDetents([.height(rollHelpSheetHeight), .large])
+                        .appFontScale(setting.fontScale)
                     }
             }
             .padding(0)
@@ -581,6 +636,13 @@ struct CalcView: View {
         return functionMenuSpaceBelow > functionMenuSpaceAbove
             ? .top     // ボタンの下（キーボード側）へ開く
             : .bottom  // ボタンの上（ロール側）へ開く
+    }
+
+    /// ロール操作シートを開く高さ（中身が分かるまでは半画面ぶん）
+    private var rollHelpSheetHeight: CGFloat {
+        let screen = UIScreen.main.bounds.height
+        guard rollHelpContentHeight > 0 else { return screen * 0.5 }
+        return min(rollHelpContentHeight, screen * 0.9)
     }
 
     /// 入力行の「機能」ボタン。PDF出力・色・フォントをまとめた吹き出しを出す
@@ -1372,6 +1434,15 @@ private struct FunctionButtonFramePreferenceKey: PreferenceKey {
     }
 }
 
+
+/// 入力行右端（[?]＋アプリ名）の幅
+private struct AppNameWidthPreferenceKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
 
 private struct InputToolsWidthPreferenceKey: PreferenceKey {
     static let defaultValue: CGFloat = 0

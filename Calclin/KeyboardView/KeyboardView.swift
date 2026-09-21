@@ -41,26 +41,14 @@ struct KeyboardView: View {
             //  # カスタムインジケータ上のスワイプ・タップでも切り替えできるようにした
             keyPager
             // 下部メニュー
-            VStack(spacing: 4) {
-                KeyboardFooterView(
-                    selectedPage: $selectedPage,
-                    pageCount: KeyboardViewModel.pageCount,
-                    onOpenSettings: onOpenSettings
-                )
-                // キーボード切り替え操作はインジケータでもできることを示すため、暗めの時は少し透過
-                .opacity(colorScheme == .dark ? 0.60 : 1.0)
-
-                if setting.playMode == .beginner {
-                    // 初心者モードでは操作ヒントを補足
-                    Text("keyboard.switchHint")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.top, -8)
-                        .padding(.horizontal, 12)
-                        .cappedAtLargeTypeSize()
-                }
-            }
+            // ＃操作の説明はヘルプシート（? ヘルプ）へ移したので、ここには置かない
+            KeyboardFooterView(
+                selectedPage: $selectedPage,
+                pageCount: KeyboardViewModel.pageCount,
+                onOpenSettings: onOpenSettings
+            )
+            // キーボード切り替え操作はインジケータでもできることを示すため、暗めの時は少し透過
+            .opacity(colorScheme == .dark ? 0.60 : 1.0)
         }
     }
 

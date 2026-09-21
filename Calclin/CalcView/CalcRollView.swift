@@ -87,21 +87,6 @@ struct CalcRollView: View {
                 .opacity(colorScheme == .dark ? 0.60 : 1.0)
             }
 
-            if isBeginner {
-                // 初心者モードでは、ヘッダー直下に操作ヒントを表示する
-                // 要望どおり、CalcViewの内側ではなく「CalcRollHeaderViewとCalcViewの間」に配置する
-                let isCalcMode = calcViewModels[selectedPage].calcMode == .calculator
-                Text(isCalcMode
-                     ? String(localized: "history.rollHint")
-                     : String(localized: "history.formulaHint"))
-                    .font(.system(size: 13.0, weight: .regular))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.horizontal, 8.0)
-                    .padding(.bottom, 4.0)
-                    .cappedAtLargeTypeSize()
-            }
-            
             // CalcViewを3個横に並べ、1ページずつ左右に切り替える
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
             //  # カスタムインジケータ上のスワイプまたはタップで切り替えできるようにした
@@ -243,6 +228,18 @@ private struct PaperRollEdgeLines: View {
 
 // 上部メニュー
 struct CalcRollHeaderView: View {
+    /// ロール操作の説明シート
+    @State private var isHelpPresented = false
+    /// 説明シートの中身の高さ（実測）。画面の高さは超えないように抑える
+    @State private var helpSheetContentHeight: CGFloat = 0
+
+    /// シートを開く高さ。中身が分かるまでは半画面ぶんで待つ
+    private var helpSheetHeight: CGFloat {
+        let screen = UIScreen.main.bounds.height
+        guard helpSheetContentHeight > 0 else { return screen * 0.5 }
+        return min(helpSheetContentHeight, screen * 0.9)
+    }
+
     let isBeginner: Bool
     let selectedPage: Int
     let pageCount: Int
@@ -280,11 +277,14 @@ struct CalcRollHeaderView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
+                        // 折り返して全文を出す（幅で切らない）
+                        .fixedSize(horizontal: false, vertical: true)
                         .padding(.top, -14)
                         .cappedAtLargeTypeSize()
                 }
             }
-            .frame(minWidth: 60, maxWidth: 100)
+            // 初心者モードは説明文が入る幅を確保する（アイコンだけなら従来どおり）
+            .frame(minWidth: 60, maxWidth: isBeginner ? 130 : 100)
 
             Spacer()
 
@@ -355,14 +355,26 @@ struct CalcRollHeaderView: View {
                     }
 
                     if isBeginner {
-                        // 初心者モードではインジケータの操作方法を補足
-                        Text(String(localized: "calcFrame.switchHint"))
+                        // 操作方法はここに全部書くと6行になってロールを押し下げるので、
+                        // 入口だけ置いて詳しくはシートで説明する
+                        Button {
+                            isHelpPresented = true
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: "questionmark.circle")
+                                // 表示は短く「操作」。読み上げは下の accessibilityLabel で補う
+                                Text(String(localized: "calcFrame.help.buttonShort"))
+                            }
                             .font(.caption2)
                             .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: 140)
-                            .padding(.top, -8)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                            .padding(.top, -6)
+                            .contentShape(Rectangle())
                             .cappedAtLargeTypeSize()
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text("calcFrame.help.button"))
                     }
                 }
             }
@@ -392,14 +404,32 @@ struct CalcRollHeaderView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
+                        // 折り返して全文を出す（幅で切らない）
+                        .fixedSize(horizontal: false, vertical: true)
                         .padding(.top, -14)
                         .cappedAtLargeTypeSize()
                 }
             }
-            .frame(minWidth: 60, maxWidth: 100)
+            .frame(minWidth: 60, maxWidth: isBeginner ? 130 : 100)
         }
-        .frame(height: isBeginner ? HEADER_HEIGHT + 42 : HEADER_HEIGHT)
+        // 達人モードは固定高。初心者モードはボタン名と「? ロール操作」のぶん伸ばす。
+        // ＃インジケータ部が GeometryReader なので中身に合わせて縮められない。
+        //   ここは決め打ちにするしかない
+        // ＃以前は 3行の説明を見込んで +42 だった。説明をシートへ移して1行に
+        //   なったので縮めたが、+18 では左右のボタン名（「ロールを増やす」など）の
+        //   下が欠ける。中央の [? ロール操作] より低い位置にあるため、
+        //   低い方（左右）に合わせて +28 にする
+        .frame(height: isBeginner ? HEADER_HEIGHT + 28 : HEADER_HEIGHT,
+               alignment: .top)
         .padding(.horizontal, 12)
+        .sheet(isPresented: $isHelpPresented) {
+            CalcRollHelpSheet(onMeasured: { height in
+                helpSheetContentHeight = height
+            })
+                // 中身の高さぴったりで開く（足りなければ引き上げて全画面に近づけられる）。
+                // ＃.medium 固定だと、節が増えても半画面のままで下が詰まる
+                .presentationDetents([.height(helpSheetHeight), .large])
+        }
         //debug// .border(Color.red)
     }
 
@@ -450,4 +480,147 @@ struct CalcRollHeaderView: View {
         }
     }
 
+}
+
+/// ロール操作の説明シート。
+/// ＃ヘッダに全文を置くと6行になってロールを押し下げてしまうので、
+///   ヘッダには「? ロール操作」だけ出し、詳しい説明はここで読ませる
+struct CalcRollHelpSheet: View {
+    /// 中身の高さを親へ返す（シートを中身ぴったりの高さで開くため）
+    var onMeasured: (CGFloat) -> Void = { _ in }
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 0) {
+                // まず全体像（いくつあるのか）を伝えてから、個々の操作を説明する。
+                // ＃スクロールしても見え続けるよう、ScrollView の外に置く
+                // ＃件数は CALC_COUNT_MAX から差し込む（文面に直接書かない）
+                Text(String(format: String(localized: "calcFrame.help.intro"),
+                            CALC_COUNT_MAX))
+                    .font(.subheadline)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+
+                Divider()
+                    .padding(.top, 12)
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
+                        // アイコンはヘッダのインジケータと同じ ◁▷ にして、
+                        // どれを操作する話か一目で分かるようにする
+                        section(title: "calcFrame.help.switch.title",
+                                body: "calcFrame.help.switch.body") {
+                            HStack(spacing: 2) {
+                                Image(systemName: "arrowtriangle.left")
+                                Image(systemName: "arrowtriangle.right")
+                            }
+                        }
+                        // アイコンはヘッダ両端のボタンと同じ [-][+] にする
+                        section(title: "calcFrame.help.count.title",
+                                body: "calcFrame.help.count.body") {
+                            HStack(spacing: 2) {
+                                Image(systemName: "minus.square")
+                                Image(systemName: "plus.square.on.square")
+                            }
+                        }
+                        section(title: "calcFrame.help.edit.title",
+                                body: "calcFrame.help.edit.body") {
+                            Image(systemName: "hand.tap")
+                        }
+                        section(title: "calcFrame.help.unit.title",
+                                body: "calcFrame.help.unit.body") {
+                            Image(systemName: "ruler")
+                        }
+                        section(title: "calcFrame.help.keyboard.title",
+                                body: "calcFrame.help.keyboard.body") {
+                            Image(systemName: "keyboard")
+                        }
+                    }
+                    .padding(20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    // ＃ScrollView の中身を測る。外枠（VStack）を測ると
+                    //   「今開いている高さ」が返り、自分の値で自分が決まってしまう
+                    .background {
+                        GeometryReader { contentGeo in
+                            Color.clear
+                                .preference(key: HelpSheetHeightKey.self,
+                                            value: contentGeo.size.height)
+                        }
+                    }
+                }
+            }
+            .onPreferenceChange(HelpSheetHeightKey.self) { height in
+                guard height > 0 else { return }
+                onMeasured(height + helpSheetChromeHeight)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                // タイトルは [?] アイコン付きにしたいので principal に自前で置く
+                // （navigationTitle は文字だけで記号を添えられない）
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "questionmark.circle")
+                        Text("calcFrame.help.title")
+                    }
+                    .font(.headline)
+                }
+                // 閉じる操作は設定シートと同じ見た目・同じ位置にそろえる。
+                // ＃「画面から出る」操作は左（戻ると同じ位置）。
+                //   右は追加・編集などの機能ボタン用に空けておく
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Label("common.close", systemImage: "chevron.down")
+                            .labelStyle(.iconOnly)
+                            .imageScale(.large)
+                            .padding(10)
+                            .background(.thinMaterial)
+                            .clipShape(Circle())
+                    }
+                    .tint(.accentColor)
+                }
+            }
+        }
+    }
+
+    /// 測っていない部分の高さ。
+    /// ナビゲーションバー（約56）＋前置きの文と区切り線（約60）
+    private var helpSheetChromeHeight: CGFloat { 56 + 60 }
+
+    /// 1節（見出しの記号＋タイトル＋説明）。
+    /// 記号はヘッダの実物と同じものを並べたいので、呼び出し側から渡す
+    private func section<Symbol: View>(
+        title: LocalizedStringKey,
+        body: LocalizedStringKey,
+        @ViewBuilder symbol: () -> Symbol
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                symbol()
+                Text(title)
+            }
+            .font(.headline)
+            Text(body)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                // 長い説明なので、幅で切らずに折り返す
+                .fixedSize(horizontal: false, vertical: true)
+                // 箇条書き（・）が続く節があるので、行間を少し空けて読みやすくする
+                .lineSpacing(3)
+        }
+    }
+}
+
+/// 説明シートの中身の高さ
+private struct HelpSheetHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
 }
