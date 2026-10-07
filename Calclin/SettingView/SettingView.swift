@@ -19,6 +19,12 @@ struct SettingView: View {
     @State private var safariURL: URL?  // 開く予定のURLを保持
     @State private var showTipSheet = false    // 投げ銭シートの有無
     @State private var expandedDropdown: SettingDropdownKind? = nil  // 独自プルダウンの開閉状態
+    /// 以前「標準／大／特大」を選んだ人だけ、戻せるよう選択肢を残す（Deferin と同じ方式）
+    /// 文字サイズを変えると画面ごと作り直されて @State が初期化されるため、
+    /// 判定はアプリ起動後に初めて設定画面を開いた時の1回だけにする（自動に変えても次回起動までは戻せる）
+    /// キー "fontScale" は SettingViewModel.StorageKey.fontScale と同じ
+    private static let showsFontScalePicker = UserDefaults.standard.string(forKey: "fontScale")
+        .flatMap(SettingViewModel.FontScale.init(rawValue:)).map { $0 != .system } ?? false
 
     // 現在の Dynamic Type サイズ（特大時に左右余白を最小化して内容欠けを防ぐ）
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -63,6 +69,27 @@ struct SettingView: View {
     private func isDropdownExpanded(in kinds: [SettingDropdownKind]) -> Bool {
         guard let expandedDropdown else { return false }
         return kinds.contains(expandedDropdown)
+    }
+
+    /// 「設定アプリで変更できます」。訳文の [..](app-settings:) をリンクにして下線を付ける
+    /// app-settings: は設定アプリのこのアプリのページを開く公開URL
+    /// （文字サイズの画面を直接開く公開URLは無いため、設定アプリを開くところまでにする）
+    private var fontScaleSystemNote: AttributedString {
+        Self.underlinedLinks(AttributedString(localized: "settings.fontScale.systemNote"))
+    }
+
+    /// 選択肢が残っている人が「自動」にした時の「次回から設定アプリで変更できます」
+    private var fontScaleSystemNextNote: AttributedString {
+        Self.underlinedLinks(AttributedString(localized: "settings.fontScale.systemNoteNext"))
+    }
+
+    /// リンク部分に下線を付ける
+    private static func underlinedLinks(_ source: AttributedString) -> AttributedString {
+        var text = source
+        for run in text.runs where run.link != nil {
+            text[run.range].underlineStyle = .single
+        }
+        return text
     }
 
     /// アプリのVersion/Build番号をまとめて返す
@@ -208,19 +235,38 @@ struct SettingView: View {
                             .labelStyle(.titleAndIcon)
                             .font(.subheadline)
                     } control: {
-                        SettingDropdown(options: SettingViewModel.FontScale.allCases,
-                                        selection: $viewModel.fontScale,
-                                        isExpanded: dropdownBinding(.fontScale),
-                                        minWidth: 140) { scale in
-                            Text(LocalizedStringKey(scale.localizedKey))
-                        }
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .onChange(of: viewModel.fontScale) { _, _ in
-                            // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
-                            NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                        // 「自動」の人には選択肢の代わりに、システム設定で変えられることを示す
+                        if Self.showsFontScalePicker {
+                            SettingDropdown(options: SettingViewModel.FontScale.allCases,
+                                            selection: $viewModel.fontScale,
+                                            isExpanded: dropdownBinding(.fontScale),
+                                            minWidth: 140) { scale in
+                                Text(LocalizedStringKey(scale.localizedKey))
+                            }
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .onChange(of: viewModel.fontScale) { _, _ in
+                                // ローカル通知 送信：SBCD_Configが変更された　＞全Calcで再描画させるため
+                                NotificationCenter.default.post(name: .SBCD_Config_Change, object: nil)
+                            }
+                        } else {
+                            // 「設定アプリ」の部分だけ下線付きのリンクにし、押すと設定アプリを開く
+                            Text(fontScaleSystemNote)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.trailing)
+                                .frame(maxWidth: .infinity, alignment: .trailing)
                         }
                     }
                     .zIndex(expandedDropdown == .fontScale ? 60 : 0)
+
+                    // 自動にしても次回起動までは選択肢が残るので、次回からの変更先を伝える
+                    if Self.showsFontScalePicker && viewModel.fontScale.followsSystem {
+                        Text(fontScaleSystemNextNote)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .multilineTextAlignment(.trailing)
+                    }
                     if viewModel.playMode == .beginner {
                         Text("settings.help.fontScale")
                             .font(.caption)

@@ -2414,6 +2414,40 @@
         }
       }
     },
+    "settings.fontScale.systemNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change it in the [Settings app](app-settings:)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "[設定アプリ](app-settings:)で変更できます"
+          }
+        }
+      }
+    },
+    "settings.fontScale.systemNoteNext" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From next time, change it in the [Settings app](app-settings:)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次回から[設定アプリ](app-settings:)で変更できます"
+          }
+        }
+      }
+    },
     "settings.fontScale.standard" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2471,13 +2505,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Auto follows your iOS text size settings."
+            "value" : "Text size follows your iPhone settings\n\nTap \"Settings app\" to open Settings, go back to the main list at the top left, then adjust it in Display & Brightness > Text Size\n\nFor even larger text, turn on Accessibility > Display & Text Size > Larger Text\n\nIf you previously chose Standard, Large, or Extra Large, choose Auto to follow this setting"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "自動にすれば、システム設定した文字サイズの拡大などが反映されます"
+            "value" : "文字サイズは iPhone の設定に従います\n\n「設定アプリ」を押すと設定が開くので、左上で一覧に戻り、「画面表示と明るさ」→「テキストサイズを変更」で調整してください\n\nさらに大きくするには、「アクセシビリティ」→「画面表示とテキストサイズ」→「さらに大きな文字」をオンにします\n\n以前「標準／大／特大」を選んでいた場合は、「自動」にするとこの設定に従います"
           }
         }
       }

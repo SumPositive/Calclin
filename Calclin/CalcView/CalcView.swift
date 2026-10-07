@@ -632,6 +632,13 @@ struct CalcView: View {
         return space > 0 ? space : .infinity
     }
 
+    /// 機能メニューに使える幅（画面の安全領域から左右の余白を引いたもの）
+    /// ＃まだ測れていない（0）あいだは制限しない
+    private var functionMenuAvailableWidth: CGFloat {
+        let width = screenSafeFrame.width - functionMenuMargin
+        return 0 < width ? width : .infinity
+    }
+
     /// 機能メニューを出す向き。
     /// ＃arrowEdge: .bottom は「ボタンの上」に出す指定（矢印が下に付く）。
     /// ＃高さ上限（functionMenuAvailableHeight）はこの判断に従うので、
@@ -706,6 +713,7 @@ struct CalcView: View {
             InputFunctionMenuPopover(
                 openPane: $functionMenuPane,
                 maxHeight: functionMenuAvailableHeight,
+                maxWidth: functionMenuAvailableWidth,
                 numberFontPreviewText: numberFontPreviewText,
                 numberFontPreviewSize: numberFontPreviewSize,
                 onCopyText: {
@@ -781,6 +789,12 @@ private struct InputFunctionMenuPopover: View {
     @State private var isRoundTypeExpanded = false
     /// この高さに収める（画面からはみ出して iOS に縮められるのを防ぐ）
     var maxHeight: CGFloat = .infinity
+    /// 吹き出し全体の幅の上限（画面からはみ出さない範囲）
+    var maxWidth: CGFloat = .infinity
+    /// 右側の内容の基準幅。文字サイズに合わせて広げる（標準で 230pt）
+    @ScaledMetric(relativeTo: .subheadline) private var scaledDetailWidth: CGFloat = 230
+    /// 左側のアイコン列の実測幅（初心者モードは名前つきで広くなる）
+    @State private var menuListWidth: CGFloat = 56
     let numberFontPreviewText: String
     let numberFontPreviewSize: CGFloat
     let onCopyText: () -> Void
@@ -797,9 +811,10 @@ private struct InputFunctionMenuPopover: View {
             menuList
             if let pane = openPane {
                 Divider()
-                // アイコン列(56) + 区切り + ここ が画面幅に収まるようにする
+                // 余裕があれば文字サイズに合わせて広げ、
+                // アイコン列 + 区切り + ここ が画面幅に収まるようにする
                 detail(pane)
-                    .frame(width: 230)
+                    .frame(width: detailWidth)
             }
         }
         // 入りきらない高さのときだけ縦スクロールにする。
@@ -808,6 +823,12 @@ private struct InputFunctionMenuPopover: View {
         .modifier(FunctionMenuHeightLimit(maxHeight: maxHeight,
                                           contentScrollsItself: openPane == .font))
         .animation(.easeOut(duration: 0.18), value: openPane)
+    }
+
+    /// 右側の内容の幅。最低 230pt、文字サイズに応じて広げるが画面幅を超えない
+    private var detailWidth: CGFloat {
+        let available = maxWidth - menuListWidth - 1
+        return max(230, min(scaledDetailWidth, available))
     }
 
     /// アイコン列の高さを測るためだけの見本。
@@ -843,6 +864,10 @@ private struct InputFunctionMenuPopover: View {
         // 名前を出すときは中身に合わせて広げる（アイコンだけなら従来どおり 56pt）
         .frame(width: showsTitles ? nil : 56)
         .fixedSize(horizontal: showsTitles, vertical: false)
+        // 右側の幅を決めるため、アイコン列の幅を測っておく
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
+            menuListWidth = width
+        }
     }
 
     /// 右側：選んだ内容
