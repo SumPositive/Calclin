@@ -77,6 +77,12 @@ let COLOR_UNIT_UNDERLINE: Color = COLOR_TAPPABLE
 //   見た目を揃えるには数値比で 0.6 程度まで落とす必要がある
 let UNIT_FONT_RATIO: CGFloat = 0.62
 
+// 入力行で数値の後ろに付く文字の大きさ（入力行の数字の文字サイズに対する比率）
+// - 英字・記号（kg・㎡・% と税率の数字）
+let INPUT_SYMBOL_RATIO: CGFloat = 0.58
+// - 漢字（坪・割・分・厘・税込・税抜）。字面が大きく見えるので一段小さくする
+let INPUT_KANJI_RATIO: CGFloat = 0.50
+
 // 答えに添える単位の持ち上げ量（答えの文字サイズに対する比率）
 // - ベースラインを揃えると、小さい単位は数値より下に沈んで見える
 //   （実測：数値の中心 +9.5pt に対し 坪 は +5.9pt）
@@ -381,6 +387,8 @@ let FM_PERC     = "%"   // パーセント /100
 let FM_PER_WARI = "割"   // J割 /10
 let FM_PER_BU   = "分"   // J分 /100
 let FM_PER_RI   = "厘"   // J厘 /1000
+/// 数値の後ろに付く % 系の記号
+let PERC_SYMBOLS: Set<String> = [FM_PERC, FM_PER_WARI, FM_PER_BU, FM_PER_RI]
 // 制御文字
 //let KD_GT       = "GT"  //">GT" // 総計 ＜＜1字目を OP_START にして「開始行」扱いすることを示す＞＞
 

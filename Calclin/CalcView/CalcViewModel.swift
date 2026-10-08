@@ -533,7 +533,11 @@ final class CalcViewModel: ObservableObject {
             }
             else if let tax = TaxToken(token: token) {
                 // 税込・税抜は % と同じ見た目で名前を出す
-                self.formulaAttr += percentAttrString(tax.label)
+                self.formulaAttr += taxAttrString(tax)
+            }
+            else if PERC_SYMBOLS.contains(token) {
+                // % 割 分 厘 は数値の後ろに付く記号なので、単位と同じく小さく細めにする
+                self.formulaAttr += percentAttrString(token)
             }
             else{
                 var attr = AttributedString(operatorDisplay(token))
@@ -1185,10 +1189,42 @@ final class CalcViewModel: ObservableObject {
     /// - 大きさは単位に合わせる（数値より一回り小さく）。同じ大きさだと
     ///   「割」「分」「厘」は漢字なので数字より目立ってしまう
     /// - 色は演算子と同じ。数値に掛かる操作であって単位ではないため
+    /// 入力行で数値の後ろに付く文字（単位・割分厘・税込税抜）の書体
+    /// - 数字用の太い書体だと漢字が強すぎるので、細めの丸ゴシックにする
+    /// - 漢字は字面が大きく見えるので、英字や記号（kg・㎡ など）よりさらに小さくする
+    private func inputSuffixFont(_ text: String) -> Font {
+        let baseSize = 33.6 * numberFontScale
+        let hasKanji = text.unicodeScalars.contains { (0x4E00...0x9FFF).contains($0.value) }
+        let ratio = hasKanji ? INPUT_KANJI_RATIO : INPUT_SYMBOL_RATIO
+        return .system(size: baseSize * ratio, weight: .medium, design: .rounded)
+    }
+
+    /// 税込・税抜の見た目（「税込10%」）
+    /// - 漢字は数字用の太い書体だと強すぎるので、細めの標準書体で小さくする
+    /// - 税率の数字は名前より少し大きくして読みやすくする
+    /// - 色は演算子と同じ。数値に掛かる操作であって単位ではないため
+    private func taxAttrString(_ tax: TaxToken) -> AttributedString {
+        let baseSize = 33.6 * numberFontScale
+        // 数値との間を少し空ける（細いスペース）
+        var name = AttributedString("\u{2009}" + taxKeyName(isIncluded: tax.isIncluded))
+        name.foregroundColor = COLOR_OPERATOR
+        name.font = inputSuffixFont(taxKeyName(isIncluded: tax.isIncluded))
+        var rate = AttributedString(taxRateText(tax.rate) + "%")
+        rate.foregroundColor = COLOR_OPERATOR
+        rate.font = numberFont.font(size: baseSize * INPUT_SYMBOL_RATIO, weight: .semibold)
+        var attr = name + rate
+        // 単位と同じだけ持ち上げて、下端の位置を揃える
+        attr.baselineOffset = baseSize * 0.06
+        return attr
+    }
+
     private func percentAttrString(_ symbol: String) -> AttributedString {
         var attr = AttributedString(symbol)
         attr.foregroundColor = COLOR_OPERATOR
-        attr.font = numberFont.font(size: 33.6 * numberFontScale * 0.80, weight: .bold)
+        // 割・分・厘 は漢字、% は記号。税込・税抜と同じ大きさ・太さにそろえる
+        attr.font = symbol == FM_PERC
+            ? numberFont.font(size: 33.6 * numberFontScale * INPUT_SYMBOL_RATIO, weight: .semibold)
+            : inputSuffixFont(symbol)
         // 単位と同じだけ持ち上げて、下端の位置を揃える
         attr.baselineOffset = 33.6 * numberFontScale * 0.06
         return attr
@@ -1197,10 +1233,10 @@ final class CalcViewModel: ObservableObject {
     private func unitAttrString(_ formula: String, isTappable: Bool) -> AttributedString {
         var attr = AttributedString(formula)
         attr.foregroundColor = COLOR_UNIT
-        // 単位は数値より一回り小さくする。
+        // 単位は数値より小さく、細めの書体にして数値を主役にする。
         // ㎡ や 坪 は Hiragino へフォールバックし数字より背が高いので、
         // 同じサイズだと単位のほうが大きく見えてしまう
-        attr.font = numberFont.font(size: 33.6 * numberFontScale * 0.80, weight: .bold)
+        attr.font = inputSuffixFont(formula)
         // g や kg のディセンダが入力行の下端に接してしまうので、少し持ち上げる
         attr.baselineOffset = 33.6 * numberFontScale * 0.06
         if isTappable {
@@ -1617,7 +1653,11 @@ final class CalcViewModel: ObservableObject {
                     : AZDecimal(numStr).formatted(calcConfig)
                 curPart += AttributedString(minusSignedDisplay(displayStr))
                 if isPercMode {
-                    curPart += percentAttrString(percSymbol)
+                    if let token = percTaxToken, let tax = TaxToken(token: token) {
+                        curPart += taxAttrString(tax)
+                    } else {
+                        curPart += percentAttrString(percSymbol)
+                    }
                 } else if let ut = unitToken {
                     let code = String(ut.dropFirst())
                     if let def = keyboardViewModel.keyDef(code: code) {
@@ -3023,7 +3063,10 @@ final class CalcViewModel: ObservableObject {
                 }
             } else if let tax = TaxToken(token: token) {
                 // 税込・税抜は % と同じ見た目で名前を出す
-                attr += percentAttrString(tax.label)
+                attr += taxAttrString(tax)
+            } else if PERC_SYMBOLS.contains(token) {
+                // % 割 分 厘 は入力行と同じ見た目にする
+                attr += percentAttrString(token)
             } else {
                 var a = AttributedString(operatorDisplay(token))
                 a.foregroundColor = COLOR_OPERATOR
