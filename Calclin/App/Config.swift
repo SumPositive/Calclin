@@ -387,6 +387,9 @@ let FM_PERC     = "%"   // パーセント /100
 let FM_PER_WARI = "割"   // J割 /10
 let FM_PER_BU   = "分"   // J分 /100
 let FM_PER_RI   = "厘"   // J厘 /1000
+/// キートップを √（SF Symbol）と同じくらいの大きさ・太さで描くキー
+/// 文字で描く記号や漢字は、数字と同じ太字だと重く大きく見えるため
+let SYMBOL_LIKE_KEY_CODES: Set<String> = ["cuRoot", "J割", "J分", "J厘"]
 /// 数値の後ろに付く % 系の記号
 let PERC_SYMBOLS: Set<String> = [FM_PERC, FM_PER_WARI, FM_PER_BU, FM_PER_RI]
 // 制御文字

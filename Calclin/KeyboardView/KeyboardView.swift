@@ -818,11 +818,15 @@ struct KeyView: View {
                             .imageScale(.large)
                             .foregroundColor(displayTextColor)
                     } else {
+                        // ∛ 割 分 厘 は、隣の √（SF Symbol）と同じくらいの大きさ・太さにそろえる
+                        // （数字と同じ太字だと記号だけ重く大きく見える）
+                        let isSymbolLike = SYMBOL_LIKE_KEY_CODES.contains(keyDef?.code ?? "")
                         Text(keyTop)
                             .foregroundColor(displayTextColor)
-                            .font(.system(size: 24 * keyTopScale,
-                                          weight: (keyDef?.unitBase == nil ||
-                                                   keyDef?.unitBase == keyDef?.code) ? .bold : .light))
+                            .font(.system(size: (isSymbolLike ? 20 : 24) * keyTopScale,
+                                          weight: isSymbolLike ? .regular
+                                              : ((keyDef?.unitBase == nil ||
+                                                  keyDef?.unitBase == keyDef?.code) ? .bold : .light)))
                             .minimumScaleFactor(0.5)
                             .lineLimit(1)
                             .padding(.horizontal, 8)
