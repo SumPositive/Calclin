@@ -116,9 +116,10 @@ struct CalcView: View {
     /// モード切替直後に出す、計算方式の違いの説明
     private func calcModeHintBanner(_ mode: CalcMode) -> some View {
         HStack(alignment: .top, spacing: modeHintSpacing) {
+            // タップできない案内なのでアクセント色は使わない
             Image(systemName: "info.circle")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(Color.secondary)
             Text(mode == .formula ? "calc.mode.formula.hint" : "calc.mode.calculator.hint")
                 .font(.footnote)
                 .fixedSize(horizontal: false, vertical: true)
@@ -132,7 +133,7 @@ struct CalcView: View {
                 .fill(.regularMaterial)
                 .overlay {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .strokeBorder(Color.accentColor.opacity(0.45), lineWidth: 1)
+                        .strokeBorder(Color.secondary.opacity(0.45), lineWidth: 1)
                 }
                 .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
         }

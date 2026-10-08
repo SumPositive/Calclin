@@ -60,13 +60,16 @@ let COLOR_CALC_INACTIVE: Color = .secondary // Calc非活性枠
 let COLOR_NUMBER: Color = .primary          // 数値
 let COLOR_ANSWER: Color = COLOR_NUMBER      // 答え
 
-let COLOR_OPERATOR: Color = .cyan           // 演算子
+// アクセント色は「タップできる」印にだけ使う（≒ と下線付きの単位）。
+// タップできない演算子などはアクセント色と紛れない中立色にする
+let COLOR_TAPPABLE: Color = .accentColor    // タップできる印
+let COLOR_OPERATOR: Color = .secondary      // 演算子（タップできないので中立色）
 let COLOR_OPERATOR_WAIT: Color = .gray      // 待機演算子　右端の[.]や[)]
 let COLOR_UNIT: Color = .secondary          // 単位
 // 単位の下線色（タップで換算リストを出せる印）
 // 「タップできる」という機能の印なので、入力行の色（好みで変えられる装飾）とは
 // 切り離し、常に標準のアクセント色にする
-let COLOR_UNIT_UNDERLINE: Color = .accentColor
+let COLOR_UNIT_UNDERLINE: Color = COLOR_TAPPABLE
 
 // 答えに添える単位の大きさ（答えの文字サイズに対する比率）
 // - 単位は補助情報なので数値より小さくする
@@ -357,6 +360,12 @@ let FM_ANS      = "="   // 答え
 // 「=」のままだと丸めた値を厳密な答えと誤読されるため、記号で区別する
 // （長押しで全桁を表示できる合図も兼ねる）
 let FM_ANS_APPROX = "\u{2252}"   // ≒
+/// ≒ の大きさ（周りの記号・数値に対する倍率）
+/// タップで全桁を見られる印なので、= や演算子より大きくして押しやすく目立たせる
+let APPROX_SIGN_SCALE: CGFloat = 1.4
+/// 1つの Text の中で ≒ を大きくしたときの沈め量（≒ の文字サイズに対する比率）
+/// ベースラインが共通なので、そのままだと大きい ≒ の中心が数値より上に浮く
+let APPROX_SIGN_BASELINE_DROP: CGFloat = 0.08
 // 四則演算子
 let FM_OPERATORS = "+-*/×÷"  // 四則演算子
 let FM_ADD      = "+"   // 加算 ASCII+（U+002B） テンキー上のAsciiプラス

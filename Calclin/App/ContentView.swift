@@ -433,9 +433,10 @@ struct ContentView: View {
         // - 余白とアイコンは @ScaledMetric で文字と一緒に大きくする
         // - 挙動変更を説明する本文なので cappedAtLargeTypeSize は付けず、特大まで伸ばす
         HStack(alignment: .top, spacing: hintSpacing) {
+            // タップできない案内なのでアクセント色は使わない
             Image(systemName: "info.circle")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(Color.secondary)
             Text("calc.unit.swapHint")
                 .font(.footnote)
                 .fixedSize(horizontal: false, vertical: true)
@@ -445,10 +446,10 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color.accentColor.opacity(0.10))
+                .fill(Color.secondary.opacity(0.10))
                 .overlay {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .strokeBorder(Color.accentColor.opacity(0.45), lineWidth: 1)
+                        .strokeBorder(Color.secondary.opacity(0.45), lineWidth: 1)
                 }
         }
         .padding(.horizontal, 8)

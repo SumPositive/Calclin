@@ -19,6 +19,8 @@ struct SettingView: View {
     @State private var safariURL: URL?  // 開く予定のURLを保持
     @State private var showTipSheet = false    // 投げ銭シートの有無
     @State private var expandedDropdown: SettingDropdownKind? = nil  // 独自プルダウンの開閉状態
+    @State private var showFontScaleHelp = false  // 文字サイズのヘルプシート表示有無
+    @State private var fontScaleHelpHeight: CGFloat = 0  // ヘルプシートの中身の高さ（実測）
     /// 以前「標準／大／特大」を選んだ人だけ、戻せるよう選択肢を残す（Deferin と同じ方式）
     /// 文字サイズを変えると画面ごと作り直されて @State が初期化されるため、
     /// 判定はアプリ起動後に初めて設定画面を開いた時の1回だけにする（自動に変えても次回起動までは戻せる）
@@ -81,6 +83,13 @@ struct SettingView: View {
     /// 選択肢が残っている人が「自動」にした時の「次回から設定アプリで変更できます」
     private var fontScaleSystemNextNote: AttributedString {
         Self.underlinedLinks(AttributedString(localized: "settings.fontScale.systemNoteNext"))
+    }
+
+    /// 文字サイズのヘルプシートを開く高さ。中身が分かるまでは半画面ぶんで待つ
+    private var fontScaleHelpSheetHeight: CGFloat {
+        let screen = UIScreen.main.bounds.height
+        guard 0 < fontScaleHelpHeight else { return screen * 0.5 }
+        return min(fontScaleHelpHeight, screen * 0.9)
     }
 
     /// リンク部分に下線を付ける
@@ -231,9 +240,22 @@ struct SettingView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     AdaptiveControlRow {
-                        Label("settings.fontScale", systemImage: "textformat.size")
-                            .labelStyle(.titleAndIcon)
-                            .font(.subheadline)
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Label("settings.fontScale", systemImage: "textformat.size")
+                                .labelStyle(.titleAndIcon)
+                                .font(.subheadline)
+                            // 説明が長いので、項目名の右の (?) からシートで読ませる
+                            Button {
+                                showFontScaleHelp = true
+                            } label: {
+                                Image(systemName: "questionmark.circle")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(Text("settings.fontScale"))
+                        }
                     } control: {
                         // 「自動」の人には選択肢の代わりに、システム設定で変えられることを示す
                         if Self.showsFontScalePicker {
@@ -267,16 +289,18 @@ struct SettingView: View {
                             .frame(maxWidth: .infinity, alignment: .trailing)
                             .multilineTextAlignment(.trailing)
                     }
-                    if viewModel.playMode == .beginner {
-                        Text("settings.help.fontScale")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 2)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .cappedAtLargeTypeSize()
-                    }
                 }
                 .zIndex(expandedDropdown == .fontScale ? 50 : 0)
+                .sheet(isPresented: $showFontScaleHelp) {
+                    FontScaleHelpSheet(settingsLink: fontScaleSystemNote) { height in
+                        fontScaleHelpHeight = height
+                    }
+                    .appFontScale(viewModel.fontScale)
+                    // 中身の高さぴったりで開く（足りなければ引き上げられる）
+                    .presentationDetents([.height(fontScaleHelpSheetHeight), .large])
+                    // 背面の設定が透けないよう不透過にする
+                    .presentationBackground(Color(.systemBackground))
+                }
             }
             .padding(.top, -12)
             .padding(.leading, sectionLeadingPadding)
@@ -400,6 +424,44 @@ struct SettingView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
+    }
+}
+
+// MARK: - 文字サイズのヘルプシート
+
+/// 文字サイズの説明シート（設定アプリでの変え方と「自動」の案内）
+private struct FontScaleHelpSheet: View {
+    /// 「設定アプリで変更できます」（下線付きリンク）
+    let settingsLink: AttributedString
+    /// 中身の高さを親へ返す（シートを中身ぴったりの高さで開くため）
+    var onMeasured: (CGFloat) -> Void = { _ in }
+
+    /// 測っていない部分の高さ（シート上端のつまみまわりの余白）
+    private let chromeHeight: CGFloat = 24
+
+    var body: some View {
+        // タイトルや閉じるボタンは置かず、説明だけを見せる（下へスワイプで閉じる）
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("settings.help.fontScale")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                // 説明文の「設定アプリ」を、ここから押せるようにする
+                Text(settingsLink)
+                    .font(.subheadline)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .multilineTextAlignment(.trailing)
+            }
+            .padding(20)
+            .padding(.top, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // ScrollView の中身を測る（外枠を測ると開いている高さが返ってしまう）
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                guard 0 < height else { return }
+                onMeasured(height + chromeHeight)
+            }
+        }
     }
 }
 

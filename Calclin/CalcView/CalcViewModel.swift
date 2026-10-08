@@ -1163,6 +1163,8 @@ final class CalcViewModel: ObservableObject {
         // g や kg のディセンダが入力行の下端に接してしまうので、少し持ち上げる
         attr.baselineOffset = 33.6 * numberFontScale * 0.06
         if isTappable {
+            // タップで換算リストを出せるので、文字もアクセント色にする
+            attr.foregroundColor = COLOR_TAPPABLE
             // 色は Text.LineStyle の中に入れる。
             // attr.underlineColor は UIKit スコープに入るのに対し underlineStyle は SwiftUI スコープへ入り、
             // SwiftUI の Text は自分のスコープしか見ないため、別々に指定すると下線が文字色のままになる

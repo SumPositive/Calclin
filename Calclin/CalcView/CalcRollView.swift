@@ -530,96 +530,67 @@ struct CalcRollHelpSheet: View {
     /// 中身の高さを親へ返す（シートを中身ぴったりの高さで開くため）
     var onMeasured: (CGFloat) -> Void = { _ in }
 
-    @Environment(\.dismiss) private var dismiss
-
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    // アイコンはヘッダのインジケータと同じ ◁▷ にして、
-                    // どれを操作する話か一目で分かるようにする
-                    // ＃先頭にロールの数を書く。件数は CALC_COUNT_MAX から
-                    //   差し込むので、文面に直接書かない
-                    section(title: "calcFrame.help.switch.title",
-                            bodyText: String(format:
-                                String(localized: "calcFrame.help.switch.body"),
-                                CALC_COUNT_MAX)) {
-                        HStack(spacing: 2) {
-                            Image(systemName: "arrowtriangle.left")
-                            Image(systemName: "arrowtriangle.right")
-                        }
-                    }
-                    // アイコンはヘッダ両端のボタンと同じ [-][+] にする
-                    section(title: "calcFrame.help.count.title",
-                            body: "calcFrame.help.count.body") {
-                        HStack(spacing: 2) {
-                            Image(systemName: "minus.square")
-                            Image(systemName: "plus.square")
-                        }
-                    }
-                    section(title: "calcFrame.help.edit.title",
-                            body: "calcFrame.help.edit.body") {
-                        Image(systemName: "hand.tap")
-                    }
-                    section(title: "calcFrame.help.unit.title",
-                            body: "calcFrame.help.unit.body") {
-                        Image(systemName: "ruler")
-                    }
-                    section(title: "calcFrame.help.keyboard.title",
-                            body: "calcFrame.help.keyboard.body") {
-                        Image(systemName: "keyboard")
+        // タイトルや閉じるボタンは置かず、説明だけを見せる（下へスワイプで閉じる）
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                // アイコンはヘッダのインジケータと同じ ◁▷ にして、
+                // どれを操作する話か一目で分かるようにする
+                // ＃先頭にロールの数を書く。件数は CALC_COUNT_MAX から
+                //   差し込むので、文面に直接書かない
+                section(title: "calcFrame.help.switch.title",
+                        bodyText: String(format:
+                            String(localized: "calcFrame.help.switch.body"),
+                            CALC_COUNT_MAX)) {
+                    HStack(spacing: 2) {
+                        Image(systemName: "arrowtriangle.left")
+                        Image(systemName: "arrowtriangle.right")
                     }
                 }
-                .padding(20)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                // ＃ScrollView の中身を測る。外枠（VStack）を測ると
-                //   「今開いている高さ」が返り、自分の値で自分が決まってしまう
-                .background {
-                    GeometryReader { contentGeo in
-                        Color.clear
-                            .preference(key: HelpSheetHeightKey.self,
-                                        value: contentGeo.size.height)
+                // アイコンはヘッダ両端のボタンと同じ [-][+] にする
+                section(title: "calcFrame.help.count.title",
+                        body: "calcFrame.help.count.body") {
+                    HStack(spacing: 2) {
+                        Image(systemName: "minus.square")
+                        Image(systemName: "plus.square")
                     }
+                }
+                section(title: "calcFrame.help.edit.title",
+                        body: "calcFrame.help.edit.body") {
+                    Image(systemName: "hand.tap")
+                }
+                section(title: "calcFrame.help.unit.title",
+                        body: "calcFrame.help.unit.body") {
+                    Image(systemName: "ruler")
+                }
+                section(title: "calcFrame.help.keyboard.title",
+                        body: "calcFrame.help.keyboard.body") {
+                    Image(systemName: "keyboard")
                 }
             }
-            .onPreferenceChange(HelpSheetHeightKey.self) { height in
-                guard height > 0 else { return }
-                onMeasured(height + helpSheetChromeHeight)
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                // タイトルは [?] アイコン付きにしたいので principal に自前で置く
-                // （navigationTitle は文字だけで記号を添えられない）
-                ToolbarItem(placement: .principal) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "questionmark.circle")
-                        Text("calcFrame.help.title")
-                    }
-                    .font(.headline)
-                }
-                // 閉じる操作は設定シートと同じ見た目・同じ位置にそろえる。
-                // ＃「画面から出る」操作は左（戻ると同じ位置）。
-                //   右は追加・編集などの機能ボタン用に空けておく
-                ToolbarItem(placement: .cancellationAction) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Label("common.close", systemImage: "chevron.down")
-                            .labelStyle(.iconOnly)
-                            .imageScale(.large)
-                            .padding(10)
-                            .background(.thinMaterial)
-                            .clipShape(Circle())
-                    }
-                    .tint(.accentColor)
+            .padding(20)
+            .padding(.top, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // ＃ScrollView の中身を測る。外枠（VStack）を測ると
+            //   「今開いている高さ」が返り、自分の値で自分が決まってしまう
+            .background {
+                GeometryReader { contentGeo in
+                    Color.clear
+                        .preference(key: HelpSheetHeightKey.self,
+                                    value: contentGeo.size.height)
                 }
             }
         }
+        .onPreferenceChange(HelpSheetHeightKey.self) { height in
+            guard height > 0 else { return }
+            onMeasured(height + helpSheetChromeHeight)
+        }
+        // 背面が透けないよう不透過にする
+        .presentationBackground(Color(.systemBackground))
     }
 
-    /// 測っていない部分の高さ。
-    /// ナビゲーションバー（約56）＋前置きの文と区切り線（約60）
-    private var helpSheetChromeHeight: CGFloat { 56 + 60 }
+    /// 測っていない部分の高さ（シート上端のつまみまわりの余白）
+    private var helpSheetChromeHeight: CGFloat { 24 }
 
     /// 1節（見出しの記号＋タイトル＋説明）。
     /// 記号はヘッダの実物と同じものを並べたいので、呼び出し側から渡す

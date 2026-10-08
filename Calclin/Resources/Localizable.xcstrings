@@ -36,66 +36,34 @@
         }
       }
     },
-    "calc.unit.convertList" : {
+    "calc.error.divideByZero" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Conversions"
+            "value" : "Div by 0"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "\u63db\u7b97\u30ea\u30b9\u30c8"
+            "value" : "÷0エラー"
           }
         }
       }
     },
-    "calc.unit.swapHint" : {
+    "calc.error.negativeSqrt" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Only the unit changed. Tap the same unit key again to convert the value. Tap the unit in the input row to see the conversion list."
+            "value" : "No √ for negatives"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "\u5358\u4f4d\u3060\u3051\u3092\u5909\u3048\u307e\u3057\u305f\u3002\u540c\u3058\u5358\u4f4d\u30ad\u30fc\u3092\u3082\u3046\u4e00\u5ea6\u62bc\u3059\u3068\u63db\u7b97\u3057\u307e\u3059\u3002\u5165\u529b\u884c\u306e\u5358\u4f4d\u3092\u62bc\u3059\u3068\u63db\u7b97\u30ea\u30b9\u30c8\u3092\u8868\u793a\u3057\u307e\u3059"
-          }
-        }
-      }
-    },
-    "calc.quote.unitMismatch" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Different base unit, can\u2019t add"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "\u57fa\u6e96\u5358\u4f4d\u304c\u9055\u3046\u305f\u3081\u5f15\u7528\u3067\u304d\u307e\u305b\u3093"
-          }
-        }
-      }
-    },
-    "calc.unit.cannotConvert" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Different base unit, can\u2019t convert"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "\u57fa\u6e96\u5358\u4f4d\u304c\u9055\u3046\u305f\u3081\u63db\u7b97\u3067\u304d\u307e\u305b\u3093"
+            "value" : "負の数の√は計算できません"
           }
         }
       }
@@ -132,70 +100,6 @@
         }
       }
     },
-    "calc.error.divideByZero" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Div by 0"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "÷0エラー"
-          }
-        }
-      }
-    },
-    "calc.error.negativeSqrt" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No √ for negatives"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "負の数の√は計算できません"
-          }
-        }
-      }
-    },
-    "calc.mode.calculator.hint" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Calc: adds up in the order you enter. 5+5\u00d72 = 20"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "\u96fb\u5353\uff1a\u5165\u529b\u3057\u305f\u9806\u306b\u8a08\u7b97\u3057\u307e\u3059\u30005\uff0b5\u00d72\uff1d20"
-          }
-        }
-      }
-    },
-    "calc.mode.formula.hint" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Formula: \u00d7 and \u00f7 come first. 5+5\u00d72 = 15"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "\u6570\u5f0f\uff1a\u00d7\u3068\u00f7\u3092\u5148\u306b\u8a08\u7b97\u3057\u307e\u3059\u30005\uff0b5\u00d72\uff1d15"
-          }
-        }
-      }
-    },
     "calc.mode.calculator" : {
       "localizations" : {
         "en" : {
@@ -208,6 +112,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "電卓"
+          }
+        }
+      }
+    },
+    "calc.mode.calculator.hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calc: adds up in the order you enter. 5+5×2 = 20"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "電卓：入力した順に計算します　5＋5×2＝20"
           }
         }
       }
@@ -228,6 +148,22 @@
         }
       }
     },
+    "calc.mode.formula.hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formula: × and ÷ come first. 5+5×2 = 15"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数式：×と÷を先に計算します　5＋5×2＝15"
+          }
+        }
+      }
+    },
     "calc.pdf.generating" : {
       "localizations" : {
         "en" : {
@@ -240,6 +176,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PDF作成中…"
+          }
+        }
+      }
+    },
+    "calc.quote.unitMismatch" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Different base unit, can’t add"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "基準単位が違うため引用できません"
           }
         }
       }
@@ -324,6 +276,54 @@
         }
       }
     },
+    "calc.unit.cannotConvert" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Different base unit, can’t convert"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "基準単位が違うため換算できません"
+          }
+        }
+      }
+    },
+    "calc.unit.convertList" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conversions"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "換算リスト"
+          }
+        }
+      }
+    },
+    "calc.unit.swapHint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only the unit changed. Tap the same unit key again to convert the value. Tap the unit in the input row to see the conversion list."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "単位だけを変えました。同じ単位キーをもう一度押すと換算します。入力行の単位を押すと換算リストを表示します"
+          }
+        }
+      }
+    },
     "calcFrame.decrease" : {
       "localizations" : {
         "en" : {
@@ -340,114 +340,18 @@
         }
       }
     },
-    "calcFrame.increase" : {
+    "calcFrame.help.button" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "More rolls"
+            "value" : "Roll controls"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ロールを増やす"
-          }
-        }
-      }
-    },
-    "calcFrame.help.edit.title" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Editing rows"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "行を編集する"
-          }
-        }
-      }
-    },
-    "calcFrame.help.edit.body" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "\u2022 In Calc, tap a detail row to edit its operator and value\n\u2022 Swipe right to add a note, or to copy the formula or the answer\n\u2022 Swipe left to delete the row"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "・電卓の明細行をタップすると演算子と数値を修正できます\n・右へスワイプするとメモを付けたり、式や答えをコピーしたりできます\n・左へスワイプすると削除できます"
-          }
-        }
-      }
-    },
-    "calcFrame.help.unit.title" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Changing the unit"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "単位を変える"
-          }
-        }
-      }
-    },
-    "calcFrame.help.unit.body" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "When a unit is underlined, tap it to show the conversion list and pick another unit."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "単位に下線があるときタップで変換リストを表示し、選択すれば単位を変更できます"
-          }
-        }
-      }
-    },
-    "calcFrame.help.keyboard.title" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Changing the keyboard"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "キーボードを変える"
-          }
-        }
-      }
-    },
-    "calcFrame.help.keyboard.body" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "\u2022 Swipe left or right, or tap a dot below, to switch keyboards\n\u2022 Long-press a key to change what it does"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "・左右にスワイプするか下の丸を押せばキーボードが切り替わります\n・キーを長押しすればキー定義を変更できます"
+            "value" : "ロール操作"
           }
         }
       }
@@ -469,66 +373,18 @@
         }
       }
     },
-    "calcFrame.help.button" : {
+    "calcFrame.help.count.body" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Roll controls"
+            "value" : "Use the buttons at either end of the header to show fewer or more rolls side by side. Double-tapping a roll changes the count too. Each roll keeps its own calculation."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ロール操作"
-          }
-        }
-      }
-    },
-    "calcFrame.help.title" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Help"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ヘルプ"
-          }
-        }
-      }
-    },
-    "calcFrame.help.switch.title" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Switching rolls"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ロールを切り替える"
-          }
-        }
-      }
-    },
-    "calcFrame.help.switch.body" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "There are %lld rolls (calculation lists)\n\u2022 When several rolls are visible, you can also tap a roll directly to switch to it"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ロール（計算一覧）は%lldつあります\n・ロールが複数見えているとき、ロールを直接タップしても切り替えることができます"
+            "value" : "ヘッダ両端のボタンで、並べて表示するロールの数を増減できます。ロールをダブルタップしても増減できます。ロールごとに別の計算を保持します"
           }
         }
       }
@@ -549,18 +405,163 @@
         }
       }
     },
-    "calcFrame.help.count.body" : {
+    "calcFrame.help.edit.body" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Use the buttons at either end of the header to show fewer or more rolls side by side. Double-tapping a roll changes the count too. Each roll keeps its own calculation."
+            "value" : "• In Calc, tap a detail row to edit its operator and value\n• Swipe right to add a note, or to copy the formula or the answer\n• Swipe left to delete the row"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ヘッダ両端のボタンで、並べて表示するロールの数を増減できます。ロールをダブルタップしても増減できます。ロールごとに別の計算を保持します"
+            "value" : "・電卓の明細行をタップすると演算子と数値を修正できます\n・右へスワイプするとメモを付けたり、式や答えをコピーしたりできます\n・左へスワイプすると削除できます"
+          }
+        }
+      }
+    },
+    "calcFrame.help.edit.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editing rows"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行を編集する"
+          }
+        }
+      }
+    },
+    "calcFrame.help.keyboard.body" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Swipe left or right, or tap a dot below, to switch keyboards\n• Long-press a key to change what it does"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "・左右にスワイプするか下の丸を押せばキーボードが切り替わります\n・キーを長押しすればキー定義を変更できます"
+          }
+        }
+      }
+    },
+    "calcFrame.help.keyboard.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changing the keyboard"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キーボードを変える"
+          }
+        }
+      }
+    },
+    "calcFrame.help.switch.body" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There are %lld rolls (calculation lists)\n• When several rolls are visible, you can also tap a roll directly to switch to it"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ロール（計算一覧）は%lldつあります\n・ロールが複数見えているとき、ロールを直接タップしても切り替えることができます"
+          }
+        }
+      }
+    },
+    "calcFrame.help.switch.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switching rolls"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ロールを切り替える"
+          }
+        }
+      }
+    },
+    "calcFrame.help.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Help"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ヘルプ"
+          }
+        }
+      }
+    },
+    "calcFrame.help.unit.body" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When a unit is underlined, tap it to show the conversion list and pick another unit."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "単位に下線があるときタップで変換リストを表示し、選択すれば単位を変更できます"
+          }
+        }
+      }
+    },
+    "calcFrame.help.unit.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changing the unit"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "単位を変える"
+          }
+        }
+      }
+    },
+    "calcFrame.increase" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More rolls"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ロールを増やす"
           }
         }
       }
@@ -577,6 +578,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "閉じる"
+          }
+        }
+      }
+    },
+    "common.color" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Input row color"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "入力行の色"
+          }
+        }
+      }
+    },
+    "common.font" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Input number font"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "入力数字フォント"
+          }
+        }
+      }
+    },
+    "common.function" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Functions"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "機能"
           }
         }
       }
@@ -641,54 +690,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
-          }
-        }
-      }
-    },
-    "common.color" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Input row color"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "入力行の色"
-          }
-        }
-      }
-    },
-    "common.function" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Functions"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "機能"
-          }
-        }
-      }
-    },
-    "common.font" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Input number font"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "入力数字フォント"
           }
         }
       }
@@ -1045,166 +1046,6 @@
         }
       }
     },
-    "settings.keySettings" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Key settings"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "キー設定"
-          }
-        }
-      }
-    },
-    "settings.keyShape" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Key shape"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "キー形状"
-          }
-        }
-      }
-    },
-    "settings.keyShape.circle" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Round"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "円"
-          }
-        }
-      }
-    },
-    "settings.keyShape.custom" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Custom"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "カスタム"
-          }
-        }
-      }
-    },
-    "settings.keyShape.default" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Default"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "デフォルト"
-          }
-        }
-      }
-    },
-    "settings.keyBrightness" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Brightness"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "明るさ"
-          }
-        }
-      }
-    },
-    "settings.keyDepth" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Depth"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "立体感"
-          }
-        }
-      }
-    },
-    "settings.keyHighlight" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Highlight"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ハイライト"
-          }
-        }
-      }
-    },
-    "settings.keyShadow" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Shadow"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "影"
-          }
-        }
-      }
-    },
-    "settings.keyShape.square" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Square"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "四角"
-          }
-        }
-      }
-    },
     "keyboard.layout" : {
       "localizations" : {
         "en" : {
@@ -1249,6 +1090,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "キーが空欄・未定義に置き換わります"
+          }
+        }
+      }
+    },
+    "keyboard.reset" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "初期化"
           }
         }
       }
@@ -1313,22 +1170,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "キーボード配置を初期化しますか？"
-          }
-        }
-      }
-    },
-    "keyboard.reset" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "初期化"
           }
         }
       }
@@ -1532,54 +1373,6 @@
         }
       }
     },
-    "settings.appearance.auto" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Auto"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自動"
-          }
-        }
-      }
-    },
-    "settings.appearance.dark" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dark"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ダーク"
-          }
-        }
-      }
-    },
-    "settings.appearance.light" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Light"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ライト"
-          }
-        }
-      }
-    },
     "roll.actions.label" : {
       "localizations" : {
         "en" : {
@@ -1756,54 +1549,6 @@
         }
       }
     },
-    "settings.accent.standard" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Accent"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アクセント"
-          }
-        }
-      }
-    },
-    "settings.accent.teal" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deep Teal"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ディープティール"
-          }
-        }
-      }
-    },
-    "settings.accent.indigo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Indigo"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "藍"
-          }
-        }
-      }
-    },
     "settings.accent.bronze" : {
       "localizations" : {
         "en" : {
@@ -1836,6 +1581,102 @@
         }
       }
     },
+    "settings.accent.indigo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indigo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "藍"
+          }
+        }
+      }
+    },
+    "settings.accent.standard" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accent"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アクセント"
+          }
+        }
+      }
+    },
+    "settings.accent.teal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deep Teal"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ディープティール"
+          }
+        }
+      }
+    },
+    "settings.appearance.auto" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動"
+          }
+        }
+      }
+    },
+    "settings.appearance.dark" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dark"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダーク"
+          }
+        }
+      }
+    },
+    "settings.appearance.light" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ライト"
+          }
+        }
+      }
+    },
     "settings.appearanceMode" : {
       "localizations" : {
         "en" : {
@@ -1864,22 +1705,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最新行を表示するタイミング"
-          }
-        }
-      }
-    },
-    "settings.autoScroll.recommended" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recommended"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "おすすめ"
           }
         }
       }
@@ -1928,6 +1753,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "＝合計時"
+          }
+        }
+      }
+    },
+    "settings.autoScroll.recommended" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recommended"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "おすすめ"
           }
         }
       }
@@ -2008,6 +1849,125 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "達人"
+          }
+        }
+      }
+    },
+    "settings.fontScale" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Font Size"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字サイズ"
+          }
+        }
+      }
+    },
+    "settings.fontScale.large" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Large"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大"
+          }
+        }
+      }
+    },
+    "settings.fontScale.standard" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "標準"
+          }
+        }
+      }
+    },
+    "settings.fontScale.system" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動"
+          }
+        }
+      }
+    },
+    "settings.fontScale.systemNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change it in the [Settings app](app-settings:)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "[設定アプリ](app-settings:)で変更できます"
+          }
+        }
+      }
+    },
+    "settings.fontScale.systemNoteNext" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From next time, change it in the [Settings app](app-settings:)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次回から[設定アプリ](app-settings:)で変更できます"
+          }
+        }
+      }
+    },
+    "settings.fontScale.xLarge" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extra Large"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "特大"
           }
         }
       }
@@ -2108,6 +2068,199 @@
         }
       }
     },
+    "settings.help.fontScale" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text size follows your device settings\n\nTap \"Settings app\" to open Settings, go back to the main list at the top left, then adjust it in Display & Brightness > Text Size\n\nFor even larger text, turn on Accessibility > Display & Text Size > Larger Text\n\nIf you previously chose Standard, Large, or Extra Large, choose Auto to follow this setting"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字サイズは端末の設定に従います\n\n「設定アプリ」を押すと設定が開くので、左上で一覧に戻り、「画面表示と明るさ」→「テキストサイズを変更」で調整してください\n\nさらに大きくするには、「アクセシビリティ」→「画面表示とテキストサイズ」→「さらに大きな文字」をオンにします\n\n以前「標準／大／特大」を選んでいた場合は、「自動」にするとこの設定に従います"
+          }
+        }
+      }
+    },
+    "settings.keyBrightness" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brightness"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "明るさ"
+          }
+        }
+      }
+    },
+    "settings.keyDepth" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Depth"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立体感"
+          }
+        }
+      }
+    },
+    "settings.keyHighlight" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Highlight"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ハイライト"
+          }
+        }
+      }
+    },
+    "settings.keySettings" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Key settings"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キー設定"
+          }
+        }
+      }
+    },
+    "settings.keyShadow" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shadow"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "影"
+          }
+        }
+      }
+    },
+    "settings.keyShape" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Key shape"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キー形状"
+          }
+        }
+      }
+    },
+    "settings.keyShape.circle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Round"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "円"
+          }
+        }
+      }
+    },
+    "settings.keyShape.custom" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カスタム"
+          }
+        }
+      }
+    },
+    "settings.keyShape.default" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "デフォルト"
+          }
+        }
+      }
+    },
+    "settings.keyShape.square" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Square"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "四角"
+          }
+        }
+      }
+    },
+    "settings.numberFont.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Input number font"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "入力数字フォント"
+          }
+        }
+      }
+    },
     "settings.open" : {
       "localizations" : {
         "en" : {
@@ -2120,6 +2273,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "設定を開く"
+          }
+        }
+      }
+    },
+    "settings.rateApp" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rate This App"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリを評価する"
+          }
+        }
+      }
+    },
+    "settings.rateApp.description" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We’d love to hear your requests and suggestions. They help us decide which new features and improvements to work on next."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ご要望やご提案もぜひお聞かせください。今後の新機能や改善を検討する際の参考にさせていただきます"
           }
         }
       }
@@ -2328,190 +2513,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "取扱説明"
-          }
-        }
-      }
-    },
-    "settings.rateApp" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rate This App"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリを評価する"
-          }
-        }
-      }
-    },
-    "settings.rateApp.description" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "We\u2019d love to hear your requests and suggestions. They help us decide which new features and improvements to work on next."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ご要望やご提案もぜひお聞かせください。今後の新機能や改善を検討する際の参考にさせていただきます"
-          }
-        }
-      }
-    },
-    "settings.fontScale" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Font Size"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "文字サイズ"
-          }
-        }
-      }
-    },
-    "settings.numberFont.title" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Input number font"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "入力数字フォント"
-          }
-        }
-      }
-    },
-    "settings.fontScale.system" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Auto"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自動"
-          }
-        }
-      }
-    },
-    "settings.fontScale.systemNote" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Change it in the [Settings app](app-settings:)"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "[設定アプリ](app-settings:)で変更できます"
-          }
-        }
-      }
-    },
-    "settings.fontScale.systemNoteNext" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "From next time, change it in the [Settings app](app-settings:)"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "次回から[設定アプリ](app-settings:)で変更できます"
-          }
-        }
-      }
-    },
-    "settings.fontScale.standard" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Standard"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "標準"
-          }
-        }
-      }
-    },
-    "settings.fontScale.large" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Large"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "大"
-          }
-        }
-      }
-    },
-    "settings.fontScale.xLarge" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Extra Large"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "特大"
-          }
-        }
-      }
-    },
-    "settings.help.fontScale" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Text size follows your iPhone settings\n\nTap \"Settings app\" to open Settings, go back to the main list at the top left, then adjust it in Display & Brightness > Text Size\n\nFor even larger text, turn on Accessibility > Display & Text Size > Larger Text\n\nIf you previously chose Standard, Large, or Extra Large, choose Auto to follow this setting"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "文字サイズは iPhone の設定に従います\n\n「設定アプリ」を押すと設定が開くので、左上で一覧に戻り、「画面表示と明るさ」→「テキストサイズを変更」で調整してください\n\nさらに大きくするには、「アクセシビリティ」→「画面表示とテキストサイズ」→「さらに大きな文字」をオンにします\n\n以前「標準／大／特大」を選んでいた場合は、「自動」にするとこの設定に従います"
           }
         }
       }

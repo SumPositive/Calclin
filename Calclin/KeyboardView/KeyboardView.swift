@@ -796,7 +796,7 @@ struct KeyView: View {
                     if isEditReturn {
                         Image(systemName: "return")
                             .font(.system(size: 24, weight: .heavy))
-                            .foregroundColor(isDisabled ? disabledTextColor : (colorScheme == .dark ? .black : COLOR_OPERATOR))
+                            .foregroundColor(isDisabled ? disabledTextColor : (colorScheme == .dark ? .black : COLOR_TAPPABLE))
                     } else if symbol != "" {
                         Image(systemName: symbol)
                             .imageScale(.large)

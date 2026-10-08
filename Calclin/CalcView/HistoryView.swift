@@ -101,7 +101,7 @@ struct HistoryView: View {
                                         Text("history.copy.expression") // 上下逆に表示される
                                         //.font(.system(size: 24.0, weight: .bold))
                                     }
-                                    .tint(COLOR_OPERATOR) // スワイプ背景色
+                                    .tint(COLOR_TAPPABLE) // スワイプ背景色（押せるボタンなのでアクセント色）
                                 }
 
                                 Button() {
@@ -264,7 +264,8 @@ struct CustomCell: View {
     /// ＃電卓のロール行（RollCell は 15pt 基準）と同じ見え方にするため、
     ///   数式側（本文 16pt）でもロールと同じ基準で計算する
     private var answerSignFontSize: CGFloat {
-        ROLL_BODY_FONT_SIZE * calcFontScale
+        // ≒ はタップできる印なので大きくする
+        ROLL_BODY_FONT_SIZE * calcFontScale * (isAnswerRounded ? APPROX_SIGN_SCALE : 1.0)
     }
 
     /// 拡大した答えの隣で、記号（= ≒）を縦中央に見せるための持ち上げ量。
@@ -296,7 +297,14 @@ struct CustomCell: View {
     /// 最新行以外の1行表示「式＝答え単位（＋メモ）」
     private var historyLineText: AttributedString {
         var equal = AttributedString(answerSign)
-        equal.foregroundColor = COLOR_OPERATOR
+        // ≒ はタップで全桁を見られる印なのでアクセント色、= は演算子と同じ中立色
+        equal.foregroundColor = isAnswerRounded ? COLOR_TAPPABLE : COLOR_OPERATOR
+        if isAnswerRounded {
+            // ≒ はタップできる印なので大きくし、浮いた分だけ沈めて数値と高さを揃える
+            let signSize = fontSize * calcFontScale * APPROX_SIGN_SCALE
+            equal.font = .system(size: signSize, weight: .regular, design: .rounded)
+            equal.baselineOffset = -signSize * APPROX_SIGN_BASELINE_DROP
+        }
         var answer = AttributedString(minusSignedDisplay(displayedAnswer))
         // 答えは式より目立たせる（電卓モードの [=] 行と揃える）
         answer.font = .system(size: fontSize * calcFontScale,
@@ -315,6 +323,11 @@ struct CustomCell: View {
     /// - 保存時の入力行の見た目（大きなフォント・下線・持ち上げ）は履歴では使わないので消す
     private var plainFormulaTextRaw: AttributedString {
         var formula = row.formula
+        // 入力行でタップできた単位（下線付き）はアクセント色なので、
+        // 履歴ではタップできない普通の単位の色に戻す
+        for run in formula.runs where run.underlineStyle != nil {
+            formula[run.range].foregroundColor = COLOR_UNIT
+        }
         formula.underlineStyle = nil
         formula.font = nil
         formula.baselineOffset = nil
@@ -369,7 +382,8 @@ struct CustomCell: View {
             Text({
                 // 記号と数値の間に空きを入れる（電卓のロール行と同じ）
                 var equal = AttributedString(answerSign + " ")
-                equal.foregroundColor = COLOR_OPERATOR
+                // ≒ はタップで全桁を見られる印なのでアクセント色、= は中立色
+                equal.foregroundColor = isAnswerRounded ? COLOR_TAPPABLE : COLOR_OPERATOR
                 equal.font = .system(size: answerSignFontSize,
                                      weight: .regular, design: .rounded)
                 // 記号と答えは1つの Text なのでベースラインが揃う。
@@ -449,7 +463,8 @@ struct CustomCell: View {
     private var latestUnitText: AttributedString? {
         guard isLatest, let kt = row.unitFormula, !kt.isEmpty else { return nil }
         var unitKt = AttributedString(kt)
-        unitKt.foregroundColor = COLOR_UNIT
+        // タップで換算リストを出せるので、文字も下線もアクセント色にする
+        unitKt.foregroundColor = COLOR_TAPPABLE
         // タップで換算リストを出せる印。
         // 機能の印なので入力行の色には追従させず、常に標準のアクセント色にする
         unitKt.underlineStyle = Text.LineStyle(pattern: .solid, color: COLOR_UNIT_UNDERLINE)
@@ -649,7 +664,7 @@ struct RollView: View {
                                 } label: {
                                     Text("history.copy.expression") // 上下逆に表示される
                                 }
-                                .tint(COLOR_OPERATOR) // スワイプ背景色
+                                .tint(COLOR_TAPPABLE) // スワイプ背景色（押せるボタンなのでアクセント色）
                             }
 
                             Button() {
@@ -834,11 +849,21 @@ struct RollCell: View {
         // 中間結果も答えと同じく、丸めているなら ≒ を付けてタップできるようにする
         let isRounded = accBase.map { viewModel?.hasHiddenPrecision($0) ?? false } ?? false
         let sign = isRounded ? FM_ANS_APPROX : FM_ANS
-        return Text(sign + " " + minusSignedDisplay(value))
+        // ≒ だけはタップできる印としてアクセント色にする（数値は控えめな色のまま）
+        var signAttr = AttributedString(sign + " ")
+        signAttr.foregroundColor = isRounded ? COLOR_TAPPABLE : Color.secondary.opacity(0.7)
+        if isRounded {
+            // ≒ はタップできる印なので大きくし、浮いた分だけ沈めて数値と高さを揃える
+            let signSize = size * APPROX_SIGN_SCALE
+            signAttr.font = .system(size: signSize, weight: .light, design: .rounded)
+            signAttr.baselineOffset = -signSize * APPROX_SIGN_BASELINE_DROP
+        }
+        var valueAttr = AttributedString(minusSignedDisplay(value))
+        valueAttr.foregroundColor = Color.secondary.opacity(0.7)
+        return Text(signAttr + valueAttr)
             .font(.system(size: size, weight: .light, design: .rounded).monospacedDigit())
             .lineLimit(1)
             .fixedSize(horizontal: true, vertical: false)
-            .foregroundStyle(Color.secondary.opacity(0.7))
             .contentShape(Rectangle())
             // ≒ が出ている中間結果は、タップで丸める前の値を見せる
             .highPriorityGesture(
@@ -880,9 +905,12 @@ struct RollCell: View {
         // 記号だけを下げて、インクの中心どうしで揃える。
         // ＃= と ≒ は字形が違うので、実際に出す記号を渡して測る
         // ＃文言のときは拡大しないので、ずらす必要もない
+        // ≒ はタップできる印なので大きくする（他の演算子は本文と同じ）
+        let opFontSize = fontSize * calcFontScale
+            * (displayOp == FM_ANS_APPROX ? APPROX_SIGN_SCALE : 1.0)
         let opBaselineDrop = enlarges
             ? operatorBaselineDrop(answerSize: latestAnswerFontSize,
-                                   operatorSize: fontSize * calcFontScale,
+                                   operatorSize: opFontSize,
                                    symbol: operatorDisplay(displayOp))
             : 0
         return HStack(spacing: 0) {
@@ -891,9 +919,10 @@ struct RollCell: View {
             HStack(spacing: 0) {
                 if !opStr.isEmpty {
                     Text(operatorDisplay(displayOp) + " ")
-                        .font(.system(size: fontSize * calcFontScale,
+                        .font(.system(size: opFontSize,
                                       weight: .regular, design: .rounded))
-                        .foregroundStyle(COLOR_OPERATOR)
+                        // ≒ はタップで全桁を見られる印なのでアクセント色、他の演算子は中立色
+                        .foregroundStyle(displayOp == FM_ANS_APPROX ? COLOR_TAPPABLE : COLOR_OPERATOR)
                         // ＃セルは scaleEffect(y: -1) で反転しているので、
                         //   画面上で「持ち上げる」には y をマイナスにする
                         .offset(y: -opBaselineDrop)
@@ -970,7 +999,8 @@ struct RollCell: View {
     /// タップできる単位の見た目（下線を付けて換算リストが出せることを示す）
     private func tappableUnitText(_ formula: String) -> AttributedString {
         var attr = AttributedString(formula)
-        attr.foregroundColor = COLOR_UNIT
+        // タップで換算リストを出せるので、文字も下線もアクセント色にする
+        attr.foregroundColor = COLOR_TAPPABLE
         // タップで換算リストを出せる印。
         // 機能の印なので入力行の色には追従させず、常に標準のアクセント色にする
         attr.underlineStyle = Text.LineStyle(pattern: .solid, color: COLOR_UNIT_UNDERLINE)
