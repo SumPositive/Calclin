@@ -4,6 +4,9 @@
     " %lld " : {
 
     },
+    "0" : {
+
+    },
     "app.title" : {
       "localizations" : {
         "en" : {
@@ -2085,6 +2088,23 @@
         }
       }
     },
+    "settings.help.taxRate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These rates are used by the TAX+ and TAX− keys\n\nEach key shows the rate set here\n\nKeys for a rate set to 0 can't be pressed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "税込・税抜キーで使う税率です\n\nキーには設定した税率が表示されます\n\n0 にした枠のキーは押せなくなります"
+          }
+        }
+      }
+    },
     "settings.keyBrightness" : {
       "localizations" : {
         "en" : {
@@ -2485,6 +2505,57 @@
         }
       }
     },
+    "settings.section.tax" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tax Rates"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "税率"
+          }
+        }
+      }
+    },
+    "settings.taxRate.format" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rate %d"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "税率%d"
+          }
+        }
+      }
+    },
+    "settings.taxRate.reset" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset to Defaults"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "初期値に戻す"
+          }
+        }
+      }
+    },
     "settings.title" : {
       "localizations" : {
         "en" : {
@@ -2770,6 +2841,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "現在ご利用いただけません。"
+          }
+        }
+      }
+    },
+    "tax.error.unit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tax keys can't be used with units"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "単位付きの値には税込・税抜を使えません"
+          }
+        }
+      }
+    },
+    "tax.excluded" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TAX−"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "税抜"
+          }
+        }
+      }
+    },
+    "tax.included" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TAX+"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "税込"
           }
         }
       }

@@ -229,6 +229,9 @@ struct AppAnalytics {
             return "sign"
         case "CA", "CS", "BS":
             return "clear"
+        case _ where TaxKey(code: keyDef.code) != nil:
+            // 税込・税抜（どの枠がよく使われるかはキーコードで分かる）
+            return "tax"
         default:
             return "other"
         }

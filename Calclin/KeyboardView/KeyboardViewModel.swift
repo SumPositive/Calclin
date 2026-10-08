@@ -108,8 +108,15 @@ final class KeyboardViewModel: ObservableObject {
         if isInitial == false {
             // 1) Documents 内があればそれを使う
             if FileManager.default.fileExists(atPath: KeyDefStore.documentsURL.path) {
-                if let defs = decodeKeyDefs(from: KeyDefStore.documentsURL) {
+                if var defs = decodeKeyDefs(from: KeyDefStore.documentsURL) {
                     log(.info,"load Documents/UserKeyDefinition.json")
+                    // ユーザ定義には、後のバージョンで増えたキー（税込・税抜など）が無いので、
+                    // Bundle にしか無いキーを末尾に足す（ユーザが編集したキーはそのまま）
+                    if let bundleURL = KeyDefStore.bundleURL,
+                       let bundleDefs = decodeKeyDefs(from: bundleURL) {
+                        let userCodes = Set(defs.map(\.code))
+                        defs += bundleDefs.filter { !userCodes.contains($0.code) }
+                    }
                     return defs
                 }
             }

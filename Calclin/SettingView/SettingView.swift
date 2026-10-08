@@ -135,6 +135,7 @@ struct SettingView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 8) {
                             modeSection
+                            taxSection
                             infoSection
                             supportSection
                             footerSection
@@ -309,6 +310,44 @@ struct SettingView: View {
         .zIndex(isDropdownExpanded(in: [.playMode, .appearanceMode, .fontScale]) ? 50 : 0)
     }
 
+    /// 税込・税抜キーの税率（3枠）
+    private var taxSection: some View {
+        SettingSectionCard(
+            title: "settings.section.tax",
+            iconName: "percent",
+            tint: .orange
+        ) {
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(0..<TaxKey.slotCount, id: \.self) { slot in
+                    TaxRateRow(slot: slot,
+                               rate: Binding(
+                                get: { viewModel.taxRate(slot: slot) },
+                                set: { newValue in
+                                    guard slot < viewModel.taxRates.count else { return }
+                                    viewModel.taxRates[slot] = newValue
+                                }))
+                }
+                // 地域の初期値に戻す（変更して分からなくなったとき用）
+                Button {
+                    viewModel.taxRates = defaultTaxRates(regionCode: Locale.current.region?.identifier)
+                } label: {
+                    Text("settings.taxRate.reset")
+                        .font(.subheadline)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                if viewModel.playMode == .beginner {
+                    Text("settings.help.taxRate")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .cappedAtLargeTypeSize()
+                }
+            }
+            .padding(.top, -12)
+            .padding(.leading, sectionLeadingPadding)
+        }
+    }
+
     /// 整数部の見え方をまとめるカード
     /// 開発者応援ボタンをまとめるカード
     private var supportSection: some View {
@@ -424,6 +463,80 @@ struct SettingView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
+    }
+}
+
+// MARK: - 税率の入力行
+
+/// 税率1〜3 の1行（見出し＋数値入力＋%）
+private struct TaxRateRow: View {
+    let slot: Int
+    @Binding var rate: String
+    @State private var text = ""
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(String(format: String(localized: "settings.taxRate.format"), slot + 1))
+                .font(.subheadline)
+            Spacer(minLength: 8)
+            TextField("0", text: $text)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .font(.body.monospacedDigit())
+                .foregroundStyle(Color.accentColor)
+                .frame(minWidth: 60, maxWidth: 90)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(Color(.systemBackground).opacity(0.96))
+                )
+                .overlay(
+                    Capsule(style: .continuous)
+                        .strokeBorder(isFocused ? Color.accentColor.opacity(0.55)
+                                                : Color.secondary.opacity(0.20),
+                                      lineWidth: 1)
+                )
+                .focused($isFocused)
+                .onChange(of: isFocused) { _, focused in
+                    // 入力を終えたときに確定する（入力途中の "5." などで書き換えない）
+                    if !focused { commit() }
+                }
+                .toolbar {
+                    // 数字キーボードには改行が無いので、閉じるボタンを付ける
+                    if isFocused {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button("common.close") { isFocused = false }
+                        }
+                    }
+                }
+            Text(verbatim: "%")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .onAppear { text = taxRateText(rate) }
+        // 「初期値に戻す」などで外から変わったら表示も合わせる
+        .onChange(of: rate) { _, newValue in
+            if !isFocused { text = taxRateText(newValue) }
+        }
+    }
+
+    /// 入力値を確かめて保存する。使えない値なら元に戻す
+    private func commit() {
+        // 地域によって数字キーボードの小数点がカンマになるので揃える
+        let normalized = text.trimmingCharacters(in: .whitespaces)
+            .replacingOccurrences(of: ",", with: ".")
+        let value = normalized.isEmpty ? "0" : normalized
+        // 0（使わない枠）〜100未満、小数は2桁まで
+        if let number = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")),
+           Double(value) != nil, 0 <= number, number < 100,
+           (value.split(separator: ".").dropFirst().first?.count ?? 0) <= 2 {
+            // "08" や "10.0" を "8" "10" に整える
+            rate = taxRateText("\(number)")
+        }
+        text = taxRateText(rate)
     }
 }
 

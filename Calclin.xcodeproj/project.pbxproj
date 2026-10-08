@@ -60,6 +60,7 @@
 				App/Log.swift,
 				App/Manager.swift,
 				App/PopupView.swift,
+				App/TaxKey.swift,
 				CalcView/CalcRollView.swift,
 				CalcView/CalcShareHelper.swift,
 				CalcView/CalcStateCodable.swift,

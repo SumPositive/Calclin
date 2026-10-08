@@ -797,6 +797,22 @@ struct KeyView: View {
                         Image(systemName: "return")
                             .font(.system(size: 24, weight: .heavy))
                             .foregroundColor(isDisabled ? disabledTextColor : (colorScheme == .dark ? .black : COLOR_TAPPABLE))
+                    } else if let taxKey = TaxKey(code: keyDef?.code ?? "") {
+                        // 税込・税抜は名前と税率の2段（税率は設定から。使わない枠は「−」）
+                        let rate = setting.taxRate(slot: taxKey.slot)
+                        // 2段なので1段のキーより小さくし、行の上下の余白を詰めて
+                        // 文字どうしの間が 2pt ほどになるようにする
+                        // （行の高さには字の上下の余白が含まれるので、間隔をマイナスにする）
+                        VStack(spacing: -5 * keyTopScale) {
+                            Text(taxKeyName(isIncluded: taxKey.isIncluded))
+                                .font(.system(size: 13 * keyTopScale, weight: .bold))
+                            Text(isUsableTaxRate(rate) ? taxRateText(rate) + "%" : "−")
+                                .font(.system(size: 17 * keyTopScale, weight: .bold))
+                        }
+                        .foregroundColor(displayTextColor)
+                        .minimumScaleFactor(0.5)
+                        .lineLimit(1)
+                        .padding(.horizontal, 6)
                     } else if symbol != "" {
                         Image(systemName: symbol)
                             .imageScale(.large)
@@ -1063,6 +1079,14 @@ struct KeyDefListView: View {
         }
     }
     
+    /// キー定義一覧での税込・税抜の表示名（税キーでなければ nil）
+    private func taxKeyListLabel(_ code: String) -> String? {
+        guard let taxKey = TaxKey(code: code) else { return nil }
+        let rate = setting.taxRate(slot: taxKey.slot)
+        let rateText = isUsableTaxRate(rate) ? taxRateText(rate) + "%" : "−"
+        return taxKeyName(isIncluded: taxKey.isIncluded) + rateText
+    }
+
     @ViewBuilder
     private func keyCell(_ keyDef: KeyDefinition) -> some View {
         ZStack {
@@ -1077,7 +1101,8 @@ struct KeyDefListView: View {
                             }
                     )
             } else {
-                Text(keyDef.keyTop)
+                // 税込・税抜は設定の税率を入れた名前で出す（「税込10%」）
+                Text(taxKeyListLabel(keyDef.code) ?? keyDef.keyTop)
                     .font(.system(size: 20 * keyListScale, weight: .bold))
                     .minimumScaleFactor(0.2)
                     .lineLimit(1)

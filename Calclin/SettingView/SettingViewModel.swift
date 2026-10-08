@@ -40,6 +40,7 @@ final class SettingViewModel: ObservableObject {
         static let keyDepthAmount = "keyDepthAmount"
         static let keyShadowAmount = "keyShadowAmount"
         static let keyHighlightAmount = "keyHighlightAmount"
+        static let taxRates = "taxRates"
     }
     
     /// 初期化
@@ -660,6 +661,32 @@ final class SettingViewModel: ObservableObject {
         }
     }
 
+    /// 税込・税抜キーの税率（3枠、% の数値文字列）
+    /// - 初期値は地域の代表的な税率。0 は使わない枠（その枠のキーは押せない）
+    @Published var taxRates: [String] = defaultTaxRates(regionCode: Locale.current.region?.identifier) {
+        didSet {
+            save(taxRates, forKey: StorageKey.taxRates)
+        }
+    }
+
+    /// 枠の税率（範囲外は "0"）
+    func taxRate(slot: Int) -> String {
+        guard 0 <= slot, slot < taxRates.count else { return "0" }
+        return taxRates[slot]
+    }
+
+    /// 税キーが使えるか（税率が 0 の枠は使えない）
+    func isTaxKeyUsable(_ key: TaxKey) -> Bool {
+        isUsableTaxRate(taxRate(slot: key.slot))
+    }
+
+    /// 税キーを押したときの税トークン（使えない枠なら nil）
+    func taxToken(for key: TaxKey) -> TaxToken? {
+        let rate = taxRate(slot: key.slot)
+        guard isUsableTaxRate(rate) else { return nil }
+        return TaxToken(isIncluded: key.isIncluded, rate: rate)
+    }
+
     // HistoryMemoViewをPopupで表示する
     @Published var popupHistoryMemoInfo: (maxLength: Int, index: Int, calcIndex: Int)? = nil
     // キーボードを見ながらキー形状を調整するPopup表示
@@ -678,6 +705,12 @@ final class SettingViewModel: ObservableObject {
         accentTheme = storedEnum(forKey: StorageKey.accentTheme, default: accentTheme)
         keyShapeMode = storedEnum(forKey: StorageKey.keyShapeMode, default: keyShapeMode)
         numberFont = storedEnum(forKey: StorageKey.numberFont, default: numberFont)
+        // 税率は3枠そろっているときだけ使う（壊れた値なら地域の初期値のまま）
+        if let rates = defaults.stringArray(forKey: StorageKey.taxRates),
+           rates.count == TaxKey.slotCount,
+           rates.allSatisfy({ Double($0) != nil }) {
+            taxRates = rates
+        }
 
         if defaults.object(forKey: StorageKey.decimalDigits) != nil {
             decimalDigits = min(max(defaults.double(forKey: StorageKey.decimalDigits), 0), SETTING_decimalDigits_MAX)

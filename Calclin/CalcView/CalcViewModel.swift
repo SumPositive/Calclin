@@ -140,6 +140,9 @@ final class CalcViewModel: ObservableObject {
     private var isPercMode: Bool = false        // % / 割 / 分 / 厘 入力済みフラグ
     private var percDivisor: AZDecimal = AZDecimal("100")  // 除数: %=100, 割=10, 分=100, 厘=1000
     private var percSymbol: String = FM_PERC               // 表示記号: "%", "割", "分", "厘"
+    /// 税込・税抜の入力中なら税トークン（"T+10" など）。% と同じ仕組みで現在値に掛ける
+    /// - このとき percSymbol は表示名（「税込10%」など）になる
+    private var percTaxToken: String? = nil
     private var isCalcNewEntryAfterUnit: Bool = false // 単位キー直後フラグ（次の数値入力で数値のみ置き換え）
     private var calcUnitDef: KeyDefinition? = nil  // 電卓モードの計算単位（= 結果表示単位）
     /// 直前に単位を差し替えた履歴（同じ単位キーの2度押しで換算するために保持する）
@@ -161,6 +164,10 @@ final class CalcViewModel: ObservableObject {
 
     /// 電卓モードで非活性にするキーかどうかを返す
     func isKeyDisabled(_ code: String) -> Bool {
+        // 税率が 0 の枠の税キーは、どちらのモードでも押せない
+        if let taxKey = TaxKey(code: code) {
+            return !keyboardViewModel.setting.isTaxKeyUsable(taxKey)
+        }
         guard calcMode == .calculator else { return false }
         if CALC_DISABLED_IN_CALCULATOR.contains(code) { return true }
         // 単位キー（unitBase を持つ）は電卓モードでも使用可能
@@ -202,6 +209,13 @@ final class CalcViewModel: ObservableObject {
         }
         if calcMode == .calculator {
             inputCalcMode(keyDef)
+            return
+        }
+        // 税込・税抜の直後に数値や単位を続けると式が壊れる（"×1.1" に数字が連結される）ので受け付けない
+        // 続けるには演算子を押す
+        if let last = tokens.last, TaxToken(token: last) != nil,
+           keyDef.code.hasPrefix("#") || keyDef.code == "Deci"
+            || (keyDef.unitBase.map { !$0.isEmpty } ?? false) {
             return
         }
         if let unitBase  = keyDef.unitBase, !unitBase.isEmpty {
@@ -297,9 +311,16 @@ final class CalcViewModel: ObservableObject {
                 case "Ans":
                     inputAnswer(keyDef)
 
+                case _ where TaxKey(code: keyDef.code) != nil:
+                    // 税込・税抜
+                    if let taxKey = TaxKey(code: keyDef.code) {
+                        inputTaxFormula(taxKey, keyDef: keyDef)
+                    }
+
                 case "Paren": // 前"("後")"の丸括弧を判定して追加する
                     if let last = tokens.last {
-                        if Double(last) != nil || last == FM_PT_RIGHT || last.hasPrefix(TOKEN_UNIT_PREFIX) {
+                        if Double(last) != nil || last == FM_PT_RIGHT || last.hasPrefix(TOKEN_UNIT_PREFIX)
+                            || TaxToken(token: last) != nil {
                             // 数値だけの入力行（[数値] or [数値][単位]）なら "(" を数値の前に挿入
                             let isOnlyNumber = (tokens.count == 1 && Double(tokens[0]) != nil)
                                             || (tokens.count == 2 && Double(tokens[0]) != nil
@@ -352,6 +373,12 @@ final class CalcViewModel: ObservableObject {
                         else if last.hasPrefix(TOKEN_UNIT_PREFIX) { // @単位
                             tokens.removeLast()
                             // isAnswerMode キープ
+                            formulaUpdate()
+                        }
+                        else if TaxToken(token: last) != nil {
+                            // 税込・税抜は1文字ずつではなく丸ごと取り消す
+                            tokens.removeLast()
+                            isAnswerMode = false
                             formulaUpdate()
                         }
                         else{
@@ -459,6 +486,10 @@ final class CalcViewModel: ObservableObject {
                     formula += "*" + conv + FM_PT_RIGHT   // "*" + 変換倍率 + ")"
                 }
             }
+            else if let tax = TaxToken(token: token) {
+                // 税込は ×(1＋税率)、税抜は ÷(1＋税率)。直前の数値や括弧に掛かる
+                formula += tax.formula
+            }
             else{
                 formula += token
             }
@@ -499,6 +530,10 @@ final class CalcViewModel: ObservableObject {
                     let isTappable = trailingDisplayUnit()?.code == def.code
                     self.formulaAttr += unitAttrString(def.formula, isTappable: isTappable)
                 }
+            }
+            else if let tax = TaxToken(token: token) {
+                // 税込・税抜は % と同じ見た目で名前を出す
+                self.formulaAttr += percentAttrString(tax.label)
             }
             else{
                 var attr = AttributedString(operatorDisplay(token))
@@ -612,6 +647,12 @@ final class CalcViewModel: ObservableObject {
             }
             else if last == FM_PT_RIGHT { // ")"
                 tokens.append(op)
+            }
+            else if TaxToken(token: last) != nil { // 税込・税抜
+                // 続けられるのは四則演算子だけ（% 系を重ねると意味が通らない）
+                if FM_OPERATORS.contains(op) {
+                    tokens.append(op)
+                }
             }
             else if last == FM_PT_LEFT { // "("
                 if op == FM_SUB {
@@ -1361,8 +1402,9 @@ final class CalcViewModel: ObservableObject {
         if let last = tokens.last {
             if Double(last) != nil
                 || last.hasPrefix(TOKEN_UNIT_PREFIX)
-                || last == FM_PERC || last == FM_PER_WARI || last == FM_PER_BU || last == FM_PER_RI {
-                // last が 数値 or 単位 or %系
+                || last == FM_PERC || last == FM_PER_WARI || last == FM_PER_BU || last == FM_PER_RI
+                || TaxToken(token: last) != nil {
+                // last が 数値 or 単位 or %系 or 税込・税抜
                 // Answer用フォーマット（true:末尾[0]表示と予定[.][)]表示なし、右括弧を閉じる）
                 formulaUpdate(true)
                 // tokens からUNITに対応した計算式を生成する
@@ -1693,6 +1735,11 @@ final class CalcViewModel: ObservableObject {
             inputPercCalc(symbol: FM_PER_RI,   divisor: AZDecimal("1000"))
         case "Ans":
             inputAnswerCalc()
+        case _ where TaxKey(code: keyDef.code) != nil:
+            // 税込・税抜
+            if let taxKey = TaxKey(code: keyDef.code) {
+                inputTaxCalc(taxKey)
+            }
         case "CA":
             tokens = []
             isAnswerMode = false
@@ -1873,7 +1920,7 @@ final class CalcViewModel: ObservableObject {
             let raw = AZDecimal(cv.numStr)
             lineUnitCode = cv.unitDef?.code
             if isPercMode {
-                displayValue = cv.numStr + percSymbol
+                displayValue = percLineDisplay(cv.numStr)
                 current = resolvedPercValue(raw)   // % の場合は Base単位変換なし
             } else {
                 // 単位があれば Base単位に変換
@@ -2049,6 +2096,8 @@ final class CalcViewModel: ObservableObject {
               !currentStr.isEmpty, currentStr != FM_SUB,
               Double(currentStr) != nil else { return }
         // トークンは変えず表示に記号を付けるだけ。計算時に変換する
+        // 税込・税抜から % に押し直したときは税を外す
+        percTaxToken = nil
         isPercMode = true
         percSymbol = symbol
         percDivisor = divisor
@@ -2056,15 +2105,108 @@ final class CalcViewModel: ObservableObject {
         formulaUpdateCalc()
     }
 
+    /// 電卓モード：税込・税抜キー入力
+    /// - 入力中の値に掛ける（% と同じく、次の演算子か [=] で確定する）
+    ///   例：1,000 税込8% + 2,000 税込10% = 3,280
+    /// - [=] の直後なら直前の答えに掛けて、そのまま答えを出す
+    ///   例：1,000 + 2,000 = 3,000 → 税込10% → 3,300
+    /// - 単位付きの値には掛けられない（通知して何もしない）
+    private func inputTaxCalc(_ taxKey: TaxKey) {
+        guard let tax = keyboardViewModel.setting.taxToken(for: taxKey) else { return }
+        if isAfterEquals && tokens.isEmpty {
+            // 直前の答えが単位付きなら掛けない
+            guard calcUnitDef == nil else {
+                Manager.shared.toast(String(localized: "tax.error.unit"))
+                return
+            }
+            guard !accumulator.isNaN else { return }
+            tokens = [accumulator.value]
+            isCalcNewEntry = false
+            isAfterEquals = false
+            setTaxMode(tax)
+            inputAnswerCalc()
+            return
+        }
+        if let last = tokens.last, last.hasPrefix(TOKEN_UNIT_PREFIX) {
+            Manager.shared.toast(String(localized: "tax.error.unit"))
+            return
+        }
+        guard let currentStr = tokens.last,
+              !currentStr.isEmpty, currentStr != FM_SUB,
+              Double(currentStr) != nil else { return }
+        setTaxMode(tax)
+        isAnswerMode = false
+        formulaUpdateCalc()
+    }
+
+    /// 税込・税抜を入力中にする（% と同じ状態を使い、記号の代わりに名前を出す）
+    private func setTaxMode(_ tax: TaxToken) {
+        isPercMode = true
+        percSymbol = tax.label
+        percDivisor = AZDecimal("100")
+        percTaxToken = tax.token
+    }
+
+    /// 数式モード：税込・税抜キー入力
+    /// - 直前の数値や閉じ括弧に掛かる（1,000 + 2,000 税込10% は 2,000 だけに掛かる）
+    /// - 続けて別の税キーを押すと置き換える
+    /// - [=] の直後なら直前の答えに掛けて、そのまま答えを出す
+    /// - 単位付きの値には掛けられない（通知して何もしない）
+    private func inputTaxFormula(_ taxKey: TaxKey, keyDef: KeyDefinition) {
+        guard let tax = keyboardViewModel.setting.taxToken(for: taxKey) else { return }
+        guard let last = tokens.last else {
+            // [=] の直後：直前の答えに掛ける
+            guard isAfterEquals, let row = historyRows.last,
+                  Double(row.answer) != nil else { return }
+            guard row.unitFormula == nil else {
+                Manager.shared.toast(String(localized: "tax.error.unit"))
+                return
+            }
+            guard let ansDef = keyboardViewModel.keyDef(code: "Ans") else { return }
+            tokens = [row.answer, tax.token]
+            isAfterEquals = false
+            inputAnswer(ansDef)
+            return
+        }
+        if last.hasPrefix(TOKEN_UNIT_PREFIX) {
+            Manager.shared.toast(String(localized: "tax.error.unit"))
+            return
+        }
+        if Double(last) != nil || last == FM_PT_RIGHT {
+            tokens.append(tax.token)
+        } else if TaxToken(token: last) != nil {
+            tokens[tokens.count - 1] = tax.token
+        } else {
+            return
+        }
+        isAnswerMode = false
+        formulaUpdate()
+    }
+
     /// isPercMode / percSymbol / percDivisor を一括リセットする
     private func resetPercMode() {
         isPercMode = false
         percSymbol = FM_PERC
         percDivisor = AZDecimal("100")
+        percTaxToken = nil
+    }
+
+    /// % 系・税込税抜の入力値をロール行に出す文字列
+    /// - 税込・税抜は桁区切りして名前との間を空ける（「1,000 税込10%」）
+    /// - % 系は従来どおり（「5%」）
+    private func percLineDisplay(_ numStr: String) -> String {
+        if percTaxToken != nil {
+            return AZDecimal(numStr).formatted(calcConfig) + " " + percSymbol
+        }
+        return numStr + percSymbol
     }
 
     /// isPercMode 時にトークンの値を割合変換して返す（%, 割, 分, 厘 共通）
     private func resolvedPercValue(_ current: AZDecimal) -> AZDecimal {
+        // 税込・税抜は演算子に関係なく、その値に税を掛ける／外す
+        if let token = percTaxToken, let tax = TaxToken(token: token) {
+            return tax.apply(current)
+        }
         if pendingOp == FM_ADD || pendingOp == FM_SUB {
             return accumulator * current / percDivisor   // 丸めなし
         } else {
@@ -2097,7 +2239,7 @@ final class CalcViewModel: ObservableObject {
             let displayValue: String
             let lineUnitCode = cv.unitDef?.code
             if isPercMode {
-                displayValue = cv.numStr + percSymbol
+                displayValue = percLineDisplay(cv.numStr)
                 current = resolvedPercValue(raw)
             } else {
                 current = toBaseValue(cv.numStr, unitDef: cv.unitDef)
@@ -2108,6 +2250,8 @@ final class CalcViewModel: ObservableObject {
                 }
             }
             let prevAccumulator = accumulator
+            // 税込・税抜の単独値（1,000 税込10% =）は、何に税を掛けたか分かるよう明細を残す
+            let hadTax = percTaxToken != nil
             resetPercMode()
 
             if let existingOp = pendingOp {
@@ -2125,9 +2269,8 @@ final class CalcViewModel: ObservableObject {
                 // 演算子なしの単独値。通常は入力値と答えが同じなので行を積まないが、
                 // 自動換算で単位が変わるときは「何を換算したか」が分からなくなるため、
                 // 換算元の値をロールに残す（7㎡ → = 2.1175坪）
-                if isSingleUnitValue,
-                   let fromDef = calcUnitDef,
-                   autoConvertTarget(for: fromDef) != nil {
+                if hadTax || (isSingleUnitValue
+                              && calcUnitDef.map { autoConvertTarget(for: $0) != nil } == true) {
                     rollLinesBuilding.append(RollLine(op: " ", value: displayValue,
                                                       isFinal: false,
                                                       rawBase: current.value,
@@ -2372,7 +2515,7 @@ final class CalcViewModel: ObservableObject {
             let raw = AZDecimal(cv.numStr)
             if isPercMode {
                 current = resolvedPercValue(raw)
-                displayValue = cv.numStr + percSymbol
+                displayValue = percLineDisplay(cv.numStr)
             } else {
                 current = toBaseValue(cv.numStr, unitDef: cv.unitDef)
                 if let def = cv.unitDef {
@@ -2444,7 +2587,7 @@ final class CalcViewModel: ObservableObject {
             let raw = AZDecimal(cv.numStr)
             if isPercMode {
                 current = resolvedPercValue(raw)
-                displayValue = cv.numStr + percSymbol
+                displayValue = percLineDisplay(cv.numStr)
             } else {
                 current = toBaseValue(cv.numStr, unitDef: cv.unitDef)
                 if let def = cv.unitDef {
@@ -2727,6 +2870,7 @@ final class CalcViewModel: ObservableObject {
             isPercMode: isPercMode,
             percDivisor: percDivisor.description,
             percSymbol: percSymbol,
+            percTaxToken: percTaxToken,
             isCalcNewEntryAfterUnit: isCalcNewEntryAfterUnit,
             calcUnitDef: calcUnitDef,
             isCalcRootResult: isCalcRootResult,
@@ -2800,6 +2944,7 @@ final class CalcViewModel: ObservableObject {
         isPercMode = state.isPercMode
         percDivisor = AZDecimal(state.percDivisor)
         percSymbol = state.percSymbol
+        percTaxToken = state.percTaxToken
         isCalcNewEntryAfterUnit = state.isCalcNewEntryAfterUnit
         calcUnitDef = state.calcUnitDef
         isCalcRootResult = state.isCalcRootResult
@@ -2876,6 +3021,9 @@ final class CalcViewModel: ObservableObject {
                     a.foregroundColor = COLOR_UNIT
                     attr += a
                 }
+            } else if let tax = TaxToken(token: token) {
+                // 税込・税抜は % と同じ見た目で名前を出す
+                attr += percentAttrString(tax.label)
             } else {
                 var a = AttributedString(operatorDisplay(token))
                 a.foregroundColor = COLOR_OPERATOR

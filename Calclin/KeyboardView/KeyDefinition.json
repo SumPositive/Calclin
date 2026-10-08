@@ -164,6 +164,42 @@
         "keyTop" : "厘"
     },
     {
+        "code" : "TaxIn1",
+        "formula" : "",
+        "keyTop" : "税込1",
+        "memo" : "税込（×(1＋税率)）　税率は設定の税率1を使う"
+    },
+    {
+        "code" : "TaxIn2",
+        "formula" : "",
+        "keyTop" : "税込2",
+        "memo" : "税込（×(1＋税率)）　税率は設定の税率2を使う"
+    },
+    {
+        "code" : "TaxIn3",
+        "formula" : "",
+        "keyTop" : "税込3",
+        "memo" : "税込（×(1＋税率)）　税率は設定の税率3を使う"
+    },
+    {
+        "code" : "TaxEx1",
+        "formula" : "",
+        "keyTop" : "税抜1",
+        "memo" : "税抜（÷(1＋税率)）　税率は設定の税率1を使う"
+    },
+    {
+        "code" : "TaxEx2",
+        "formula" : "",
+        "keyTop" : "税抜2",
+        "memo" : "税抜（÷(1＋税率)）　税率は設定の税率2を使う"
+    },
+    {
+        "code" : "TaxEx3",
+        "formula" : "",
+        "keyTop" : "税抜3",
+        "memo" : "税抜（÷(1＋税率)）　税率は設定の税率3を使う"
+    },
+    {
         "code" : "Bare",
         "formula" : "",
         "hidden" : true,

@@ -49,6 +49,8 @@ struct CalcStateCodable: Codable {
     var isPercMode: Bool
     var percDivisor: String                 // AZDecimal.description
     var percSymbol: String
+    /// 税込・税抜の入力中なら税トークン（この機能より前の保存データには無いので Optional）
+    var percTaxToken: String?
     var isCalcNewEntryAfterUnit: Bool
     var calcUnitDef: KeyDefinition?         // KeyDefinition は Codable
     var isCalcRootResult: Bool
