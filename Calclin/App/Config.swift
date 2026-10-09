@@ -45,6 +45,14 @@ let APP_KB_HEIGHT_MAX : CGFloat = 500       // 最大（見栄えで決める）
 ///   キーボードの高さ（リサイズ量）には含めず、外側の余白として足す
 let APP_KB_TOP_GAP : CGFloat = 8
 
+/// 吹き出し（ポップオーバー）の外回りの余白。
+/// 吹き出しの角丸が大きいので、角のアイコンや文字が縁に寄って見えないよう内側へ寄せる
+/// 機能メニュー・単位の換算リスト・全桁表示・設定のプルダウンで共通に使う
+let POPOVER_INSET: CGFloat = 8
+
+/// キー設定ポップアップと、ロールとキーボードの境目・画面上端とのすき間
+let KEY_STYLE_POPUP_MARGIN: CGFloat = 8
+
 //-------------------------------------- Color関係
 
 let COLOR_TITLE: Color = .secondary         // App Name

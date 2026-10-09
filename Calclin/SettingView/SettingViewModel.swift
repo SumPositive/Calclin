@@ -680,6 +680,75 @@ final class SettingViewModel: ObservableObject {
         isUsableTaxRate(taxRate(slot: key.slot))
     }
 
+    // MARK: 税率の入力（電卓キーボードで打つ）
+
+    /// 税率を入力中の枠（nil = 入力していない）
+    /// - 入力中は電卓キーボードのキーが計算ではなく税率の入力に使われる
+    @Published private(set) var editingTaxSlot: Int? = nil
+    /// 入力中の税率の文字列
+    @Published private(set) var taxEditBuffer: String = ""
+    /// 入力を始めたばかりか（最初の数字キーで今の値を置き換える。電卓の新規入力と同じ）
+    private var isTaxEditFresh = true
+
+    /// 枠の税率の入力を始める（入力中の枠があれば先に確定する）
+    func beginTaxEdit(slot: Int) {
+        commitTaxEdit()
+        editingTaxSlot = slot
+        taxEditBuffer = taxRateText(taxRate(slot: slot))
+        isTaxEditFresh = true
+    }
+
+    /// 入力中の税率を確定する。使えない値なら元の値のまま
+    func commitTaxEdit() {
+        guard let slot = editingTaxSlot else { return }
+        if !isTaxEditFresh, slot < taxRates.count {
+            // 空は「使わない枠」として 0 にする
+            let value = taxEditBuffer.isEmpty ? "0" : taxEditBuffer
+            if let number = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")),
+               0 <= number, number < 100 {
+                // "08" や "10.0" を "8" "10" に整える
+                taxRates[slot] = taxRateText("\(number)")
+            }
+        }
+        editingTaxSlot = nil
+        taxEditBuffer = ""
+        isTaxEditFresh = true
+    }
+
+    /// 税率の入力中に電卓キーボードのキーを受け取る
+    /// - 数字・00・000・小数点・BS・CA（消去）・=（確定）だけを使い、ほかのキーは無視する
+    /// - 整数2桁・小数2桁まで（0〜99.99）
+    func inputTaxEdit(_ keyDef: KeyDefinition) {
+        let code = keyDef.code
+        var next = isTaxEditFresh ? "" : taxEditBuffer
+        switch code {
+        case "#0", "#00", "#000", "#1", "#2", "#3", "#4", "#5", "#6", "#7", "#8", "#9":
+            next += keyDef.formula
+            // 先頭の余分な 0 は詰める（"010" → "10"）。"0." は残す
+            while next.count > 1, next.hasPrefix("0"), !next.hasPrefix("0.") {
+                next.removeFirst()
+            }
+        case "Deci":
+            if next.isEmpty { next = "0" }
+            if !next.contains(".") { next += "." }
+        case "BS":
+            if !next.isEmpty { next.removeLast() }
+        case "CA", "CS":
+            next = ""
+        case "Ans":
+            commitTaxEdit()
+            return
+        default:
+            return
+        }
+        // 整数2桁・小数2桁を超える入力は受け付けない
+        let parts = next.split(separator: ".", omittingEmptySubsequences: false)
+        guard (parts.first?.count ?? 0) <= 2,
+              parts.count < 2 || parts[1].count <= 2 else { return }
+        taxEditBuffer = next
+        isTaxEditFresh = false
+    }
+
     /// 税キーを押したときの税トークン（使えない枠なら nil）
     func taxToken(for key: TaxKey) -> TaxToken? {
         let rate = taxRate(slot: key.slot)
@@ -690,7 +759,12 @@ final class SettingViewModel: ObservableObject {
     // HistoryMemoViewをPopupで表示する
     @Published var popupHistoryMemoInfo: (maxLength: Int, index: Int, calcIndex: Int)? = nil
     // キーボードを見ながらキー形状を調整するPopup表示
-    @Published var isKeyStylePopupPresented: Bool = false
+    @Published var isKeyStylePopupPresented: Bool = false {
+        didSet {
+            // ポップアップを閉じたら、入力中の税率を確定する
+            if !isKeyStylePopupPresented { commitTaxEdit() }
+        }
+    }
 
     private func loadPersistentSettings() {
         let defaults = UserDefaults.standard

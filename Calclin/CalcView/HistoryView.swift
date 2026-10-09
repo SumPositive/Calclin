@@ -1244,8 +1244,10 @@ struct FullPrecisionPopover: View {
                 .multilineTextAlignment(.center)
         }
         .padding(12)
+        // 角の文字が吹き出しの丸い縁に寄らないよう、他の吹き出しと同じ余白を足す
+        .padding(POPOVER_INSET)
         // 長い値でも読める幅を確保しつつ、画面からはみ出さない
-        .frame(maxWidth: 280)
+        .frame(maxWidth: 280 + POPOVER_INSET * 2)
     }
 }
 

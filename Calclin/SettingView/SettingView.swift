@@ -20,7 +20,6 @@ struct SettingView: View {
     @State private var showTipSheet = false    // 投げ銭シートの有無
     @State private var expandedDropdown: SettingDropdownKind? = nil  // 独自プルダウンの開閉状態
     @State private var showFontScaleHelp = false  // 文字サイズのヘルプシート表示有無
-    @State private var fontScaleHelpHeight: CGFloat = 0  // ヘルプシートの中身の高さ（実測）
     /// 以前「標準／大／特大」を選んだ人だけ、戻せるよう選択肢を残す（Deferin と同じ方式）
     /// 文字サイズを変えると画面ごと作り直されて @State が初期化されるため、
     /// 判定はアプリ起動後に初めて設定画面を開いた時の1回だけにする（自動に変えても次回起動までは戻せる）
@@ -85,13 +84,6 @@ struct SettingView: View {
         Self.underlinedLinks(AttributedString(localized: "settings.fontScale.systemNoteNext"))
     }
 
-    /// 文字サイズのヘルプシートを開く高さ。中身が分かるまでは半画面ぶんで待つ
-    private var fontScaleHelpSheetHeight: CGFloat {
-        let screen = UIScreen.main.bounds.height
-        guard 0 < fontScaleHelpHeight else { return screen * 0.5 }
-        return min(fontScaleHelpHeight, screen * 0.9)
-    }
-
     /// リンク部分に下線を付ける
     private static func underlinedLinks(_ source: AttributedString) -> AttributedString {
         var text = source
@@ -135,7 +127,6 @@ struct SettingView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 8) {
                             modeSection
-                            taxSection
                             infoSection
                             supportSection
                             footerSection
@@ -246,16 +237,9 @@ struct SettingView: View {
                                 .labelStyle(.titleAndIcon)
                                 .font(.subheadline)
                             // 説明が長いので、項目名の右の (?) からシートで読ませる
-                            Button {
+                            HelpQuestionButton(accessibilityLabel: "settings.fontScale") {
                                 showFontScaleHelp = true
-                            } label: {
-                                Image(systemName: "questionmark.circle")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .contentShape(Rectangle())
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel(Text("settings.fontScale"))
                         }
                     } control: {
                         // 「自動」の人には選択肢の代わりに、システム設定で変えられることを示す
@@ -292,60 +276,16 @@ struct SettingView: View {
                     }
                 }
                 .zIndex(expandedDropdown == .fontScale ? 50 : 0)
-                .sheet(isPresented: $showFontScaleHelp) {
-                    FontScaleHelpSheet(settingsLink: fontScaleSystemNote) { height in
-                        fontScaleHelpHeight = height
-                    }
-                    .appFontScale(viewModel.fontScale)
-                    // 中身の高さぴったりで開く（足りなければ引き上げられる）
-                    .presentationDetents([.height(fontScaleHelpSheetHeight), .large])
-                    // 背面の設定が透けないよう不透過にする
-                    .presentationBackground(Color(.systemBackground))
-                }
+                .helpTextSheet(isPresented: $showFontScaleHelp,
+                               text: "settings.help.fontScale",
+                               link: fontScaleSystemNote,
+                               fontScale: viewModel.fontScale)
             }
             .padding(.top, -12)
             .padding(.leading, sectionLeadingPadding)
         }
         // 候補ポップアップが下のカードに隠れないよう前面に出す
         .zIndex(isDropdownExpanded(in: [.playMode, .appearanceMode, .fontScale]) ? 50 : 0)
-    }
-
-    /// 税込・税抜キーの税率（3枠）
-    private var taxSection: some View {
-        SettingSectionCard(
-            title: "settings.section.tax",
-            iconName: "percent",
-            tint: .orange
-        ) {
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(0..<TaxKey.slotCount, id: \.self) { slot in
-                    TaxRateRow(slot: slot,
-                               rate: Binding(
-                                get: { viewModel.taxRate(slot: slot) },
-                                set: { newValue in
-                                    guard slot < viewModel.taxRates.count else { return }
-                                    viewModel.taxRates[slot] = newValue
-                                }))
-                }
-                // 地域の初期値に戻す（変更して分からなくなったとき用）
-                Button {
-                    viewModel.taxRates = defaultTaxRates(regionCode: Locale.current.region?.identifier)
-                } label: {
-                    Text("settings.taxRate.reset")
-                        .font(.subheadline)
-                }
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                if viewModel.playMode == .beginner {
-                    Text("settings.help.taxRate")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .cappedAtLargeTypeSize()
-                }
-            }
-            .padding(.top, -12)
-            .padding(.leading, sectionLeadingPadding)
-        }
     }
 
     /// 整数部の見え方をまとめるカード
@@ -468,84 +408,72 @@ struct SettingView: View {
 
 // MARK: - 税率の入力行
 
-/// 税率1〜3 の1行（見出し＋数値入力＋%）
-private struct TaxRateRow: View {
+/// 税率1〜3 の1行（見出し＋値＋%）
+/// - 値をタップすると、電卓キーボードで税率を打てるようになる
+///   （システムのテンキーは出さない。= で確定、別の枠や外をタップしても確定）
+/// - キーボードの「キー設定」ポップアップで使う
+struct TaxRateRow: View {
+    @EnvironmentObject var setting: SettingViewModel
     let slot: Int
-    @Binding var rate: String
-    @State private var text = ""
-    @FocusState private var isFocused: Bool
+
+    private var isEditing: Bool { setting.editingTaxSlot == slot }
 
     var body: some View {
         HStack(spacing: 8) {
             Text(String(format: String(localized: "settings.taxRate.format"), slot + 1))
                 .font(.subheadline)
             Spacer(minLength: 8)
-            TextField("0", text: $text)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .font(.body.monospacedDigit())
-                .foregroundStyle(Color.accentColor)
-                .frame(minWidth: 60, maxWidth: 90)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(Color(.systemBackground).opacity(0.96))
-                )
-                .overlay(
-                    Capsule(style: .continuous)
-                        .strokeBorder(isFocused ? Color.accentColor.opacity(0.55)
-                                                : Color.secondary.opacity(0.20),
-                                      lineWidth: 1)
-                )
-                .focused($isFocused)
-                .onChange(of: isFocused) { _, focused in
-                    // 入力を終えたときに確定する（入力途中の "5." などで書き換えない）
-                    if !focused { commit() }
+            Button {
+                if isEditing {
+                    // 入力中の枠をもう一度押したら確定する
+                    setting.commitTaxEdit()
+                } else {
+                    setting.beginTaxEdit(slot: slot)
                 }
-                .toolbar {
-                    // 数字キーボードには改行が無いので、閉じるボタンを付ける
-                    if isFocused {
-                        ToolbarItemGroup(placement: .keyboard) {
-                            Spacer()
-                            Button("common.close") { isFocused = false }
-                        }
-                    }
-                }
+            } label: {
+                Text(verbatim: isEditing
+                     ? (setting.taxEditBuffer.isEmpty ? "0" : setting.taxEditBuffer)
+                     : taxRateText(setting.taxRate(slot: slot)))
+                    .font(.body.monospacedDigit())
+                    .foregroundStyle(Color.accentColor)
+                    .lineLimit(1)
+                    .frame(minWidth: 60, alignment: .trailing)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(isEditing ? Color.accentColor.opacity(0.12)
+                                            : Color(.systemBackground).opacity(0.96))
+                    )
+                    .overlay(
+                        // 入力中の枠は縁を強めて、どこに打っているか分かるようにする
+                        Capsule(style: .continuous)
+                            .strokeBorder(isEditing ? Color.accentColor.opacity(0.7)
+                                                    : Color.secondary.opacity(0.20),
+                                          lineWidth: isEditing ? 1.5 : 1)
+                    )
+                    .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
             Text(verbatim: "%")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
-        .onAppear { text = taxRateText(rate) }
-        // 「初期値に戻す」などで外から変わったら表示も合わせる
-        .onChange(of: rate) { _, newValue in
-            if !isFocused { text = taxRateText(newValue) }
-        }
-    }
-
-    /// 入力値を確かめて保存する。使えない値なら元に戻す
-    private func commit() {
-        // 地域によって数字キーボードの小数点がカンマになるので揃える
-        let normalized = text.trimmingCharacters(in: .whitespaces)
-            .replacingOccurrences(of: ",", with: ".")
-        let value = normalized.isEmpty ? "0" : normalized
-        // 0（使わない枠）〜100未満、小数は2桁まで
-        if let number = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")),
-           Double(value) != nil, 0 <= number, number < 100,
-           (value.split(separator: ".").dropFirst().first?.count ?? 0) <= 2 {
-            // "08" や "10.0" を "8" "10" に整える
-            rate = taxRateText("\(number)")
-        }
-        text = taxRateText(rate)
+        // 入力中に一覧ごと消えても、打った値を失わないよう確定する
+        .onDisappear { if isEditing { setting.commitTaxEdit() } }
     }
 }
 
-// MARK: - 文字サイズのヘルプシート
+// MARK: - ヘルプシート
 
-/// 文字サイズの説明シート（設定アプリでの変え方と「自動」の案内）
-private struct FontScaleHelpSheet: View {
-    /// 「設定アプリで変更できます」（下線付きリンク）
-    let settingsLink: AttributedString
+/// 説明文だけのヘルプシート（文字サイズ・税率などの (?) から開く）
+/// - タイトルや閉じるボタンは置かず、説明だけを見せる（下へスワイプで閉じる）
+/// - 背面が透けないよう不透過にし、中身の高さぴったりで開く
+struct HelpTextSheet: View {
+    /// 説明文（1文1段落、空行区切り）
+    let text: LocalizedStringKey
+    /// 説明の下に置く下線付きリンク（「設定アプリで変更できます」など）
+    var link: AttributedString? = nil
     /// 中身の高さを親へ返す（シートを中身ぴったりの高さで開くため）
     var onMeasured: (CGFloat) -> Void = { _ in }
 
@@ -553,18 +481,18 @@ private struct FontScaleHelpSheet: View {
     private let chromeHeight: CGFloat = 24
 
     var body: some View {
-        // タイトルや閉じるボタンは置かず、説明だけを見せる（下へスワイプで閉じる）
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("settings.help.fontScale")
+                Text(text)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                // 説明文の「設定アプリ」を、ここから押せるようにする
-                Text(settingsLink)
-                    .font(.subheadline)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .multilineTextAlignment(.trailing)
+                if let link {
+                    Text(link)
+                        .font(.subheadline)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .multilineTextAlignment(.trailing)
+                }
             }
             .padding(20)
             .padding(.top, 8)
@@ -575,6 +503,64 @@ private struct FontScaleHelpSheet: View {
                 onMeasured(height + chromeHeight)
             }
         }
+    }
+}
+
+/// HelpTextSheet を中身の高さで開く
+private struct HelpTextSheetModifier: ViewModifier {
+    @Binding var isPresented: Bool
+    let text: LocalizedStringKey
+    let link: AttributedString?
+    let fontScale: SettingViewModel.FontScale
+    /// 中身の高さ（実測）
+    @State private var contentHeight: CGFloat = 0
+
+    /// シートを開く高さ。中身が分かるまでは半画面ぶんで待つ
+    private var sheetHeight: CGFloat {
+        let screen = UIScreen.main.bounds.height
+        guard 0 < contentHeight else { return screen * 0.5 }
+        return min(contentHeight, screen * 0.9)
+    }
+
+    func body(content: Content) -> some View {
+        content.sheet(isPresented: $isPresented) {
+            HelpTextSheet(text: text, link: link) { height in
+                contentHeight = height
+            }
+            .appFontScale(fontScale)
+            // 中身の高さぴったりで開く（足りなければ引き上げられる）
+            .presentationDetents([.height(sheetHeight), .large])
+            // 背面が透けないよう不透過にする
+            .presentationBackground(Color(.systemBackground))
+        }
+    }
+}
+
+extension View {
+    /// 説明文だけのヘルプシートを出す
+    func helpTextSheet(isPresented: Binding<Bool>,
+                       text: LocalizedStringKey,
+                       link: AttributedString? = nil,
+                       fontScale: SettingViewModel.FontScale) -> some View {
+        modifier(HelpTextSheetModifier(isPresented: isPresented, text: text,
+                                       link: link, fontScale: fontScale))
+    }
+}
+
+/// 項目名の右に置く (?) ボタン。押すとヘルプシートを開く
+struct HelpQuestionButton: View {
+    let accessibilityLabel: LocalizedStringKey
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "questionmark.circle")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(accessibilityLabel))
     }
 }
 
@@ -691,7 +677,8 @@ struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: View {
                     .environmentObject(viewModel)
                     .presentationCompactAdaptation(.popover)
                     .presentationBackground(Color(.systemBackground))
-                    .padding(2)
+                    // 候補が吹き出しの丸い縁に寄らないよう、他の吹き出しと同じ余白を取る
+                    .padding(POPOVER_INSET)
             }
             .background {
                 GeometryReader { proxy in
@@ -790,16 +777,9 @@ struct SettingDropdown<Option: Hashable & Identifiable, Label: View>: View {
         .scrollIndicators(.hidden)
         .frame(maxHeight: popupMaxHeight)
         .padding(6)
-        .background(
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                .fill(Color(.systemBackground))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                .strokeBorder(Color.secondary.opacity(0.18), lineWidth: 1)
-        )
-        // 背面の文字や枠線が透けないよう、候補パネルは不透過にする
-        .shadow(color: Color.black.opacity(0.10), radius: 5, x: 0, y: 2)
+        // 吹き出しの中に別の枠（小さい角丸のパネル）を重ねると、
+        // その四角い角が吹き出しの大きな丸い角にぶつかって窮屈に見える。
+        // 背景は吹き出し自身（不透過の presentationBackground）に任せ、枠と影は付けない
     }
 
     private func optionButton(_ option: Option) -> some View {

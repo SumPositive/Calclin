@@ -227,6 +227,12 @@ struct KeyboardStylePopupView: View {
     /// 必要なときだけ開いてもらう
     @State private var isLayoutExpanded = false
 
+    /// 税率の折りたたみ（キー配置と同じく既定は閉じておく）
+    @State private var isTaxExpanded = false
+
+    /// 税率のヘルプシート
+    @State private var showTaxHelp = false
+
     /// 見出しより下の中身の高さ（実測）。
     /// ScrollView をこの高さに縮めて、閉じたときに空白が残らないようにする
     @State private var contentHeight: CGFloat = 0
@@ -264,6 +270,20 @@ struct KeyboardStylePopupView: View {
         }
         // 折りたたみの開閉でキーボードの見える範囲が変わるので、動きを付けて分かるようにする
         .animation(.easeOut(duration: 0.2), value: isLayoutExpanded)
+        .animation(.easeOut(duration: 0.2), value: isTaxExpanded)
+        // 税率の一覧を閉じたら、入力中の税率を確定する
+        .onChange(of: isTaxExpanded) { _, expanded in
+            if !expanded { setting.commitTaxEdit() }
+        }
+    }
+
+    /// 税率1〜3 の入力
+    private var taxRateContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(0..<TaxKey.slotCount, id: \.self) { slot in
+                TaxRateRow(slot: slot)
+            }
+        }
     }
 
     /// 中身に使ってよい高さ（全体の上限から、実測した見出しぶんを引く）
@@ -326,6 +346,26 @@ struct KeyboardStylePopupView: View {
             }
 
             Divider()
+
+            // 税込・税抜キーの税率。キーの表面に税率が出るので、
+            // キーボードを見ながら変えられるここに置く
+            DisclosureGroup(isExpanded: $isTaxExpanded) {
+                taxRateContent
+                    .padding(.top, 8)
+            } label: {
+                HStack(spacing: 6) {
+                    Label("settings.section.tax", systemImage: "percent")
+                        .font(.subheadline)
+                    // 説明はシートで読ませる（ポップアップを縦に伸ばさない）
+                    HelpQuestionButton(accessibilityLabel: "settings.section.tax") {
+                        showTaxHelp = true
+                    }
+                }
+            }
+            .tint(.secondary)
+            .helpTextSheet(isPresented: $showTaxHelp,
+                           text: "settings.help.taxRate",
+                           fontScale: setting.fontScale)
 
             // キー配置（書き出し・読み込み・初期化）。
             // 開くと縦に伸びてキーボードが隠れるので、既定は閉じておく
@@ -532,8 +572,14 @@ struct KeyboardFooterView: View {
                     Spacer()
                     VStack(spacing: 0) {
                         Button {
-                            AppAnalytics.logKeyStylePopupOpened()
-                            setting.isKeyStylePopupPresented = true
+                            // ポップアップを出していてもキーボードは押せるので、
+                            // このボタンはもう一度押すと閉じる（開け閉めの切り替え）
+                            let willOpen = !setting.isKeyStylePopupPresented
+                            if willOpen { AppAnalytics.logKeyStylePopupOpened() }
+                            // ロールとキーボードの境目からせり出す／引っ込む動きを付ける
+                            withAnimation(.easeOut(duration: 0.22)) {
+                                setting.isKeyStylePopupPresented = willOpen
+                            }
                         } label: {
                             // 今後キーボード関係の設定をここへ集約していくので、
                             // 形状に限定した記号ではなくキーボードそのものを示す

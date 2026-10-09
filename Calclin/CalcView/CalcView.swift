@@ -818,6 +818,9 @@ private struct InputFunctionMenuPopover: View {
                     .frame(width: detailWidth)
             }
         }
+        // 吹き出しの角は大きく丸いので、外回りに余白を取って
+        // 角のアイコンや文字が縁に寄って見えないようにする
+        .padding(POPOVER_INSET)
         // 入りきらない高さのときだけ縦スクロールにする。
         // ＃はみ出したまま出すと iOS が吹き出しごと縮めて、先頭の項目が隠れる
         // フォント一覧は自前で縦スクロールするので、外側では包まない
@@ -828,7 +831,7 @@ private struct InputFunctionMenuPopover: View {
 
     /// 右側の内容の幅。最低 230pt、文字サイズに応じて広げるが画面幅を超えない
     private var detailWidth: CGFloat {
-        let available = maxWidth - menuListWidth - 1
+        let available = maxWidth - menuListWidth - 1 - POPOVER_INSET * 2
         return max(230, min(scaledDetailWidth, available))
     }
 
@@ -845,6 +848,8 @@ private struct InputFunctionMenuPopover: View {
         }
         .padding(.vertical, 8)
         .frame(width: 56)
+        // 実際の吹き出しと同じく外回りの余白を含めて測る
+        .padding(POPOVER_INSET)
     }
 
     /// 左側：機能のアイコン列（達人モードはアイコンだけ、初心者モードは名前も出す）
@@ -1353,6 +1358,8 @@ struct UnitConvertPickPopover: View {
         .onPreferenceChange(UnitListHeightKey.self) { height in
             contentHeight = height
         }
+        // 角のアイコンや文字が吹き出しの丸い縁に寄らないよう、外回りに余白を取る
+        .padding(POPOVER_INSET)
         // 全行が入る高さを要求する。入りきらないぶんは ScrollView が引き受ける
         .frame(minWidth: 240, idealHeight: popoverHeight, maxHeight: popoverHeight)
         .background(Color(.systemBackground))
@@ -1372,8 +1379,8 @@ struct UnitConvertPickPopover: View {
         return min(needed, limit)
     }
 
-    /// 見出しと VStack の余白ぶん（実測 21.7pt ＋ padding）
-    private var headerHeight: CGFloat { 34 }
+    /// 見出しと VStack の余白ぶん（実測 21.7pt ＋ padding）＋外回りの余白
+    private var headerHeight: CGFloat { 34 + POPOVER_INSET * 2 }
 
     /// 1行ぶんの表示。入力行と同じく右寄せで、換算後の数値＋単位を並べる
     private func row(_ candidate: CalcViewModel.UnitConvertCandidate) -> some View {

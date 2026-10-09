@@ -307,6 +307,9 @@ struct ContentView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // 設定シートの表示状態
     @State private var isSettingSheetPresented = false
+    /// キーボードの位置（.global）。キー設定ポップアップをロールとキーボードの境目に置くため
+    @State private var keyboardGlobalFrame: CGRect = .zero
+
     // @State 変化あればViewが更新される
     @State private var selectedCalc: Int = 0
     // キーボード領域の高さを保存し、履歴領域との比率を復元する
@@ -403,23 +406,11 @@ struct ContentView: View {
         min(max(height, minimumKeyboardHeight), APP_KB_HEIGHT_MAX)
     }
 
-    /// キー設定ポップアップの上端の位置（セーフエリア上端からの距離）。
-    /// ロール上部のヘッダ（CalcRollHeaderView）のすぐ下に置く。
-    /// 固定値なので、折りたたみを開け閉めしても位置が動かない
-    /// ＃CalcRollHeaderView の HEADER_HEIGHT と揃えること
-    /// ＃ロールが1面かつ初心者モードでないときはヘッダ自体が出ないが、
-    ///   その場合もロール上端の余白として同じ位置で収まりが良いので揃えている
-    private var keyStylePopupTopInset: CGFloat {
-        // 初心者モードはヘッダに説明文が付くぶん背が高い（+42）
-        setting.playMode == .beginner ? 44 + 42 : 44
-    }
-
-    /// キー設定ポップアップの高さの上限。
-    /// 上端は固定なので、そこから下へ伸ばせるぶんだけを上限にする。
-    /// 入り切らないぶんは中身の ScrollView でスクロールする
-    private func keyStylePopupMaxHeight(screenHeight: CGFloat) -> CGFloat {
-        // 下端は画面の底から少し浮かせる（フッタのボタンにかからないように）
-        max(200, screenHeight - keyStylePopupTopInset - 40)
+    /// キー設定ポップアップを閉じる（境目へ引っ込む動きを付ける）
+    private func closeKeyStylePopup() {
+        withAnimation(.easeOut(duration: 0.22)) {
+            setting.isKeyStylePopupPresented = false
+        }
     }
 
     /// 単位キーで「換算せずに単位だけ差し替えた」直後に出す操作ヒント
@@ -551,6 +542,11 @@ struct ContentView: View {
                 KeyboardView(viewModel: keyboardViewModel,
                              activeCalcViewModel: selectedViewModel,
                              onTap: { keyDef in
+                    // 税率を入力中なら、キーは計算ではなく税率の入力に使う
+                    if setting.editingTaxSlot != nil {
+                        setting.inputTaxEdit(keyDef)
+                        return
+                    }
                     // 実際の数値や式は送らず、キー種別だけをAnalyticsへ送る
                     AppAnalytics.logKeyTapped(keyDef, calcMode: selectedViewModel.calcMode)
                     // 選択中のCalcViewへkeyDefを送る
@@ -568,6 +564,11 @@ struct ContentView: View {
                 .frame(minWidth: APP_KB_WIDTH_MIN, maxWidth: APP_KB_WIDTH_MAX,
                        minHeight: minimumKeyboardHeight, maxHeight: APP_KB_HEIGHT_MAX)
                 .frame(height: normalizedKeyboardHeight)
+                // キー設定ポップアップをロールとキーボードの境目からせり出させるため、
+                // キーボードの位置を測っておく
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
+                    keyboardGlobalFrame = frame
+                }
                 // 入力行と接して窮屈に見えるので、少し離す。
                 // 高さの frame より外に付けて、リサイズで扱う高さは変えない
                 .padding(.top, APP_KB_TOP_GAP)
@@ -660,55 +661,68 @@ struct ContentView: View {
             }
 
             //(ZStack 2) Popupでキースタイル設定表示
-            if setting.isKeyStylePopupPresented {
-                GeometryReader { geo in
-                    let popupWidth = min(340, geo.size.width - 32)
-                    ZStack {
+            // ロールとキーボードの境目からせり出して、ロールの上に被せる。
+            // キーボードは隠さないので、キーを見ながら形状を調整でき、
+            // 税率の入力などでキーをそのまま押せる
+            GeometryReader { geo in
+                let popupWidth = min(340, geo.size.width - 32)
+                // 境目（キーボードの上端）の高さ。この座標系での値に直す
+                let boundary = keyboardGlobalFrame.isEmpty
+                    ? geo.size.height
+                    : max(0, keyboardGlobalFrame.minY - geo.frame(in: .global).minY - APP_KB_TOP_GAP)
+                ZStack(alignment: .top) {
+                    if setting.isKeyStylePopupPresented {
+                        // ロール側（境目より上）をタップしたら閉じる。キーボードは覆わない
                         Color.black.opacity(0.001)
-                            .ignoresSafeArea()
+                            .frame(height: boundary)
+                            .contentShape(Rectangle())
                             .onTapGesture {
-                                setting.isKeyStylePopupPresented = false
+                                closeKeyStylePopup()
                             }
-
-                        KeyboardStylePopupView(
-                            onClose: { setting.isKeyStylePopupPresented = false },
-                            // 全体の上限を渡す（見出しぶんはポップアップ側で実測して引く）
-                            maxPopupHeight: keyStylePopupMaxHeight(
-                                screenHeight: geo.size.height),
-                            layoutActions: {
-                                AnyView(
-                                    KeyboardLayoutActionsView(
-                                        isPreparingExport: $isPreparingKeyboardExport)
-                                        .environmentObject(keyboardViewModel)
-                                )
-                            }
-                        )
-                        .environmentObject(setting)
-                        .frame(width: popupWidth)
-                        // 高さは指定しない。中身（ScrollView）が自分で
-                        // min(実測, 上限) に縮むので、閉じれば小さくなり、
-                        // 開いて入り切らなければ上限で止まってスクロールする。
-                        // ＃ここで maxHeight を与えると、閉じていても
-                        //   その高さまで広がって下半分が空白になる
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(COLOR_BACK_SETTING)
-                                .shadow(radius: 5)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(Color.gray.opacity(0.3))
-                        )
-                        // 上端を固定し、開いたら下へ伸ばす。
-                        // 位置が動かないので、折りたたみを開け閉めしても
-                        // 見出しと閉じるボタンが同じ場所に留まる
-                        .frame(maxWidth: .infinity, maxHeight: .infinity,
-                               alignment: .top)
-                        .padding(.top, keyStylePopupTopInset)
                     }
+
+                    // 境目で切り取り、下からせり出して見えるようにする
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 0)
+                        if setting.isKeyStylePopupPresented {
+                            KeyboardStylePopupView(
+                                onClose: { closeKeyStylePopup() },
+                                // 境目より上に収まる高さ（見出しぶんはポップアップ側で実測して引く）
+                                maxPopupHeight: max(200, boundary - KEY_STYLE_POPUP_MARGIN * 2),
+                                layoutActions: {
+                                    AnyView(
+                                        KeyboardLayoutActionsView(
+                                            isPreparingExport: $isPreparingKeyboardExport)
+                                            .environmentObject(keyboardViewModel)
+                                    )
+                                }
+                            )
+                            .environmentObject(setting)
+                            .frame(width: popupWidth)
+                            // 高さは指定しない。中身（ScrollView）が自分で
+                            // min(実測, 上限) に縮むので、閉じれば小さくなり、
+                            // 開いて入り切らなければ上限で止まってスクロールする
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(COLOR_BACK_SETTING)
+                                    .shadow(radius: 5)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .stroke(Color.gray.opacity(0.3))
+                            )
+                            // 下端を境目に揃え、折りたたみを開くと上へ伸ばす
+                            .padding(.bottom, KEY_STYLE_POPUP_MARGIN)
+                            .frame(maxWidth: .infinity)
+                            .transition(.move(edge: .bottom))
+                        }
+                    }
+                    .frame(height: boundary)
+                    // 境目より下へははみ出さない（せり出す動きの切り口になる）
+                    .clipped()
                 }
-                .zIndex(2) // キーボードの上に出す
             }
+            .zIndex(2) // キーボードの上に出す
 
             //(ZStack 2.5) キー配置の書き出し準備中
             if isPreparingKeyboardExport {
@@ -808,3 +822,4 @@ extension View {
         dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 }
+

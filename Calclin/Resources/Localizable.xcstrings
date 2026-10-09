@@ -4,9 +4,6 @@
     " %lld " : {
 
     },
-    "0" : {
-
-    },
     "app.title" : {
       "localizations" : {
         "en" : {
@@ -1054,13 +1051,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Keyboard"
+            "value" : "Key Layout"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "キーボード配置"
+            "value" : "キー配置"
           }
         }
       }
@@ -1166,13 +1163,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reset the keyboard layout?"
+            "value" : "Reset the key layout?"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "キーボード配置を初期化しますか？"
+            "value" : "キー配置を初期化しますか？"
           }
         }
       }
@@ -2094,13 +2091,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "These rates are used by the TAX+ and TAX− keys\n\nEach key shows the rate set here\n\nKeys for a rate set to 0 can't be pressed"
+            "value" : "These rates are used by the TAX+ and TAX− keys\n\nTap a rate to type it on the calculator keyboard, then press = to set it\n\nTAX+ adds tax to the amount, and TAX− removes it\n\nIt applies to the value you're entering, or to the answer right after [=]\n\nEach key shows the rate set here\n\nKeys for a rate set to 0 can't be pressed"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "税込・税抜キーで使う税率です\n\nキーには設定した税率が表示されます\n\n0 にした枠のキーは押せなくなります"
+            "value" : "税込・税抜キーで使う税率です\n\n値をタップすると電卓のキーボードで入力でき、= で確定します\n\n税込は税を足した金額、税抜は税を除いた金額を求めます\n\n入力中の値に掛かり、[=] の直後に押すと答えに掛かります\n\nキーには設定した税率が表示されます\n\n0 にした枠のキーは押せなくなります"
           }
         }
       }
@@ -2535,23 +2532,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "税率%d"
-          }
-        }
-      }
-    },
-    "settings.taxRate.reset" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset to Defaults"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "初期値に戻す"
           }
         }
       }
