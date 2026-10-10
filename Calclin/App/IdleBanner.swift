@@ -115,6 +115,19 @@ final class IdleBannerState: ObservableObject {
         }
     }
 
+    /// 待ち時間（秒）。既定は定数どおり。テストでは短くして状態の移り変わりを確かめる
+    struct Timing {
+        var idleDelay: Double = IDLE_BANNER_DELAY
+        var retryDelay: Double = IDLE_BANNER_RETRY_DELAY
+        var loadTimeout: Double = IDLE_BANNER_LOAD_TIMEOUT
+        var tapGuard: Double = IDLE_BANNER_TAP_GUARD
+    }
+    let timing: Timing
+
+    init(timing: Timing = Timing()) {
+        self.timing = timing
+    }
+
     /// 操作が無くなるのを待つ
     private var idleTask: Task<Void, Never>?
     /// 広告の返事を待つ（来なければ受け取れなかったものとして扱う）
@@ -136,7 +149,8 @@ final class IdleBannerState: ObservableObject {
     }
 
     /// 操作が無くなるのを待ち直す
-    func restartIdleTimer(after delay: Double = IDLE_BANNER_DELAY) {
+    func restartIdleTimer(after delay: Double? = nil) {
+        let delay = delay ?? timing.idleDelay
         idleTask?.cancel()
         idleTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(delay))
@@ -153,8 +167,9 @@ final class IdleBannerState: ObservableObject {
         isRequesting = true
         // 返事が来ないまま待ち続けないよう、上限を決めておく
         loadTimeoutTask?.cancel()
+        let timeout = timing.loadTimeout
         loadTimeoutTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(IDLE_BANNER_LOAD_TIMEOUT))
+            try? await Task.sleep(for: .seconds(timeout))
             guard !Task.isCancelled else { return }
             self?.adDidFail()
         }
@@ -170,8 +185,9 @@ final class IdleBannerState: ObservableObject {
         withAnimation(.easeOut(duration: 0.35)) {
             isVisible = true
         }
+        let tapGuard = timing.tapGuard
         Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(IDLE_BANNER_TAP_GUARD))
+            try? await Task.sleep(for: .seconds(tapGuard))
             self?.isTapGuarded = false
         }
     }
@@ -181,7 +197,7 @@ final class IdleBannerState: ObservableObject {
     func adDidFail() {
         guard isRequesting else { return }
         cancelRequest()
-        if !isSuspended { restartIdleTimer(after: IDLE_BANNER_RETRY_DELAY) }
+        if !isSuspended { restartIdleTimer(after: timing.retryDelay) }
     }
 
     /// アプリを離れたとき：待ちと要求をやめ、出ていれば引っ込める。
