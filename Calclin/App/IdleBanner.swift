@@ -184,6 +184,18 @@ final class IdleBannerState: ObservableObject {
         if !isSuspended { restartIdleTimer(after: IDLE_BANNER_RETRY_DELAY) }
     }
 
+    /// アプリを離れたとき：待ちと要求をやめ、出ていれば引っ込める。
+    /// 戻ってきたら restartIdleTimer() で 20 秒を数え直す
+    func pauseWhileInactive() {
+        idleTask?.cancel()
+        idleTask = nil
+        cancelRequest()
+        // 見えていないので動きは付けない（ここでは待ちを再開しない）
+        isVisible = false
+        isTapGuarded = false
+        bannerFrame = .zero
+    }
+
     /// 要求をやめる（見せる前なので画面は変わらない）
     private func cancelRequest() {
         isRequesting = false
@@ -282,8 +294,14 @@ private struct IdleBannerModifier: ViewModifier {
                 state.isSuspended = suspended
             }
             .onChange(of: scenePhase) { _, phase in
-                // アプリへ戻ってきたら、そこから数え直す（すぐに出さない）
-                if phase == .active, !state.isVisible { state.restartIdleTimer() }
+                if phase == .active {
+                    // アプリへ戻ってきたら、そこから数え直す（すぐに出さない）
+                    state.restartIdleTimer()
+                } else {
+                    // アプリを離れている間は数えない。
+                    // 離れている間に待ちが満了して、戻った直後に広告が出るのを防ぐ
+                    state.pauseWhileInactive()
+                }
             }
     }
 }
