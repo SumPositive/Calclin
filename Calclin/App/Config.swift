@@ -70,6 +70,10 @@ let COLOR_TITLE: Color = .secondary         // App Name
 let COLOR_CALC_INACTIVE: Color = .secondary // Calc非活性枠
 let COLOR_NUMBER: Color = .primary          // 数値
 let COLOR_ANSWER: Color = COLOR_NUMBER      // 答え
+/// ロール行を右へスワイプしたときの「答え」ボタンの背景色。
+/// 答えの文字色（.primary）を使うとダークでは白地に白文字になって見えないので、
+/// ライト・ダークのどちらでも白文字が読める灰色にする
+let COLOR_SWIPE_ANSWER: Color = Color(.systemGray)
 
 // アクセント色は「タップできる」印にだけ使う（≒ と下線付きの単位）。
 // タップできない演算子などはアクセント色と紛れない中立色にする

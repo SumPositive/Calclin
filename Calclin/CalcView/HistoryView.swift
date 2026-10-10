@@ -114,7 +114,7 @@ struct HistoryView: View {
                                 } label: {
                                     Text("history.copy.answer") // 上下逆に表示される
                                 }
-                                .tint(COLOR_ANSWER) // スワイプ背景色
+                                .tint(COLOR_SWIPE_ANSWER) // スワイプ背景色（ダークでも見える色）
                             }
                             // ＃ロールのタップで入力行を書き換えない。
                             //   入力行が変わるのはキーボード操作だけ、と役割を分けている。
@@ -681,7 +681,7 @@ struct RollView: View {
                             } label: {
                                 Text("history.copy.answer") // 上下逆に表示される
                             }
-                            .tint(COLOR_ANSWER) // スワイプ背景色
+                            .tint(COLOR_SWIPE_ANSWER) // スワイプ背景色（ダークでも見える色）
                         }
                         // ＃シングルタップでの答え引用は廃止した。
                         //   タップは「丸める前の値を見せる」役割に統一し（CustomCell 内で処理）、
