@@ -307,6 +307,8 @@ struct ContentView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // 設定シートの表示状態
     @State private var isSettingSheetPresented = false
+    /// しばらく操作が無いときに出すバナー広告
+    @StateObject private var idleBanner = IdleBannerState()
     /// キーボードの位置（.global）。キー設定ポップアップをロールとキーボードの境目に置くため
     @State private var keyboardGlobalFrame: CGRect = .zero
 
@@ -494,6 +496,47 @@ struct ContentView: View {
                 .padding(.horizontal, 4)
                 .frame(minWidth: APP_CALC_WIDTH_MIN, maxWidth: APP_CALC_WIDTH_MAX,
                        minHeight: APP_CALC_HEIGHT_MIN, maxHeight: APP_CALC_HEIGHT_MAX)
+                // 放置時のバナー広告が出ている間は、入力行を残してロールだけ消す
+                // （消えたロールの所にバナーを出すので、ロールのボタンを誤って押さない）
+                .environment(\.isRollHiddenForAd, idleBanner.isVisible)
+                .overlay(alignment: .top) {
+                    GeometryReader { rollGeo in
+                        // 広告の範囲は、消えたロール（入力行と、その上に残す答えより上）
+                        let scale = setting.inputRowFontScale(for: dynamicTypeSize)
+                        let fade = idleAdRollFadeHeight(inputRowFontScale: scale)
+                        let areaHeight = max(0, rollGeo.size.height
+                                             - calcInputLineHeight(inputRowFontScale: scale)
+                                             - idleAdRollKeepHeight(inputRowFontScale: scale))
+                        if idleBanner.isVisible {
+                            // 広告の地は Nenrin と同じく、ざらっとした紙の面にして
+                            // アプリの画面ではないと分かるようにする。
+                            // 下端は残したロールへ溶け込むよう、グラデーションで消す
+                            AdAreaBackground(colorScheme: colorScheme)
+                                .mask {
+                                    VStack(spacing: 0) {
+                                        Color.black
+                                        LinearGradient(colors: [.black, .clear],
+                                                       startPoint: .top, endPoint: .bottom)
+                                            .frame(height: fade)
+                                    }
+                                }
+                                .frame(height: areaHeight)
+                                .allowsHitTesting(false)
+                                .transition(.opacity)
+                        }
+                        if idleBanner.isVisible {
+                            IdleBannerBar(
+                                state: idleBanner,
+                                availableSize: CGSize(
+                                    width: max(50, rollGeo.size.width - IDLE_BANNER_HORIZONTAL_PADDING * 2),
+                                    // 下のグラデーション部分には広告を掛けない
+                                    height: max(50, areaHeight - fade
+                                                - IDLE_BANNER_VERTICAL_PADDING * 2)))
+                                .frame(maxWidth: .infinity)
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                        }
+                    }
+                }
                 .overlay(alignment: .bottom) {
                     KeyboardResizeHandle(
                         isActive: isKeyboardResizing || isKeyboardResizeHintVisible,
@@ -751,6 +794,14 @@ struct ContentView: View {
             
         }
         .ignoresSafeArea(.keyboard) // システムキーボードに押し上げられない
+        // しばらく操作が無いときだけ、上端からバナー広告を出す
+        // （設定シートやキー設定・メモ編集などの作業中は出さない）
+        .idleBanner(idleBanner,
+                    isSuspended: isSettingSheetPresented
+                        || setting.isKeyStylePopupPresented
+                        || setting.popupHistoryMemoInfo != nil
+                        || keyboardViewModel.popupKeyDefList != nil
+                        || keyboardViewModel.popupEditKeyDef != nil)
         .preferredColorScheme(setting.appearanceMode.colorScheme)
         // 文字サイズ：自動以外は固定の DynamicTypeSize を適用
         // 設定シートを含む全画面・全シートに反映される

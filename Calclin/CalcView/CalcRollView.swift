@@ -93,6 +93,9 @@ struct CalcRollView: View {
     }
 
     
+    /// 放置時のバナー広告が出ていて、ロールを隠しているか
+    @Environment(\.isRollHiddenForAd) private var isRollHiddenForAd
+
     var body: some View {
         VStack(spacing: 0) {
             // 上部メニュー。インジケータとロール増減は常に出す
@@ -132,6 +135,9 @@ struct CalcRollView: View {
                 }
             )
             .opacity(colorScheme == .dark ? 0.60 : 1.0)
+            // 放置時のバナー広告が出ている間はヘッダも消して押せなくする（誤タップ防止）
+            .opacity(isRollHiddenForAd ? 0 : 1)
+            .allowsHitTesting(!isRollHiddenForAd)
 
             // CalcViewを3個横に並べ、1ページずつ左右に切り替える
             //  ＃TabViewを使うとTabView上のスワイプを無効にできないので独自実装した
@@ -337,6 +343,9 @@ struct CalcRollHeaderView: View {
             }
             // 初心者モードは説明文が入る幅を確保する（アイコンだけなら従来どおり）
             .frame(minWidth: 60, maxWidth: isBeginner ? 130 : 100)
+            // iPad のウインドウ表示では、左上にウインドウ操作ボタン（赤・黄・緑）が重なる。
+            // その分だけ右へずらして避ける（全画面や iPhone ではずれない）
+            .modifier(AvoidWindowControls())
 
             Spacer()
 
@@ -631,5 +640,18 @@ private struct HelpSheetHeightKey: PreferenceKey {
 
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = max(value, nextValue())
+    }
+}
+
+
+/// iPadOS 26 のウインドウ操作ボタン（左上の赤・黄・緑）を避けるために、
+/// 角に何かあるときだけ、その分だけ内側へずらす
+private struct AvoidWindowControls: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.containerCornerOffset(.leading)
+        } else {
+            content
+        }
     }
 }

@@ -25,11 +25,16 @@ private let adUnavailableMessage = String(localized: "support.ad.unavailable")
 #if DEBUG
 // アダプティブ バナー テスト用
 let ADMOB_BANNER_UnitID = "ca-app-pub-3940256099942544/2435281174"
+// 放置時のインライン アダプティブ バナー テスト用（同じテストIDを使う）
+let ADMOB_IDLE_BANNER_UnitID = "ca-app-pub-3940256099942544/2435281174"
 // リワード型 テスト用
 let ADMOB_REWARD_1_UnitID  = "ca-app-pub-3940256099942544/1712485313"
 #else // RELEASE || TESTFLIGHT
-// アダプティブ バナー 本番用
+// アダプティブ バナー 本番用（設定シート上部の固定バナー）
 let ADMOB_BANNER_UnitID = "ca-app-pub-7576639777972199/4375487250"
+// 放置時のインライン アダプティブ バナー 本番用
+// 設定シートと分けて、成果や誤タップをこの配置だけで見られるようにする
+let ADMOB_IDLE_BANNER_UnitID = "ca-app-pub-7576639777972199/6815119462"
 // リワード型
 let ADMOB_REWARD_1_UnitID  = "ca-app-pub-7576639777972199/5757039341"
 #endif
@@ -188,6 +193,57 @@ struct AdMobAdSheetView: View {
     }
 }
 
+
+// MARK: - インライン アダプティブ バナー
+
+/// 幅と高さの上限を渡すと、その中で Google が選んだ大きさの広告を出す
+/// （低ければ帯状のバナー、高ければレクタングル級になる）
+/// - 実際の高さは広告を受け取るまで分からないので、受け取ったら onHeightChange で知らせる
+struct InlineAdaptiveBannerView: UIViewRepresentable {
+    let adUnitID: String
+    let width: CGFloat
+    let maxHeight: CGFloat
+    /// 受け取った広告の高さ
+    var onHeightChange: @MainActor (CGFloat) -> Void = { _ in }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onHeightChange: onHeightChange)
+    }
+
+    func makeUIView(context: Context) -> BannerView {
+        // 大きさは出す時点の空きで決める（表示中に空きが変わっても作り直さない）
+        let banner = BannerView(adSize: inlineAdaptiveBanner(width: width, maxHeight: maxHeight))
+        banner.adUnitID = adUnitID
+        banner.rootViewController = UIApplication.shared.rootController
+        banner.delegate = context.coordinator
+        banner.load(Request())
+        return banner
+    }
+
+    func updateUIView(_ uiView: BannerView, context: Context) {
+        // 表示中に親VCが変わる可能性を考慮して毎回セットする
+        uiView.rootViewController = UIApplication.shared.rootController
+        context.coordinator.onHeightChange = onHeightChange
+    }
+
+    @MainActor
+    final class Coordinator: NSObject, BannerViewDelegate {
+        var onHeightChange: @MainActor (CGFloat) -> Void
+
+        init(onHeightChange: @escaping @MainActor (CGFloat) -> Void) {
+            self.onHeightChange = onHeightChange
+        }
+
+        func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+            // 選ばれた広告の実際の高さを伝える
+            onHeightChange(bannerView.adSize.size.height)
+        }
+
+        func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
+            log(.warning, "InlineAdaptiveBanner load failed: \(error.localizedDescription)")
+        }
+    }
+}
 
 // MARK: - UIViewRepresentable で AdMob のバナー広告を表示する
 struct BannerAdView: UIViewRepresentable {

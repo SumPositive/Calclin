@@ -218,6 +218,9 @@ struct CalcView: View {
         33.6 * inputRowFontScale
     }
 
+    /// 放置時のバナー広告が出ていて、ロールを隠しているか
+    @Environment(\.isRollHiddenForAd) private var isRollHiddenForAd
+
     var body: some View {
 
         GeometryReader { geo in
@@ -259,6 +262,17 @@ struct CalcView: View {
             //   数字が届くまで粘る作りにしていたが、入力中もずっと出ていて
             //   邪魔だったので、ツール類と同じタイミングで引っ込める
             let showsHelpMark = showsInputTools
+            // 「機能」ボタンは1面表示なら常に出す。
+            // 2面・3面でも、数式／電卓の切替の右に入る幅があれば出す（アイコンだけ）
+            // 必要な幅 = 左余白(6) + 数式／電卓 + 間隔(10) + 機能アイコン + 右端の [?] ぶん(28)
+            // ＃数式／電卓の幅は実測（測る前は見積もり）。
+            //   neededToolsWidth は余裕を多めに見ているので、ここでは使わない
+            let functionButtonWidth: CGFloat = 30 * min(calcFontScale, 1.5)
+            let modeToolsWidth = inputToolsWidth > 0
+                ? inputToolsWidth
+                : (modeTitleThreshold - 24) * calcFontScale
+            let showsFunctionButton = isSingleRoll
+                || 6 + modeToolsWidth + 10 + functionButtonWidth + 28 <= geo.size.width
 
             VStack(spacing: 0) {
 
@@ -295,6 +309,26 @@ struct CalcView: View {
                 // - .padding で内側に詰め、.clipShape でその境界まで描画を強制
                 .padding(.horizontal, 2)
                 .clipShape(Rectangle())
+                // 放置時のバナー広告が出ている間は、入力行の上の答えあたりだけを残し、
+                // それより上は徐々に消す（消えた所に広告を出す）。
+                // 消えている間は押せなくする（広告と重なる所の誤タップ防止）
+                .mask {
+                    VStack(spacing: 0) {
+                        // 消す所（広告が出ている間は透明）
+                        Color.black.opacity(isRollHiddenForAd ? 0 : 1)
+                        // 消す所から残す所へ、徐々に濃くする
+                        ZStack {
+                            LinearGradient(colors: [.clear, .black],
+                                           startPoint: .top, endPoint: .bottom)
+                            Color.black.opacity(isRollHiddenForAd ? 0 : 1)
+                        }
+                        .frame(height: idleAdRollFadeHeight(inputRowFontScale: inputRowFontScale))
+                        // 残す所（直前の答え）
+                        Color.black
+                            .frame(height: idleAdRollKeepHeight(inputRowFontScale: inputRowFontScale))
+                    }
+                }
+                .allowsHitTesting(!isRollHiddenForAd)
                 // モード切替直後の説明は、ロール紙の上に重ねて出す
                 // - 行として挿入すると履歴の高さが変わってしまうため overlay にする
                 .overlay(alignment: .top) {
@@ -395,10 +429,10 @@ struct CalcView: View {
                             inputLineTools(showsModeTitle: showsModeTitles,
                                            isCompact: usesCompactTools)
                             // PDF・色・フォントは「機能」1つにまとめる。
-                            // 1面表示のときだけ出す（2面・3面では入力行が狭く、
-                            // 数式／電卓の切替を優先する）
-                            if isSingleRoll {
-                                inputLineFunctionButton(showsTitle: showsInputToolTitles,
+                            // 2面・3面では入力行が狭いので、入る幅があるときだけ
+                            // アイコンだけで出す（数式／電卓の切替を優先する）
+                            if showsFunctionButton {
+                                inputLineFunctionButton(showsTitle: isSingleRoll && showsInputToolTitles,
                                                         isCompact: usesCompactTools)
                                     // モード切替とは役割が違うので少し離す
                                     .padding(.leading, usesCompactTools ? 6 : 10)
@@ -422,6 +456,9 @@ struct CalcView: View {
                                             .padding(.leading, usesCompactTools ? 6 : 10)
                                     }
                                 }
+                                    // 本来の幅（縮めない幅）で測る。
+                                    // 親の幅に合わせて伸び縮みした値を測ると、判定がずれる
+                                    .fixedSize()
                                     .hidden()
                                     .background {
                                         GeometryReader { toolsGeo in
@@ -744,6 +781,11 @@ struct CalcView: View {
             .environmentObject(setting)
             .appFontScale(setting.fontScale)
             .presentationCompactAdaptation(.popover)
+        }
+        // 放置時の広告が出たら、開いている吹き出し（機能・単位の換算）は閉じる
+        .onIdleAdShown {
+            isFunctionMenuPresented = false
+            isUnitConvertPickerPresented = false
         }
         // 閉じたら次回は一覧から始める
         .onChange(of: isFunctionMenuPresented) { _, isPresented in

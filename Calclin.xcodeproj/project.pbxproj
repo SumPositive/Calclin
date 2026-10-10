@@ -57,6 +57,7 @@
 				App/AppMain.swift,
 				App/Config.swift,
 				App/ContentView.swift,
+				App/IdleBanner.swift,
 				App/Log.swift,
 				App/Manager.swift,
 				App/PopupView.swift,

@@ -553,6 +553,11 @@ struct CustomCell: View {
             )
             .presentationCompactAdaptation(.popover)
         }
+        // 放置時の広告が出たら、開いている吹き出しは閉じる
+        .onIdleAdShown {
+            fullPrecisionValue = nil
+            isUnitConvertPresented = false
+        }
     }
 }
 
@@ -1166,6 +1171,11 @@ struct RollCell: View {
             )
             .presentationCompactAdaptation(.popover)
         }
+        // 放置時の広告が出たら、開いている吹き出しは閉じる
+        .onIdleAdShown {
+            fullPrecisionValue = nil
+            isUnitConvertPresented = false
+        }
     }
 }
 
@@ -1237,17 +1247,18 @@ struct FullPrecisionPopover: View {
                 .foregroundStyle(.secondary)
 
             // 桁が多いので折り返して全部見せる（右端で切らない）
+            // ＃幅は固定で渡す。maxWidth だけだと吹き出しは「1行のままの高さ」で
+            //   大きさを決めてしまい、折り返した2行目以降が上下で切れる
             Text(minusSignedDisplay(value) + (unit ?? ""))
                 .font(.system(.body, design: .rounded).monospacedDigit())
                 .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(width: FULL_PRECISION_TEXT_WIDTH)
         }
         .padding(12)
         // 角の文字が吹き出しの丸い縁に寄らないよう、他の吹き出しと同じ余白を足す
         .padding(POPOVER_INSET)
-        // 長い値でも読める幅を確保しつつ、画面からはみ出さない
-        .frame(maxWidth: 280 + POPOVER_INSET * 2)
     }
 }
 

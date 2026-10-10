@@ -53,6 +53,9 @@ let POPOVER_INSET: CGFloat = 8
 /// キー設定ポップアップと、ロールとキーボードの境目・画面上端とのすき間
 let KEY_STYLE_POPUP_MARGIN: CGFloat = 8
 
+/// 全桁表示の吹き出しの数値の幅（長い値は折り返す。画面からはみ出さない幅）
+let FULL_PRECISION_TEXT_WIDTH: CGFloat = 260
+
 //-------------------------------------- Color関係
 
 let COLOR_TITLE: Color = .secondary         // App Name
@@ -226,6 +229,18 @@ private func inkCenterY(_ text: String, font: UIFont) -> CGFloat? {
 ///   ぎりぎりにすると上が欠ける
 func calcInputLineHeight(inputRowFontScale: CGFloat) -> CGFloat {
     max(46, 33.6 * inputRowFontScale * 1.25)
+}
+
+/// 放置時の広告を出している間も、入力行の上に残して見せるロールの高さ。
+/// 直前の答え（[=] 行）が読めるよう、その行の 1.5 倍くらいを残す
+func idleAdRollKeepHeight(inputRowFontScale: CGFloat) -> CGFloat {
+    // [=] 行の高さは答えの文字サイズの約 1.3 倍
+    calcLatestAnswerFontSize(inputRowFontScale: inputRowFontScale) * 1.3 * 1.5
+}
+
+/// 残したロールの上を、徐々に消していくグラデーションの高さ
+func idleAdRollFadeHeight(inputRowFontScale: CGFloat) -> CGFloat {
+    idleAdRollKeepHeight(inputRowFontScale: inputRowFontScale) * 0.8
 }
 
 /// ロール枠（PaperRollEdgeLines）の線の幅。
