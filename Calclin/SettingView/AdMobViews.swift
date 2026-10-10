@@ -205,9 +205,11 @@ struct InlineAdaptiveBannerView: UIViewRepresentable {
     let maxHeight: CGFloat
     /// 受け取った広告の高さ
     var onHeightChange: @MainActor (CGFloat) -> Void = { _ in }
+    /// 受け取れなかった（通信不可・在庫なしなど）
+    var onFail: @MainActor () -> Void = {}
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onHeightChange: onHeightChange)
+        Coordinator(onHeightChange: onHeightChange, onFail: onFail)
     }
 
     func makeUIView(context: Context) -> BannerView {
@@ -224,14 +226,18 @@ struct InlineAdaptiveBannerView: UIViewRepresentable {
         // 表示中に親VCが変わる可能性を考慮して毎回セットする
         uiView.rootViewController = UIApplication.shared.rootController
         context.coordinator.onHeightChange = onHeightChange
+        context.coordinator.onFail = onFail
     }
 
     @MainActor
     final class Coordinator: NSObject, BannerViewDelegate {
         var onHeightChange: @MainActor (CGFloat) -> Void
+        var onFail: @MainActor () -> Void
 
-        init(onHeightChange: @escaping @MainActor (CGFloat) -> Void) {
+        init(onHeightChange: @escaping @MainActor (CGFloat) -> Void,
+             onFail: @escaping @MainActor () -> Void) {
             self.onHeightChange = onHeightChange
+            self.onFail = onFail
         }
 
         func bannerViewDidReceiveAd(_ bannerView: BannerView) {
@@ -241,6 +247,7 @@ struct InlineAdaptiveBannerView: UIViewRepresentable {
 
         func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
             log(.warning, "InlineAdaptiveBanner load failed: \(error.localizedDescription)")
+            onFail()
         }
     }
 }

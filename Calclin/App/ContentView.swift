@@ -524,7 +524,9 @@ struct ContentView: View {
                                 .allowsHitTesting(false)
                                 .transition(.opacity)
                         }
-                        if idleBanner.isVisible {
+                        // 要求中から置いて広告を読み込む。受け取るまでは見せず、押せない
+                        // （受け取れなかったときは、ロールもそのまま何も変わらない）
+                        if idleBanner.isRequesting || idleBanner.isVisible {
                             IdleBannerBar(
                                 state: idleBanner,
                                 availableSize: CGSize(
@@ -533,7 +535,11 @@ struct ContentView: View {
                                     height: max(50, areaHeight - fade
                                                 - IDLE_BANNER_VERTICAL_PADDING * 2)))
                                 .frame(maxWidth: .infinity)
-                                .transition(.move(edge: .top).combined(with: .opacity))
+                                // 受け取れたら、上から下りてくる
+                                .offset(y: idleBanner.isVisible ? 0 : -40)
+                                .opacity(idleBanner.isVisible ? 1 : 0)
+                                .allowsHitTesting(idleBanner.isVisible)
+                                .transition(.opacity)
                         }
                     }
                 }

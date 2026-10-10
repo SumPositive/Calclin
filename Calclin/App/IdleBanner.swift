@@ -17,6 +17,10 @@ import UIKit.UIGestureRecognizerSubclass
 
 /// 操作が無くなってからバナーを出すまでの秒数
 let IDLE_BANNER_DELAY: Double = 20
+/// 広告を受け取れなかったとき、次に試すまでの秒数（通信不可などで何度も要求しない）
+let IDLE_BANNER_RETRY_DELAY: Double = 60
+/// 広告の返事を待つ上限の秒数。返事が無ければ受け取れなかったものとして扱う
+let IDLE_BANNER_LOAD_TIMEOUT: Double = 15
 /// 出た直後はバナーへのタップを受け付けない秒数。
 /// 戻ってきた指がちょうど出てきたバナーに当たる誤タップを防ぐ
 /// （誤タップが多いと広告配信を止められる。Vitalin の教訓）
@@ -89,6 +93,10 @@ private struct TouchObserverInstaller: UIViewRepresentable {
 /// - 出ている間は入力行を残してロールだけをフェードアウトし、そこにバナーを出す
 @MainActor
 final class IdleBannerState: ObservableObject {
+    /// 広告を要求中か（まだ見せていない）
+    /// - 受け取れたときだけ見せてロールを隠す。受け取れなければロールはそのまま
+    @Published private(set) var isRequesting = false
+    /// 広告を受け取って見せているか（このときだけロールを隠す）
     @Published private(set) var isVisible = false
     /// 出た直後の誤タップ防止中か
     @Published private(set) var isTapGuarded = false
@@ -109,6 +117,8 @@ final class IdleBannerState: ObservableObject {
 
     /// 操作が無くなるのを待つ
     private var idleTask: Task<Void, Never>?
+    /// 広告の返事を待つ（来なければ受け取れなかったものとして扱う）
+    private var loadTimeoutTask: Task<Void, Never>?
 
     /// 画面のどこかを触った
     func handleTouch(at point: CGPoint) {
@@ -118,24 +128,43 @@ final class IdleBannerState: ObservableObject {
             // 外を触ったら、すぐに引っ込める（使い始めた人を待たせない）
             hide()
         } else {
+            // 要求中に触ったら要求をやめる（受け取れても出さない）
+            cancelRequest()
             // 触るたびに、操作が無くなるまでの待ちを数え直す
             restartIdleTimer()
         }
     }
 
     /// 操作が無くなるのを待ち直す
-    func restartIdleTimer() {
+    func restartIdleTimer(after delay: Double = IDLE_BANNER_DELAY) {
         idleTask?.cancel()
         idleTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(IDLE_BANNER_DELAY))
+            try? await Task.sleep(for: .seconds(delay))
             guard !Task.isCancelled else { return }
             self?.show()
         }
     }
 
+    /// 広告を要求する。この時点ではまだ何も見せない（ロールもそのまま）
     private func show() {
         // スクリーンショット撮影中や、作業中（シートなど）は出さない
-        guard !SnapshotSupport.isRunningSnapshot, !isSuspended, !isVisible else { return }
+        guard !SnapshotSupport.isRunningSnapshot, !isSuspended,
+              !isVisible, !isRequesting else { return }
+        isRequesting = true
+        // 返事が来ないまま待ち続けないよう、上限を決めておく
+        loadTimeoutTask?.cancel()
+        loadTimeoutTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(IDLE_BANNER_LOAD_TIMEOUT))
+            guard !Task.isCancelled else { return }
+            self?.adDidFail()
+        }
+    }
+
+    /// 広告を受け取れた。ここで初めて見せて、ロールを隠す
+    func adDidLoad() {
+        guard isRequesting else { return }
+        isRequesting = false
+        loadTimeoutTask?.cancel()
         isTapGuarded = true
         // バナーが下りてくるのと同時にロールがフェードアウトする
         withAnimation(.easeOut(duration: 0.35)) {
@@ -147,7 +176,23 @@ final class IdleBannerState: ObservableObject {
         }
     }
 
+    /// 広告を受け取れなかった（通信不可・在庫なし・時間切れ）。
+    /// ロールは隠していないので、そのまま。少し間を空けてから、また試す
+    func adDidFail() {
+        guard isRequesting else { return }
+        cancelRequest()
+        if !isSuspended { restartIdleTimer(after: IDLE_BANNER_RETRY_DELAY) }
+    }
+
+    /// 要求をやめる（見せる前なので画面は変わらない）
+    private func cancelRequest() {
+        isRequesting = false
+        loadTimeoutTask?.cancel()
+        loadTimeoutTask = nil
+    }
+
     private func hide() {
+        cancelRequest()
         if isVisible {
             // バナーが上がるのと同時にロールがフェードインする
             withAnimation(.easeIn(duration: 0.3)) {
@@ -173,10 +218,17 @@ struct IdleBannerBar: View {
         // （ロールが低ければ帯状、高ければレクタングル級）
         InlineAdaptiveBannerView(adUnitID: ADMOB_IDLE_BANNER_UnitID,
                                  width: availableSize.width,
-                                 maxHeight: availableSize.height) { height in
+                                 maxHeight: availableSize.height,
+                                 onHeightChange: { height in
             guard 0 < height else { return }
-            withAnimation(.easeOut(duration: 0.25)) { adHeight = height }
-        }
+            adHeight = height
+            // 受け取れたので見せる（ここで初めてロールを隠す）
+            state.adDidLoad()
+        },
+                                 onFail: {
+            // 受け取れなければ見せないまま引き下げる（ロールは隠さない）
+            state.adDidFail()
+        })
             .frame(width: availableSize.width, height: adHeight)
             // 出た直後は透明な覆いでタップを止める（誤タップ防止）
             .overlay {
